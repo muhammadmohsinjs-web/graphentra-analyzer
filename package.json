@@ -2,10 +2,11 @@
   "name": "graphentra-analyzer",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/index.ts",
   "scripts": {
-    "start": "node index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "tsx src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "analyze": "tsx src/index.ts"
   },
   "repository": {
     "type": "git",
@@ -18,5 +19,10 @@
   "bugs": {
     "url": "https://github.com/muhammadmohsinjs-web/graphentra-analyzer/issues"
   },
-  "homepage": "https://github.com/muhammadmohsinjs-web/graphentra-analyzer#readme"
+  "homepage": "https://github.com/muhammadmohsinjs-web/graphentra-analyzer#readme",
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  }
 }
