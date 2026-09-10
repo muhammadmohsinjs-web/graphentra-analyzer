@@ -1,77 +1,82 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { extname, join, relative, resolve } from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { extname, resolve } from 'node:path';
 
-const targetRepository = process.argv.slice(2).find((argument) => !argument.startsWith('--'));
+// Path passed from GitHub Actions:
+//
+// npm run analyze -- ../demo-application
+//
+const targetRepository = process.argv[2];
 
 if (!targetRepository) {
-  console.error('\n❌ Usage: npm start -- <repository-path>\n');
+  console.error('❌ Repository path is required');
+  console.error('Usage: npm run analyze -- <repository-path>');
   process.exit(1);
 }
 
 const repositoryRoot = resolve(targetRepository);
 
 if (!existsSync(repositoryRoot)) {
-  console.error(`\n❌ Error: Directory not found: ${repositoryRoot}\n`);
+  console.error(`❌ Repository not found: ${repositoryRoot}`);
   process.exit(1);
 }
 
-const IGNORED_DIRS = new Set(['node_modules', '.git', 'dist', 'build', '.next', '.turbo', 'coverage']);
-const TS_EXTENSIONS = new Set(['.ts', '.tsx', '.mts', '.cts']);
+const TYPESCRIPT_EXTENSIONS = new Set(['.ts', '.tsx', '.mts', '.cts']);
 
-interface TypeScriptFile {
-  path: string;
-  relativePath: string;
-  content: string;
-  lineCount: number;
-}
+function getChangedFiles(): string[] {
+  try {
+    const output = execFileSync('git', ['diff', '--name-only', 'HEAD~1', 'HEAD'], {
+      cwd: repositoryRoot,
+      encoding: 'utf-8',
+    });
 
-function collectTypeScriptFiles(dirPath: string): string[] {
-  const fileList: string[] = [];
-  const entries = readdirSync(dirPath, { withFileTypes: true });
-
-  for (const entry of entries) {
-    if (entry.isDirectory()) {
-      if (!IGNORED_DIRS.has(entry.name)) {
-        fileList.push(...collectTypeScriptFiles(join(dirPath, entry.name)));
-      }
-    } else if (entry.isFile() && TS_EXTENSIONS.has(extname(entry.name))) {
-      fileList.push(join(dirPath, entry.name));
-    }
+    return output
+      .split('\n')
+      .map(file => file.trim())
+      .filter(Boolean);
+  } catch (error) {
+    console.error('❌ Could not read Git changes');
+    console.error(error);
+    process.exit(1);
   }
-
-  return fileList;
 }
 
-function readTypeScriptFiles(filePaths: string[]): TypeScriptFile[] {
-  return filePaths.map((filePath) => {
-    const content = readFileSync(filePath, 'utf-8');
-    return {
-      path: filePath,
-      relativePath: relative(repositoryRoot, filePath),
-      content,
-      lineCount: content.split('\n').length,
-    };
-  });
+function getChangedTypeScriptFiles(files: string[]): string[] {
+  return files.filter(file => TYPESCRIPT_EXTENSIONS.has(extname(file)));
 }
+
+// -------------------------------------
+// Run Analyzer
+// -------------------------------------
 
 console.log('\n========================================');
-console.log('🔍  GRAPHENTRA ANALYZER');
+console.log('🔍 GRAPHENTRA ANALYZER');
 console.log('========================================');
-console.log(`📁 Target: ${repositoryRoot}`);
 
-const filePaths = collectTypeScriptFiles(repositoryRoot);
-const tsFiles = readTypeScriptFiles(filePaths);
+console.log(`📁 Repository: ${repositoryRoot}`);
 
-console.log(`📘 TypeScript files loaded: ${tsFiles.length}`);
-console.log('----------------------------------------');
+const changedFiles = getChangedFiles();
 
-if (tsFiles.length === 0) {
-  console.log('  (no TypeScript files found)');
+console.log('\n📄 Changed files:');
+
+if (changedFiles.length === 0) {
+  console.log('No changed files found.');
 } else {
-  tsFiles.forEach((file, index) => {
-    const prefix = String(index + 1).padStart(String(tsFiles.length).length, ' ');
-    console.log(`  [${prefix}] ${file.relativePath} (${file.lineCount} lines, ${file.content.length} chars)`);
-  });
+  for (const file of changedFiles) {
+    console.log(`- ${file}`);
+  }
 }
 
-console.log('========================================\n');
+const changedTypeScriptFiles = getChangedTypeScriptFiles(changedFiles);
+
+console.log('\n📘 Changed TypeScript files:');
+
+if (changedTypeScriptFiles.length === 0) {
+  console.log('No TypeScript files changed.');
+} else {
+  for (const file of changedTypeScriptFiles) {
+    console.log(`- ${file}`);
+  }
+}
+
+console.log('\n========================================\n');
