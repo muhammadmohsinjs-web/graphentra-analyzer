@@ -338,21 +338,23 @@ if (files.length === 0) {
  */
 
 function getCompilerOptions(): ts.CompilerOptions {
-  const configPath = ts.findConfigFile(projectRoot, ts.sys.fileExists, 'tsconfig.json');
+  if (ts.sys && typeof ts.findConfigFile === 'function') {
+    const configPath = ts.findConfigFile(projectRoot, ts.sys.fileExists, 'tsconfig.json');
 
-  if (configPath) {
-    const config = ts.readConfigFile(configPath, ts.sys.readFile);
+    if (configPath) {
+      const config = ts.readConfigFile(configPath, ts.sys.readFile);
 
-    if (!config.error) {
-      const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, path.dirname(configPath));
+      if (!config.error) {
+        const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, path.dirname(configPath));
 
-      return {
-        ...parsed.options,
+        return {
+          ...parsed.options,
 
-        noEmit: true,
+          noEmit: true,
 
-        skipLibCheck: true,
-      };
+          skipLibCheck: true,
+        };
+      }
     }
   }
 
