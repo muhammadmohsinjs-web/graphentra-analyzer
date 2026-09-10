@@ -45,6 +45,25 @@ function getChangedTypeScriptFiles(files: string[]): string[] {
   return files.filter(file => TYPESCRIPT_EXTENSIONS.has(extname(file)));
 }
 
+function getChangedCode(files: string[]): string {
+  if (files.length === 0) {
+    return '';
+  }
+
+  try {
+    const output = execFileSync('git', ['diff', 'HEAD~1', 'HEAD', '--', ...files], {
+      cwd: repositoryRoot,
+      encoding: 'utf-8',
+    });
+
+    return output.trim();
+  } catch (error) {
+    console.error('❌ Could not read Git diff');
+    console.error(error);
+    process.exit(1);
+  }
+}
+
 // -------------------------------------
 // Run Analyzer
 // -------------------------------------
@@ -77,6 +96,16 @@ if (changedTypeScriptFiles.length === 0) {
   for (const file of changedTypeScriptFiles) {
     console.log(`- ${file}`);
   }
+}
+
+const changedCode = getChangedCode(changedTypeScriptFiles);
+
+console.log('\n💻 Changed code:');
+
+if (!changedCode) {
+  console.log('No changed code found.');
+} else {
+  console.log(changedCode);
 }
 
 console.log('\n========================================\n');
