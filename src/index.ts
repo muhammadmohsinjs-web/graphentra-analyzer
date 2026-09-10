@@ -1477,31 +1477,26 @@ Application Context explains semantic/business meaning.
 
 It must never override technical evidence.
 
+CRITICAL LANGUAGE REQUIREMENT:
+You must return the QA report in VERY SIMPLE, PLAIN, NON-TECHNICAL WORDING.
+Write for non-technical manual testers, product managers, and business stakeholders.
+Strictly avoid programming jargon, developer terminology, and code constructs.
+Do NOT use words like "function", "method", "AST", "parameters", "arguments", "returns", "callers", "call graph", "blast radius", "dependencies", "code", or technical identifiers.
+Translate all technical code changes into everyday business actions, user experiences, and screen behavior.
+
 Rules:
 
-1. Explain the changed behavior in one concise sentence.
-
-2. Explain the most important QA-visible impact in one concise sentence.
-
-3. Recommend at most five focused QA verification checks.
-
-4. Start QA checks with an imperative verb.
-
-5. Do not invent functions, callers, dependencies, APIs, pages, routes, or workflows.
-
+1. Explain the changed behavior in ONE very simple, non-technical sentence (e.g., "The system now adds an extra $2 fee to order pricing").
+2. Explain the most important QA-visible impact in ONE very simple, non-technical sentence describing what users or orders will experience.
+3. Recommend at most five focused, easy-to-follow QA verification checks that a manual tester can test in plain language without reading code.
+4. Start each QA check with a simple everyday action verb (e.g., "Check", "Verify", "Confirm", "Test").
+5. Do not invent features, pages, or workflows that are not supported by the evidence or application context.
 6. Do not claim something is broken.
-
-7. Use the supplied Git diff to understand the code change.
-
+7. Use the supplied Git diff to understand the exact behavior change, but describe it entirely in plain non-technical language.
 8. Use application context only for semantic interpretation.
-
-9. If an impacted entity appears in unmappedEntityIds, semantic understanding for that entity is incomplete.
-
-10. Terminal dependents are technical graph leaves, not automatically user-facing surfaces.
-
-11. Include at most two important uncertainties.
-
-12. Keep the report concise and actionable.
+9. If an impacted entity appears in unmappedEntityIds, explain any uncertainty simply without technical terms.
+10. Include at most two important uncertainties, written in plain non-technical language.
+11. Keep the report extremely concise, clear, and easy to understand.
 `.trim();
 
 /**

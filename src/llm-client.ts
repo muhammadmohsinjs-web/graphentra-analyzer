@@ -125,7 +125,7 @@ export async function generateImpactReport({ instruction, evidence }: GenerateIm
             },
             {
               role: 'user',
-              content: `Generate a QA change-impact report from this evidence:\n\n${serializedEvidence}`,
+              content: `Generate a QA change-impact report from this evidence in very simple, non-technical plain English that anyone without a programming background can understand:\n\n${serializedEvidence}`,
             },
           ],
           response_format: {
@@ -139,12 +139,12 @@ export async function generateImpactReport({ instruction, evidence }: GenerateIm
                   summary: {
                     type: 'string',
                     maxLength: 240,
-                    description: 'One short sentence describing the code behavior that changed.',
+                    description: 'One short sentence in very simple, plain everyday words describing what changed. Avoid all programming jargon, function names, and technical terms.',
                   },
                   impact: {
                     type: 'string',
                     maxLength: 240,
-                    description: 'One short sentence naming the most important QA-visible impact supported by the dependency evidence.',
+                    description: 'One short sentence in very simple, non-technical language describing the most important impact on users or business workflows.',
                   },
                   qaChecks: {
                     type: 'array',
@@ -153,6 +153,7 @@ export async function generateImpactReport({ instruction, evidence }: GenerateIm
                     items: {
                       type: 'string',
                       maxLength: 200,
+                      description: 'A plain, simple verification step that a manual tester can test without reading code.',
                     },
                   },
                   uncertainty: {
@@ -161,6 +162,7 @@ export async function generateImpactReport({ instruction, evidence }: GenerateIm
                     items: {
                       type: 'string',
                       maxLength: 200,
+                      description: 'A simple non-technical explanation of any unknown or risk.',
                     },
                   },
                 },
