@@ -1159,7 +1159,7 @@ function buildTechnicalGraph(): TechnicalGraph {
  */
 
 function writeOutputFile(name: string, data: unknown): string {
-  const directory = path.resolve(process.cwd(), '.graphentra-output');
+  const directory = path.resolve(projectRoot, '.graphentra');
 
   fs.mkdirSync(directory, {
     recursive: true,
