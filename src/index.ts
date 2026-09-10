@@ -3,13 +3,24 @@ import * as path from 'node:path';
 import * as fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
 
+import OpenAI from 'openai';
+import { config } from 'dotenv';
+import { z } from 'zod';
+
+import { formatImpactReport, generateImpactReport, OPENROUTER_MODEL } from './llm-client';
+
+config({
+  path: ['.env', '../.env'],
+  quiet: true,
+});
+
 /**
  * ============================================================
  * CONFIG
  * ============================================================
  */
 
-const ANALYZER_VERSION = '0.2.0';
+const ANALYZER_VERSION = '0.3.0';
 
 const MAX_BLAST_DEPTH = 6;
 
@@ -19,7 +30,7 @@ const TYPESCRIPT_EXTENSIONS = new Set(['.ts', '.tsx', '.mts', '.cts']);
 
 /**
  * ============================================================
- * CORE TYPES
+ * TECHNICAL TYPES
  * ============================================================
  */
 
@@ -48,9 +59,6 @@ interface Relation {
 interface ChangedFile {
   file: string;
 
-  /**
-   * Line numbers refer to the NEW version of the file.
-   */
   changedLines: number[];
 
   addedCode: string[];
@@ -71,14 +79,6 @@ interface ImpactPath {
 
   depth: number;
 
-  /**
-   * Example:
-   *
-   * calculatePrice
-   * -> applyPricing
-   * -> buildOrderTotal
-   * -> checkout
-   */
   path: Entity[];
 }
 
@@ -108,8 +108,6 @@ interface TechnicalGraph {
 
     headSha: string;
 
-    workingTreeDirty: boolean;
-
     generatedAt: string;
 
     analyzerVersion: string;
@@ -132,16 +130,96 @@ interface TechnicalGraph {
   relations: Relation[];
 }
 
+/**
+ * ============================================================
+ * APPLICATION CONTEXT
+ * ============================================================
+ */
+
+type Confidence = 'high' | 'medium' | 'low';
+
+interface ApplicationContext {
+  schemaVersion: '1.0';
+
+  application: {
+    name: string;
+
+    summary: string;
+
+    purpose: string;
+  };
+
+  domains: Array<{
+    id: string;
+
+    name: string;
+
+    description: string;
+  }>;
+
+  terminology: Array<{
+    term: string;
+
+    meaning: string;
+  }>;
+
+  entityAnnotations: Array<{
+    entityId: string;
+
+    businessMeaning: string;
+
+    domainIds: string[];
+
+    confidence: Confidence;
+  }>;
+
+  applicationFacts: string[];
+
+  unknowns: string[];
+}
+
+interface RelevantApplicationContext {
+  application: ApplicationContext['application'];
+
+  domains: ApplicationContext['domains'];
+
+  terminology: ApplicationContext['terminology'];
+
+  entityAnnotations: ApplicationContext['entityAnnotations'];
+
+  applicationFacts: string[];
+
+  unknowns: string[];
+
+  unmappedEntityIds: string[];
+}
+
+/**
+ * ============================================================
+ * FINAL ANALYSIS RESULT
+ * ============================================================
+ */
+
+interface QAReportResult {
+  changedEntityId: string;
+
+  report: {
+    summary: string;
+
+    impact: string;
+
+    qaChecks: string[];
+
+    uncertainty: string[];
+  };
+}
+
 interface AnalysisResult {
   schemaVersion: '1.0';
 
   repository: {
-    root: string;
-
     headSha: string;
   };
-
-  analyzedFiles: string[];
 
   changedFiles: ChangedFile[];
 
@@ -149,35 +227,89 @@ interface AnalysisResult {
 
   impacts: EntityImpact[];
 
+  qaReports: QAReportResult[];
+
   limitations: string[];
 }
 
 /**
  * ============================================================
- * CLI INPUT
+ * APPLICATION CONTEXT VALIDATION
  * ============================================================
- *
- * GitHub Actions currently runs:
- *
- * npm run analyze -- ../demo-application
+ */
+
+const applicationContextSchema = z
+  .object({
+    schemaVersion: z.literal('1.0'),
+
+    application: z
+      .object({
+        name: z.string(),
+
+        summary: z.string(),
+
+        purpose: z.string(),
+      })
+      .strict(),
+
+    domains: z.array(
+      z
+        .object({
+          id: z.string(),
+
+          name: z.string(),
+
+          description: z.string(),
+        })
+        .strict(),
+    ),
+
+    terminology: z.array(
+      z
+        .object({
+          term: z.string(),
+
+          meaning: z.string(),
+        })
+        .strict(),
+    ),
+
+    entityAnnotations: z.array(
+      z
+        .object({
+          entityId: z.string(),
+
+          businessMeaning: z.string(),
+
+          domainIds: z.array(z.string()),
+
+          confidence: z.enum(['high', 'medium', 'low']),
+        })
+        .strict(),
+    ),
+
+    applicationFacts: z.array(z.string()),
+
+    unknowns: z.array(z.string()),
+  })
+  .strict();
+
+/**
+ * ============================================================
+ * CLI
+ * ============================================================
  */
 
 const targetRepository = process.argv.slice(2).find(argument => !argument.startsWith('--'));
 
 if (!targetRepository) {
   console.error('\n❌ Repository path is required.');
+
   console.error('Usage: npm run analyze -- <repository-path>\n');
 
   process.exit(1);
 }
 
-/**
- * This is the directory Graphentra should analyze.
- *
- * Example:
- *
- * /runner/work/.../demo-application
- */
 const projectRoot = path.resolve(targetRepository);
 
 if (!fs.existsSync(projectRoot)) {
@@ -188,35 +320,26 @@ if (!fs.existsSync(projectRoot)) {
 
 /**
  * ============================================================
- * GIT HELPERS
+ * GIT
  * ============================================================
  */
 
 function executeGit(args: string[], cwd: string = projectRoot): string {
   return execFileSync('git', args, {
     cwd,
+
     encoding: 'utf8',
 
     maxBuffer: 20 * 1024 * 1024,
   }).trimEnd();
 }
 
-/**
- * Find actual Git repository root.
- *
- * Currently this will be the same as projectRoot for
- * demo-application.
- *
- * Later this also allows Graphentra to support projects inside
- * monorepositories.
- */
-
 let gitRepositoryRoot: string;
 
 try {
   gitRepositoryRoot = executeGit(['rev-parse', '--show-toplevel']);
 } catch {
-  console.error(`\n❌ Target is not inside a Git repository: ${projectRoot}\n`);
+  console.error(`❌ Not a Git repository: ${projectRoot}`);
 
   process.exit(1);
 }
@@ -224,15 +347,11 @@ try {
 const projectInsideRepository = path.relative(gitRepositoryRoot, projectRoot).replace(/\\/g, '/');
 
 function getHeadSha(): string {
-  return executeGit(['rev-parse', 'HEAD'], gitRepositoryRoot);
-}
+  return executeGit(
+    ['rev-parse', 'HEAD'],
 
-function isWorkingTreeDirty(): boolean {
-  const target = projectInsideRepository && projectInsideRepository !== '.' ? projectInsideRepository : '.';
-
-  const output = executeGit(['status', '--porcelain', '--', target], gitRepositoryRoot);
-
-  return output.trim().length > 0;
+    gitRepositoryRoot,
+  );
 }
 
 /**
@@ -244,10 +363,6 @@ function isWorkingTreeDirty(): boolean {
 function isTypeScriptFile(filePath: string): boolean {
   const normalized = filePath.replace(/\\/g, '/');
 
-  /**
-   * We currently do not treat declaration files as
-   * application entities.
-   */
   if (normalized.endsWith('.d.ts') || normalized.endsWith('.d.mts') || normalized.endsWith('.d.cts')) {
     return false;
   }
@@ -283,24 +398,9 @@ function collectTypeScriptFiles(directory: string): string[] {
   return results;
 }
 
-/**
- * ============================================================
- * PATH HELPERS
- * ============================================================
- */
-
 function normalizeProjectPath(fileName: string): string {
   return path.relative(projectRoot, fileName).replace(/\\/g, '/');
 }
-
-/**
- * Git reports paths relative to repository root.
- *
- * Graphentra entities are relative to projectRoot.
- *
- * Currently both are identical because demo-application
- * itself is the repository.
- */
 
 function gitPathToProjectPath(gitFile: string): string {
   const normalized = gitFile.replace(/\\/g, '/');
@@ -312,16 +412,10 @@ function gitPathToProjectPath(gitFile: string): string {
   return normalized;
 }
 
-/**
- * ============================================================
- * DISCOVER TYPESCRIPT FILES
- * ============================================================
- */
-
 const files = collectTypeScriptFiles(projectRoot).sort();
 
 if (files.length === 0) {
-  console.log('\nNo TypeScript files found.');
+  console.log('No TypeScript files found.');
 
   process.exit(0);
 }
@@ -330,68 +424,45 @@ if (files.length === 0) {
  * ============================================================
  * TYPESCRIPT PROGRAM
  * ============================================================
- *
- * If the target repository has tsconfig.json, we reuse its
- * compiler options.
- *
- * Otherwise use safe defaults for the current prototype.
  */
 
 function getCompilerOptions(): ts.CompilerOptions {
-  if (ts.sys && typeof ts.findConfigFile === 'function') {
-    const configPath = ts.findConfigFile(projectRoot, ts.sys.fileExists, 'tsconfig.json');
+  const configPath = ts.findConfigFile(projectRoot, ts.sys.fileExists, 'tsconfig.json');
 
-    if (configPath) {
-      const config = ts.readConfigFile(configPath, ts.sys.readFile);
+  if (configPath) {
+    const config = ts.readConfigFile(configPath, ts.sys.readFile);
 
-      if (!config.error) {
-        const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, path.dirname(configPath));
+    if (!config.error) {
+      const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, path.dirname(configPath));
 
-        return {
-          ...parsed.options,
+      return {
+        ...parsed.options,
 
-          noEmit: true,
+        noEmit: true,
 
-          skipLibCheck: true,
-        };
-      }
+        skipLibCheck: true,
+      };
     }
   }
-
-  /**
-   * demo-application currently has no tsconfig.
-   *
-   * These defaults are suitable for analyzing source files
-   * without emitting JavaScript.
-   */
 
   return {
     target: ts.ScriptTarget.ES2022,
 
-    module: ts.ModuleKind.Preserve,
+    module: ts.ModuleKind.CommonJS,
 
-    moduleResolution: ts.ModuleResolutionKind.Bundler,
+    moduleResolution: ts.ModuleResolutionKind.Node10,
 
     jsx: ts.JsxEmit.ReactJSX,
 
     noEmit: true,
 
     skipLibCheck: true,
-
-    allowJs: false,
   };
 }
 
 const program = ts.createProgram(files, getCompilerOptions());
 
 const checker = program.getTypeChecker();
-
-/**
- * Ensure we only analyze source files explicitly discovered
- * inside the customer's project.
- *
- * TypeScript Program also contains lib.d.ts and dependencies.
- */
 
 const analyzedFileSet = new Set(files.map(file => path.resolve(file)));
 
@@ -411,11 +482,9 @@ const symbolToEntity = new Map<ts.Symbol, Entity>();
 
 const relationKeys = new Set<string>();
 
-/**
- * ============================================================
- * SYMBOL HELPERS
- * ============================================================
- */
+function getEntity(id: string): Entity | undefined {
+  return entityById.get(id);
+}
 
 function resolveSymbol(node: ts.Node): ts.Symbol | undefined {
   let symbol = checker.getSymbolAtLocation(node);
@@ -443,26 +512,19 @@ function addRelation(relation: Relation): void {
   relations.push(relation);
 }
 
-function getEntity(id: string): Entity | undefined {
-  return entityById.get(id);
-}
-
 /**
  * ============================================================
- * PASS 1
+ * PASS 1 — FUNCTIONS
  *
- * DISCOVER FUNCTION ENTITIES
+ * Prototype ONLY supports:
+ *
+ * function foo() {}
+ *
+ * Not:
+ * class methods
+ * arrow functions
+ * function expressions
  * ============================================================
- *
- * Current MVP supports:
- *
- * function calculatePrice() {}
- *
- * It does NOT yet support:
- *
- * const calculatePrice = () => {}
- * class.method()
- * object.method()
  */
 
 for (const sourceFile of program.getSourceFiles()) {
@@ -470,9 +532,7 @@ for (const sourceFile of program.getSourceFiles()) {
     continue;
   }
 
-  const absoluteFile = path.resolve(sourceFile.fileName);
-
-  if (!analyzedFileSet.has(absoluteFile)) {
+  if (!analyzedFileSet.has(path.resolve(sourceFile.fileName))) {
     continue;
   }
 
@@ -517,12 +577,12 @@ for (const sourceFile of program.getSourceFiles()) {
 
 /**
  * ============================================================
- * FIND ENCLOSING FUNCTION
+ * FIND CALLING FUNCTION
  * ============================================================
  */
 
 function findEnclosingFunction(node: ts.Node): ts.FunctionDeclaration | undefined {
-  let current: ts.Node | undefined = node.parent;
+  let current = node.parent;
 
   while (current) {
     if (ts.isFunctionDeclaration(current)) {
@@ -537,9 +597,7 @@ function findEnclosingFunction(node: ts.Node): ts.FunctionDeclaration | undefine
 
 /**
  * ============================================================
- * PASS 2
- *
- * DISCOVER CALL RELATIONSHIPS
+ * PASS 2 — CALL RELATIONSHIPS
  * ============================================================
  */
 
@@ -548,9 +606,7 @@ for (const sourceFile of program.getSourceFiles()) {
     continue;
   }
 
-  const absoluteFile = path.resolve(sourceFile.fileName);
-
-  if (!analyzedFileSet.has(absoluteFile)) {
+  if (!analyzedFileSet.has(path.resolve(sourceFile.fileName))) {
     continue;
   }
 
@@ -558,26 +614,24 @@ for (const sourceFile of program.getSourceFiles()) {
     if (ts.isCallExpression(node)) {
       const calledSymbol = resolveSymbol(node.expression);
 
-      if (calledSymbol) {
-        const callerFunction = findEnclosingFunction(node);
+      const callerFunction = findEnclosingFunction(node);
 
-        if (callerFunction?.name) {
-          const callerSymbol = resolveSymbol(callerFunction.name);
+      if (calledSymbol && callerFunction?.name) {
+        const callerSymbol = resolveSymbol(callerFunction.name);
 
-          if (callerSymbol) {
-            const callerEntity = symbolToEntity.get(callerSymbol);
+        if (callerSymbol) {
+          const caller = symbolToEntity.get(callerSymbol);
 
-            const calledEntity = symbolToEntity.get(calledSymbol);
+          const called = symbolToEntity.get(calledSymbol);
 
-            if (callerEntity && calledEntity) {
-              addRelation({
-                from: callerEntity.id,
+          if (caller && called) {
+            addRelation({
+              from: caller.id,
 
-                to: calledEntity.id,
+              to: called.id,
 
-                type: 'CALLS',
-              });
-            }
+              type: 'CALLS',
+            });
           }
         }
       }
@@ -591,57 +645,414 @@ for (const sourceFile of program.getSourceFiles()) {
 
 /**
  * ============================================================
- * BUILD ADJACENCY MAPS
+ * REVERSE GRAPH
  * ============================================================
  */
-
-const adjacency = new Map<string, Relation[]>();
 
 const reverseAdjacency = new Map<string, Relation[]>();
 
 for (const entity of entities) {
-  adjacency.set(entity.id, []);
-
   reverseAdjacency.set(entity.id, []);
 }
 
 for (const relation of relations) {
-  adjacency.get(relation.from)?.push(relation);
-
   reverseAdjacency.get(relation.to)?.push(relation);
 }
 
 /**
  * ============================================================
- * GIT DIFF RANGE
+ * TECHNICAL GRAPH
  * ============================================================
- *
- * Current GitHub workflow checks out:
- *
- * fetch-depth: 2
- *
- * Therefore Graphentra can compare:
- *
- * HEAD~1
- * HEAD
- *
- * Later we can provide BASE_SHA and HEAD_SHA explicitly for
- * pull requests / multi-commit pushes.
+ */
+
+function buildTechnicalGraph(): TechnicalGraph {
+  return {
+    schemaVersion: '1.0',
+
+    repository: {
+      root: projectRoot,
+
+      headSha: getHeadSha(),
+
+      generatedAt: new Date().toISOString(),
+
+      analyzerVersion: ANALYZER_VERSION,
+    },
+
+    capabilities: {
+      language: 'typescript',
+
+      entityKinds: ['function'],
+
+      relationTypes: ['CALLS'],
+
+      maxBlastDepth: MAX_BLAST_DEPTH,
+    },
+
+    analyzedFiles: files.map(normalizeProjectPath),
+
+    entities: [...entities],
+
+    relations: [...relations],
+  };
+}
+
+/**
+ * ============================================================
+ * .GRAPHENTRA STORAGE
+ * ============================================================
+ */
+
+function getGraphentraDirectory(): string {
+  return path.resolve(projectRoot, '.graphentra');
+}
+
+function writeGraphentraJSON(fileName: string, value: unknown): string {
+  const directory = getGraphentraDirectory();
+
+  fs.mkdirSync(directory, {
+    recursive: true,
+  });
+
+  const filePath = path.join(directory, fileName);
+
+  fs.writeFileSync(
+    filePath,
+
+    JSON.stringify(value, null, 2),
+
+    'utf8',
+  );
+
+  return filePath;
+}
+
+/**
+ * ============================================================
+ * APPLICATION CONTEXT LLM
+ * ============================================================
+ */
+
+function createOpenRouterClient(): OpenAI {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+
+  if (!apiKey) {
+    throw new Error('OPENROUTER_API_KEY is required.');
+  }
+
+  return new OpenAI({
+    apiKey,
+
+    baseURL: 'https://openrouter.ai/api/v1',
+  });
+}
+
+async function generateApplicationContext(technicalGraph: TechnicalGraph): Promise<ApplicationContext> {
+  /**
+   * Prototype only.
+   *
+   * For a tiny demo repository we provide complete TS source.
+   *
+   * Do NOT do this for large production repositories later.
+   */
+
+  const sourceFiles = files.map(file => ({
+    path: normalizeProjectPath(file),
+
+    content: fs.readFileSync(file, 'utf8'),
+  }));
+
+  console.log('\n🧠 Generating first-time Application Context...');
+
+  const client = createOpenRouterClient();
+
+  const completion = await client.chat.completions.create({
+    model: OPENROUTER_MODEL,
+
+    messages: [
+      {
+        role: 'system',
+
+        content: `
+You are Graphentra's application-understanding assistant.
+
+You receive:
+
+1. A deterministic TypeScript technical graph.
+2. The application's TypeScript source code.
+
+The deterministic graph is authoritative for:
+- entity IDs,
+- functions,
+- files,
+- CALLS relationships.
+
+Your job is semantic interpretation only.
+
+Determine:
+- what the application does,
+- its main domains,
+- important business terminology,
+- the business/application meaning of technical entities,
+- useful application facts.
+
+Rules:
+
+- Never invent technical entities.
+- entityId values MUST exactly match IDs from technicalGraph.entities.
+- Never invent CALLS relationships.
+- Do not claim unsupported facts.
+- Use "unknowns" when information is unclear.
+- Keep descriptions concise.
+`.trim(),
+      },
+
+      {
+        role: 'user',
+
+        content: JSON.stringify(
+          {
+            technicalGraph,
+
+            sourceFiles,
+          },
+          null,
+          2,
+        ),
+      },
+    ],
+
+    response_format: {
+      type: 'json_schema',
+
+      json_schema: {
+        name: 'graphentra_application_context',
+
+        strict: true,
+
+        schema: {
+          type: 'object',
+
+          additionalProperties: false,
+
+          properties: {
+            schemaVersion: {
+              type: 'string',
+
+              enum: ['1.0'],
+            },
+
+            application: {
+              type: 'object',
+
+              additionalProperties: false,
+
+              properties: {
+                name: {
+                  type: 'string',
+                },
+
+                summary: {
+                  type: 'string',
+                },
+
+                purpose: {
+                  type: 'string',
+                },
+              },
+
+              required: ['name', 'summary', 'purpose'],
+            },
+
+            domains: {
+              type: 'array',
+
+              items: {
+                type: 'object',
+
+                additionalProperties: false,
+
+                properties: {
+                  id: {
+                    type: 'string',
+                  },
+
+                  name: {
+                    type: 'string',
+                  },
+
+                  description: {
+                    type: 'string',
+                  },
+                },
+
+                required: ['id', 'name', 'description'],
+              },
+            },
+
+            terminology: {
+              type: 'array',
+
+              items: {
+                type: 'object',
+
+                additionalProperties: false,
+
+                properties: {
+                  term: {
+                    type: 'string',
+                  },
+
+                  meaning: {
+                    type: 'string',
+                  },
+                },
+
+                required: ['term', 'meaning'],
+              },
+            },
+
+            entityAnnotations: {
+              type: 'array',
+
+              items: {
+                type: 'object',
+
+                additionalProperties: false,
+
+                properties: {
+                  entityId: {
+                    type: 'string',
+                  },
+
+                  businessMeaning: {
+                    type: 'string',
+                  },
+
+                  domainIds: {
+                    type: 'array',
+
+                    items: {
+                      type: 'string',
+                    },
+                  },
+
+                  confidence: {
+                    type: 'string',
+
+                    enum: ['high', 'medium', 'low'],
+                  },
+                },
+
+                required: ['entityId', 'businessMeaning', 'domainIds', 'confidence'],
+              },
+            },
+
+            applicationFacts: {
+              type: 'array',
+
+              items: {
+                type: 'string',
+              },
+            },
+
+            unknowns: {
+              type: 'array',
+
+              items: {
+                type: 'string',
+              },
+            },
+          },
+
+          required: ['schemaVersion', 'application', 'domains', 'terminology', 'entityAnnotations', 'applicationFacts', 'unknowns'],
+        },
+      },
+    },
+  });
+
+  const content = completion.choices[0]?.message.content;
+
+  if (!content) {
+    throw new Error('Application Context LLM returned no content.');
+  }
+
+  const parsed = JSON.parse(content);
+
+  return applicationContextSchema.parse(parsed);
+}
+
+/**
+ * ============================================================
+ * LOAD OR CREATE APPLICATION CONTEXT
+ * ============================================================
+ */
+
+async function getOrCreateApplicationContext(technicalGraph: TechnicalGraph): Promise<ApplicationContext> {
+  const contextPath = path.join(getGraphentraDirectory(), 'application-context.json');
+
+  if (fs.existsSync(contextPath)) {
+    console.log('\n🧠 Application Context found.');
+
+    const parsed = JSON.parse(fs.readFileSync(contextPath, 'utf8'));
+
+    return applicationContextSchema.parse(parsed);
+  }
+
+  const context = await generateApplicationContext(technicalGraph);
+
+  writeGraphentraJSON('application-context.json', context);
+
+  console.log(`✅ Application Context generated: ${contextPath}`);
+
+  console.warn('\n⚠️ If this was generated inside GitHub Actions, the file is temporary.');
+
+  console.warn('For this prototype, copy/commit .graphentra/application-context.json so future runs can reuse it.\n');
+
+  return context;
+}
+
+/**
+ * ============================================================
+ * VALIDATE APPLICATION CONTEXT
+ * ============================================================
+ */
+
+function validateApplicationContext(context: ApplicationContext): void {
+  const validIds = new Set(entities.map(entity => entity.id));
+
+  const invalidIds = context.entityAnnotations.map(annotation => annotation.entityId).filter(id => !validIds.has(id));
+
+  if (invalidIds.length > 0) {
+    console.warn('\n⚠️ Application Context contains entity IDs not found in the current technical graph:');
+
+    for (const id of invalidIds) {
+      console.warn(`- ${id}`);
+    }
+
+    console.warn('Application Context may need regeneration.\n');
+  }
+}
+
+/**
+ * ============================================================
+ * GIT DIFF
+ * ============================================================
  */
 
 function getDiffRange(): {
   base: string;
+
   head: string;
 } {
-  const baseFromEnvironment = process.env.BASE_SHA?.trim();
+  const base = process.env.BASE_SHA?.trim();
 
-  const headFromEnvironment = process.env.HEAD_SHA?.trim();
+  const head = process.env.HEAD_SHA?.trim();
 
-  if (baseFromEnvironment && headFromEnvironment && !/^0+$/.test(baseFromEnvironment)) {
+  if (base && head && !/^0+$/.test(base)) {
     return {
-      base: baseFromEnvironment,
-
-      head: headFromEnvironment,
+      base,
+      head,
     };
   }
 
@@ -652,118 +1063,67 @@ function getDiffRange(): {
   };
 }
 
-/**
- * ============================================================
- * GET RAW GIT DIFF
- * ============================================================
- */
-
 function getGitDiff(): string {
   const { base, head } = getDiffRange();
 
   const target = projectInsideRepository && projectInsideRepository !== '.' ? projectInsideRepository : '.';
 
-  try {
-    return executeGit(
-      ['diff', '--unified=3', base, head, '--', target],
+  return executeGit(
+    ['diff', '--unified=3', base, head, '--', target],
 
-      gitRepositoryRoot,
-    );
-  } catch (error) {
-    console.error(`\n❌ Could not compare ${base} → ${head}.`);
-
-    console.error('Make sure enough Git history was checked out.\n');
-
-    throw error;
-  }
+    gitRepositoryRoot,
+  );
 }
 
 /**
  * ============================================================
  * PARSE GIT DIFF
  * ============================================================
- *
- * Converts raw Git:
- *
- * - return price + tax;
- * + return price + tax + 2;
- *
- * into:
- *
- * {
- *   file: "pricing.ts",
- *   changedLines: [3],
- *   removedCode: [...],
- *   addedCode: [...]
- * }
  */
 
 function parseGitDiff(diff: string): ChangedFile[] {
-  const changedFiles = new Map<
-    string,
-    {
-      changedLines: Set<number>;
+  interface ChangeBuilder {
+    changedLines: Set<number>;
 
-      addedCode: string[];
+    addedCode: string[];
 
-      removedCode: string[];
+    removedCode: string[];
 
-      diffLines: string[];
-    }
-  >();
+    diffLines: string[];
+  }
+
+  const changedFiles = new Map<string, ChangeBuilder>();
 
   let currentFile: string | undefined;
 
-  let currentInformation:
-    | {
-        changedLines: Set<number>;
-
-        addedCode: string[];
-
-        removedCode: string[];
-
-        diffLines: string[];
-      }
-    | undefined;
+  let current: ChangeBuilder | undefined;
 
   let newLineNumber = 0;
 
   let insideHunk = false;
 
-  let pendingHeaderLines: string[] = [];
-
   let oldFile: string | undefined;
 
-  for (const line of diff.split('\n')) {
-    /**
-     * Start new file diff.
-     */
+  let headerLines: string[] = [];
 
+  for (const line of diff.split('\n')) {
     if (line.startsWith('diff --git ')) {
       currentFile = undefined;
 
-      currentInformation = undefined;
+      current = undefined;
 
       insideHunk = false;
 
       oldFile = undefined;
 
-      pendingHeaderLines = [line];
+      headerLines = [line];
 
       continue;
     }
 
-    /**
-     * Keep Git metadata before +++.
-     */
-
-    if (!currentInformation) {
-      pendingHeaderLines.push(line);
+    if (!current) {
+      headerLines.push(line);
     }
-
-    /**
-     * Old file path.
-     */
 
     if (line.startsWith('--- a/')) {
       oldFile = gitPathToProjectPath(line.slice('--- a/'.length));
@@ -771,57 +1131,44 @@ function parseGitDiff(diff: string): ChangedFile[] {
       continue;
     }
 
+    if (line.startsWith('+++ b/')) {
+      currentFile = gitPathToProjectPath(line.slice('+++ b/'.length));
+
+      current = changedFiles.get(currentFile);
+
+      if (!current) {
+        current = {
+          changedLines: new Set(),
+
+          addedCode: [],
+
+          removedCode: [],
+
+          diffLines: [],
+        };
+
+        changedFiles.set(currentFile, current);
+      }
+
+      current.diffLines.push(...headerLines);
+
+      headerLines = [];
+
+      continue;
+    }
+
     /**
      * Deleted file.
-     *
-     * Deleted functions cannot be mapped against the new AST
-     * yet, but we still preserve the diff evidence.
      */
 
-    if (line === '+++ /dev/null') {
-      if (!oldFile) {
-        continue;
-      }
-
+    if (line === '+++ /dev/null' && oldFile) {
       currentFile = oldFile;
 
-      currentInformation = changedFiles.get(currentFile);
+      current = changedFiles.get(currentFile);
 
-      if (!currentInformation) {
-        currentInformation = {
-          changedLines: new Set<number>(),
-
-          addedCode: [],
-
-          removedCode: [],
-
-          diffLines: [],
-        };
-
-        changedFiles.set(currentFile, currentInformation);
-      }
-
-      currentInformation.diffLines.push(...pendingHeaderLines);
-
-      pendingHeaderLines = [];
-
-      continue;
-    }
-
-    /**
-     * New/current file path.
-     */
-
-    if (line.startsWith('+++ b/')) {
-      const gitFile = line.slice('+++ b/'.length);
-
-      currentFile = gitPathToProjectPath(gitFile);
-
-      currentInformation = changedFiles.get(currentFile);
-
-      if (!currentInformation) {
-        currentInformation = {
-          changedLines: new Set<number>(),
+      if (!current) {
+        current = {
+          changedLines: new Set(),
 
           addedCode: [],
 
@@ -830,34 +1177,28 @@ function parseGitDiff(diff: string): ChangedFile[] {
           diffLines: [],
         };
 
-        changedFiles.set(currentFile, currentInformation);
+        changedFiles.set(currentFile, current);
       }
 
-      currentInformation.diffLines.push(...pendingHeaderLines);
+      current.diffLines.push(...headerLines);
 
-      pendingHeaderLines = [];
+      headerLines = [];
 
       continue;
     }
 
-    if (!currentFile || !currentInformation) {
+    if (!currentFile || !current) {
       continue;
     }
 
-    currentInformation.diffLines.push(line);
+    current.diffLines.push(line);
 
-    /**
-     * Example:
-     *
-     * @@ -1,4 +1,4 @@
-     */
+    const hunk = line.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
 
-    const hunkMatch = line.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
-
-    if (hunkMatch) {
+    if (hunk) {
       insideHunk = true;
 
-      newLineNumber = Number(hunkMatch[1]);
+      newLineNumber = Number(hunk[1]);
 
       continue;
     }
@@ -866,38 +1207,23 @@ function parseGitDiff(diff: string): ChangedFile[] {
       continue;
     }
 
-    /**
-     * Added line.
-     */
-
     if (line.startsWith('+') && !line.startsWith('+++')) {
-      currentInformation.changedLines.add(Math.max(newLineNumber, 1));
+      current.changedLines.add(Math.max(newLineNumber, 1));
 
-      currentInformation.addedCode.push(line.slice(1));
+      current.addedCode.push(line.slice(1));
 
       newLineNumber += 1;
 
       continue;
     }
 
-    /**
-     * Removed line.
-     *
-     * A removed line does not exist in the new file anymore.
-     * We anchor the change to the nearest new-file position.
-     */
-
     if (line.startsWith('-') && !line.startsWith('---')) {
-      currentInformation.changedLines.add(Math.max(newLineNumber, 1));
+      current.changedLines.add(Math.max(newLineNumber, 1));
 
-      currentInformation.removedCode.push(line.slice(1));
+      current.removedCode.push(line.slice(1));
 
       continue;
     }
-
-    /**
-     * Context line exists in both versions.
-     */
 
     if (line.startsWith(' ')) {
       newLineNumber += 1;
@@ -921,32 +1247,30 @@ function parseGitDiff(diff: string): ChangedFile[] {
 
 /**
  * ============================================================
- * MAP CHANGED LINES → FUNCTIONS
+ * MAP LINES → CHANGED FUNCTIONS
  * ============================================================
  */
 
 function findChangedEntities(changedFiles: ChangedFile[]): ChangedEntity[] {
-  const results: ChangedEntity[] = [];
+  const result: ChangedEntity[] = [];
 
-  for (const changedFile of changedFiles) {
-    const fileEntities = entities.filter(entity => entity.file === changedFile.file);
+  for (const change of changedFiles) {
+    const matchingEntities = entities.filter(entity => entity.file === change.file);
 
-    for (const entity of fileEntities) {
-      const overlaps = changedFile.changedLines.some(line => line >= entity.startLine && line <= entity.endLine);
+    for (const entity of matchingEntities) {
+      const overlaps = change.changedLines.some(line => line >= entity.startLine && line <= entity.endLine);
 
-      if (!overlaps) {
-        continue;
+      if (overlaps) {
+        result.push({
+          entity,
+
+          change,
+        });
       }
-
-      results.push({
-        entity,
-
-        change: changedFile,
-      });
     }
   }
 
-  return results;
+  return result;
 }
 
 /**
@@ -958,17 +1282,17 @@ function findChangedEntities(changedFiles: ChangedFile[]): ChangedEntity[] {
 function getCallers(entityId: string): Entity[] {
   const incoming = reverseAdjacency.get(entityId) ?? [];
 
-  const result = new Map<string, Entity>();
+  const unique = new Map<string, Entity>();
 
   for (const relation of incoming) {
     const caller = getEntity(relation.from);
 
     if (caller) {
-      result.set(caller.id, caller);
+      unique.set(caller.id, caller);
     }
   }
 
-  return [...result.values()];
+  return [...unique.values()];
 }
 
 /**
@@ -991,34 +1315,30 @@ function getBlastRadiusPaths(entityId: string): ImpactPath[] {
 
     path: Entity[];
 
-    visitedInPath: Set<string>;
+    visited: Set<string>;
   }> = [
     {
       entity: start,
 
       path: [start],
 
-      visitedInPath: new Set([start.id]),
+      visited: new Set([start.id]),
     },
   ];
 
   while (queue.length > 0) {
     const current = queue.shift()!;
 
-    const currentDepth = current.path.length - 1;
+    const depth = current.path.length - 1;
 
-    if (currentDepth >= MAX_BLAST_DEPTH) {
+    if (depth >= MAX_BLAST_DEPTH) {
       continue;
     }
 
     const callers = getCallers(current.entity.id);
 
     for (const caller of callers) {
-      /**
-       * Prevent cycles on this dependency path.
-       */
-
-      if (current.visitedInPath.has(caller.id)) {
+      if (current.visited.has(caller.id)) {
         continue;
       }
 
@@ -1032,38 +1352,22 @@ function getBlastRadiusPaths(entityId: string): ImpactPath[] {
         path: newPath,
       });
 
-      const nextVisited = new Set(current.visitedInPath);
+      const visited = new Set(current.visited);
 
-      nextVisited.add(caller.id);
+      visited.add(caller.id);
 
       queue.push({
         entity: caller,
 
         path: newPath,
 
-        visitedInPath: nextVisited,
+        visited,
       });
     }
   }
 
   return results;
 }
-
-/**
- * ============================================================
- * TERMINAL DEPENDENTS
- * ============================================================
- */
-
-function getTerminalDependents(impactedEntities: Entity[]): Entity[] {
-  return impactedEntities.filter(entity => getCallers(entity.id).length === 0);
-}
-
-/**
- * ============================================================
- * BUILD IMPACT
- * ============================================================
- */
 
 function buildImpact(changedEntity: ChangedEntity): EntityImpact {
   const paths = getBlastRadiusPaths(changedEntity.entity.id);
@@ -1082,6 +1386,8 @@ function buildImpact(changedEntity: ChangedEntity): EntityImpact {
 
   const affectedEntities = [...affected.values()];
 
+  const terminalDependents = affectedEntities.filter(entity => getCallers(entity.id).length === 0);
+
   return {
     changedEntity: changedEntity.entity,
 
@@ -1097,90 +1403,172 @@ function buildImpact(changedEntity: ChangedEntity): EntityImpact {
       paths,
     },
 
-    terminalDependents: getTerminalDependents(affectedEntities),
+    terminalDependents,
   };
 }
 
 /**
  * ============================================================
- * TECHNICAL GRAPH
+ * RELEVANT APPLICATION CONTEXT
  * ============================================================
  */
 
-function buildTechnicalGraph(): TechnicalGraph {
+function selectRelevantApplicationContext(
+  context: ApplicationContext,
+
+  impact: EntityImpact,
+): RelevantApplicationContext {
+  const relevantIds = new Set<string>([impact.changedEntity.id, ...impact.blastRadius.entities.map(entity => entity.id)]);
+
+  const annotations = context.entityAnnotations.filter(annotation => relevantIds.has(annotation.entityId));
+
+  const domainIds = new Set(annotations.flatMap(annotation => annotation.domainIds));
+
+  const domains = context.domains.filter(domain => domainIds.has(domain.id));
+
+  const mappedIds = new Set(annotations.map(annotation => annotation.entityId));
+
+  const unmappedEntityIds = [...relevantIds].filter(id => !mappedIds.has(id));
+
   return {
-    schemaVersion: '1.0',
+    application: context.application,
 
-    repository: {
-      root: projectRoot,
+    domains,
 
-      headSha: getHeadSha(),
+    /**
+     * Prototype:
+     * keep terminology small enough to send all of it.
+     */
+    terminology: context.terminology,
 
-      workingTreeDirty: isWorkingTreeDirty(),
+    entityAnnotations: annotations,
 
-      generatedAt: new Date().toISOString(),
+    applicationFacts: context.applicationFacts,
 
-      analyzerVersion: ANALYZER_VERSION,
-    },
+    unknowns: context.unknowns,
 
-    capabilities: {
+    unmappedEntityIds,
+  };
+}
+
+/**
+ * ============================================================
+ * QA LLM INSTRUCTION
+ * ============================================================
+ */
+
+const qaInstruction = `
+You are Graphentra's QA change-impact assistant.
+
+You receive:
+
+1. DETERMINISTIC TECHNICAL EVIDENCE
+2. RELEVANT APPLICATION CONTEXT
+
+Deterministic technical evidence is authoritative for:
+- what code changed,
+- which function changed,
+- CALLS relationships,
+- direct dependents,
+- blast-radius entities,
+- dependency paths.
+
+Application Context explains semantic/business meaning.
+
+It must never override technical evidence.
+
+Rules:
+
+1. Explain the changed behavior in one concise sentence.
+
+2. Explain the most important QA-visible impact in one concise sentence.
+
+3. Recommend at most five focused QA verification checks.
+
+4. Start QA checks with an imperative verb.
+
+5. Do not invent functions, callers, dependencies, APIs, pages, routes, or workflows.
+
+6. Do not claim something is broken.
+
+7. Use the supplied Git diff to understand the code change.
+
+8. Use application context only for semantic interpretation.
+
+9. If an impacted entity appears in unmappedEntityIds, semantic understanding for that entity is incomplete.
+
+10. Terminal dependents are technical graph leaves, not automatically user-facing surfaces.
+
+11. Include at most two important uncertainties.
+
+12. Keep the report concise and actionable.
+`.trim();
+
+/**
+ * ============================================================
+ * QA PAYLOAD
+ * ============================================================
+ */
+
+function buildLLMPayload(
+  impact: EntityImpact,
+
+  context: ApplicationContext,
+) {
+  return {
+    analysisScope: {
       language: 'typescript',
 
-      entityKinds: ['function'],
+      entityGranularity: 'function',
 
       relationTypes: ['CALLS'],
 
       maxBlastDepth: MAX_BLAST_DEPTH,
     },
 
-    analyzedFiles: files.map(normalizeProjectPath),
+    changedEntity: impact.changedEntity,
 
-    entities: [...entities].sort((a, b) => a.id.localeCompare(b.id)),
+    change: {
+      file: impact.change.file,
 
-    relations: [...relations].sort((a, b) => {
-      const from = a.from.localeCompare(b.from);
+      changedLines: impact.change.changedLines,
 
-      if (from !== 0) {
-        return from;
-      }
+      removedCode: impact.change.removedCode,
 
-      return a.to.localeCompare(b.to);
-    }),
+      addedCode: impact.change.addedCode,
+
+      diff: impact.change.diff,
+    },
+
+    directDependents: impact.directDependents,
+
+    blastRadius: impact.blastRadius,
+
+    terminalDependents: impact.terminalDependents,
+
+    applicationContext: selectRelevantApplicationContext(context, impact),
+
+    limitations: [
+      'Only TypeScript is analyzed.',
+
+      'Only named function declarations are supported.',
+
+      'Only CALLS relationships are supported.',
+
+      'Class methods are outside the current prototype.',
+
+      'Arrow functions are outside the current prototype.',
+
+      'Dynamic runtime dependencies are not resolved.',
+
+      'Blast-radius traversal is limited to depth 6.',
+    ],
   };
 }
 
 /**
  * ============================================================
- * OUTPUT FILES
- * ============================================================
- *
- * Store Graphentra's generated information in the analyzer
- * workspace rather than modifying the customer's repository.
- */
-
-function writeOutputFile(name: string, data: unknown): string {
-  const directory = path.resolve(projectRoot, '.graphentra');
-
-  fs.mkdirSync(directory, {
-    recursive: true,
-  });
-
-  const outputFile = path.join(directory, name);
-
-  fs.writeFileSync(
-    outputFile,
-
-    JSON.stringify(data, null, 2),
-
-    'utf8',
-  );
-
-  return outputFile;
-}
-
-/**
- * ============================================================
- * CONSOLE REPORT
+ * CONSOLE HELPERS
  * ============================================================
  */
 
@@ -1191,9 +1579,9 @@ function printChangedFile(change: ChangedFile): void {
 
   console.log('----------------------------------------');
 
-  console.log(`Changed lines: ${change.changedLines.length ? change.changedLines.join(', ') : 'unknown'}`);
+  console.log(`Changed lines: ${change.changedLines.join(', ')}`);
 
-  if (change.removedCode.length) {
+  if (change.removedCode.length > 0) {
     console.log('\nRemoved:');
 
     for (const line of change.removedCode) {
@@ -1201,17 +1589,13 @@ function printChangedFile(change: ChangedFile): void {
     }
   }
 
-  if (change.addedCode.length) {
+  if (change.addedCode.length > 0) {
     console.log('\nAdded:');
 
     for (const line of change.addedCode) {
       console.log(`+ ${line}`);
     }
   }
-
-  console.log('\nRaw Git diff:\n');
-
-  console.log(change.diff);
 }
 
 function printImpact(impact: EntityImpact): void {
@@ -1229,30 +1613,16 @@ function printImpact(impact: EntityImpact): void {
 
   if (impact.directDependents.length === 0) {
     console.log('  none');
-  } else {
-    for (const entity of impact.directDependents) {
-      console.log(`  → ${entity.id}`);
-    }
   }
 
-  console.log(`\nBlast radius: ${impact.blastRadius.totalAffectedEntities} entities`);
-
-  if (impact.blastRadius.paths.length) {
-    console.log('\nImpact paths:');
-
-    for (const impactPath of impact.blastRadius.paths) {
-      console.log(`  ${impactPath.path.map(entity => entity.name).join(' → ')}`);
-    }
+  for (const entity of impact.directDependents) {
+    console.log(`  → ${entity.id}`);
   }
 
-  console.log('\nTerminal dependents:');
+  console.log(`\nBlast radius: ${impact.blastRadius.totalAffectedEntities}`);
 
-  if (impact.terminalDependents.length === 0) {
-    console.log('  none');
-  } else {
-    for (const terminal of impact.terminalDependents) {
-      console.log(`  → ${terminal.id}`);
-    }
+  for (const pathInfo of impact.blastRadius.paths) {
+    console.log(`  ${pathInfo.path.map(entity => entity.name).join(' → ')}`);
   }
 }
 
@@ -1262,7 +1632,7 @@ function printImpact(impact: EntityImpact): void {
  * ============================================================
  */
 
-function run(): void {
+async function run(): Promise<void> {
   console.log('\n========================================');
 
   console.log('🔍 GRAPHENTRA ANALYZER');
@@ -1278,31 +1648,37 @@ function run(): void {
   console.log(`🔗 CALLS relations: ${relations.length}`);
 
   /**
-   * --------------------------------------
-   * Write full repository graph.
-   * --------------------------------------
+   * ==========================================================
+   * 1. BUILD TECHNICAL GRAPH
+   * ==========================================================
    */
 
   const technicalGraph = buildTechnicalGraph();
 
-  const technicalGraphFile = writeOutputFile(
-    'technical-graph.json',
+  const technicalGraphPath = writeGraphentraJSON('technical-graph.json', technicalGraph);
 
-    technicalGraph,
-  );
+  console.log(`\n✅ Technical graph created: ${technicalGraphPath}`);
 
   /**
-   * --------------------------------------
-   * Git changes
-   * --------------------------------------
+   * ==========================================================
+   * 2. LOAD OR GENERATE APPLICATION CONTEXT
+   * ==========================================================
+   */
+
+  const applicationContext = await getOrCreateApplicationContext(technicalGraph);
+
+  validateApplicationContext(applicationContext);
+
+  /**
+   * ==========================================================
+   * 3. GET GIT CHANGE
+   * ==========================================================
    */
 
   const gitDiff = getGitDiff();
 
   if (!gitDiff.trim()) {
     console.log('\nNo Git changes found.');
-
-    console.log(`\nTechnical graph: ${technicalGraphFile}\n`);
 
     return;
   }
@@ -1316,51 +1692,81 @@ function run(): void {
   }
 
   /**
-   * --------------------------------------
-   * Changed functions
-   * --------------------------------------
+   * ==========================================================
+   * 4. MAP CHANGED LINES TO FUNCTIONS
+   * ==========================================================
    */
 
   const changedEntities = findChangedEntities(changedFiles);
 
   console.log(`\n🎯 Changed functions: ${changedEntities.length}`);
 
-  if (changedEntities.length === 0) {
-    console.log('\nGit changes were found, but no supported named function declaration matched the changed lines.');
+  for (const changed of changedEntities) {
+    console.log(`  → ${changed.entity.id}`);
   }
 
-  for (const changedEntity of changedEntities) {
-    console.log(`  → ${changedEntity.entity.id}`);
+  if (changedEntities.length === 0) {
+    console.log('\nNo supported standalone function matched the changed lines.');
+
+    return;
   }
 
   /**
-   * --------------------------------------
-   * Blast radius
-   * --------------------------------------
+   * ==========================================================
+   * 5. BUILD DETERMINISTIC IMPACT
+   * ==========================================================
    */
 
   const impacts = changedEntities.map(buildImpact);
 
+  const qaReports: QAReportResult[] = [];
+
+  /**
+   * ==========================================================
+   * 6. LLM QA REPORT
+   * ==========================================================
+   */
+
   for (const impact of impacts) {
     printImpact(impact);
+
+    const payload = buildLLMPayload(impact, applicationContext);
+
+    console.log('\n🤖 Sending deterministic evidence + relevant application context to LLM...');
+
+    const report = await generateImpactReport({
+      instruction: qaInstruction,
+
+      evidence: payload,
+    });
+
+    qaReports.push({
+      changedEntityId: impact.changedEntity.id,
+
+      report,
+    });
+
+    console.log('\n========================================');
+
+    console.log(`🤖 QA IMPACT REPORT — ${impact.changedEntity.name}`);
+
+    console.log('========================================\n');
+
+    console.log(formatImpactReport(report));
   }
 
   /**
-   * --------------------------------------
-   * Final machine-readable evidence.
-   * --------------------------------------
+   * ==========================================================
+   * 7. SAVE FINAL ANALYSIS
+   * ==========================================================
    */
 
-  const analysis: AnalysisResult = {
+  const result: AnalysisResult = {
     schemaVersion: '1.0',
 
     repository: {
-      root: projectRoot,
-
       headSha: getHeadSha(),
     },
-
-    analyzedFiles: files.map(normalizeProjectPath),
 
     changedFiles,
 
@@ -1368,30 +1774,30 @@ function run(): void {
 
     impacts,
 
+    qaReports,
+
     limitations: [
       'Only TypeScript is analyzed.',
 
-      'Only named function declarations are currently entities.',
+      'Only named standalone function declarations are supported.',
 
-      'Only CALLS relationships are currently modeled.',
+      'Only CALLS relationships are currently supported.',
 
-      'Arrow functions and class methods are not yet modeled.',
+      'Class methods are not analyzed.',
 
-      'Blast-radius traversal is limited to depth 6.',
+      'Arrow functions are not analyzed.',
 
-      'Deleted functions cannot yet be mapped because only the post-change AST is analyzed.',
+      'Dynamic calls are not analyzed.',
 
-      'Top-level module execution is not currently represented as an entity.',
+      'Deleted functions require before/after AST analysis.',
 
-      'Dynamic runtime calls are not resolved.',
+      'Application surfaces are not yet discovered.',
+
+      'Blast radius is limited to depth 6.',
     ],
   };
 
-  const analysisFile = writeOutputFile(
-    'analysis.json',
-
-    analysis,
-  );
+  const analysisPath = writeGraphentraJSON('analysis.json', result);
 
   console.log('\n========================================');
 
@@ -1399,19 +1805,19 @@ function run(): void {
 
   console.log('========================================');
 
-  console.log(`Technical graph: ${technicalGraphFile}`);
+  console.log(`Technical graph: ${technicalGraphPath}`);
 
-  console.log(`Analysis: ${analysisFile}`);
+  console.log(`Application context: ${path.join(getGraphentraDirectory(), 'application-context.json')}`);
+
+  console.log(`Analysis: ${analysisPath}`);
 
   console.log();
 }
 
-try {
-  run();
-} catch (error) {
-  console.error('\n❌ Graphentra analysis failed.');
+void run().catch(error => {
+  console.error('\n❌ Graphentra analysis failed:');
 
   console.error(error);
 
   process.exitCode = 1;
-}
+});
