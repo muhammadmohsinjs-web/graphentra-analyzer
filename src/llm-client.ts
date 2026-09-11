@@ -9,10 +9,10 @@ export const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL ?? 'openai/gpt-5.6-
 
 const impactReportSchema = z
   .object({
-    summary: z.string().max(240).trim(),
-    impact: z.string().max(240).trim(),
-    qaChecks: z.array(z.string().max(200).trim()).min(1).max(5),
-    uncertainty: z.array(z.string().max(200).trim()).max(2),
+    summary: z.string().trim(),
+    impact: z.string().trim(),
+    qaChecks: z.array(z.string().trim()).min(1).max(5),
+    uncertainty: z.array(z.string().trim()).max(2),
   })
   .strict();
 
@@ -27,7 +27,9 @@ export function validateImpactReportSemantics(report: ImpactReport): string[] {
     ...report.uncertainty.map((value, index): [string, string] => [`uncertainty[${index}]`, value]),
   ];
   const heading = /^(?:qa\s+(?:report|change)\b|what\s+changed\b|(?:summary|change|impact|qa\s*checks|uncertainty|title|overview|checks|risks?|notes?)\s*(?::|$))/i;
-  const markdown = /[\r\n\u2028\u2029`]|^\s*(?:#|>|[-+*]\s|\d+[.)]\s)|\*\*|__[^_\s].*?__|~~|\*[^*\s][^*]*\*|(?:^|\s)_[^_\s][^_]*_(?=\s|[.,!?]|$)|!?\[[^\]]*\]\s*\([^)]*\)|<\/?[a-z][^>]*>|^\|.*\|$/i;
+  const markdown = /[\r\n\u2028\u2029`#]|^\s*(?:>|[-+*]\s|\d+[.)]\s)|\*\*|__[^_\s].*?__|~~|\*[^*\s][^*]*\*|(?:^|\s)_[^_\s][^_]*_(?=\s|[.,!?]|$)|!?\[[^\]]*\]\s*\([^)]*\)|<\/?[a-z][^>]*>|^\|.*\|$/i;
+  const technicalIdentifier = /(?:\b[a-z]{2,}[A-Z][A-Za-z0-9_$]*\b|\b[^\s]+\.(?:ts|tsx|mts|cts)\b)/;
+  const implementationTask = /\b(?:test suite|test expectations?|unit tests?|integration tests?|source code|inline comment|code comment|edit the code|update the code|update the comment|change the code)\b/i;
 
   for (const [field, value] of fields) {
     const text = value.trim();
@@ -41,8 +43,24 @@ export function validateImpactReportSemantics(report: ImpactReport): string[] {
       errors.push(`${field} must be plain text without headings, field labels, Markdown, or line breaks.`);
     }
 
-    if (field.startsWith('qaChecks[') && !/^(verify|check|confirm|validate|test|ensure)\b/i.test(text)) {
-      errors.push(`${field} must start with Verify, Check, Confirm, Validate, Test, or Ensure and describe a specific action.`);
+    if (technicalIdentifier.test(text)) {
+      errors.push(`${field} must not include source file names or technical entity identifiers.`);
+    }
+
+    if (field === 'summary' || field === 'impact') {
+      if (!/[.!?][)'"\]]*$/.test(text)) {
+        errors.push(`${field} must be a complete sentence ending with a period, question mark, or exclamation mark.`);
+      }
+    }
+
+    if (field.startsWith('qaChecks[')) {
+      if (!/^(verify|check|confirm|validate|test|ensure)\b/i.test(text)) {
+        errors.push(`${field} must start with Verify, Check, Confirm, Validate, Test, or Ensure and describe a specific action.`);
+      }
+
+      if (implementationTask.test(text)) {
+        errors.push(`${field} must verify runtime behavior, not inspect or update source code, comments, or automated tests.`);
+      }
     }
   }
 
@@ -169,13 +187,11 @@ export async function generateImpactReport({ instruction, evidence }: GenerateIm
             properties: {
               summary: {
                 type: 'string',
-                maxLength: 240,
-                description: 'Exactly one short sentence describing the actual behavior change supported by the evidence, in plain English with precise quantities. No headings, field labels, Markdown, or report titles.',
+                description: 'Exactly one concise, complete sentence describing the actual behavior change supported by the evidence, in plain English with precise quantities. Finish the thought and end with sentence punctuation. Do not name functions, files, or entity IDs. No headings, field labels, Markdown, or report titles.',
               },
               impact: {
                 type: 'string',
-                maxLength: 240,
-                description: 'Exactly one short sentence describing the most important supported QA-visible consequence. Do not invent consequences or user-facing surfaces. No headings, field labels, or Markdown.',
+                description: 'Exactly one concise, complete sentence describing the most important supported QA-visible consequence. Finish the thought and end with sentence punctuation. Do not invent consequences, user-facing surfaces, functions, files, or entity IDs. No headings, field labels, or Markdown.',
               },
               qaChecks: {
                 type: 'array',
@@ -183,8 +199,7 @@ export async function generateImpactReport({ instruction, evidence }: GenerateIm
                 maxItems: 5,
                 items: {
                   type: 'string',
-                  maxLength: 200,
-                  description: 'Start with Verify, Check, Confirm, Validate, Test, or Ensure. Describe an actionable check of the specific changed behavior using only supplied evidence/context; no generic recommendations. Plain text only, no headings, field labels, or Markdown.',
+                  description: 'Start with Verify, Check, Confirm, Validate, Test, or Ensure. Check the specific changed runtime behavior using only supplied evidence/context. Do not ask QA to inspect or update code/comments, run/update automated tests, or test unrelated existing behavior. Do not name source files or entity IDs. Plain text only, no headings, labels, or Markdown.',
                 },
               },
               uncertainty: {
@@ -192,7 +207,6 @@ export async function generateImpactReport({ instruction, evidence }: GenerateIm
                 maxItems: 2,
                 items: {
                   type: 'string',
-                  maxLength: 200,
                   description: 'A genuine uncertainty or missing fact in the evidence, in simple non-technical plain text. Do not invent risks or add generic disclaimers; use an empty array when nothing is uncertain. No headings, field labels, or Markdown.',
                 },
               },
@@ -252,7 +266,7 @@ export async function generateImpactReport({ instruction, evidence }: GenerateIm
           { role: 'assistant', content },
           {
             role: 'user',
-            content: `Correct the previous report using only the same evidence above. Return the complete JSON object matching the schema. Fix these validation errors:\n${errors.join('\n')}\nUse exactly one short actual behavior sentence for summary and one supported QA consequence sentence for impact. All fields must be nonempty plain text without headings, field labels, Markdown, or line breaks. Start every QA check with Verify, Check, Confirm, Validate, Test, or Ensure and describe a specific action. Include only genuine uncertainties; otherwise use an empty uncertainty array.`,
+            content: `Correct the previous report using only the same evidence above. Return the complete JSON object matching the schema. Fix these validation errors:\n${errors.join('\n')}\nUse exactly one concise, complete sentence for summary and one for impact. Finish each thought naturally and end it with sentence punctuation; never stop because of an arbitrary character count. Treat removedCode as BEFORE and addedCode as AFTER; do not reverse them. All fields must be nonempty plain text without headings, labels, Markdown, source file names, function names, entity IDs, or line breaks. Start every QA check with Verify, Check, Confirm, Validate, Test, or Ensure and test the specific changed runtime behavior. Do not ask QA to inspect/update code or comments, run/update automated tests, or test unrelated behavior. Include only genuine uncertainties; otherwise use an empty uncertainty array.`,
           },
         );
         continue;

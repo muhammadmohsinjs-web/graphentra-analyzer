@@ -57,7 +57,11 @@ quantities, one to five specific imperative checks, and zero to two genuine
 uncertainties. Test callers are coverage evidence, not user-facing impact.
 
 After Zod, `validateImpactReportSemantics()` in `src/llm-client.ts` rejects empty
-values, headings/labels, Markdown, and checks without an allowed imperative verb.
+values, headings/labels, Markdown, incomplete summary/impact sentences,
+technical source/entity identifiers, checks without an allowed imperative verb, and
+checks that request source maintenance or automated-test work. Summary and impact
+must each finish naturally with sentence punctuation. Report text has no hardcoded
+character ceiling, preventing JSON Schema length limits from clipping a thought.
 One semantic correction is allowed with the same evidence. A second failure throws.
 Malformed JSON and Zod failures fail immediately. SDK transport retry behavior is
 unchanged and is distinct from this one report-correction retry. The lightweight

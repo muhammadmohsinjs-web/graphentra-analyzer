@@ -93,4 +93,7 @@ test('instructions preserve evidence authority, precise quantities, and plain fi
   assert.match(qaInstruction, /Never discover new dependencies/);
   assert.match(qaInstruction, /Never include Markdown/);
   assert.match(qaInstruction, /Exactly one short sentence/);
+  assert.match(qaInstruction, /Finish the thought naturally/);
+  assert.match(qaInstruction, /removedCode as BEFORE with addedCode as AFTER/);
+  assert.match(qaInstruction, /Never ask QA to inspect or update source code\/comments/);
 });

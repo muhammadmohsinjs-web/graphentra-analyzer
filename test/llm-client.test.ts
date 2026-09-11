@@ -117,10 +117,6 @@ const structuralFailures: [string, unknown][] = [
   ['extra field', { ...validReport, title: 'Report' }],
   ['wrong field type', { ...validReport, impact: 3 }],
   ['null report', null],
-  ['long summary', { ...validReport, summary: 'x'.repeat(241) }],
-  ['long impact', { ...validReport, impact: 'x'.repeat(241) }],
-  ['long QA check', { ...validReport, qaChecks: [`Verify ${'x'.repeat(194)}`] }],
-  ['long uncertainty', { ...validReport, uncertainty: ['x'.repeat(201)] }],
   ['empty QA array', { ...validReport, qaChecks: [] }],
   ['too many QA checks', { ...validReport, qaChecks: Array(6).fill(validReport.qaChecks[0]) }],
   ['too many uncertainties', { ...validReport, uncertainty: Array(3).fill('The evidence omits the rollout date.') }],
@@ -174,11 +170,47 @@ test('accepts action verbs case-insensitively but requires a word boundary', () 
   }
 });
 
-test('accepts decimals, abbreviations, code identifiers, and genuine uncertainty', () => {
+test('accepts decimals, abbreviations, precise quantities, and genuine uncertainty', () => {
   assert.deepEqual(validateImpactReportSemantics({
-    summary: 'The checkout now uses discount_rate from checkout.ts at version 1.2.',
+    summary: 'The checkout now uses a discount rate of 1.2.',
     impact: 'Customers pay $3.50 less for eligible U.S. orders.',
-    qaChecks: ['Verify checkout.apply_discount uses discount_rate of 1.5 for eligible orders.'],
+    qaChecks: ['Verify eligible orders use a discount rate of 1.5.'],
     uncertainty: ['The evidence does not show whether existing discounts are recalculated.'],
   }), []);
+});
+
+test('rejects the supplied incomplete impact without imposing a character limit', () => {
+  const impact = 'Cancellation behavior is reversed: orders in SHIPPED status will now throw the cannot-cancel error while orders in every other non-cancelled status can be cancelled, potentially allowing cancellation of orders already shipped under the old,';
+  assert.equal(impact.length, 240);
+  const errors = validateImpactReportSemantics({
+    ...validReport,
+    summary: 'The sales tax rate applied by calculateCheckoutTotals decreased from 8% to 3%.',
+    impact,
+    qaChecks: ['Confirm whether test expectations in test.ts#runTests use the previous rate.'],
+  });
+  assert.ok(errors.some(error => error === 'impact must be a complete sentence ending with a period, question mark, or exclamation mark.'));
+  assert.ok(errors.some(error => error.startsWith('summary must not include source file names or technical entity identifiers.')));
+  assert.ok(errors.some(error => error.startsWith('qaChecks[0] must be plain text')));
+  assert.ok(errors.some(error => error.startsWith('qaChecks[0] must verify runtime behavior')));
+});
+
+test('accepts complete report text regardless of character count', () => {
+  const longButComplete = `The changed behavior has a fully expressed consequence ${'with additional supported detail '.repeat(10).trim()}.`;
+  assert.ok(longButComplete.length > 240);
+  assert.deepEqual(validateImpactReportSemantics({
+    ...validReport,
+    summary: longButComplete,
+    impact: longButComplete,
+  }), []);
+});
+
+test('rejects source-maintenance and automated-test recommendations', () => {
+  for (const qaCheck of [
+    'Check the stale inline comment and update the comment to 3%.',
+    'Confirm the test suite passes with the new rate.',
+    'Verify unit tests use the new cancellation expectation.',
+    'Validate the source code now contains the correct value.',
+  ]) {
+    assert.match(validateImpactReportSemantics({ ...validReport, qaChecks: [qaCheck] }).join(' '), /must verify runtime behavior/);
+  }
 });

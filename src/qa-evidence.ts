@@ -46,20 +46,26 @@ Do not invent screen behavior to make technical evidence sound less technical.
 
 Field requirements:
 - summary: Exactly one short sentence describing the actual code behavior that changed.
+  Finish the thought naturally, end it with sentence punctuation, and do not name source functions or files.
   Good: The low-stock threshold increased from 5 to 10 units.
   Bad: QA Change-Impact Report; What changed; Change.
 - impact: Exactly one short sentence describing the most important QA-visible consequence supported
-  by the evidence. Qualify outcomes when other safeguards or behavior are not established.
+  by the evidence. Finish the thought naturally and end it with sentence punctuation.
+  Qualify outcomes when other safeguards or behavior are not established.
   Good: Products with stock levels from 6 through 10 will now be classified as low stock.
 - qaChecks: One to five actionable checks of this specific changed behavior, based only on supplied
   evidence/context. Each must start with Verify, Check, Confirm, Validate, Test, or Ensure.
   Prefer evidenced boundaries and adjacent values; no generic testing recommendations.
+  Test the changed runtime behavior. Never ask QA to inspect or update source code/comments,
+  run or update automated tests, or test unrelated thresholds and branches merely because they
+  appear in unchanged context. Never mention source files, function names, entity IDs, or line numbers.
 - uncertainty: Zero to two genuine unresolved questions relevant to the change. Use [] when none.
   Do not fill this field merely because some annotations are missing.
 
 Never include Markdown in any field value. Never use #, ##, **, headings, labels, or report titles.
 Do not put Change:, Impact:, QA Checks:, Summary:, or similar labels inside field values.
 Return only the content required by each field.
+Before answering, compare removedCode as BEFORE with addedCode as AFTER. Never swap old and new behavior.
 `.trim();
 
 export function buildLLMPayload(impact: EntityImpact, context: ApplicationContext) {
