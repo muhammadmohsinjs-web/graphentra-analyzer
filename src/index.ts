@@ -8,6 +8,8 @@ import { config } from 'dotenv';
 import { z } from 'zod';
 
 import { formatImpactReport, generateImpactReport, OPENROUTER_MODEL } from './llm-client';
+import { extractEntityChange, getFunctionRanges, parseGitDiff as parseDiff, type ChangedFile, type EntityChange } from './change-evidence';
+import { buildLLMPayload, qaInstruction } from './qa-evidence';
 
 config({
   path: ['.env', '../.env'],
@@ -34,7 +36,7 @@ const TYPESCRIPT_EXTENSIONS = new Set(['.ts', '.tsx', '.mts', '.cts']);
  * ============================================================
  */
 
-interface Entity {
+export interface Entity {
   id: string;
 
   kind: 'function';
@@ -56,22 +58,10 @@ interface Relation {
   type: 'CALLS';
 }
 
-interface ChangedFile {
-  file: string;
-
-  changedLines: number[];
-
-  addedCode: string[];
-
-  removedCode: string[];
-
-  diff: string;
-}
-
 interface ChangedEntity {
   entity: Entity;
 
-  change: ChangedFile;
+  change: EntityChange;
 }
 
 interface ImpactPath {
@@ -82,10 +72,10 @@ interface ImpactPath {
   path: Entity[];
 }
 
-interface EntityImpact {
+export interface EntityImpact {
   changedEntity: Entity;
 
-  change: ChangedFile;
+  change: EntityChange;
 
   directDependents: Entity[];
 
@@ -138,7 +128,7 @@ interface TechnicalGraph {
 
 type Confidence = 'high' | 'medium' | 'low';
 
-interface ApplicationContext {
+export interface ApplicationContext {
   schemaVersion: '1.0';
 
   application: {
@@ -176,22 +166,6 @@ interface ApplicationContext {
   applicationFacts: string[];
 
   unknowns: string[];
-}
-
-interface RelevantApplicationContext {
-  application: ApplicationContext['application'];
-
-  domains: ApplicationContext['domains'];
-
-  terminology: ApplicationContext['terminology'];
-
-  entityAnnotations: ApplicationContext['entityAnnotations'];
-
-  applicationFacts: string[];
-
-  unknowns: string[];
-
-  unmappedEntityIds: string[];
 }
 
 /**
@@ -991,6 +965,8 @@ Rules:
 async function getOrCreateApplicationContext(technicalGraph: TechnicalGraph): Promise<ApplicationContext> {
   const contextPath = path.join(getGraphentraDirectory(), 'application-context.json');
 
+  // Persistent semantic knowledge, unlike the regenerated graph and analysis artifacts.
+  // CI must restore this committed/persisted file before running the analyzer.
   if (fs.existsSync(contextPath)) {
     console.log('\n🧠 Application Context found.');
 
@@ -1007,7 +983,8 @@ async function getOrCreateApplicationContext(technicalGraph: TechnicalGraph): Pr
 
   console.warn('\n⚠️ If this was generated inside GitHub Actions, the file is temporary.');
 
-  console.warn('For this prototype, copy/commit .graphentra/application-context.json so future runs can reuse it.\n');
+  console.warn('Persist .graphentra/application-context.json in the analyzed repository (commit it or restore it before CI runs).');
+  console.warn('technical-graph.json and analysis.json are disposable run artifacts, not persistent application context.\n');
 
   return context;
 }
@@ -1069,7 +1046,7 @@ function getGitDiff(): string {
   const target = projectInsideRepository && projectInsideRepository !== '.' ? projectInsideRepository : '.';
 
   return executeGit(
-    ['diff', '--unified=3', base, head, '--', target],
+    ['-c', 'core.quotePath=false', 'diff', '--no-ext-diff', '--no-color', '--unified=3', base, head, '--', target],
 
     gitRepositoryRoot,
   );
@@ -1082,167 +1059,7 @@ function getGitDiff(): string {
  */
 
 function parseGitDiff(diff: string): ChangedFile[] {
-  interface ChangeBuilder {
-    changedLines: Set<number>;
-
-    addedCode: string[];
-
-    removedCode: string[];
-
-    diffLines: string[];
-  }
-
-  const changedFiles = new Map<string, ChangeBuilder>();
-
-  let currentFile: string | undefined;
-
-  let current: ChangeBuilder | undefined;
-
-  let newLineNumber = 0;
-
-  let insideHunk = false;
-
-  let oldFile: string | undefined;
-
-  let headerLines: string[] = [];
-
-  for (const line of diff.split('\n')) {
-    if (line.startsWith('diff --git ')) {
-      currentFile = undefined;
-
-      current = undefined;
-
-      insideHunk = false;
-
-      oldFile = undefined;
-
-      headerLines = [line];
-
-      continue;
-    }
-
-    if (!current) {
-      headerLines.push(line);
-    }
-
-    if (line.startsWith('--- a/')) {
-      oldFile = gitPathToProjectPath(line.slice('--- a/'.length));
-
-      continue;
-    }
-
-    if (line.startsWith('+++ b/')) {
-      currentFile = gitPathToProjectPath(line.slice('+++ b/'.length));
-
-      current = changedFiles.get(currentFile);
-
-      if (!current) {
-        current = {
-          changedLines: new Set(),
-
-          addedCode: [],
-
-          removedCode: [],
-
-          diffLines: [],
-        };
-
-        changedFiles.set(currentFile, current);
-      }
-
-      current.diffLines.push(...headerLines);
-
-      headerLines = [];
-
-      continue;
-    }
-
-    /**
-     * Deleted file.
-     */
-
-    if (line === '+++ /dev/null' && oldFile) {
-      currentFile = oldFile;
-
-      current = changedFiles.get(currentFile);
-
-      if (!current) {
-        current = {
-          changedLines: new Set(),
-
-          addedCode: [],
-
-          removedCode: [],
-
-          diffLines: [],
-        };
-
-        changedFiles.set(currentFile, current);
-      }
-
-      current.diffLines.push(...headerLines);
-
-      headerLines = [];
-
-      continue;
-    }
-
-    if (!currentFile || !current) {
-      continue;
-    }
-
-    current.diffLines.push(line);
-
-    const hunk = line.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
-
-    if (hunk) {
-      insideHunk = true;
-
-      newLineNumber = Number(hunk[1]);
-
-      continue;
-    }
-
-    if (!insideHunk) {
-      continue;
-    }
-
-    if (line.startsWith('+') && !line.startsWith('+++')) {
-      current.changedLines.add(Math.max(newLineNumber, 1));
-
-      current.addedCode.push(line.slice(1));
-
-      newLineNumber += 1;
-
-      continue;
-    }
-
-    if (line.startsWith('-') && !line.startsWith('---')) {
-      current.changedLines.add(Math.max(newLineNumber, 1));
-
-      current.removedCode.push(line.slice(1));
-
-      continue;
-    }
-
-    if (line.startsWith(' ')) {
-      newLineNumber += 1;
-    }
-  }
-
-  return [...changedFiles.entries()]
-    .map(([file, information]) => ({
-      file,
-
-      changedLines: [...information.changedLines].sort((a, b) => a - b),
-
-      addedCode: information.addedCode,
-
-      removedCode: information.removedCode,
-
-      diff: information.diffLines.join('\n').trim(),
-    }))
-    .filter(change => isTypeScriptFile(change.file));
+  return parseDiff(diff, gitPathToProjectPath).filter(change => isTypeScriptFile(change.file));
 }
 
 /**
@@ -1256,15 +1073,32 @@ function findChangedEntities(changedFiles: ChangedFile[]): ChangedEntity[] {
 
   for (const change of changedFiles) {
     const matchingEntities = entities.filter(entity => entity.file === change.file);
+    if (matchingEntities.length === 0) continue;
+
+    const previousRanges = change.oldFile
+      ? getFunctionRanges(change.oldFile, executeGit([
+          'show', `${getDiffRange().base}:${path.posix.join(projectInsideRepository, change.oldFile)}`,
+        ], gitRepositoryRoot))
+      : [];
 
     for (const entity of matchingEntities) {
-      const overlaps = change.changedLines.some(line => line >= entity.startLine && line <= entity.endLine);
+      const candidates = previousRanges.filter(previous => previous.name === entity.name);
+      // Ambiguous old identities must not leak another function's removed code.
+      const previous = candidates.length === 1 ? candidates[0] : undefined;
+      const overlaps = (a: { startLine: number; endLine: number }, b: { startLine: number; endLine: number }) =>
+        a.startLine <= b.endLine && b.startLine <= a.endLine;
+      if (matchingEntities.some(other => other !== entity && overlaps(entity, other)) ||
+          (previous && previousRanges.some(other => other !== previous && overlaps(previous, other)))) {
+        console.warn(`Skipping ambiguous overlapping function ranges: ${entity.id}`);
+        continue;
+      }
+      const entityChange = extractEntityChange(change, entity, previous);
 
-      if (overlaps) {
+      if (entityChange) {
         result.push({
           entity,
 
-          change,
+          change: entityChange,
         });
       }
     }
@@ -1404,160 +1238,6 @@ function buildImpact(changedEntity: ChangedEntity): EntityImpact {
     },
 
     terminalDependents,
-  };
-}
-
-/**
- * ============================================================
- * RELEVANT APPLICATION CONTEXT
- * ============================================================
- */
-
-function selectRelevantApplicationContext(
-  context: ApplicationContext,
-
-  impact: EntityImpact,
-): RelevantApplicationContext {
-  const relevantIds = new Set<string>([impact.changedEntity.id, ...impact.blastRadius.entities.map(entity => entity.id)]);
-
-  const annotations = context.entityAnnotations.filter(annotation => relevantIds.has(annotation.entityId));
-
-  const domainIds = new Set(annotations.flatMap(annotation => annotation.domainIds));
-
-  const domains = context.domains.filter(domain => domainIds.has(domain.id));
-
-  const mappedIds = new Set(annotations.map(annotation => annotation.entityId));
-
-  const unmappedEntityIds = [...relevantIds].filter(id => !mappedIds.has(id));
-
-  return {
-    application: context.application,
-
-    domains,
-
-    /**
-     * Prototype:
-     * keep terminology small enough to send all of it.
-     */
-    terminology: context.terminology,
-
-    entityAnnotations: annotations,
-
-    applicationFacts: context.applicationFacts,
-
-    unknowns: context.unknowns,
-
-    unmappedEntityIds,
-  };
-}
-
-/**
- * ============================================================
- * QA LLM INSTRUCTION
- * ============================================================
- */
-
-const qaInstruction = `
-You are Graphentra's QA change-impact assistant.
-
-You receive:
-
-1. DETERMINISTIC TECHNICAL EVIDENCE
-2. RELEVANT APPLICATION CONTEXT
-
-Deterministic technical evidence is authoritative for:
-- what code changed,
-- which function changed,
-- CALLS relationships,
-- direct dependents,
-- blast-radius entities,
-- dependency paths.
-
-Application Context explains semantic/business meaning.
-
-It must never override technical evidence.
-
-CRITICAL LANGUAGE REQUIREMENT:
-You must return the QA report in VERY SIMPLE, PLAIN, NON-TECHNICAL WORDING.
-Write for non-technical manual testers, product managers, and business stakeholders.
-Strictly avoid programming jargon, developer terminology, and code constructs.
-Do NOT use words like "function", "method", "AST", "parameters", "arguments", "returns", "callers", "call graph", "blast radius", "dependencies", "code", or technical identifiers.
-Translate all technical code changes into everyday business actions, user experiences, and screen behavior.
-
-Rules:
-
-1. Explain the changed behavior in ONE very simple, non-technical sentence (e.g., "The system now adds an extra $2 fee to order pricing").
-2. Explain the most important QA-visible impact in ONE very simple, non-technical sentence describing what users or orders will experience.
-3. Recommend at most five focused, easy-to-follow QA verification checks that a manual tester can test in plain language without reading code.
-4. Start each QA check with a simple everyday action verb (e.g., "Check", "Verify", "Confirm", "Test").
-5. Do not invent features, pages, or workflows that are not supported by the evidence or application context.
-6. Do not claim something is broken.
-7. Use the supplied Git diff to understand the exact behavior change, but describe it entirely in plain non-technical language.
-8. Use application context only for semantic interpretation.
-9. If an impacted entity appears in unmappedEntityIds, explain any uncertainty simply without technical terms.
-10. Include at most two important uncertainties, written in plain non-technical language.
-11. Keep the report extremely concise, clear, and easy to understand.
-`.trim();
-
-/**
- * ============================================================
- * QA PAYLOAD
- * ============================================================
- */
-
-function buildLLMPayload(
-  impact: EntityImpact,
-
-  context: ApplicationContext,
-) {
-  return {
-    analysisScope: {
-      language: 'typescript',
-
-      entityGranularity: 'function',
-
-      relationTypes: ['CALLS'],
-
-      maxBlastDepth: MAX_BLAST_DEPTH,
-    },
-
-    changedEntity: impact.changedEntity,
-
-    change: {
-      file: impact.change.file,
-
-      changedLines: impact.change.changedLines,
-
-      removedCode: impact.change.removedCode,
-
-      addedCode: impact.change.addedCode,
-
-      diff: impact.change.diff,
-    },
-
-    directDependents: impact.directDependents,
-
-    blastRadius: impact.blastRadius,
-
-    terminalDependents: impact.terminalDependents,
-
-    applicationContext: selectRelevantApplicationContext(context, impact),
-
-    limitations: [
-      'Only TypeScript is analyzed.',
-
-      'Only named function declarations are supported.',
-
-      'Only CALLS relationships are supported.',
-
-      'Class methods are outside the current prototype.',
-
-      'Arrow functions are outside the current prototype.',
-
-      'Dynamic runtime dependencies are not resolved.',
-
-      'Blast-radius traversal is limited to depth 6.',
-    ],
   };
 }
 
@@ -1784,7 +1464,9 @@ async function run(): Promise<void> {
 
       'Dynamic calls are not analyzed.',
 
-      'Deleted functions require before/after AST analysis.',
+      'Deleted functions have no current graph entity; renamed or ambiguous functions may lack removed-code evidence.',
+
+      'Overlapping function line ranges are skipped rather than sharing ambiguous evidence.',
 
       'Application surfaces are not yet discovered.',
 

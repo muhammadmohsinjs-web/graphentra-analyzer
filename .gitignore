@@ -1,5 +1,8 @@
 # graphentra output
 .graphentra-output/
+# Disposable artifacts only; application-context.json is persistent and may be committed.
+.graphentra/technical-graph.json
+.graphentra/analysis.json
 
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
