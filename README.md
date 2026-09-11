@@ -74,10 +74,12 @@ checks that request source maintenance or automated-test work. Summary and impac
 must each finish naturally with sentence punctuation. Report text has no hardcoded
 character ceiling, preventing JSON Schema length limits from clipping a thought.
 One semantic correction is allowed with the same evidence. A second failure throws.
-Malformed JSON and Zod failures fail immediately. SDK transport retry behavior is
-unchanged and is distinct from this one report-correction retry. The lightweight
-validator does not prove factual accuracy or count natural-language sentences;
-those requirements remain explicit in the system prompt and JSON schema.
+Malformed JSON and Zod failures fail immediately. Raw response-body connection
+resets are retried twice with short backoff for both context and report requests;
+the SDK's HTTP/connection retries remain separate from this transport recovery and
+the one report-correction retry. The lightweight validator does not prove factual
+accuracy or count natural-language sentences; those requirements remain explicit
+in the system prompt and JSON schema.
 
 ## Same-file example
 

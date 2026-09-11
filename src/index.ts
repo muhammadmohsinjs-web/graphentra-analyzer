@@ -7,7 +7,7 @@ import OpenAI from 'openai';
 import { config } from 'dotenv';
 import { z } from 'zod';
 
-import { formatImpactReport, generateImpactReport, OPENROUTER_MODEL } from './llm-client';
+import { formatImpactReport, generateImpactReport, OPENROUTER_MODEL, withTransportRetries } from './llm-client';
 import { extractEntityChange, getFunctionRanges, parseGitDiff as parseDiff, type ChangedFile, type EntityChange } from './change-evidence';
 import { buildLLMPayload, qaInstruction } from './qa-evidence';
 import { parseCliOptions, type CliOptions } from './cli';
@@ -749,7 +749,7 @@ async function generateApplicationContext(technicalGraph: TechnicalGraph): Promi
 
   const client = createOpenRouterClient();
 
-  const completion = await client.chat.completions.create({
+  const completion = await withTransportRetries(() => client.chat.completions.create({
     model: OPENROUTER_MODEL,
 
     messages: [
@@ -952,7 +952,7 @@ Rules:
         },
       },
     },
-  });
+  }));
 
   const content = completion.choices[0]?.message.content;
 

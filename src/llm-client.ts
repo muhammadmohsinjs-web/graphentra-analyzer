@@ -85,6 +85,56 @@ interface GenerateImpactReportInput {
 type OpenAILogLevel = NonNullable<ClientOptions['logLevel']>;
 
 const openAILogLevels = new Set<OpenAILogLevel>(['off', 'error', 'warn', 'info', 'debug']);
+const transportRetryDelaysMs = [500, 1500];
+const transientTransportCodes = new Set(['ECONNRESET', 'ETIMEDOUT', 'EPIPE', 'ENETDOWN', 'ENETUNREACH', 'EHOSTUNREACH']);
+
+function isTransientTransportError(error: unknown): boolean {
+  // APIError failures have already gone through the SDK's status/connection retry policy.
+  if (error instanceof APIError) {
+    return false;
+  }
+
+  const seen = new Set<unknown>();
+  let current = error;
+
+  while (current && !seen.has(current)) {
+    seen.add(current);
+
+    if (current instanceof Error && /\b(?:terminated|fetch failed|socket hang up)\b/i.test(current.message)) {
+      return true;
+    }
+
+    if (typeof current !== 'object') {
+      return false;
+    }
+
+    const details = current as { cause?: unknown; code?: unknown };
+    if (typeof details.code === 'string' && transientTransportCodes.has(details.code)) {
+      return true;
+    }
+
+    current = details.cause;
+  }
+
+  return false;
+}
+
+export async function withTransportRetries<T>(operation: () => Promise<T>): Promise<T> {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await operation();
+    } catch (error) {
+      const delayMs = transportRetryDelaysMs[attempt];
+
+      if (delayMs === undefined || !isTransientTransportError(error)) {
+        throw error;
+      }
+
+      console.warn(`[llm] Connection dropped while reading the response; retrying (${attempt + 2}/${transportRetryDelaysMs.length + 1}) in ${delayMs}ms.`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+}
 
 function getOpenAILogLevel(): OpenAILogLevel {
   const configuredLevel = process.env.OPENAI_LOG?.toLowerCase();
@@ -219,16 +269,18 @@ export async function generateImpactReport({ instruction, evidence }: GenerateIm
     };
 
     for (; attempt <= 2; attempt += 1) {
-      const { data: completion, request_id: requestId } = await client.chat.completions
-        .create(
-          request,
-          {
-            headers: {
-              'X-Client-Request-Id': traceId,
+      const { data: completion, request_id: requestId } = await withTransportRetries(() =>
+        client.chat.completions
+          .create(
+            request,
+            {
+              headers: {
+                'X-Client-Request-Id': traceId,
+              },
             },
-          },
-        )
-        .withResponse();
+          )
+          .withResponse(),
+      );
 
       const content = completion.choices[0]?.message.content;
 

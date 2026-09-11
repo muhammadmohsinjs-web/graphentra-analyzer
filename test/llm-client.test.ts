@@ -15,7 +15,7 @@ const input = {
   evidence: { change: 'Reject expired discount codes at checkout.' },
 };
 
-function mockCompletions(t: TestContext, contents: (string | null)[]) {
+function mockCompletions(t: TestContext, contents: (string | null | Error)[]) {
   const previousKey = process.env.OPENROUTER_API_KEY;
   const previousLog = process.env.OPENAI_LOG;
   process.env.OPENROUTER_API_KEY = 'offline-test-key';
@@ -37,12 +37,22 @@ function mockCompletions(t: TestContext, contents: (string | null)[]) {
     requests.push({ body: JSON.parse(String(options?.body)), headers: new Headers(options?.headers) });
     const index = requests.length - 1;
     assert.ok(index < contents.length, 'Unexpected extra completion request');
+    const content = contents[index];
+
+    if (content instanceof Error) {
+      return new Response(new ReadableStream({
+        start(controller) {
+          controller.error(content);
+        },
+      }), { status: 200, headers: { 'content-type': 'application/json', 'x-request-id': `request-${index + 1}` } });
+    }
+
     return new Response(JSON.stringify({
       id: `completion-${index + 1}`,
       object: 'chat.completion',
       created: 0,
       model: OPENROUTER_MODEL,
-      choices: [{ index: 0, message: { role: 'assistant', content: contents[index] }, finish_reason: 'stop' }],
+      choices: [{ index: 0, message: { role: 'assistant', content }, finish_reason: 'stop' }],
       usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 },
     }), { status: 200, headers: { 'content-type': 'application/json', 'x-request-id': `request-${index + 1}` } });
   });
@@ -73,6 +83,21 @@ test('returns the first valid report, trims fields, and preserves formatting and
   assert.equal(logs[0].traceId, logs[1].traceId);
   assert.equal(requests[0].headers.get('X-Client-Request-Id'), logs[0].traceId);
   assert.equal(formatImpactReport(report), `Change: ${report.summary}\nImpact: ${report.impact}\n\nQA checks:\n- ${report.qaChecks[0]}`);
+});
+
+test('retries when the response body connection is reset', async t => {
+  const cause = Object.assign(new Error('read ECONNRESET'), { code: 'ECONNRESET' });
+  const reset = new TypeError('terminated', { cause });
+  const warnings: string[] = [];
+  t.mock.method(console, 'warn', (message: string) => warnings.push(message));
+  const { requests, logs } = mockCompletions(t, [reset, JSON.stringify(validReport)]);
+
+  assert.deepEqual(await generateImpactReport(input), validReport);
+  assert.equal(requests.length, 2);
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /retrying \(2\/3\) in 500ms/);
+  assert.deepEqual(logs.map(log => log.event), ['request.started', 'request.completed']);
+  assert.equal(logs[1].requestId, 'request-2');
 });
 
 test('corrects one semantic failure using the same evidence and the assistant response', async t => {
