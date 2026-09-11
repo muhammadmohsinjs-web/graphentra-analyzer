@@ -8,6 +8,8 @@ builds or overrides the CALLS graph. Supported entity/relation scope is unchange
 
 ```sh
 npm run analyze -- /absolute/path/to/demo-repository
+npm run build
+node dist/index.js --target /absolute/path/to/demo-repository --base HEAD~1 --head HEAD --report /tmp/graphentra-report.md
 npm test
 npm run typecheck
 ```
@@ -16,6 +18,15 @@ Set `OPENROUTER_API_KEY` and optionally `OPENROUTER_MODEL`. The default comparis
 is `HEAD~1..HEAD`; `BASE_SHA` and `HEAD_SHA` select a different comparison. Analyze
 a clean checkout of the comparison's head: graph ranges still come from the
 working tree. Tests are offline and mock SDK HTTP responses, not live LLM output.
+The long-form CLI options match the GitHub Actions integration. A nested analyzer
+checkout is excluded from the target application's TypeScript graph.
+
+GitHub Actions must expose the OpenRouter secret to the analyzer step:
+
+```yaml
+env:
+  OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+```
 
 ## Evidence isolation
 

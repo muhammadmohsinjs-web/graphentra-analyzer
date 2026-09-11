@@ -2,9 +2,10 @@
   "name": "graphentra-analyzer",
   "version": "1.0.0",
   "description": "",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
   "scripts": {
     "start": "tsx src/index.ts",
+    "build": "tsc -p tsconfig.json",
     "test": "tsx --test test/*.test.ts",
     "typecheck": "tsc --noEmit --target ES2022 --module commonjs --moduleResolution node --esModuleInterop --strict --skipLibCheck src/*.ts test/*.ts",
     "analyze": "tsx src/index.ts"

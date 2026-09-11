@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { formatImpactReport, generateImpactReport, OPENROUTER_MODEL } from './llm-client';
 import { extractEntityChange, getFunctionRanges, parseGitDiff as parseDiff, type ChangedFile, type EntityChange } from './change-evidence';
 import { buildLLMPayload, qaInstruction } from './qa-evidence';
+import { parseCliOptions, type CliOptions } from './cli';
 
 config({
   path: ['.env', '../.env'],
@@ -274,17 +275,19 @@ const applicationContextSchema = z
  * ============================================================
  */
 
-const targetRepository = process.argv.slice(2).find(argument => !argument.startsWith('--'));
+let cliOptions: CliOptions;
 
-if (!targetRepository) {
-  console.error('\n❌ Repository path is required.');
-
-  console.error('Usage: npm run analyze -- <repository-path>\n');
-
+try {
+  cliOptions = parseCliOptions(process.argv.slice(2));
+} catch (error) {
+  console.error(`\n❌ ${error instanceof Error ? error.message : String(error)}`);
+  console.error('Usage: graphentra --target <repository-path> [--base <ref> --head <ref>] [--report <file>]\n');
   process.exit(1);
 }
 
-const projectRoot = path.resolve(targetRepository);
+const projectRoot = path.resolve(cliOptions.target);
+const reportPath = cliOptions.report ? path.resolve(cliOptions.report) : undefined;
+const analyzerRoot = path.resolve(__dirname, '..');
 
 if (!fs.existsSync(projectRoot)) {
   console.error(`\n❌ Repository does not exist: ${projectRoot}\n`);
@@ -355,6 +358,10 @@ function collectTypeScriptFiles(directory: string): string[] {
     const absolutePath = path.join(directory, entry.name);
 
     if (entry.isDirectory()) {
+      if (projectRoot !== analyzerRoot && path.resolve(absolutePath) === analyzerRoot) {
+        continue;
+      }
+
       if (IGNORED_DIRECTORIES.has(entry.name)) {
         continue;
       }
@@ -390,6 +397,8 @@ const files = collectTypeScriptFiles(projectRoot).sort();
 
 if (files.length === 0) {
   console.log('No TypeScript files found.');
+
+  writeMarkdownReport('No TypeScript files were found in the target repository.');
 
   process.exit(0);
 }
@@ -1022,9 +1031,9 @@ function getDiffRange(): {
 
   head: string;
 } {
-  const base = process.env.BASE_SHA?.trim();
+  const base = cliOptions.base ?? process.env.BASE_SHA?.trim();
 
-  const head = process.env.HEAD_SHA?.trim();
+  const head = cliOptions.head ?? process.env.HEAD_SHA?.trim();
 
   if (base && head && !/^0+$/.test(base)) {
     return {
@@ -1301,6 +1310,22 @@ function printImpact(impact: EntityImpact): void {
   }
 }
 
+function writeMarkdownReport(content: string): void {
+  if (!reportPath) {
+    return;
+  }
+
+  fs.mkdirSync(path.dirname(reportPath), { recursive: true });
+  fs.writeFileSync(reportPath, `${content.trim()}\n`, 'utf8');
+  console.log(`\n📋 Markdown report: ${reportPath}`);
+}
+
+function formatMarkdownReports(reports: QAReportResult[]): string {
+  return reports
+    .map(({ changedEntityId, report }) => `## \`${changedEntityId}\`\n\n${formatImpactReport(report)}`)
+    .join('\n\n---\n\n');
+}
+
 /**
  * ============================================================
  * MAIN
@@ -1336,17 +1361,7 @@ async function run(): Promise<void> {
 
   /**
    * ==========================================================
-   * 2. LOAD OR GENERATE APPLICATION CONTEXT
-   * ==========================================================
-   */
-
-  const applicationContext = await getOrCreateApplicationContext(technicalGraph);
-
-  validateApplicationContext(applicationContext);
-
-  /**
-   * ==========================================================
-   * 3. GET GIT CHANGE
+   * 2. GET GIT CHANGE
    * ==========================================================
    */
 
@@ -1354,6 +1369,9 @@ async function run(): Promise<void> {
 
   if (!gitDiff.trim()) {
     console.log('\nNo Git changes found.');
+
+    const { base, head } = getDiffRange();
+    writeMarkdownReport(`No TypeScript changes were found between \`${base}\` and \`${head}\`.`);
 
     return;
   }
@@ -1368,7 +1386,7 @@ async function run(): Promise<void> {
 
   /**
    * ==========================================================
-   * 4. MAP CHANGED LINES TO FUNCTIONS
+   * 3. MAP CHANGED LINES TO FUNCTIONS
    * ==========================================================
    */
 
@@ -1383,8 +1401,20 @@ async function run(): Promise<void> {
   if (changedEntities.length === 0) {
     console.log('\nNo supported standalone function matched the changed lines.');
 
+    writeMarkdownReport('No supported standalone TypeScript function declarations matched the changed lines.');
+
     return;
   }
+
+  /**
+   * ==========================================================
+   * 4. LOAD OR GENERATE APPLICATION CONTEXT
+   * ==========================================================
+   */
+
+  const applicationContext = await getOrCreateApplicationContext(technicalGraph);
+
+  validateApplicationContext(applicationContext);
 
   /**
    * ==========================================================
@@ -1475,6 +1505,8 @@ async function run(): Promise<void> {
   };
 
   const analysisPath = writeGraphentraJSON('analysis.json', result);
+
+  writeMarkdownReport(formatMarkdownReports(qaReports));
 
   console.log('\n========================================');
 
