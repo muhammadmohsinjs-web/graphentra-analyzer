@@ -1322,7 +1322,7 @@ function writeMarkdownReport(content: string): void {
 
 function formatMarkdownReports(reports: QAReportResult[]): string {
   return reports
-    .map(({ changedEntityId, report }) => `## \`${changedEntityId}\`\n\n${formatImpactReport(report)}`)
+    .map(({ report }) => `## ${report.summary}\n\n${formatImpactReport(report)}`)
     .join('\n\n---\n\n');
 }
 
