@@ -28,7 +28,7 @@ env:
   OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 ```
 
-## Evidence isolation
+## Unified evidence
 
 Previously, `findChangedEntities()` attached the entire `ChangedFile` to every
 matching function. It now reads function ranges from the base revision for removal
@@ -50,29 +50,34 @@ Renamed/ambiguous old identities may lack removed-code evidence. Overlapping
 function line ranges, including functions sharing a line, are skipped with a warning
 instead of sending ambiguous evidence. This does not add support for new syntax.
 
-`src/qa-evidence.ts` holds the existing QA payload/context selection and prompt as
+`src/qa-evidence.ts` holds the QA payload/context selection and prompt as
 pure functions so they can be tested without starting the CLI:
 
-- `buildLLMPayload()` sends only the changed entity, its isolated change, retrieved
-  callers/paths, scoped context, and limitations. No whole technical graph.
+- `buildLLMPayload()` sends all changed entities in one request while preserving
+  isolated change evidence for each function. The payload includes retrieved
+  callers/paths, shared scoped context, and limitations, but no whole technical graph.
 - `getSourceRole()` tags obvious test paths. All graph relationships remain intact;
   payload entities/paths carry roles and affected callers are also split into
   `productionDependents` and `testDependents`.
-- `selectRelevantApplicationContext()` retrieves affected entity annotations,
+- `selectRelevantApplicationContext()` retrieves annotations for all affected entities,
   their domain names, and matching terminology. Unscoped summaries, facts, domain
-  descriptions, and unknowns remain persisted but are not sent to each QA request.
+  descriptions, and unknowns remain persisted but are not sent to the QA request.
   Existing free-text context cannot be perfectly fact-checked; code takes precedence.
 
-The QA prompt requires actual one-sentence behavior/impact descriptions, precise
-quantities, one to five specific imperative checks, and zero to two genuine
-uncertainties. Test callers are coverage evidence, not user-facing impact.
+The analyzer makes one QA report request for the complete change set. The prompt
+requires one overall summary, one to five combined key changes, one to five focused
+checks, and at most one material uncertainty. Related service, endpoint, and test
+changes must be merged instead of producing one section per function. Test callers
+are coverage evidence, not user-facing impact.
+
+The disposable `analysis.json` format is schema version `1.1` and stores the result
+as one `qaReport` object rather than a `qaReports` array.
 
 After Zod, `validateImpactReportSemantics()` in `src/llm-client.ts` rejects empty
-values, headings/labels, Markdown, incomplete summary/impact sentences,
+values, headings/labels, Markdown, incomplete summary/key-change sentences,
 technical source/entity identifiers, checks without an allowed imperative verb, and
-checks that request source maintenance or automated-test work. Summary and impact
-must each finish naturally with sentence punctuation. Report text has no hardcoded
-character ceiling, preventing JSON Schema length limits from clipping a thought.
+checks that request source maintenance or automated-test work. Complete sentences
+must finish naturally with punctuation. Report text has no hardcoded character ceiling.
 One semantic correction is allowed with the same evidence. A second failure throws.
 Malformed JSON and Zod failures fail immediately. Raw response-body connection
 resets are retried twice with short backoff for both context and report requests;
@@ -83,8 +88,9 @@ in the system prompt and JSON schema.
 
 ## Same-file example
 
-Given separate edits at lines 16 and 150 in `src/ecommerceService.ts`, these are
-the two independent `payload.change` values (zero-context patches shown):
+Given separate edits at lines 16 and 150 in `src/ecommerceService.ts`, these remain
+two independent `payload.changes[].change` values inside the single unified request
+(zero-context patches shown):
 
 ```json
 {
@@ -106,11 +112,10 @@ the two independent `payload.change` values (zero-context patches shown):
 }
 ```
 
-`test/qa-evidence.test.ts` proves that two functions in a single shared hunk also
-produce isolated *whole QA payloads*: the catalog payload contains no checkout/cart
-content, and the checkout payload contains no catalog/stock content. Actual callers
-are still retained even if another changed function is legitimately a dependent;
-that function's separate change evidence is never included.
+`test/qa-evidence.test.ts` proves that two functions in a single shared hunk retain
+isolated change entries in the unified payload: the catalog entry contains no
+checkout/cart content, and the checkout entry contains no catalog/stock content.
+Actual callers are retained even when another changed function is a dependent.
 
 `test/change-evidence.test.ts` additionally covers separate hunks, shared hunk
 context, shifted line numbers with pure deletions, deleted neighboring functions,
@@ -139,44 +144,26 @@ rules. Generated context emits an explicit persistence warning.
 
 ## Console contract
 
-Existing banners, file diagnostics, impact paths, report formatting, and JSON traces
-remain. File diagnostics intentionally show all file edits; they are **not** the QA
-payload. Each function gets a separate impact block and report block.
-
-For a report containing the supplied catalog example, the exact `formatImpactReport()`
-output is:
+File diagnostics intentionally show all file edits; they are **not** separate QA
+reports. The analyzer builds deterministic evidence for every changed function, sends
+one LLM request, and prints one report. A representative `formatImpactReport()` is:
 
 ```text
-Change: The low-stock threshold increased from 5 to 10 units.
-Impact: Products with stock levels from 6 through 10 will now be classified as low stock.
+Summary: Catalog and checkout validation now enforce the intended stock and cart boundaries.
+
+Key changes:
+- Zero-stock products are now out of stock, while products with four units remain low stock.
+- Empty carts are now rejected instead of carts containing exactly 50 entries.
 
 QA checks:
-- Verify a product with stock 5 remains classified as low stock.
-- Verify a product with stock 6 is classified as low stock.
-- Verify a product with stock 10 is classified as low stock.
-- Verify a product with stock 11 remains classified as in stock.
-```
-
-For the checkout example:
-
-```text
-Change: The checkout guard now triggers when the cart entry count equals 50 instead of zero.
-Impact: Empty carts may bypass this guard while carts with exactly 50 entries may enter the rejection branch.
-
-QA checks:
-- Verify checkout behavior with an empty cart.
-- Verify checkout behavior with exactly 50 cart entries.
-- Verify checkout behavior with 49 cart entries.
-- Verify checkout behavior with 51 cart entries.
-
-Uncertainty:
-- The supplied evidence does not establish whether another safeguard prevents empty-cart checkout.
+- Verify stock values of zero and four produce the expected classifications.
+- Verify empty and 50-entry carts follow the corrected checkout behavior.
 ```
 
 The console sequence below uses JSON-escaped Unicode for the existing decorative
 markers. Decode the escapes to obtain the literal console lines. Angle-bracket
-values are run-dependent; the file block repeats per file and impact/report blocks
-repeat per changed function. Live LLM wording is not guaranteed to equal the examples.
+values are run-dependent and the file block repeats per file. The LLM request and
+report blocks appear exactly once. Live LLM wording is not guaranteed to equal the example.
 
 ```text
 
@@ -208,25 +195,15 @@ Added:
 \ud83c\udfaf Changed functions: <count>
   \u2192 <changed entity ID, repeated>
 
-========================================
-\ud83d\udca5 IMPACT \u2014 <function>
-========================================
-Entity: <file>#<function>
-Lines: <start>-<end>
+\ud83d\udca5 Deterministic impact evidence built for <count> changed functions.
 
-Direct dependents:
-  \u2192 <caller ID, repeated; or "  none" if empty>
-
-Blast radius: <count>
-  <function> \u2192 <caller, with further path elements as applicable>
-
-\ud83e\udd16 Sending deterministic evidence + relevant application context to LLM...
+\ud83e\udd16 Sending unified deterministic evidence + relevant application context to LLM...
 <request.started JSON>
 <optional request.semantic_retry JSON>
 <request.completed JSON>
 
 ========================================
-\ud83e\udd16 QA IMPACT REPORT \u2014 <function>
+\ud83e\udd16 UNIFIED QA IMPACT REPORT
 ========================================
 
 <formatImpactReport output shown above>

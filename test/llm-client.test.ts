@@ -4,8 +4,8 @@ import type OpenAI from 'openai';
 import { formatImpactReport, generateImpactReport, OPENROUTER_MODEL, validateImpactReportSemantics, type ImpactReport } from '../src/llm-client';
 
 const validReport: ImpactReport = {
-  summary: 'The checkout now rejects expired discount codes.',
-  impact: 'Customers can no longer use expired discounts to reduce their total.',
+  summary: 'Checkout validation is stricter for discounts.',
+  keyChanges: ['Expired discount codes are now rejected, so they can no longer reduce the order total.'],
   qaChecks: ['Verify an expired discount is rejected and the total stays unchanged.'],
   uncertainty: [],
 };
@@ -63,7 +63,7 @@ test('returns the first valid report, trims fields, and preserves formatting and
   const { requests, logs } = mockCompletions(t, [JSON.stringify({
     ...validReport,
     summary: `  ${validReport.summary}  `,
-    impact: `  ${validReport.impact}  `,
+    keyChanges: [`  ${validReport.keyChanges[0]}  `],
     qaChecks: [`  ${validReport.qaChecks[0]}  `],
   })]);
 
@@ -82,7 +82,7 @@ test('returns the first valid report, trims fields, and preserves formatting and
   assert.deepEqual(logs[1].usage, { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 });
   assert.equal(logs[0].traceId, logs[1].traceId);
   assert.equal(requests[0].headers.get('X-Client-Request-Id'), logs[0].traceId);
-  assert.equal(formatImpactReport(report), `Change: ${report.summary}\nImpact: ${report.impact}\n\nQA checks:\n- ${report.qaChecks[0]}`);
+  assert.equal(formatImpactReport(report), `Summary: ${report.summary}\n\nKey changes:\n- ${report.keyChanges[0]}\n\nQA checks:\n- ${report.qaChecks[0]}`);
 });
 
 test('retries when the response body connection is reset', async t => {
@@ -127,10 +127,10 @@ test('corrects one semantic failure using the same evidence and the assistant re
 });
 
 test('throws after two semantic failures without a third request', async t => {
-  const badContent = JSON.stringify({ ...validReport, impact: '  ' });
+  const badContent = JSON.stringify({ ...validReport, keyChanges: ['  '] });
   const { requests, logs, fetchMock } = mockCompletions(t, [badContent, badContent]);
 
-  await assert.rejects(generateImpactReport(input), /semantically invalid.*after 2 attempts: impact must not be empty/);
+  await assert.rejects(generateImpactReport(input), /semantically invalid.*after 2 attempts: keyChanges\[0\] must not be empty/);
   assert.equal(requests.length, 2);
   assert.equal(fetchMock.mock.callCount(), 2);
   assert.deepEqual(logs.map(log => log.event), ['request.started', 'request.semantic_retry', 'request.failed']);
@@ -138,13 +138,15 @@ test('throws after two semantic failures without a third request', async t => {
 });
 
 const structuralFailures: [string, unknown][] = [
-  ['missing field', { summary: validReport.summary, impact: validReport.impact, qaChecks: validReport.qaChecks }],
+  ['missing field', { summary: validReport.summary, keyChanges: validReport.keyChanges, qaChecks: validReport.qaChecks }],
   ['extra field', { ...validReport, title: 'Report' }],
-  ['wrong field type', { ...validReport, impact: 3 }],
+  ['wrong field type', { ...validReport, keyChanges: 3 }],
   ['null report', null],
+  ['empty key changes', { ...validReport, keyChanges: [] }],
+  ['too many key changes', { ...validReport, keyChanges: Array(6).fill(validReport.keyChanges[0]) }],
   ['empty QA array', { ...validReport, qaChecks: [] }],
   ['too many QA checks', { ...validReport, qaChecks: Array(6).fill(validReport.qaChecks[0]) }],
-  ['too many uncertainties', { ...validReport, uncertainty: Array(3).fill('The evidence omits the rollout date.') }],
+  ['too many uncertainties', { ...validReport, uncertainty: Array(2).fill('The evidence omits the rollout date.') }],
 ];
 
 for (const [name, content, error] of [
@@ -179,8 +181,8 @@ test('rejects empty values and heading or Markdown content in every field', () =
     'Verify <b>discounts</b> work.', 'Verify discounts.\nImpact: Checkout',
   ];
   for (const value of invalidValues) {
-    for (const field of ['summary', 'impact', 'qaChecks', 'uncertainty'] as const) {
-      const report = { ...validReport, [field]: field === 'qaChecks' || field === 'uncertainty' ? [value] : value };
+    for (const field of ['summary', 'keyChanges', 'qaChecks', 'uncertainty'] as const) {
+      const report = { ...validReport, [field]: field === 'summary' ? value : [value] };
       assert.ok(validateImpactReportSemantics(report).some(error => error.startsWith(field)), `${field}: ${JSON.stringify(value)}`);
     }
   }
@@ -198,23 +200,22 @@ test('accepts action verbs case-insensitively but requires a word boundary', () 
 test('accepts decimals, abbreviations, precise quantities, and genuine uncertainty', () => {
   assert.deepEqual(validateImpactReportSemantics({
     summary: 'The checkout now uses a discount rate of 1.2.',
-    impact: 'Customers pay $3.50 less for eligible U.S. orders.',
+    keyChanges: ['Eligible customers now pay $3.50 less when the discount rate is 1.2.'],
     qaChecks: ['Verify eligible orders use a discount rate of 1.5.'],
     uncertainty: ['The evidence does not show whether existing discounts are recalculated.'],
   }), []);
 });
 
-test('rejects the supplied incomplete impact without imposing a character limit', () => {
-  const impact = 'Cancellation behavior is reversed: orders in SHIPPED status will now throw the cannot-cancel error while orders in every other non-cancelled status can be cancelled, potentially allowing cancellation of orders already shipped under the old,';
-  assert.equal(impact.length, 240);
+test('rejects an incomplete key change without imposing a character limit', () => {
+  const keyChange = 'Cancellation behavior is reversed: orders in SHIPPED status will now throw the cannot-cancel error while orders in every other non-cancelled status can be cancelled, potentially allowing cancellation of orders already shipped under the old,';
+  assert.equal(keyChange.length, 240);
   const errors = validateImpactReportSemantics({
     ...validReport,
-    summary: 'The sales tax rate applied by calculateCheckoutTotals decreased from 8% to 3%.',
-    impact,
+    summary: 'The sales tax behavior changed from 8% to 3%.',
+    keyChanges: [keyChange],
     qaChecks: ['Confirm whether test expectations in test.ts#runTests use the previous rate.'],
   });
-  assert.ok(errors.some(error => error === 'impact must be a complete sentence ending with a period, question mark, or exclamation mark.'));
-  assert.ok(errors.some(error => error.startsWith('summary must not include source file names or technical entity identifiers.')));
+  assert.ok(errors.some(error => error === 'keyChanges[0] must be a complete sentence ending with a period, question mark, or exclamation mark.'));
   assert.ok(errors.some(error => error.startsWith('qaChecks[0] must be plain text')));
   assert.ok(errors.some(error => error.startsWith('qaChecks[0] must verify runtime behavior')));
 });
@@ -225,7 +226,7 @@ test('accepts complete report text regardless of character count', () => {
   assert.deepEqual(validateImpactReportSemantics({
     ...validReport,
     summary: longButComplete,
-    impact: longButComplete,
+    keyChanges: [longButComplete],
   }), []);
 });
 

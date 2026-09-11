@@ -7,7 +7,7 @@ import OpenAI from 'openai';
 import { config } from 'dotenv';
 import { z } from 'zod';
 
-import { formatImpactReport, generateImpactReport, OPENROUTER_MODEL, withTransportRetries } from './llm-client';
+import { formatImpactReport, generateImpactReport, OPENROUTER_MODEL, withTransportRetries, type ImpactReport } from './llm-client';
 import { extractEntityChange, getFunctionRanges, parseGitDiff as parseDiff, type ChangedFile, type EntityChange } from './change-evidence';
 import { buildLLMPayload, qaInstruction } from './qa-evidence';
 import { parseCliOptions, type CliOptions } from './cli';
@@ -23,7 +23,7 @@ config({
  * ============================================================
  */
 
-const ANALYZER_VERSION = '0.3.0';
+const ANALYZER_VERSION = '0.4.0';
 
 const MAX_BLAST_DEPTH = 6;
 
@@ -175,22 +175,8 @@ export interface ApplicationContext {
  * ============================================================
  */
 
-interface QAReportResult {
-  changedEntityId: string;
-
-  report: {
-    summary: string;
-
-    impact: string;
-
-    qaChecks: string[];
-
-    uncertainty: string[];
-  };
-}
-
 interface AnalysisResult {
-  schemaVersion: '1.0';
+  schemaVersion: '1.1';
 
   repository: {
     headSha: string;
@@ -202,7 +188,7 @@ interface AnalysisResult {
 
   impacts: EntityImpact[];
 
-  qaReports: QAReportResult[];
+  qaReport: ImpactReport;
 
   limitations: string[];
 }
@@ -1282,34 +1268,6 @@ function printChangedFile(change: ChangedFile): void {
   }
 }
 
-function printImpact(impact: EntityImpact): void {
-  console.log('\n========================================');
-
-  console.log(`💥 IMPACT — ${impact.changedEntity.name}`);
-
-  console.log('========================================');
-
-  console.log(`Entity: ${impact.changedEntity.id}`);
-
-  console.log(`Lines: ${impact.changedEntity.startLine}-${impact.changedEntity.endLine}`);
-
-  console.log('\nDirect dependents:');
-
-  if (impact.directDependents.length === 0) {
-    console.log('  none');
-  }
-
-  for (const entity of impact.directDependents) {
-    console.log(`  → ${entity.id}`);
-  }
-
-  console.log(`\nBlast radius: ${impact.blastRadius.totalAffectedEntities}`);
-
-  for (const pathInfo of impact.blastRadius.paths) {
-    console.log(`  ${pathInfo.path.map(entity => entity.name).join(' → ')}`);
-  }
-}
-
 function writeMarkdownReport(content: string): void {
   if (!reportPath) {
     return;
@@ -1320,10 +1278,8 @@ function writeMarkdownReport(content: string): void {
   console.log(`\n📋 Markdown report: ${reportPath}`);
 }
 
-function formatMarkdownReports(reports: QAReportResult[]): string {
-  return reports
-    .map(({ report }) => `## ${report.summary}\n\n${formatImpactReport(report)}`)
-    .join('\n\n---\n\n');
+function formatMarkdownReport(report: ImpactReport): string {
+  return `# Graphentra QA Impact Report\n\n${formatImpactReport(report)}`;
 }
 
 /**
@@ -1424,7 +1380,7 @@ async function run(): Promise<void> {
 
   const impacts = changedEntities.map(buildImpact);
 
-  const qaReports: QAReportResult[] = [];
+  console.log(`\n💥 Deterministic impact evidence built for ${impacts.length} changed functions.`);
 
   /**
    * ==========================================================
@@ -1432,33 +1388,23 @@ async function run(): Promise<void> {
    * ==========================================================
    */
 
-  for (const impact of impacts) {
-    printImpact(impact);
+  const payload = buildLLMPayload(impacts, applicationContext);
 
-    const payload = buildLLMPayload(impact, applicationContext);
+  console.log('\n🤖 Sending unified deterministic evidence + relevant application context to LLM...');
 
-    console.log('\n🤖 Sending deterministic evidence + relevant application context to LLM...');
+  const report = await generateImpactReport({
+    instruction: qaInstruction,
 
-    const report = await generateImpactReport({
-      instruction: qaInstruction,
+    evidence: payload,
+  });
 
-      evidence: payload,
-    });
+  console.log('\n========================================');
 
-    qaReports.push({
-      changedEntityId: impact.changedEntity.id,
+  console.log('🤖 UNIFIED QA IMPACT REPORT');
 
-      report,
-    });
+  console.log('========================================\n');
 
-    console.log('\n========================================');
-
-    console.log(`🤖 QA IMPACT REPORT — ${impact.changedEntity.name}`);
-
-    console.log('========================================\n');
-
-    console.log(formatImpactReport(report));
-  }
+  console.log(formatImpactReport(report));
 
   /**
    * ==========================================================
@@ -1467,7 +1413,7 @@ async function run(): Promise<void> {
    */
 
   const result: AnalysisResult = {
-    schemaVersion: '1.0',
+    schemaVersion: '1.1',
 
     repository: {
       headSha: getHeadSha(),
@@ -1479,7 +1425,7 @@ async function run(): Promise<void> {
 
     impacts,
 
-    qaReports,
+    qaReport: report,
 
     limitations: [
       'Only TypeScript is analyzed.',
@@ -1506,7 +1452,7 @@ async function run(): Promise<void> {
 
   const analysisPath = writeGraphentraJSON('analysis.json', result);
 
-  writeMarkdownReport(formatMarkdownReports(qaReports));
+  writeMarkdownReport(formatMarkdownReport(report));
 
   console.log('\n========================================');
 

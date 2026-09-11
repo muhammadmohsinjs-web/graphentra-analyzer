@@ -51,31 +51,32 @@ function impactFor(entity: Entity): EntityImpact {
   };
 }
 
-test('two changed functions in one file do not contaminate each other QA payloads', () => {
-  const catalogPayload = buildLLMPayload(impactFor(catalog), context);
-  const checkoutPayload = buildLLMPayload(impactFor(checkout), context);
-  assert.doesNotMatch(JSON.stringify(catalogPayload), /checkout|cart|=== 50/i);
-  assert.doesNotMatch(JSON.stringify(checkoutPayload), /getCatalog|stock|<= 10/i);
-  assert.deepEqual(catalogPayload.change.changedLines, [2]);
-  assert.deepEqual(checkoutPayload.change.changedLines, [5]);
-  assert.deepEqual(catalogPayload.applicationContext.entityAnnotations.map(item => item.entityId), [catalog.id]);
-  assert.deepEqual(checkoutPayload.applicationContext.entityAnnotations.map(item => item.entityId), [checkout.id]);
-  assert.ok(!('technicalGraph' in catalogPayload));
-  assert.ok(!('hunks' in catalogPayload.change));
+test('multiple changed functions produce one payload with isolated change evidence', () => {
+  const payload = buildLLMPayload([impactFor(catalog), impactFor(checkout)], context);
+  assert.equal(payload.analysisScope.changedFunctionCount, 2);
+  assert.deepEqual(payload.changes.map(item => item.change.changedLines), [[2], [5]]);
+  assert.match(JSON.stringify(payload.changes[0]), /getCatalog|stock|<= 10/i);
+  assert.doesNotMatch(JSON.stringify(payload.changes[0]), /checkout|cart|=== 50/i);
+  assert.match(JSON.stringify(payload.changes[1]), /checkout|cart|=== 50/i);
+  assert.doesNotMatch(JSON.stringify(payload.changes[1]), /getCatalog|stock|<= 10/i);
+  assert.deepEqual(payload.applicationContext.entityAnnotations.map(item => item.entityId), [catalog.id, checkout.id]);
+  assert.ok(!('technicalGraph' in payload));
+  assert.ok(!('hunks' in payload.changes[0].change));
 });
 
 test('test callers remain in every graph path but are classified separately in QA evidence', () => {
   const impact = impactFor(catalog);
   const original = JSON.stringify(impact);
-  const payload = buildLLMPayload(impact, context);
-  assert.deepEqual(payload.productionDependents.map(entity => entity.id), [server.id]);
-  assert.deepEqual(payload.testDependents.map(entity => entity.id), [tests.id]);
-  assert.equal(payload.directDependents[1].sourceRole, 'test');
-  assert.equal(payload.terminalDependents[0].sourceRole, 'test');
-  assert.equal(payload.blastRadius.paths[2].path[2].sourceRole, 'test');
-  assert.equal(payload.blastRadius.paths.length, 3);
+  const payload = buildLLMPayload([impact], context);
+  const [change] = payload.changes;
+  assert.deepEqual(change.productionDependents.map(entity => entity.id), [server.id]);
+  assert.deepEqual(change.testDependents.map(entity => entity.id), [tests.id]);
+  assert.equal(change.directDependents[1].sourceRole, 'test');
+  assert.equal(change.terminalDependents[0].sourceRole, 'test');
+  assert.equal(change.blastRadius.paths[2].path[2].sourceRole, 'test');
+  assert.equal(change.blastRadius.paths.length, 3);
   assert.equal(JSON.stringify(impact), original);
-  assert.equal(buildLLMPayload({ ...impact, changedEntity: tests }, context).changedEntity.sourceRole, 'test');
+  assert.equal(buildLLMPayload([{ ...impact, changedEntity: tests }], context).changes[0].changedEntity.sourceRole, 'test');
 });
 
 test('obvious test paths are deterministic and ordinary files remain production', () => {
@@ -92,8 +93,9 @@ test('instructions preserve evidence authority, precise quantities, and plain fi
   assert.match(qaInstruction, /Test entities represent test coverage\/evidence/);
   assert.match(qaInstruction, /Never discover new dependencies/);
   assert.match(qaInstruction, /Never include Markdown/);
-  assert.match(qaInstruction, /Exactly one short sentence/);
-  assert.match(qaInstruction, /Finish the thought naturally/);
-  assert.match(qaInstruction, /removedCode as BEFORE with addedCode as AFTER/);
-  assert.match(qaInstruction, /Never ask QA to inspect or update source code\/comments/);
+  assert.match(qaInstruction, /one short, unified report/);
+  assert.match(qaInstruction, /Merge closely related changes/);
+  assert.match(qaInstruction, /Do not\s+produce a section, summary, impact statement, or QA checklist for every changed function/);
+  assert.match(qaInstruction, /removedCode as BEFORE with its addedCode as AFTER/);
+  assert.match(qaInstruction, /Never ask QA to inspect code/);
 });
