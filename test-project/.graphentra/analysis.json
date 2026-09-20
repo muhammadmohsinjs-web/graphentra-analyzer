@@ -1,0 +1,439 @@
+{
+  "schemaVersion": "1.1",
+  "repository": {
+    "headSha": "374dc982372eac2bca0002e26324463880d4fb36"
+  },
+  "changedFiles": [
+    {
+      "file": "src/billing.ts",
+      "oldFile": "src/billing.ts",
+      "changedLines": [
+        4
+      ],
+      "addedCode": [
+        "  if (!cardToken || amount <= 1) {"
+      ],
+      "removedCode": [
+        "  if (!cardToken || amount <= 0) {"
+      ],
+      "diff": "diff --git a/test-project/src/billing.ts b/test-project/src/billing.ts\nindex b5afc34..4fb41ba 100644\n--- a/test-project/src/billing.ts\n+++ b/test-project/src/billing.ts\n@@ -1,7 +1,7 @@\n import { formatCurrency } from './utils';\n \n export function chargeCard(amount: number, cardToken: string): boolean {\n-  if (!cardToken || amount <= 0) {\n+  if (!cardToken || amount <= 1) {\n     return false;\n   }\n   return true;",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "import { formatCurrency } from './utils';",
+              "oldLine": 1,
+              "newLine": 1
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 2,
+              "newLine": 2
+            },
+            {
+              "kind": " ",
+              "code": "export function chargeCard(amount: number, cardToken: string): boolean {",
+              "oldLine": 3,
+              "newLine": 3
+            },
+            {
+              "kind": "-",
+              "code": "  if (!cardToken || amount <= 0) {",
+              "oldLine": 4,
+              "newLine": 4
+            },
+            {
+              "kind": "+",
+              "code": "  if (!cardToken || amount <= 1) {",
+              "oldLine": 5,
+              "newLine": 4
+            },
+            {
+              "kind": " ",
+              "code": "    return false;",
+              "oldLine": 5,
+              "newLine": 5
+            },
+            {
+              "kind": " ",
+              "code": "  }",
+              "oldLine": 6,
+              "newLine": 6
+            },
+            {
+              "kind": " ",
+              "code": "  return true;",
+              "oldLine": 7,
+              "newLine": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "changedEntities": [
+    {
+      "entity": {
+        "id": "src/billing.ts#chargeCard",
+        "kind": "function",
+        "name": "chargeCard",
+        "file": "src/billing.ts",
+        "startLine": 3,
+        "endLine": 8
+      },
+      "change": {
+        "file": "src/billing.ts",
+        "changedLines": [
+          4
+        ],
+        "addedCode": [
+          "  if (!cardToken || amount <= 1) {"
+        ],
+        "removedCode": [
+          "  if (!cardToken || amount <= 0) {"
+        ],
+        "diff": "--- a/src/billing.ts\n+++ b/src/billing.ts\n@@ -3,5 +3,5 @@\n export function chargeCard(amount: number, cardToken: string): boolean {\n-  if (!cardToken || amount <= 0) {\n+  if (!cardToken || amount <= 1) {\n     return false;\n   }\n   return true;"
+      }
+    }
+  ],
+  "impacts": [
+    {
+      "changedEntity": {
+        "id": "src/billing.ts#chargeCard",
+        "kind": "function",
+        "name": "chargeCard",
+        "file": "src/billing.ts",
+        "startLine": 3,
+        "endLine": 8
+      },
+      "change": {
+        "file": "src/billing.ts",
+        "changedLines": [
+          4
+        ],
+        "addedCode": [
+          "  if (!cardToken || amount <= 1) {"
+        ],
+        "removedCode": [
+          "  if (!cardToken || amount <= 0) {"
+        ],
+        "diff": "--- a/src/billing.ts\n+++ b/src/billing.ts\n@@ -3,5 +3,5 @@\n export function chargeCard(amount: number, cardToken: string): boolean {\n-  if (!cardToken || amount <= 0) {\n+  if (!cardToken || amount <= 1) {\n     return false;\n   }\n   return true;"
+      },
+      "directDependents": [
+        {
+          "id": "src/billing.ts#processPayment",
+          "kind": "function",
+          "name": "processPayment",
+          "file": "src/billing.ts",
+          "startLine": 10,
+          "endLine": 12
+        }
+      ],
+      "blastRadius": {
+        "totalAffectedEntities": 5,
+        "entities": [
+          {
+            "id": "src/billing.ts#processPayment",
+            "kind": "function",
+            "name": "processPayment",
+            "file": "src/billing.ts",
+            "startLine": 10,
+            "endLine": 12
+          },
+          {
+            "id": "src/orders.ts#submitOrder",
+            "kind": "function",
+            "name": "submitOrder",
+            "file": "src/orders.ts",
+            "startLine": 6,
+            "endLine": 28
+          },
+          {
+            "id": "src/orders.ts#handleCheckout",
+            "kind": "function",
+            "name": "handleCheckout",
+            "file": "src/orders.ts",
+            "startLine": 30,
+            "endLine": 39
+          },
+          {
+            "id": "tests/orders.test.ts#testSubmitOrder",
+            "kind": "function",
+            "name": "testSubmitOrder",
+            "file": "tests/orders.test.ts",
+            "startLine": 5,
+            "endLine": 10
+          },
+          {
+            "id": "tests/orders.test.ts#testHandleCheckout",
+            "kind": "function",
+            "name": "testHandleCheckout",
+            "file": "tests/orders.test.ts",
+            "startLine": 12,
+            "endLine": 17
+          }
+        ],
+        "paths": [
+          {
+            "target": {
+              "id": "src/billing.ts#processPayment",
+              "kind": "function",
+              "name": "processPayment",
+              "file": "src/billing.ts",
+              "startLine": 10,
+              "endLine": 12
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/billing.ts#chargeCard",
+                "kind": "function",
+                "name": "chargeCard",
+                "file": "src/billing.ts",
+                "startLine": 3,
+                "endLine": 8
+              },
+              {
+                "id": "src/billing.ts#processPayment",
+                "kind": "function",
+                "name": "processPayment",
+                "file": "src/billing.ts",
+                "startLine": 10,
+                "endLine": 12
+              }
+            ]
+          },
+          {
+            "target": {
+              "id": "src/orders.ts#submitOrder",
+              "kind": "function",
+              "name": "submitOrder",
+              "file": "src/orders.ts",
+              "startLine": 6,
+              "endLine": 28
+            },
+            "depth": 2,
+            "path": [
+              {
+                "id": "src/billing.ts#chargeCard",
+                "kind": "function",
+                "name": "chargeCard",
+                "file": "src/billing.ts",
+                "startLine": 3,
+                "endLine": 8
+              },
+              {
+                "id": "src/billing.ts#processPayment",
+                "kind": "function",
+                "name": "processPayment",
+                "file": "src/billing.ts",
+                "startLine": 10,
+                "endLine": 12
+              },
+              {
+                "id": "src/orders.ts#submitOrder",
+                "kind": "function",
+                "name": "submitOrder",
+                "file": "src/orders.ts",
+                "startLine": 6,
+                "endLine": 28
+              }
+            ]
+          },
+          {
+            "target": {
+              "id": "src/orders.ts#handleCheckout",
+              "kind": "function",
+              "name": "handleCheckout",
+              "file": "src/orders.ts",
+              "startLine": 30,
+              "endLine": 39
+            },
+            "depth": 3,
+            "path": [
+              {
+                "id": "src/billing.ts#chargeCard",
+                "kind": "function",
+                "name": "chargeCard",
+                "file": "src/billing.ts",
+                "startLine": 3,
+                "endLine": 8
+              },
+              {
+                "id": "src/billing.ts#processPayment",
+                "kind": "function",
+                "name": "processPayment",
+                "file": "src/billing.ts",
+                "startLine": 10,
+                "endLine": 12
+              },
+              {
+                "id": "src/orders.ts#submitOrder",
+                "kind": "function",
+                "name": "submitOrder",
+                "file": "src/orders.ts",
+                "startLine": 6,
+                "endLine": 28
+              },
+              {
+                "id": "src/orders.ts#handleCheckout",
+                "kind": "function",
+                "name": "handleCheckout",
+                "file": "src/orders.ts",
+                "startLine": 30,
+                "endLine": 39
+              }
+            ]
+          },
+          {
+            "target": {
+              "id": "tests/orders.test.ts#testSubmitOrder",
+              "kind": "function",
+              "name": "testSubmitOrder",
+              "file": "tests/orders.test.ts",
+              "startLine": 5,
+              "endLine": 10
+            },
+            "depth": 3,
+            "path": [
+              {
+                "id": "src/billing.ts#chargeCard",
+                "kind": "function",
+                "name": "chargeCard",
+                "file": "src/billing.ts",
+                "startLine": 3,
+                "endLine": 8
+              },
+              {
+                "id": "src/billing.ts#processPayment",
+                "kind": "function",
+                "name": "processPayment",
+                "file": "src/billing.ts",
+                "startLine": 10,
+                "endLine": 12
+              },
+              {
+                "id": "src/orders.ts#submitOrder",
+                "kind": "function",
+                "name": "submitOrder",
+                "file": "src/orders.ts",
+                "startLine": 6,
+                "endLine": 28
+              },
+              {
+                "id": "tests/orders.test.ts#testSubmitOrder",
+                "kind": "function",
+                "name": "testSubmitOrder",
+                "file": "tests/orders.test.ts",
+                "startLine": 5,
+                "endLine": 10
+              }
+            ]
+          },
+          {
+            "target": {
+              "id": "tests/orders.test.ts#testHandleCheckout",
+              "kind": "function",
+              "name": "testHandleCheckout",
+              "file": "tests/orders.test.ts",
+              "startLine": 12,
+              "endLine": 17
+            },
+            "depth": 4,
+            "path": [
+              {
+                "id": "src/billing.ts#chargeCard",
+                "kind": "function",
+                "name": "chargeCard",
+                "file": "src/billing.ts",
+                "startLine": 3,
+                "endLine": 8
+              },
+              {
+                "id": "src/billing.ts#processPayment",
+                "kind": "function",
+                "name": "processPayment",
+                "file": "src/billing.ts",
+                "startLine": 10,
+                "endLine": 12
+              },
+              {
+                "id": "src/orders.ts#submitOrder",
+                "kind": "function",
+                "name": "submitOrder",
+                "file": "src/orders.ts",
+                "startLine": 6,
+                "endLine": 28
+              },
+              {
+                "id": "src/orders.ts#handleCheckout",
+                "kind": "function",
+                "name": "handleCheckout",
+                "file": "src/orders.ts",
+                "startLine": 30,
+                "endLine": 39
+              },
+              {
+                "id": "tests/orders.test.ts#testHandleCheckout",
+                "kind": "function",
+                "name": "testHandleCheckout",
+                "file": "tests/orders.test.ts",
+                "startLine": 12,
+                "endLine": 17
+              }
+            ]
+          }
+        ]
+      },
+      "terminalDependents": [
+        {
+          "id": "tests/orders.test.ts#testSubmitOrder",
+          "kind": "function",
+          "name": "testSubmitOrder",
+          "file": "tests/orders.test.ts",
+          "startLine": 5,
+          "endLine": 10
+        },
+        {
+          "id": "tests/orders.test.ts#testHandleCheckout",
+          "kind": "function",
+          "name": "testHandleCheckout",
+          "file": "tests/orders.test.ts",
+          "startLine": 12,
+          "endLine": 17
+        }
+      ]
+    }
+  ],
+  "qaReport": {
+    "summary": "A payment amount threshold change now rejects charges at or below 1 unit, affecting checkout flows that reach the payment step and their existing order tests.",
+    "keyChanges": [
+      "The payment step now returns a failure result whenever the amount is 1 or less, not just when it is 0 or less, so charges of exactly 1 and fractional amounts between 0 and 1 that previously succeeded are now rejected.",
+      "Amounts greater than 1 and requests with a missing card token behave as before, with the missing-token case failing and valid charges succeeding.",
+      "This threshold affects everything reachable from the payment call, including order submission and checkout handling, and the existing order submission and checkout tests sit on those paths."
+    ],
+    "qaChecks": [
+      "Verify charges of exactly 1 and amounts just below 1 are rejected, while amounts just above 1 still succeed.",
+      "Confirm a missing card token still fails and a valid token with an above-threshold amount still succeeds.",
+      "Test order submission and checkout end-to-end with an amount of exactly 1 to confirm the new failure behavior propagates predictably.",
+      "Validate boundary inputs around 1 with fractional amounts, for example 0.99 and 1.01, to confirm the threshold is applied consistently."
+    ],
+    "uncertainty": [
+      "It is unclear whether rejecting charges of exactly 1 unit is intended business behavior or an unintended boundary shift."
+    ]
+  },
+  "limitations": [
+    "Only TypeScript is analyzed.",
+    "Only named standalone function declarations are supported.",
+    "Only CALLS relationships are currently supported.",
+    "Class methods are not analyzed.",
+    "Arrow functions are not analyzed.",
+    "Dynamic calls are not analyzed.",
+    "Deleted functions have no current graph entity; renamed or ambiguous functions may lack removed-code evidence.",
+    "Overlapping function line ranges are skipped rather than sharing ambiguous evidence.",
+    "Application surfaces are not yet discovered.",
+    "Blast radius is limited to depth 6."
+  ]
+}

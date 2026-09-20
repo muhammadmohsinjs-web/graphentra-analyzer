@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Graphentra / Impact Explorer</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Graphentra home"><span class="brand-mark">g.</span> graphentra <span class="brand-divider">/</span> <span class="product">impact explorer</span></a>
+    <div class="repository"><span class="status-dot"></span><span id="repository">Loading local artifacts</span><code id="revision"></code></div>
+  </header>
+  <main>
+    <section class="intro">
+      <div><div class="eyebrow">DEPENDENCY INTELLIGENCE <span>/ 01</span></div><h1>Small change.<br class="mobile-break"> See the ripple.</h1><p>Trace potential impact across your discovered application graph.</p></div>
+      <div class="metrics"><div><strong id="function-count">-</strong><span>FUNCTIONS</span></div><div><strong id="connection-count">-</strong><span>CONNECTIONS</span></div><div><strong id="affected-count">-</strong><span>POTENTIALLY AFFECTED</span></div></div>
+    </section>
+    <div id="error" class="error" role="alert" hidden></div>
+    <section class="workspace" aria-label="Impact explorer">
+      <aside class="sources">
+        <div class="panel-heading"><h2>Starting points</h2><span id="change-count" class="count">0</span></div>
+        <div class="mode-switch"><button id="recorded-mode" class="active">Recorded</button><button id="whatif-mode">What-if</button></div>
+        <p id="mode-description" class="muted small">Functions changed in the saved analysis.</p>
+        <label class="search-label" for="search">FILTER FUNCTIONS</label>
+        <input id="search" type="search" placeholder="Search name or file..." autocomplete="off">
+        <button id="all-changes" class="all-changes">Explore all changes <span>+</span></button>
+        <div id="seed-list" class="seed-list"></div>
+        <div class="source-footer"><span class="status-dot"></span> Local artifacts. Read-only.<br><span>No code execution or LLM calls.</span></div>
+      </aside>
+      <section class="graph-panel" aria-label="Application graph">
+        <div class="graph-toolbar"><div><span class="eyebrow">APPLICATION MAP</span><span id="mode-badge" class="badge">RECORDED IMPACT</span></div><button id="fit" title="Fit the full application graph">Fit graph</button></div>
+        <div class="graph-stage">
+          <svg id="graph" role="group" aria-label="Interactive function dependency graph. Select nodes for evidence; drag the background to pan."><g id="world"></g></svg>
+          <div class="map-caption">Discovered functions / grouped by file</div>
+          <div class="zoom-controls"><button id="zoom-in" aria-label="Zoom in">+</button><button id="zoom-out" aria-label="Zoom out">-</button></div>
+          <svg id="minimap" aria-label="Graph overview"></svg>
+          <div class="legend"><span><i class="legend-seed"></i>Starting change</span><span><i class="legend-impact"></i>Potential impact</span><span><i class="legend-test"></i>Test function</span></div>
+        </div>
+        <div class="playback">
+          <div class="playback-top"><div class="transport"><button id="replay" title="Replay from the beginning">Replay</button><button id="previous" aria-label="Previous layer">&lt;</button><button id="play" class="primary">Play wave</button><button id="next" aria-label="Next layer">&gt;</button></div><label class="follow"><input id="follow" type="checkbox"> Follow wave</label><label class="speed-label">Speed <select id="speed"><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="2">2x</option></select></label></div>
+          <label class="timeline-label" for="timeline"><span id="layer-label">DEPTH 0</span><span id="reached-label">0 functions reached</span></label>
+          <input id="timeline" type="range" min="0" max="0" value="0" step="1">
+          <div id="playback-status" class="playback-status" aria-live="polite">Select a starting point to trace its callers.</div>
+        </div>
+      </section>
+      <aside class="evidence" aria-label="Selected function evidence"><div class="panel-heading"><h2>Evidence inspector</h2><span class="eyebrow">STATIC</span></div><div id="inspector"></div></aside>
+    </section>
+    <section class="briefing"><div class="briefing-heading"><div class="eyebrow">AI INTERPRETATION / NOT VERIFIED</div><h2>QA briefing</h2><p>Suggested checks, not test results.</p></div><div id="qa-content"></div></section>
+    <details class="limitations"><summary>Analysis boundaries &amp; artifact warnings <span id="warning-count"></span></summary><ul id="warnings"></ul></details>
+    <footer>CALLS graph <span>Impact travels from callee to caller. Reachability does not prove a regression.</span><span id="depth-limit"></span></footer>
+  </main>
+</body>
+</html>

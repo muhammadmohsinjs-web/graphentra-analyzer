@@ -2,8 +2,8 @@
   "schemaVersion": "1.0",
   "repository": {
     "root": "/Users/muhammadmohsin/Desktop/mvps/graphentra-analyzer/test-project",
-    "headSha": "b3e009f590b37793418004d28a6f4e7353e4a82a",
-    "generatedAt": "2026-09-20T04:51:36.380Z",
+    "headSha": "374dc982372eac2bca0002e26324463880d4fb36",
+    "generatedAt": "2026-09-20T05:09:46.871Z",
     "analyzerVersion": "0.4.0"
   },
   "capabilities": {
@@ -153,7 +153,7 @@
       "name": "calculateOrderTotal",
       "file": "src/pricing.ts",
       "startLine": 18,
-      "endLine": 27
+      "endLine": 23
     },
     {
       "id": "src/orders.ts#submitOrder",

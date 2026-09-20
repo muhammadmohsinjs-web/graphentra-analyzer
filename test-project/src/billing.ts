@@ -1,7 +1,7 @@
 import { formatCurrency } from './utils';
 
 export function chargeCard(amount: number, cardToken: string): boolean {
-  if (!cardToken || amount <= 0) {
+  if (!cardToken || amount <= 1) {
     return false;
   }
   return true;

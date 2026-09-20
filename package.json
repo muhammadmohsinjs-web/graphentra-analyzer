@@ -6,9 +6,10 @@
   "scripts": {
     "start": "tsx src/index.ts",
     "build": "tsc -p tsconfig.json",
-    "test": "tsx --test test/*.test.ts",
+    "test": "tsx --test test/*.test.ts test/*.test.mjs",
     "typecheck": "tsc --noEmit --target ES2022 --module commonjs --moduleResolution node --esModuleInterop --strict --skipLibCheck src/*.ts test/*.ts",
-    "analyze": "tsx src/index.ts"
+    "analyze": "tsx src/index.ts",
+    "visualize": "tsx src/visualize.ts"
   },
   "repository": {
     "type": "git",

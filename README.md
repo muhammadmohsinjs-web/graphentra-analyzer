@@ -28,6 +28,43 @@ env:
   OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 ```
 
+## Animated impact explorer
+
+Open saved analyzer results as a local, read-only application graph:
+
+```sh
+npm run visualize -- ./test-project
+# Or point it at any repository already analyzed by Graphentra:
+npm run visualize -- /absolute/path/to/repository --port 4173
+```
+
+Visit `http://127.0.0.1:4173`. The target defaults to the current directory. No
+API key, LLM request, frontend build, or additional dependency is needed. After
+`npm run build`, `node dist/visualize.js /path/to/repository` also works when the
+`visualizer/` directory is kept alongside `dist/`.
+
+- **Recorded mode** animates the saved impact paths from `analysis.json` across
+  the full discovered graph. Select a changed function or explore all changes.
+- **What-if mode** computes reverse caller reachability from any selected function.
+  It is explicitly a simulation, not a recorded change. It also works when only
+  `.graphentra/technical-graph.json` is available.
+- Use **Play wave**, pause, replay, previous/next layer, the depth slider, and speed
+  controls. Nodes stay fixed while pulses travel from callee to caller.
+- Drag the background to pan, scroll or use +/- to zoom, and use **Fit graph** to
+  return to the overview. **Follow wave** reframes offscreen layers. A minimap
+  tracks the viewport. Reduced-motion preferences disable moving pulses.
+- Select a function to inspect its recorded explanation paths, clipped diff, and
+  optional business annotation. The QA briefing stays separate from static facts.
+
+The visualizer reads only the three `.graphentra` artifacts and binds to loopback.
+Reload the browser after rerunning the analyzer. Missing optional artifacts show
+warnings; incompatible analysis or mismatched commit IDs are excluded. Matching
+commit IDs cannot prove working-tree alignment, and the UI exposes that limitation.
+Test labels are filename heuristics, not coverage. Reached functions are potentially
+affected, not confirmed regressions. Traversal is bounded by the artifact's depth
+limit. The SVG view is intended for inspectable small-to-medium graphs; file groups
+are not yet collapsible, and very large repositories may need further aggregation.
+
 ## Unified evidence
 
 Previously, `findChangedEntities()` attached the entire `ChangedFile` to every
