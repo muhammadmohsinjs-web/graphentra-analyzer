@@ -1,0 +1,333 @@
+{
+  "schemaVersion": "1.0",
+  "repository": {
+    "root": "/Users/muhammadmohsin/Desktop/mvps/graphentra-analyzer/test-project",
+    "headSha": "b3e009f590b37793418004d28a6f4e7353e4a82a",
+    "generatedAt": "2026-09-20T04:51:36.380Z",
+    "analyzerVersion": "0.4.0"
+  },
+  "capabilities": {
+    "language": "typescript",
+    "entityKinds": [
+      "function"
+    ],
+    "relationTypes": [
+      "CALLS"
+    ],
+    "maxBlastDepth": 6
+  },
+  "analyzedFiles": [
+    "src/billing.ts",
+    "src/inventory.ts",
+    "src/notifications.ts",
+    "src/orders.ts",
+    "src/pricing.ts",
+    "src/standalone.ts",
+    "src/utils.ts",
+    "tests/orders.test.ts"
+  ],
+  "entities": [
+    {
+      "id": "src/utils.ts#roundToTwo",
+      "kind": "function",
+      "name": "roundToTwo",
+      "file": "src/utils.ts",
+      "startLine": 1,
+      "endLine": 3
+    },
+    {
+      "id": "src/utils.ts#formatCurrency",
+      "kind": "function",
+      "name": "formatCurrency",
+      "file": "src/utils.ts",
+      "startLine": 5,
+      "endLine": 8
+    },
+    {
+      "id": "src/utils.ts#slugify",
+      "kind": "function",
+      "name": "slugify",
+      "file": "src/utils.ts",
+      "startLine": 10,
+      "endLine": 17
+    },
+    {
+      "id": "src/utils.ts#generateId",
+      "kind": "function",
+      "name": "generateId",
+      "file": "src/utils.ts",
+      "startLine": 19,
+      "endLine": 21
+    },
+    {
+      "id": "src/billing.ts#chargeCard",
+      "kind": "function",
+      "name": "chargeCard",
+      "file": "src/billing.ts",
+      "startLine": 3,
+      "endLine": 8
+    },
+    {
+      "id": "src/billing.ts#processPayment",
+      "kind": "function",
+      "name": "processPayment",
+      "file": "src/billing.ts",
+      "startLine": 10,
+      "endLine": 12
+    },
+    {
+      "id": "src/billing.ts#renderInvoiceSummary",
+      "kind": "function",
+      "name": "renderInvoiceSummary",
+      "file": "src/billing.ts",
+      "startLine": 14,
+      "endLine": 17
+    },
+    {
+      "id": "src/inventory.ts#sanitizeSku",
+      "kind": "function",
+      "name": "sanitizeSku",
+      "file": "src/inventory.ts",
+      "startLine": 1,
+      "endLine": 3
+    },
+    {
+      "id": "src/inventory.ts#checkInventory",
+      "kind": "function",
+      "name": "checkInventory",
+      "file": "src/inventory.ts",
+      "startLine": 5,
+      "endLine": 11
+    },
+    {
+      "id": "src/inventory.ts#reserveStock",
+      "kind": "function",
+      "name": "reserveStock",
+      "file": "src/inventory.ts",
+      "startLine": 13,
+      "endLine": 19
+    },
+    {
+      "id": "src/notifications.ts#sendEmail",
+      "kind": "function",
+      "name": "sendEmail",
+      "file": "src/notifications.ts",
+      "startLine": 3,
+      "endLine": 8
+    },
+    {
+      "id": "src/notifications.ts#sendOrderConfirmation",
+      "kind": "function",
+      "name": "sendOrderConfirmation",
+      "file": "src/notifications.ts",
+      "startLine": 10,
+      "endLine": 14
+    },
+    {
+      "id": "src/notifications.ts#sendReceiptEmail",
+      "kind": "function",
+      "name": "sendReceiptEmail",
+      "file": "src/notifications.ts",
+      "startLine": 16,
+      "endLine": 19
+    },
+    {
+      "id": "src/pricing.ts#calculateTax",
+      "kind": "function",
+      "name": "calculateTax",
+      "file": "src/pricing.ts",
+      "startLine": 3,
+      "endLine": 8
+    },
+    {
+      "id": "src/pricing.ts#applyDiscount",
+      "kind": "function",
+      "name": "applyDiscount",
+      "file": "src/pricing.ts",
+      "startLine": 10,
+      "endLine": 16
+    },
+    {
+      "id": "src/pricing.ts#calculateOrderTotal",
+      "kind": "function",
+      "name": "calculateOrderTotal",
+      "file": "src/pricing.ts",
+      "startLine": 18,
+      "endLine": 27
+    },
+    {
+      "id": "src/orders.ts#submitOrder",
+      "kind": "function",
+      "name": "submitOrder",
+      "file": "src/orders.ts",
+      "startLine": 6,
+      "endLine": 28
+    },
+    {
+      "id": "src/orders.ts#handleCheckout",
+      "kind": "function",
+      "name": "handleCheckout",
+      "file": "src/orders.ts",
+      "startLine": 30,
+      "endLine": 39
+    },
+    {
+      "id": "src/standalone.ts#validateZipCode",
+      "kind": "function",
+      "name": "validateZipCode",
+      "file": "src/standalone.ts",
+      "startLine": 1,
+      "endLine": 4
+    },
+    {
+      "id": "src/standalone.ts#hashString",
+      "kind": "function",
+      "name": "hashString",
+      "file": "src/standalone.ts",
+      "startLine": 6,
+      "endLine": 14
+    },
+    {
+      "id": "src/standalone.ts#parseQueryString",
+      "kind": "function",
+      "name": "parseQueryString",
+      "file": "src/standalone.ts",
+      "startLine": 16,
+      "endLine": 29
+    },
+    {
+      "id": "tests/orders.test.ts#testSubmitOrder",
+      "kind": "function",
+      "name": "testSubmitOrder",
+      "file": "tests/orders.test.ts",
+      "startLine": 5,
+      "endLine": 10
+    },
+    {
+      "id": "tests/orders.test.ts#testHandleCheckout",
+      "kind": "function",
+      "name": "testHandleCheckout",
+      "file": "tests/orders.test.ts",
+      "startLine": 12,
+      "endLine": 17
+    },
+    {
+      "id": "tests/orders.test.ts#testOrderTotalCalculation",
+      "kind": "function",
+      "name": "testOrderTotalCalculation",
+      "file": "tests/orders.test.ts",
+      "startLine": 19,
+      "endLine": 24
+    },
+    {
+      "id": "tests/orders.test.ts#testStandaloneZipValidation",
+      "kind": "function",
+      "name": "testStandaloneZipValidation",
+      "file": "tests/orders.test.ts",
+      "startLine": 26,
+      "endLine": 31
+    }
+  ],
+  "relations": [
+    {
+      "from": "src/utils.ts#formatCurrency",
+      "to": "src/utils.ts#roundToTwo",
+      "type": "CALLS"
+    },
+    {
+      "from": "src/billing.ts#processPayment",
+      "to": "src/billing.ts#chargeCard",
+      "type": "CALLS"
+    },
+    {
+      "from": "src/billing.ts#renderInvoiceSummary",
+      "to": "src/utils.ts#formatCurrency",
+      "type": "CALLS"
+    },
+    {
+      "from": "src/inventory.ts#checkInventory",
+      "to": "src/inventory.ts#sanitizeSku",
+      "type": "CALLS"
+    },
+    {
+      "from": "src/inventory.ts#reserveStock",
+      "to": "src/inventory.ts#checkInventory",
+      "type": "CALLS"
+    },
+    {
+      "from": "src/notifications.ts#sendOrderConfirmation",
+      "to": "src/notifications.ts#sendEmail",
+      "type": "CALLS"
+    },
+    {
+      "from": "src/notifications.ts#sendReceiptEmail",
+      "to": "src/utils.ts#formatCurrency",
+      "type": "CALLS"
+    },
+    {
+      "from": "src/notifications.ts#sendReceiptEmail",
+      "to": "src/notifications.ts#sendEmail",
+      "type": "CALLS"
+    },
+    {
+      "from": "src/pricing.ts#calculateOrderTotal",
+      "to": "src/pricing.ts#applyDiscount",
+      "type": "CALLS"
+    },
+    {
+      "from": "src/pricing.ts#calculateOrderTotal",
+      "to": "src/pricing.ts#calculateTax",
+      "type": "CALLS"
+    },
+    {
+      "from": "src/pricing.ts#calculateOrderTotal",
+      "to": "src/utils.ts#formatCurrency",
+      "type": "CALLS"
+    },
+    {
+      "from": "src/orders.ts#submitOrder",
+      "to": "src/inventory.ts#reserveStock",
+      "type": "CALLS"
+    },
+    {
+      "from": "src/orders.ts#submitOrder",
+      "to": "src/pricing.ts#calculateOrderTotal",
+      "type": "CALLS"
+    },
+    {
+      "from": "src/orders.ts#submitOrder",
+      "to": "src/billing.ts#processPayment",
+      "type": "CALLS"
+    },
+    {
+      "from": "src/orders.ts#submitOrder",
+      "to": "src/notifications.ts#sendOrderConfirmation",
+      "type": "CALLS"
+    },
+    {
+      "from": "src/orders.ts#handleCheckout",
+      "to": "src/orders.ts#submitOrder",
+      "type": "CALLS"
+    },
+    {
+      "from": "tests/orders.test.ts#testSubmitOrder",
+      "to": "src/orders.ts#submitOrder",
+      "type": "CALLS"
+    },
+    {
+      "from": "tests/orders.test.ts#testHandleCheckout",
+      "to": "src/orders.ts#handleCheckout",
+      "type": "CALLS"
+    },
+    {
+      "from": "tests/orders.test.ts#testOrderTotalCalculation",
+      "to": "src/pricing.ts#calculateOrderTotal",
+      "type": "CALLS"
+    },
+    {
+      "from": "tests/orders.test.ts#testStandaloneZipValidation",
+      "to": "src/standalone.ts#validateZipCode",
+      "type": "CALLS"
+    }
+  ]
+}
