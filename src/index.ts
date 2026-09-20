@@ -267,7 +267,7 @@ try {
   cliOptions = parseCliOptions(process.argv.slice(2));
 } catch (error) {
   console.error(`\n❌ ${error instanceof Error ? error.message : String(error)}`);
-  console.error('Usage: graphentra --target <repository-path> [--base <ref> --head <ref>] [--report <file>]\n');
+  console.error('Usage: graphentra --target <repository-path> [--base <ref> --head <ref>] [--working-tree] [--report <file>]\n');
   process.exit(1);
 }
 
@@ -1015,8 +1015,14 @@ function validateApplicationContext(context: ApplicationContext): void {
 function getDiffRange(): {
   base: string;
 
-  head: string;
+  head?: string;
 } {
+  if (cliOptions.workingTree) {
+    return {
+      base: cliOptions.base ?? 'HEAD',
+    };
+  }
+
   const base = cliOptions.base ?? process.env.BASE_SHA?.trim();
 
   const head = cliOptions.head ?? process.env.HEAD_SHA?.trim();
@@ -1040,8 +1046,10 @@ function getGitDiff(): string {
 
   const target = projectInsideRepository && projectInsideRepository !== '.' ? projectInsideRepository : '.';
 
+  const range = head ? [base, head] : [base];
+
   return executeGit(
-    ['-c', 'core.quotePath=false', 'diff', '--no-ext-diff', '--no-color', '--unified=3', base, head, '--', target],
+    ['-c', 'core.quotePath=false', 'diff', '--no-ext-diff', '--no-color', '--unified=3', ...range, '--', target],
 
     gitRepositoryRoot,
   );
@@ -1327,7 +1335,8 @@ async function run(): Promise<void> {
     console.log('\nNo Git changes found.');
 
     const { base, head } = getDiffRange();
-    writeMarkdownReport(`No TypeScript changes were found between \`${base}\` and \`${head}\`.`);
+    const comparedTo = head ?? 'the working tree';
+    writeMarkdownReport(`No TypeScript changes were found between \`${base}\` and ${head ? `\`${comparedTo}\`` : comparedTo}.`);
 
     return;
   }

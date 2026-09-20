@@ -15,11 +15,7 @@ export function applyDiscount(subtotal: number, discountPercentage: number): num
   return Math.max(0, subtotal - discount);
 }
 
-export function calculateOrderTotal(
-  subtotal: number,
-  discountPercentage: number,
-  taxRate: number,
-): string {
+export function calculateOrderTotal(subtotal: number, discountPercentage: number, taxRate: number): string {
   const discounted = applyDiscount(subtotal, discountPercentage);
   const tax = calculateTax(discounted, taxRate);
   const finalTotal = discounted + tax;
