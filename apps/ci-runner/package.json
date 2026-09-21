@@ -1,0 +1,41 @@
+{
+  "name": "@graphentra/ci-runner",
+  "version": "0.1.0",
+  "description": "CI submission adapter and runner for Graphentra evidence",
+  "license": "ISC",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "graphentra-ci": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck:src": "tsc --noEmit -p tsconfig.json",
+    "typecheck:test": "tsc --noEmit -p tsconfig.test.json",
+    "typecheck": "npm run typecheck:src && npm run typecheck:test",
+    "test": "tsx --test test/*.test.ts",
+    "prepack": "npm run build"
+  },
+  "dependencies": {
+    "@graphentra/analyzer": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "tsx": "^4.23.13",
+    "typescript": "^5.8.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

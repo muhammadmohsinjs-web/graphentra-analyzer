@@ -1,0 +1,647 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://graphentra.dev/schemas/evidence.v2.json",
+  "title": "GraphentraDeterministicEvidence",
+  "type": "object",
+  "properties": {
+    "artifactKind": {
+      "const": "graphentra-evidence"
+    },
+    "schemaVersion": {
+      "const": "2.0"
+    },
+    "analyzerVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target": {
+      "type": "object",
+      "properties": {
+        "targetPath": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*//)(?!.*\\x00).+$"
+        }
+      },
+      "required": [
+        "targetPath"
+      ],
+      "additionalProperties": false
+    },
+    "options": {
+      "type": "object",
+      "properties": {
+        "excludePaths": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*//)(?!.*\\x00).+$"
+          },
+          "uniqueItems": true
+        },
+        "sourcePolicy": {
+          "enum": [
+            "git-tracked",
+            "git-tracked-and-nonignored-untracked"
+          ]
+        }
+      },
+      "required": [
+        "excludePaths",
+        "sourcePolicy"
+      ],
+      "additionalProperties": false
+    },
+    "comparison": {
+      "$ref": "#/$defs/comparison"
+    },
+    "sourceState": {
+      "$ref": "#/$defs/sourceState"
+    },
+    "outcome": {
+      "enum": [
+        "completed",
+        "no_changes",
+        "no_supported_changes",
+        "no_source_files"
+      ]
+    },
+    "technicalGraph": {
+      "$ref": "#/$defs/graph"
+    },
+    "changedFiles": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/changedFile"
+      }
+    },
+    "changedEntities": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/changedEntity"
+      }
+    },
+    "impacts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/impact"
+      }
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/diagnostic"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "required": [
+    "artifactKind",
+    "schemaVersion",
+    "analyzerVersion",
+    "target",
+    "options",
+    "comparison",
+    "sourceState",
+    "outcome",
+    "technicalGraph",
+    "changedFiles",
+    "changedEntities",
+    "impacts",
+    "diagnostics",
+    "limitations"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "entity": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "const": "function"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "file": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*//)(?!.*\\x00).+$"
+        },
+        "startLine": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "endLine": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "name",
+        "file",
+        "startLine",
+        "endLine"
+      ],
+      "additionalProperties": false
+    },
+    "relation": {
+      "type": "object",
+      "properties": {
+        "to": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "const": "CALLS"
+        },
+        "from": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "from",
+        "to",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "change": {
+      "type": "object",
+      "properties": {
+        "file": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*//)(?!.*\\x00).+$"
+        },
+        "changedLines": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "uniqueItems": true
+        },
+        "addedCode": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "removedCode": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "diff": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "file",
+        "changedLines",
+        "addedCode",
+        "removedCode",
+        "diff"
+      ],
+      "additionalProperties": false
+    },
+    "line": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            " ",
+            "+",
+            "-"
+          ]
+        },
+        "code": {
+          "type": "string"
+        },
+        "oldLine": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "newLine": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "kind",
+        "code",
+        "oldLine",
+        "newLine"
+      ],
+      "additionalProperties": false
+    },
+    "hunk": {
+      "type": "object",
+      "properties": {
+        "lines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/line"
+          }
+        }
+      },
+      "required": [
+        "lines"
+      ],
+      "additionalProperties": false
+    },
+    "changedFile": {
+      "type": "object",
+      "properties": {
+        "file": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*//)(?!.*\\x00).+$"
+        },
+        "changedLines": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "uniqueItems": true
+        },
+        "addedCode": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "removedCode": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "diff": {
+          "type": "string"
+        },
+        "oldFile": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*//)(?!.*\\x00).+$"
+        },
+        "hunks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/hunk"
+          }
+        }
+      },
+      "required": [
+        "file",
+        "changedLines",
+        "addedCode",
+        "removedCode",
+        "diff",
+        "hunks"
+      ],
+      "additionalProperties": false
+    },
+    "changedEntity": {
+      "type": "object",
+      "properties": {
+        "entity": {
+          "$ref": "#/$defs/entity"
+        },
+        "change": {
+          "$ref": "#/$defs/change"
+        }
+      },
+      "required": [
+        "entity",
+        "change"
+      ],
+      "additionalProperties": false
+    },
+    "path": {
+      "type": "object",
+      "properties": {
+        "target": {
+          "$ref": "#/$defs/entity"
+        },
+        "depth": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6
+        },
+        "path": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/entity"
+          },
+          "minItems": 2,
+          "maxItems": 7
+        }
+      },
+      "required": [
+        "target",
+        "depth",
+        "path"
+      ],
+      "additionalProperties": false
+    },
+    "impact": {
+      "type": "object",
+      "properties": {
+        "changedEntity": {
+          "$ref": "#/$defs/entity"
+        },
+        "change": {
+          "$ref": "#/$defs/change"
+        },
+        "directDependents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/entity"
+          }
+        },
+        "blastRadius": {
+          "type": "object",
+          "properties": {
+            "totalAffectedEntities": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "entities": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/entity"
+              }
+            },
+            "paths": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/path"
+              }
+            }
+          },
+          "required": [
+            "totalAffectedEntities",
+            "entities",
+            "paths"
+          ],
+          "additionalProperties": false
+        },
+        "terminalDependents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/entity"
+          }
+        }
+      },
+      "required": [
+        "changedEntity",
+        "change",
+        "directDependents",
+        "blastRadius",
+        "terminalDependents"
+      ],
+      "additionalProperties": false
+    },
+    "graph": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "repository": {
+          "type": "object",
+          "properties": {
+            "targetPath": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*//)(?!.*\\x00).+$"
+            },
+            "headSha": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{40}$|^[a-f0-9]{64}$"
+            },
+            "analyzerVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "generatedAt": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "targetPath",
+            "headSha",
+            "analyzerVersion"
+          ],
+          "additionalProperties": false
+        },
+        "capabilities": {
+          "type": "object",
+          "properties": {
+            "language": {
+              "const": "typescript"
+            },
+            "entityKinds": {
+              "const": [
+                "function"
+              ]
+            },
+            "relationTypes": {
+              "const": [
+                "CALLS"
+              ]
+            },
+            "maxBlastDepth": {
+              "const": 6
+            }
+          },
+          "required": [
+            "language",
+            "entityKinds",
+            "relationTypes",
+            "maxBlastDepth"
+          ],
+          "additionalProperties": false
+        },
+        "analyzedFiles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*//)(?!.*\\x00).+$"
+          },
+          "uniqueItems": true
+        },
+        "entities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/entity"
+          }
+        },
+        "relations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/relation"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "repository",
+        "capabilities",
+        "analyzedFiles",
+        "entities",
+        "relations"
+      ],
+      "additionalProperties": false
+    },
+    "comparison": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "const": "commit"
+            },
+            "requestedBase": {
+              "type": "string",
+              "minLength": 1
+            },
+            "requestedHead": {
+              "type": "string",
+              "minLength": 1
+            },
+            "resolvedBaseSha": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{40}$|^[a-f0-9]{64}$"
+            },
+            "resolvedHeadSha": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{40}$|^[a-f0-9]{64}$"
+            },
+            "comparedTo": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "mode",
+            "resolvedBaseSha",
+            "resolvedHeadSha",
+            "comparedTo"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "const": "working-tree"
+            },
+            "requestedBase": {
+              "type": "string",
+              "minLength": 1
+            },
+            "resolvedBaseSha": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{40}$|^[a-f0-9]{64}$"
+            },
+            "comparedTo": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "mode",
+            "resolvedBaseSha",
+            "comparedTo"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "sourceState": {
+      "type": "object",
+      "properties": {
+        "checkoutSha": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$|^[a-f0-9]{64}$"
+        },
+        "isTrackedDirty": {
+          "type": "boolean"
+        },
+        "untrackedSourcePolicy": {
+          "enum": [
+            "excluded",
+            "included"
+          ]
+        },
+        "contentIdentity": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "checkoutSha",
+        "isTrackedDirty",
+        "untrackedSourcePolicy",
+        "contentIdentity"
+      ],
+      "additionalProperties": false
+    },
+    "diagnostic": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$"
+        },
+        "severity": {
+          "enum": [
+            "info",
+            "warning",
+            "error"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "file": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*//)(?!.*\\x00).+$"
+        },
+        "entityId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "code",
+        "severity",
+        "message"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

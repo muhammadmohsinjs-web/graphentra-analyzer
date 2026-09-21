@@ -3,6 +3,9 @@
 # Disposable artifacts only; application-context.json is persistent and may be committed.
 .graphentra/technical-graph.json
 .graphentra/analysis.json
+.graphentra/evidence.json
+
+*.tgz
 
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 

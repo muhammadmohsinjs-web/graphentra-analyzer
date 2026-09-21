@@ -1,0 +1,4 @@
+# Ignore generated run artifacts in test-project
+.graphentra/evidence.json
+dist/
+node_modules/

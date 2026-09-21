@@ -1,0 +1,67 @@
+{
+  "artifactKind": "graphentra-evidence",
+  "schemaVersion": "2.0",
+  "analyzerVersion": "0.4.0",
+  "target": {
+    "targetPath": "."
+  },
+  "comparison": {
+    "mode": "working-tree",
+    "resolvedBaseSha": "9f874eb314b2c821365d3e8cea4be94ddc650d5a",
+    "comparedTo": "the working tree"
+  },
+  "sourceState": {
+    "checkoutSha": "9f874eb314b2c821365d3e8cea4be94ddc650d5a",
+    "isTrackedDirty": false,
+    "untrackedSourcePolicy": "included",
+    "contentIdentity": "a9c2f007596544508b781421cdf2d50f9d16109ee3e98931f09918b379f2ed13"
+  },
+  "options": {
+    "excludePaths": [],
+    "sourcePolicy": "git-tracked-and-nonignored-untracked"
+  },
+  "outcome": "no_source_files",
+  "technicalGraph": {
+    "schemaVersion": "1.0",
+    "repository": {
+      "targetPath": ".",
+      "headSha": "9f874eb314b2c821365d3e8cea4be94ddc650d5a",
+      "analyzerVersion": "0.4.0"
+    },
+    "capabilities": {
+      "language": "typescript",
+      "entityKinds": [
+        "function"
+      ],
+      "relationTypes": [
+        "CALLS"
+      ],
+      "maxBlastDepth": 6
+    },
+    "analyzedFiles": [],
+    "entities": [],
+    "relations": []
+  },
+  "changedFiles": [],
+  "changedEntities": [],
+  "impacts": [],
+  "diagnostics": [
+    {
+      "code": "NO_SOURCE_FILES",
+      "severity": "info",
+      "message": "No current supported TypeScript source files are present; deletion evidence may remain."
+    }
+  ],
+  "limitations": [
+    "Only TypeScript is analyzed.",
+    "Only named standalone function declarations are supported.",
+    "Only CALLS relationships are currently supported.",
+    "Class methods are not analyzed.",
+    "Arrow functions are not analyzed.",
+    "Dynamic calls are not analyzed.",
+    "Deleted functions have no current graph entity; renamed or ambiguous functions may lack removed-code evidence.",
+    "Overlapping function line ranges are skipped rather than sharing ambiguous evidence.",
+    "Application surfaces are not yet discovered.",
+    "Blast radius is limited to depth 6."
+  ]
+}

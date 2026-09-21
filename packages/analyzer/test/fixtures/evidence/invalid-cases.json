@@ -1,0 +1,16 @@
+[
+  {"name":"null changed entity","category":"structural","path":["changedEntities",0],"value":null},
+  {"name":"null path node","category":"structural","path":["impacts",0,"blastRadius","paths",0,"path",0],"value":null},
+  {"name":"unknown version","category":"structural","path":["schemaVersion"],"value":"99"},
+  {"name":"unknown property","category":"structural","path":["unexpected"],"value":true},
+  {"name":"invalid SHA","category":"structural","path":["sourceState","checkoutSha"],"value":"invalid"},
+  {"name":"absolute file","category":"structural","path":["technicalGraph","entities",0,"file"],"value":"/tmp/source.ts"},
+  {"name":"fractional range","category":"structural","path":["technicalGraph","entities",0,"startLine"],"value":1.5},
+  {"name":"mismatched reference","category":"invariant","path":["changedEntities",0,"entity","name"],"value":"other"},
+  {"name":"wrong depth","category":"invariant","path":["impacts",0,"blastRadius","paths",0,"depth"],"value":2},
+  {"name":"wrong affected count","category":"invariant","path":["impacts",0,"blastRadius","totalAffectedEntities"],"value":20},
+  {"name":"wrong outcome","category":"invariant","path":["outcome"],"value":"no_changes"},
+  {"name":"missing direct dependents","category":"invariant","path":["impacts",0,"directDependents"],"value":[]},
+  {"name":"missing terminal dependents","category":"invariant","path":["impacts",0,"terminalDependents"],"value":[]},
+  {"name":"wrong graph target","category":"invariant","path":["technicalGraph","repository","targetPath"],"value":"different"}
+]

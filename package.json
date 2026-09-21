@@ -1,15 +1,31 @@
 {
   "name": "graphentra-analyzer",
   "version": "1.0.0",
-  "description": "",
+  "private": true,
+  "description": "Graphentra monorepo: deterministic analyzer, reporting, visualizer, and CI adapter",
   "main": "dist/index.js",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
-    "start": "tsx src/index.ts",
-    "build": "tsc -p tsconfig.json",
-    "test": "tsx --test test/*.test.ts test/*.test.mjs",
-    "typecheck": "tsc --noEmit --target ES2022 --module commonjs --moduleResolution node --esModuleInterop --strict --skipLibCheck src/*.ts test/*.ts",
-    "analyze": "tsx src/index.ts",
-    "visualize": "tsx src/visualize.ts"
+    "start": "tsx tools/report.ts",
+    "build:analyzer": "npm run build --workspace=@graphentra/analyzer",
+    "build:reporting": "npm run build --workspace=@graphentra/reporting",
+    "build:ci-runner": "npm run build --workspace=@graphentra/ci-runner",
+    "build:visualizer": "npm run build --workspace=@graphentra/visualizer",
+    "build:root": "node tools/build-root.mjs",
+    "build": "npm run build:analyzer && npm run build:reporting && npm run build:ci-runner && npm run build:visualizer && npm run build:root",
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc --noEmit -p tsconfig.root.json",
+    "test": "npm test --workspaces --if-present && tsx --test test/integration/*.test.ts",
+    "analyze": "tsx tools/report.ts",
+    "analyze:core": "tsx packages/analyzer/src/cli.ts",
+    "report": "tsx tools/report.ts",
+    "visualize": "tsx apps/visualizer/src/visualize.ts",
+    "verify:boundaries": "node tools/verify-boundaries.mjs",
+    "verify:distribution": "node tools/verify-distribution.mjs",
+    "sync:evidence-schema": "node tools/sync-evidence-schema.mjs",
+    "verify:schema": "node tools/sync-evidence-schema.mjs --check"
   },
   "repository": {
     "type": "git",
@@ -29,6 +45,10 @@
     "typescript": "^5.8.2"
   },
   "dependencies": {
+    "@graphentra/analyzer": "*",
+    "@graphentra/reporting": "*",
+    "@graphentra/visualizer": "*",
+    "@graphentra/ci-runner": "*",
     "dotenv": "^17.4.2",
     "openai": "^7.13.0",
     "zod": "^4.6.1"

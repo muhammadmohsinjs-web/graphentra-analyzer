@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { prepareData, buildTraversal, layoutGraph, edgeKey, isTest } from '../visualizer/model.mjs';
+import { prepareData, buildTraversal, layoutGraph, edgeKey, isTest } from '../public/model.mjs';
 
 function fixture() {
   const entities = ['seed', 'left', 'right', 'shared', 'isolated'].map((name, index) => ({

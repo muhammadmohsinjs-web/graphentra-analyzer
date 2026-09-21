@@ -225,3 +225,65 @@ test('CLI reports listen failures cleanly', async t => {
     return true;
   });
 });
+
+test('visualizer prefers evidence.json and serves embedded graph and recorded impacts', async t => {
+  const validEvidence = {
+    artifactKind: 'graphentra-evidence',
+    schemaVersion: '2.0',
+    analyzerVersion: '0.4.0',
+    target: { targetPath: '.' },
+    comparison: { mode: 'commit', resolvedBaseSha: '111', resolvedHeadSha: '222', comparedTo: '`HEAD`' },
+    sourceState: { checkoutSha: '222', isTrackedDirty: false, untrackedSourcePolicy: 'excluded' },
+    outcome: 'completed',
+    technicalGraph: {
+      schemaVersion: '1.0',
+      repository: { targetPath: '.', headSha: '222', analyzerVersion: '0.4.0' },
+      capabilities: { language: 'typescript', entityKinds: ['function'], relationTypes: ['CALLS'], maxBlastDepth: 6 },
+      analyzedFiles: ['src/app.ts'],
+      entities: [{ id: 'src/app.ts#run', kind: 'function', name: 'run', file: 'src/app.ts', startLine: 1, endLine: 3 }],
+      relations: [],
+    },
+    changedFiles: [],
+    changedEntities: [{ entity: { id: 'src/app.ts#run', kind: 'function', name: 'run', file: 'src/app.ts', startLine: 1, endLine: 3 }, change: { file: 'src/app.ts', changedLines: [2], addedCode: [], removedCode: [], diff: '' } }],
+    impacts: [{ changedEntity: { id: 'src/app.ts#run', kind: 'function', name: 'run', file: 'src/app.ts', startLine: 1, endLine: 3 }, change: { file: 'src/app.ts', changedLines: [2], addedCode: [], removedCode: [], diff: '' }, directDependents: [], blastRadius: { totalAffectedEntities: 0, entities: [], paths: [] }, terminalDependents: [] }],
+    diagnostics: [],
+    limitations: [],
+  };
+
+  const { get } = await fixture(t, { 'evidence.json': validEvidence });
+  const response = await get();
+  assert.equal(response.status, 200);
+  const data = JSON.parse(response.text);
+  assert.ok(data.evidence);
+  assert.equal(data.evidence.artifactKind, 'graphentra-evidence');
+  assert.equal(data.graph.repository.headSha, '222');
+  assert.equal(data.analysis.changedEntities.length, 1);
+});
+
+test('visualizer rejects invalid evidence.json with 422 and does not fall back to analysis.json', async t => {
+  const invalidEvidence = { artifactKind: 'wrong-kind' };
+  const legacyGraph = {
+    schemaVersion: '1.0',
+    repository: { headSha: 'abc123', generatedAt: '2020-01-01T00:00:00.000Z' },
+    entities: [],
+    relations: [],
+  };
+  const legacyAnalysis = {
+    schemaVersion: '1.1',
+    repository: { headSha: 'abc123' },
+    changedFiles: [],
+    changedEntities: [],
+    impacts: [],
+  };
+
+  const { get } = await fixture(t, {
+    'evidence.json': invalidEvidence,
+    'technical-graph.json': legacyGraph,
+    'analysis.json': legacyAnalysis,
+  });
+
+  const response = await get();
+  assert.equal(response.status, 422);
+  const data = JSON.parse(response.text);
+  assert.match(data.error, /Cannot load evidence\.json/);
+});

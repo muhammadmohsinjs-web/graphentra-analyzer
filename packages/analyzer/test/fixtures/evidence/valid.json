@@ -1,0 +1,255 @@
+{
+  "artifactKind": "graphentra-evidence",
+  "schemaVersion": "2.0",
+  "analyzerVersion": "0.4.0",
+  "target": {
+    "targetPath": "."
+  },
+  "comparison": {
+    "mode": "working-tree",
+    "resolvedBaseSha": "aa315724a0400f9c90cf39b3f12d441330cef5dd",
+    "comparedTo": "the working tree"
+  },
+  "sourceState": {
+    "checkoutSha": "aa315724a0400f9c90cf39b3f12d441330cef5dd",
+    "isTrackedDirty": true,
+    "untrackedSourcePolicy": "included",
+    "contentIdentity": "893b391a4bbebfeefd216187a32ac06e12844ccc324f290e967f34320ae8369b"
+  },
+  "options": {
+    "excludePaths": [],
+    "sourcePolicy": "git-tracked-and-nonignored-untracked"
+  },
+  "outcome": "completed",
+  "technicalGraph": {
+    "schemaVersion": "1.0",
+    "repository": {
+      "targetPath": ".",
+      "headSha": "aa315724a0400f9c90cf39b3f12d441330cef5dd",
+      "analyzerVersion": "0.4.0"
+    },
+    "capabilities": {
+      "language": "typescript",
+      "entityKinds": [
+        "function"
+      ],
+      "relationTypes": [
+        "CALLS"
+      ],
+      "maxBlastDepth": 6
+    },
+    "analyzedFiles": [
+      "a.ts"
+    ],
+    "entities": [
+      {
+        "id": "a.ts#callee",
+        "kind": "function",
+        "name": "callee",
+        "file": "a.ts",
+        "startLine": 1,
+        "endLine": 3
+      },
+      {
+        "id": "a.ts#caller",
+        "kind": "function",
+        "name": "caller",
+        "file": "a.ts",
+        "startLine": 4,
+        "endLine": 6
+      }
+    ],
+    "relations": [
+      {
+        "from": "a.ts#caller",
+        "to": "a.ts#callee",
+        "type": "CALLS"
+      }
+    ]
+  },
+  "changedFiles": [
+    {
+      "file": "a.ts",
+      "oldFile": "a.ts",
+      "changedLines": [
+        2
+      ],
+      "addedCode": [
+        "  return 2;"
+      ],
+      "removedCode": [
+        "  return 1;"
+      ],
+      "diff": "diff --git a/a.ts b/a.ts\nindex 1aa8100..5050b84 100644\n--- a/a.ts\n+++ b/a.ts\n@@ -1,5 +1,5 @@\n export function callee() {\n-  return 1;\n+  return 2;\n }\n export function caller() {\n   return callee();",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "export function callee() {",
+              "oldLine": 1,
+              "newLine": 1
+            },
+            {
+              "kind": "-",
+              "code": "  return 1;",
+              "oldLine": 2,
+              "newLine": 2
+            },
+            {
+              "kind": "+",
+              "code": "  return 2;",
+              "oldLine": 3,
+              "newLine": 2
+            },
+            {
+              "kind": " ",
+              "code": "}",
+              "oldLine": 3,
+              "newLine": 3
+            },
+            {
+              "kind": " ",
+              "code": "export function caller() {",
+              "oldLine": 4,
+              "newLine": 4
+            },
+            {
+              "kind": " ",
+              "code": "  return callee();",
+              "oldLine": 5,
+              "newLine": 5
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "changedEntities": [
+    {
+      "entity": {
+        "id": "a.ts#callee",
+        "kind": "function",
+        "name": "callee",
+        "file": "a.ts",
+        "startLine": 1,
+        "endLine": 3
+      },
+      "change": {
+        "file": "a.ts",
+        "changedLines": [
+          2
+        ],
+        "addedCode": [
+          "  return 2;"
+        ],
+        "removedCode": [
+          "  return 1;"
+        ],
+        "diff": "--- a/a.ts\n+++ b/a.ts\n@@ -1,3 +1,3 @@\n export function callee() {\n-  return 1;\n+  return 2;\n }"
+      }
+    }
+  ],
+  "impacts": [
+    {
+      "changedEntity": {
+        "id": "a.ts#callee",
+        "kind": "function",
+        "name": "callee",
+        "file": "a.ts",
+        "startLine": 1,
+        "endLine": 3
+      },
+      "change": {
+        "file": "a.ts",
+        "changedLines": [
+          2
+        ],
+        "addedCode": [
+          "  return 2;"
+        ],
+        "removedCode": [
+          "  return 1;"
+        ],
+        "diff": "--- a/a.ts\n+++ b/a.ts\n@@ -1,3 +1,3 @@\n export function callee() {\n-  return 1;\n+  return 2;\n }"
+      },
+      "directDependents": [
+        {
+          "id": "a.ts#caller",
+          "kind": "function",
+          "name": "caller",
+          "file": "a.ts",
+          "startLine": 4,
+          "endLine": 6
+        }
+      ],
+      "blastRadius": {
+        "totalAffectedEntities": 1,
+        "entities": [
+          {
+            "id": "a.ts#caller",
+            "kind": "function",
+            "name": "caller",
+            "file": "a.ts",
+            "startLine": 4,
+            "endLine": 6
+          }
+        ],
+        "paths": [
+          {
+            "target": {
+              "id": "a.ts#caller",
+              "kind": "function",
+              "name": "caller",
+              "file": "a.ts",
+              "startLine": 4,
+              "endLine": 6
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "a.ts#callee",
+                "kind": "function",
+                "name": "callee",
+                "file": "a.ts",
+                "startLine": 1,
+                "endLine": 3
+              },
+              {
+                "id": "a.ts#caller",
+                "kind": "function",
+                "name": "caller",
+                "file": "a.ts",
+                "startLine": 4,
+                "endLine": 6
+              }
+            ]
+          }
+        ]
+      },
+      "terminalDependents": [
+        {
+          "id": "a.ts#caller",
+          "kind": "function",
+          "name": "caller",
+          "file": "a.ts",
+          "startLine": 4,
+          "endLine": 6
+        }
+      ]
+    }
+  ],
+  "diagnostics": [],
+  "limitations": [
+    "Only TypeScript is analyzed.",
+    "Only named standalone function declarations are supported.",
+    "Only CALLS relationships are currently supported.",
+    "Class methods are not analyzed.",
+    "Arrow functions are not analyzed.",
+    "Dynamic calls are not analyzed.",
+    "Deleted functions have no current graph entity; renamed or ambiguous functions may lack removed-code evidence.",
+    "Overlapping function line ranges are skipped rather than sharing ambiguous evidence.",
+    "Application surfaces are not yet discovered.",
+    "Blast radius is limited to depth 6."
+  ]
+}

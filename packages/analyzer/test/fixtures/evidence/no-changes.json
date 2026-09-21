@@ -1,0 +1,86 @@
+{
+  "artifactKind": "graphentra-evidence",
+  "schemaVersion": "2.0",
+  "analyzerVersion": "0.4.0",
+  "target": {
+    "targetPath": "."
+  },
+  "comparison": {
+    "mode": "working-tree",
+    "resolvedBaseSha": "aa315724a0400f9c90cf39b3f12d441330cef5dd",
+    "comparedTo": "the working tree"
+  },
+  "sourceState": {
+    "checkoutSha": "aa315724a0400f9c90cf39b3f12d441330cef5dd",
+    "isTrackedDirty": false,
+    "untrackedSourcePolicy": "included",
+    "contentIdentity": "c3e67fe751cd1a169eca99d263798845d61320caf2ec5f6ad28fa3aea70617d3"
+  },
+  "options": {
+    "excludePaths": [],
+    "sourcePolicy": "git-tracked-and-nonignored-untracked"
+  },
+  "outcome": "no_changes",
+  "technicalGraph": {
+    "schemaVersion": "1.0",
+    "repository": {
+      "targetPath": ".",
+      "headSha": "aa315724a0400f9c90cf39b3f12d441330cef5dd",
+      "analyzerVersion": "0.4.0"
+    },
+    "capabilities": {
+      "language": "typescript",
+      "entityKinds": [
+        "function"
+      ],
+      "relationTypes": [
+        "CALLS"
+      ],
+      "maxBlastDepth": 6
+    },
+    "analyzedFiles": [
+      "a.ts"
+    ],
+    "entities": [
+      {
+        "id": "a.ts#callee",
+        "kind": "function",
+        "name": "callee",
+        "file": "a.ts",
+        "startLine": 1,
+        "endLine": 3
+      },
+      {
+        "id": "a.ts#caller",
+        "kind": "function",
+        "name": "caller",
+        "file": "a.ts",
+        "startLine": 4,
+        "endLine": 6
+      }
+    ],
+    "relations": [
+      {
+        "from": "a.ts#caller",
+        "to": "a.ts#callee",
+        "type": "CALLS"
+      }
+    ]
+  },
+  "changedFiles": [],
+  "changedEntities": [],
+  "impacts": [],
+  "diagnostics": [],
+  "limitations": [
+    "Only TypeScript is analyzed.",
+    "Only named standalone function declarations are supported.",
+    "Only CALLS relationships are currently supported.",
+    "Class methods are not analyzed.",
+    "Arrow functions are not analyzed.",
+    "Dynamic calls are not analyzed.",
+    "Deleted functions have no current graph entity; renamed or ambiguous functions may lack removed-code evidence.",
+    "Overlapping function line ranges are skipped rather than sharing ambiguous evidence.",
+    "Application surfaces are not yet discovered.",
+    "Blast radius is limited to depth 6."
+  ]
+}

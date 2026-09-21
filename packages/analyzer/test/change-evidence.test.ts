@@ -1,16 +1,24 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { extractEntityChange, getFunctionRanges, parseGitDiff } from '../src/change-evidence';
+import {
+  extractEntityChange,
+  getFunctionRanges,
+  parseGitDiff,
+} from '../src/change-evidence';
 
-const header = 'diff --git a/src/service.ts b/src/service.ts\n--- a/src/service.ts\n+++ b/src/service.ts\n';
+const header =
+  'diff --git a/src/service.ts b/src/service.ts\n--- a/src/service.ts\n+++ b/src/service.ts\n';
 
 test('separate hunks isolate getCatalog line 16 from checkout line 150', () => {
-  const [file] = parseGitDiff(header + `@@ -16 +16 @@ unrelated heading checkout
+  const [file] = parseGitDiff(
+    header +
+      `@@ -16 +16 @@ unrelated heading checkout
 -} else if (prod.stock <= 5) {
 +} else if (prod.stock <= 10) {
 @@ -150 +150 @@ getCatalog
 -if (cart.items.length === 0) {
-+if (cart.items.length === 50) {`);
++if (cart.items.length === 50) {`,
+  );
   const catalog = { name: 'getCatalog', startLine: 10, endLine: 30 };
   const checkout = { name: 'checkout', startLine: 140, endLine: 170 };
   const catalogChange = extractEntityChange(file, catalog, catalog)!;
@@ -26,9 +34,12 @@ test('separate hunks isolate getCatalog line 16 from checkout line 150', () => {
 });
 
 test('one shared hunk clips neighboring functions and their unchanged context', () => {
-  const before = 'function getCatalog() {\n  return stock <= 5;\n}\nfunction checkout() {\n  return cart.items.length === 0;\n}';
+  const before =
+    'function getCatalog() {\n  return stock <= 5;\n}\nfunction checkout() {\n  return cart.items.length === 0;\n}';
   const after = before.replace('<= 5', '<= 10').replace('=== 0', '=== 50');
-  const [file] = parseGitDiff(header + `@@ -1,6 +1,6 @@
+  const [file] = parseGitDiff(
+    header +
+      `@@ -1,6 +1,6 @@
  function getCatalog() {
 -  return stock <= 5;
 +  return stock <= 10;
@@ -36,28 +47,37 @@ test('one shared hunk clips neighboring functions and their unchanged context', 
  function checkout() {
 -  return cart.items.length === 0;
 +  return cart.items.length === 50;
- }`);
+ }`,
+  );
   const old = getFunctionRanges(file.file, before);
   const current = getFunctionRanges(file.file, after);
   const catalog = extractEntityChange(file, current[0], old[0])!;
   const checkout = extractEntityChange(file, current[1], old[1])!;
-  assert.equal(catalog.diff, '--- a/src/service.ts\n+++ b/src/service.ts\n@@ -1,3 +1,3 @@\n function getCatalog() {\n-  return stock <= 5;\n+  return stock <= 10;\n }');
+  assert.equal(
+    catalog.diff,
+    '--- a/src/service.ts\n+++ b/src/service.ts\n@@ -1,3 +1,3 @@\n function getCatalog() {\n-  return stock <= 5;\n+  return stock <= 10;\n }',
+  );
   assert.doesNotMatch(JSON.stringify(catalog), /checkout|cart/);
   assert.doesNotMatch(JSON.stringify(checkout), /getCatalog|stock/);
 });
 
 test('old coordinates attribute a deletion after an earlier insertion shifts function lines', () => {
-  const [file] = parseGitDiff(header + `@@ -1,0 +2,2 @@
+  const [file] = parseGitDiff(
+    header +
+      `@@ -1,0 +2,2 @@
 +const unrelatedA = 1;
 +const unrelatedB = 2;
 @@ -10,4 +12,3 @@
  function checkout() {
 -  rejectEmptyCart();
    charge();
- }`);
-  const change = extractEntityChange(file,
+ }`,
+  );
+  const change = extractEntityChange(
+    file,
     { name: 'checkout', startLine: 12, endLine: 14 },
-    { name: 'checkout', startLine: 10, endLine: 13 })!;
+    { name: 'checkout', startLine: 10, endLine: 13 },
+  )!;
   assert.deepEqual(change.changedLines, [13]);
   assert.deepEqual(change.addedCode, []);
   assert.deepEqual(change.removedCode, ['  rejectEmptyCart();']);
@@ -66,27 +86,40 @@ test('old coordinates attribute a deletion after an earlier insertion shifts fun
 });
 
 test('deleting a whole function does not mark its surviving neighbor changed', () => {
-  const [file] = parseGitDiff(header + `@@ -1,4 +1 @@
+  const [file] = parseGitDiff(
+    header +
+      `@@ -1,4 +1 @@
 -function removed() {
 -  checkout();
 -}
- function checkout() {}`);
-  assert.equal(extractEntityChange(file,
-    { name: 'checkout', startLine: 1, endLine: 1 },
-    { name: 'checkout', startLine: 4, endLine: 4 }), undefined);
+ function checkout() {}`,
+  );
+  assert.equal(
+    extractEntityChange(
+      file,
+      { name: 'checkout', startLine: 1, endLine: 1 },
+      { name: 'checkout', startLine: 4, endLine: 4 },
+    ),
+    undefined,
+  );
 });
 
 test('a deletion outside the function cannot contaminate an adjacent replacement', () => {
-  const [file] = parseGitDiff(header + `@@ -1,5 +1,4 @@
+  const [file] = parseGitDiff(
+    header +
+      `@@ -1,5 +1,4 @@
 -const unrelatedSecret = 50;
  function getCatalog() {
 -  return stock <= 5;
 +  return stock <= 10;
  }
- function checkout() {}`);
-  const change = extractEntityChange(file,
+ function checkout() {}`,
+  );
+  const change = extractEntityChange(
+    file,
     { name: 'getCatalog', startLine: 1, endLine: 3 },
-    { name: 'getCatalog', startLine: 2, endLine: 4 })!;
+    { name: 'getCatalog', startLine: 2, endLine: 4 },
+  )!;
   assert.deepEqual(change.removedCode, ['  return stock <= 5;']);
   assert.deepEqual(change.changedLines, [2]);
   assert.doesNotMatch(change.diff, /unrelatedSecret|checkout/);
@@ -99,7 +132,11 @@ test('new files and zero-count insertion hunks retain only each new function', (
 @@ -0,0 +1,2 @@
 +function getCatalog() { return 10; }
 +function checkout() { return 50; }`);
-  const change = extractEntityChange(file, { name: 'getCatalog', startLine: 1, endLine: 1 }, undefined)!;
+  const change = extractEntityChange(
+    file,
+    { name: 'getCatalog', startLine: 1, endLine: 1 },
+    undefined,
+  )!;
   assert.deepEqual(change.changedLines, [1]);
   assert.deepEqual(change.removedCode, []);
   assert.match(change.diff, /@@ -0,0 \+1,1 @@/);
@@ -117,9 +154,11 @@ test('header-like changed code is not mistaken for file metadata', () => {
 
 test('zero-context deletion uses the next new line and retains correct patch coordinates', () => {
   const [file] = parseGitDiff(header + '@@ -3 +2,0 @@\n-  rejectEmptyCart();');
-  const change = extractEntityChange(file,
+  const change = extractEntityChange(
+    file,
     { name: 'checkout', startLine: 1, endLine: 4 },
-    { name: 'checkout', startLine: 1, endLine: 5 })!;
+    { name: 'checkout', startLine: 1, endLine: 5 },
+  )!;
   assert.deepEqual(change.changedLines, [3]);
   assert.match(change.diff, /@@ -3,1 \+2,0 @@/);
 });
@@ -135,5 +174,20 @@ test('replacement blocks spanning adjacent functions retain paired old/new coord
     const change = extractEntityChange(file, range, range)!;
     assert.match(change.diff, new RegExp(`@@ -${line},1 \\+${line},1 @@`));
     assert.doesNotMatch(change.diff, new RegExp(`function ${name === 'a' ? 'b' : 'a'}`));
+  }
+});
+test('Git patch paths preserve spaces and decode octal UTF-8 escapes', () => {
+  const headers = [
+    ['a/space file.ts\t', 'space file.ts'],
+    ['a/trailing.ts \t', 'trailing.ts '],
+    ['"a/tab\\tfile.ts"', 'tab\tfile.ts'],
+    ['"a/quote\\"file.ts"', 'quote"file.ts'],
+    ['"a/back\\\\slash.ts"', 'back\\slash.ts'],
+    ['"a/\\303\\251.ts"', 'é.ts'],
+  ];
+  for (const [header, expected] of headers) {
+    const parsed = parseGitDiff(`diff --git unused unused\n--- ${header}\n+++ ${header}\n@@ -1 +1 @@\n-before\n+after\n`);
+    assert.equal(parsed[0]?.file, expected);
+    assert.equal(parsed[0]?.oldFile, expected);
   }
 });

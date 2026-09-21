@@ -1,0 +1,9 @@
+{
+  "name": "graphentra-test-project",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sample TypeScript test project for Graphentra Analyzer scenario testing",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}

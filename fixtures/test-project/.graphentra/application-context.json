@@ -1,0 +1,158 @@
+{
+  "schemaVersion": "1.0",
+  "application": {
+    "name": "TypeScript order checkout sample",
+    "summary": "A small TypeScript application simulating an e-commerce checkout flow. It validates/reserves inventory, calculates order pricing with discount and tax, processes a simulated card payment, sends order confirmation email, and returns checkout status. Tests exercise order submission, checkout handling, pricing, and ZIP validation.",
+    "purpose": "Demonstrate an order-processing pipeline across inventory, pricing, billing, notifications, and utility modules."
+  },
+  "domains": [
+    {
+      "id": "order-checkout",
+      "name": "Order checkout orchestration",
+      "description": "Coordinates stock reservation, pricing, payment, and confirmation into submitOrder and handleCheckout."
+    },
+    {
+      "id": "inventory",
+      "name": "Inventory / stock reservation",
+      "description": "Normalizes SKUs, checks inventory, and reserves stock for an order."
+    },
+    {
+      "id": "pricing",
+      "name": "Pricing / tax / discount",
+      "description": "Calculates tax, applies discounts, and computes a formatted order total."
+    },
+    {
+      "id": "billing",
+      "name": "Billing / payments",
+      "description": "Simulates card charging and payment processing."
+    },
+    {
+      "id": "notifications",
+      "name": "Notifications / email",
+      "description": "Simulates sending order confirmations and payment receipts."
+    },
+    {
+      "id": "utilities",
+      "name": "Formatting / utility functions",
+      "description": "Provides currency rounding/formatting, slug generation, and ID generation."
+    },
+    {
+      "id": "standalone-helpers",
+      "name": "Validation / standalone helpers",
+      "description": "Provides ZIP validation, string hashing, and query-string parsing."
+    },
+    {
+      "id": "tests",
+      "name": "Tests",
+      "description": "Test functions that call order, pricing, and ZIP validation functions."
+    }
+  ],
+  "terminology": [
+    {
+      "term": "cartId",
+      "meaning": "Identifier for the cart or order being checked out."
+    },
+    {
+      "term": "SKU",
+      "meaning": "Stock-keeping unit used to identify inventory items."
+    },
+    {
+      "term": "quantity",
+      "meaning": "Number of units requested for a SKU."
+    },
+    {
+      "term": "price",
+      "meaning": "Unit price used to compute subtotal."
+    },
+    {
+      "term": "cardToken",
+      "meaning": "Simulated payment token representing a card."
+    },
+    {
+      "term": "subtotal",
+      "meaning": "price multiplied by quantity before discount and tax."
+    },
+    {
+      "term": "discountPercentage",
+      "meaning": "Percentage discount applied to subtotal."
+    },
+    {
+      "term": "taxRate",
+      "meaning": "Tax rate as a decimal between 0 and 1."
+    },
+    {
+      "term": "order total",
+      "meaning": "Discounted subtotal plus tax, formatted as currency."
+    },
+    {
+      "term": "stock reservation",
+      "meaning": "Successfully checking and holding inventory for an order."
+    },
+    {
+      "term": "payment success",
+      "meaning": "Simulated successful card charge."
+    },
+    {
+      "term": "order confirmation",
+      "meaning": "Email notifying the customer that an order was placed."
+    },
+    {
+      "term": "receipt",
+      "meaning": "Email documenting payment received."
+    },
+    {
+      "term": "invoice",
+      "meaning": "Summary of an invoice amount."
+    },
+    {
+      "term": "ORDER_PLACED",
+      "meaning": "Checkout success status string, suffixed with cartId."
+    },
+    {
+      "term": "ORDER_FAILED",
+      "meaning": "Checkout failure status string."
+    },
+    {
+      "term": "ZIP code",
+      "meaning": "US postal code in 5-digit or ZIP+4 format."
+    }
+  ],
+  "entityAnnotations": [
+    {
+      "entityId": "src/utils.ts#roundToTwo",
+      "businessMeaning": "Rounds a numeric amount to two decimal places.",
+      "domainIds": [
+        "utilities"
+      ],
+      "confidence": "high"
+    }
+  ],
+  "applicationFacts": [
+    "The deterministic CALLS graph shows submitOrder as the central checkout orchestrator.",
+    "submitOrder first reserves stock; if reserveStock returns false, submitOrder returns false immediately.",
+    "submitOrder computes subtotal as price * quantity.",
+    "submitOrder calls calculateOrderTotal(subtotal, 0, 0.08), meaning no discount and an 8% tax rate.",
+    "submitOrder processes payment using the pre-tax subtotal, not the formatted tax-inclusive total.",
+    "submitOrder sends order confirmation to hard-coded 'customer@example.com' using cartId and the formatted total.",
+    "submitOrder ignores the boolean result returned by sendOrderConfirmation.",
+    "handleCheckout calls submitOrder and returns 'ORDER_PLACED:<cartId>' on success or 'ORDER_FAILED' on failure.",
+    "chargeCard returns false for missing cardToken or amount <= 1; otherwise returns true.",
+    "checkInventory sanitizes the SKU, rejects empty SKUs or quantity <= 0, and allows quantity <= 100.",
+    "reserveStock only succeeds if checkInventory succeeds.",
+    "sendEmail requires the recipient to contain '@' and the subject to be non-empty.",
+    "calculateTax throws if taxRate is less than 0 or greater than 1.",
+    "applyDiscount returns the subtotal unchanged when discountPercentage <= 0.",
+    "calculateOrderTotal returns a formatted currency string, not a numeric total.",
+    "formatCurrency rounds the amount to two decimals and returns a '$'-prefixed string.",
+    "validateZipCode accepts 5-digit ZIP codes and ZIP+4 codes.",
+    "Several functions have no incoming CALLS edges in the provided graph: slugify, generateId, renderInvoiceSummary, sendReceiptEmail, hashString, and parseQueryString. Their external usage is unknown."
+  ],
+  "unknowns": [
+    "No database, persistence layer, or data model is shown.",
+    "No real payment gateway, email provider, inventory service, or product catalog is shown.",
+    "No application entry point, framework, or runtime configuration is shown.",
+    "The source of the hard-coded tax rate 0.08 and inventory limit 100 is not shown.",
+    "Whether payment should be based on subtotal or final tax-inclusive total is ambiguous from the source.",
+    "External usage of exported or unlinked functions is unknown from the deterministic graph."
+  ]
+}
