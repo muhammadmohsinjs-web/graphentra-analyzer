@@ -11,6 +11,56 @@ import {
   DEFAULT_OPENROUTER_MODEL, type LLMClientOptions,
 } from '@graphentra/reporting';
 
+const loaderFrames = ['✦', '✧', '✦', '✧'];
+const loaderColors = ['\u001b[38;5;213m', '\u001b[38;5;177m', '\u001b[38;5;141m', '\u001b[38;5;105m'];
+const resetColor = '\u001b[0m';
+const clearLine = '\u001b[2K';
+
+async function withLLMLoader<T>(label: string, model: string, operation: () => Promise<T>): Promise<T> {
+  const interactive = Boolean(process.stderr.isTTY);
+  const color = interactive && !process.env.NO_COLOR;
+  let frame = 0;
+  const startedAt = Date.now();
+  const render = () => {
+    const symbol = loaderFrames[frame % loaderFrames.length];
+    const tint = color ? loaderColors[frame % loaderColors.length] : '';
+    const reset = color ? resetColor : '';
+    process.stderr.write(`\r${clearLine}${tint}${symbol}${reset} LLM triggered · ${label} · ${model}…`);
+    frame += 1;
+  };
+
+  if (interactive) {
+    render();
+  } else {
+    process.stderr.write(`LLM triggered · ${label} · ${model}\n`);
+  }
+  const timer = interactive ? setInterval(render, 120) : undefined;
+
+  try {
+    const result = await operation();
+    if (timer) clearInterval(timer);
+    const duration = ((Date.now() - startedAt) / 1000).toFixed(1);
+    if (interactive) {
+      const tint = color ? '\u001b[38;5;114m' : '';
+      const reset = color ? resetColor : '';
+      process.stderr.write(`\r${clearLine}${tint}✓${reset} LLM completed · ${label} · ${duration}s\n`);
+    } else {
+      process.stderr.write(`LLM completed · ${label} · ${duration}s\n`);
+    }
+    return result;
+  } catch (error) {
+    if (timer) clearInterval(timer);
+    if (interactive) {
+      const tint = color ? '\u001b[38;5;203m' : '';
+      const reset = color ? resetColor : '';
+      process.stderr.write(`\r${clearLine}${tint}✗${reset} LLM failed · ${label}\n`);
+    } else {
+      process.stderr.write(`LLM failed · ${label}\n`);
+    }
+    throw error;
+  }
+}
+
 export async function runReport(argv: string[] = process.argv.slice(2), dependencies: {
   llmOptions?: LLMClientOptions;
   environment?: NodeJS.ProcessEnv;
@@ -64,15 +114,20 @@ export async function runReport(argv: string[] = process.argv.slice(2), dependen
     };
     // Existing context is validated before any whole-source read.
     let sourceFiles: Array<{ path: string; content: string }> | undefined;
+    const generateContext = !fs.existsSync(contextPath) && options.generateContext;
     if (!fs.existsSync(contextPath) && options.generateContext) {
       console.log('Generating application context sends all eligible TypeScript source to the configured provider.');
       sourceFiles = result.technicalGraph.analyzedFiles.map(file => ({ path: file, content: fs.readFileSync(path.join(target, file), 'utf8') }));
       const current = analyzeRepository({ target, comparison });
       if (current.evidence.sourceState.contentIdentity !== result.evidence.sourceState.contentIdentity) throw new Error('Source changed before context generation.');
     }
-    const context = await getOrCreateApplicationContext({ contextDirectory: directory, technicalGraph: result.technicalGraph,
+    const contextRequest = () => getOrCreateApplicationContext({ contextDirectory: directory, technicalGraph: result.technicalGraph,
       sourceFiles, generateContext: options.generateContext, llmOptions });
-    const report = await generateQAReport(result.evidence, context, llmOptions);
+    const context = generateContext
+      ? await withLLMLoader('application context', llmOptions.model ?? DEFAULT_OPENROUTER_MODEL, contextRequest)
+      : await contextRequest();
+    const report = await withLLMLoader('QA impact report', llmOptions.model ?? DEFAULT_OPENROUTER_MODEL,
+      () => generateQAReport(result.evidence, context, llmOptions));
     const legacy = buildLegacyAnalysisResult({ headSha: result.evidence.sourceState.checkoutSha,
       evidenceIdentity: report.evidenceIdentity, changedFiles: result.changedFiles,
       changedEntities: result.changedEntities, impacts: result.impacts, qaReport: report.qaReport });
