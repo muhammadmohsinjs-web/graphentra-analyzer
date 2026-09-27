@@ -12,7 +12,8 @@ import { buildImpact, findChangedEntities } from './impact';
 import { DEFAULT_LIMITATIONS } from './output';
 import { captureSourceSnapshot } from './source-snapshot';
 import { createRepositoryContext } from './repository';
-import { extractTechnicalGraph, isTypeScriptFile } from './technical-graph';
+import { extractTechnicalGraph, isTypeScriptFile, type ExtractedGraph } from './technical-graph';
+import { APPLICATION_MAP_SCHEMA_VERSION, extractApplicationMap, type ApplicationMap } from './application-map';
 import { assertValidEvidenceEnvelope } from './validator';
 
 export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
@@ -85,10 +86,42 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
   };
   snapshot.verify();
   assertValidEvidenceEnvelope(evidence);
+  const applicationMap = buildApplicationMap(extracted, repo.projectRoot, headSha);
   const summaryMessage = outcome === 'completed' ? `Deterministic impact evidence built for ${impacts.length} changed functions.`
     : outcome === 'no_changes' ? 'No changes were found in the included target scope.'
     : outcome === 'no_source_files' ? 'No TypeScript files were found in the target repository.'
     : 'Changes did not match supported current function declarations.';
-  return { outcome, technicalGraph: extracted.technicalGraph, evidence, changedFiles, changedEntities,
+  return { outcome, technicalGraph: extracted.technicalGraph, evidence, applicationMap, changedFiles, changedEntities,
     impacts, gitDiff, diagnostics, summaryMessage };
+}
+
+function emptyApplicationMap(headSha: string, reason?: string): ApplicationMap {
+  return {
+    schemaVersion: APPLICATION_MAP_SCHEMA_VERSION, analyzerVersion: ANALYZER_VERSION, headSha,
+    platform: { frontend: false, backend: false, frameworks: [] },
+    surfaces: [], navigation: [], requests: [], e2eFlows: [], relations: [], entityFingerprints: {},
+    limitations: reason ? [reason] : [],
+  };
+}
+
+/** The application map is best-effort: a failure never blocks deterministic evidence. */
+function buildApplicationMap(extracted: ExtractedGraph, projectRoot: string, headSha: string): ApplicationMap {
+  if (!extracted.program || !extracted.checker || !extracted.symbolToEntity || !extracted.toProjectPath) return emptyApplicationMap(headSha);
+  try {
+    return extractApplicationMap({
+      program: extracted.program, checker: extracted.checker, symbolToEntity: extracted.symbolToEntity,
+      entities: extracted.entities, relations: extracted.relations, files: extracted.files,
+      toProjectPath: extracted.toProjectPath, projectRoot, headSha,
+    });
+  } catch (error) {
+    return emptyApplicationMap(headSha, `Application map extraction failed: ${error instanceof Error ? error.message : 'unknown error'}`);
+  }
+}
+
+/** Project-relative inventory (tracked + non-ignored untracked) used for business-signal collection. */
+export function listProjectFiles(options: Pick<AnalyzeOptions, 'target' | 'comparison' | 'excludePaths' | 'gitTimeoutMs'>): string[] {
+  const repo = createRepositoryContext(options.target, options.comparison, {
+    gitTimeoutMs: options.gitTimeoutMs, excludePaths: options.excludePaths,
+  });
+  return [...new Set([...repo.listFiles(), ...repo.listFiles(true)])].sort();
 }

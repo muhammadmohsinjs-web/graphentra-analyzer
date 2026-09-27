@@ -60,12 +60,28 @@ async function main() {
   if (typeof qa?.summary === 'string') {
     $('qa-content').append(text('p', qa.summary));
     const columns = text('div', '', 'qa-columns');
-    for (const [title, values] of [['Key changes', qa.keyChanges], ['Suggested checks', qa.qaChecks]]) {
+    const areas = Array.isArray(qa.testAreas) ? qa.testAreas.filter(area => typeof area?.area === 'string') : [];
+    const sections = areas.length ? [['Key changes', qa.keyChanges]] : [['Key changes', qa.keyChanges], ['Suggested checks', qa.qaChecks]];
+    for (const [title, values] of sections) {
       const section = text('section', '');
       section.append(text('h3', title));
       const list = text('ul', '');
       list.append(...(Array.isArray(values) ? values : []).filter(value => typeof value === 'string').map(value => text('li', value)));
       section.append(list);
+      columns.append(section);
+    }
+    if (areas.length) {
+      const section = text('section', '');
+      section.append(text('h3', 'Where and what to test'));
+      for (const area of areas) {
+        section.append(text('h4', area.area));
+        for (const [label, value] of [['How to reach', area.howToReach], ['Access', area.access], ['Setup', area.setup]]) {
+          if (typeof value === 'string' && value) section.append(text('p', `${label}: ${value}`));
+        }
+        const list = text('ul', '');
+        list.append(...(Array.isArray(area.checks) ? area.checks : []).filter(value => typeof value === 'string').map(value => text('li', value)));
+        section.append(list);
+      }
       columns.append(section);
     }
     $('qa-content').append(columns);
@@ -344,7 +360,11 @@ async function main() {
     const annotation = model.context?.entityAnnotations?.find(item => item?.entityId === selected);
     if (typeof annotation?.businessMeaning === 'string') {
       const section = text('section', '', 'evidence-section');
-      section.append(text('h3', 'Business context / AI annotation'), text('p', annotation.businessMeaning), text('p', `Annotation confidence: ${annotation.confidence ?? 'unknown'}. Not a regression-risk score; context may be stale.`));
+      section.append(text('h3', 'Business context / AI annotation'), text('p', annotation.businessMeaning));
+      if (typeof annotation.userVisibleEffect === 'string' && annotation.userVisibleEffect) section.append(text('p', `Visible effect: ${annotation.userVisibleEffect}`));
+      const features = (model.context?.features ?? []).filter(feature => (annotation.featureIds ?? []).includes(feature?.id));
+      if (features.length) section.append(text('p', `Feature: ${features.map(feature => `${feature.name} (${feature.criticality})`).join(', ')}`));
+      section.append(text('p', `Annotation confidence: ${annotation.confidence ?? 'unknown'}${annotation.basis ? `, basis: ${annotation.basis}` : ''}. Not a regression-risk score; context may be stale.`));
       root.append(section);
     }
   }

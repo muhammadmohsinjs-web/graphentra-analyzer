@@ -9,3 +9,6 @@ export * from './cli-options';
 export * from './errors';
 export * from './validator';
 export * from './deterministic';
+export * from './application-map';
+export * from './business-signals';
+export { isTestPath, routeMatcher } from './application-map-ast';

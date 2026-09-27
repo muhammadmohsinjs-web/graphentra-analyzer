@@ -1,3 +1,5 @@
+import type { ApplicationMap } from './application-map';
+
 export const ANALYZER_VERSION: string = require('../package.json').version;
 export const EVIDENCE_SCHEMA_VERSION = '2.0';
 export const EVIDENCE_ARTIFACT_KIND = 'graphentra-evidence';
@@ -173,6 +175,8 @@ export interface AnalyzeResult {
   outcome: AnalysisOutcome;
   technicalGraph: TechnicalGraph;
   evidence: DeterministicEvidence;
+  /** Derived product-facing map (surfaces, navigation, flows). Not part of the evidence identity. */
+  applicationMap: ApplicationMap;
   changedFiles: ChangedFile[];
   changedEntities: ChangedEntity[];
   impacts: EntityImpact[];

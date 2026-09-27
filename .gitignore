@@ -4,6 +4,8 @@
 .graphentra/technical-graph.json
 .graphentra/analysis.json
 .graphentra/evidence.json
+.graphentra/application-map.json
+.graphentra/application-context.previous.json
 
 *.tgz
 
@@ -49,3 +51,5 @@ yarn-error.*
 /ios
 /android
 .env
+
+reports.db

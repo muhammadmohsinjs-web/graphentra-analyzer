@@ -106,6 +106,11 @@ export interface ExtractedGraph {
   entityById: Map<string, Entity>;
   reverseAdjacency: Map<string, Relation[]>;
   files: string[];
+  /** Compiler state shared with derived deterministic extractors (application map). */
+  program?: ts.Program;
+  checker?: ts.TypeChecker;
+  symbolToEntity?: Map<ts.Symbol, Entity>;
+  toProjectPath?: (fileName: string) => string;
 }
 
 export function extractTechnicalGraph(options: {
@@ -281,5 +286,9 @@ export function extractTechnicalGraph(options: {
     entityById,
     reverseAdjacency,
     files,
+    program,
+    checker,
+    symbolToEntity,
+    toProjectPath: normalizeProjectPath,
   };
 }

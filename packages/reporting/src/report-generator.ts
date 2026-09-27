@@ -1,11 +1,12 @@
 import { assertValidEvidenceEnvelope, computeDeterministicEvidenceIdentity } from '@graphentra/analyzer';
-import { assertApplicationContext } from './application-context';
 import type {
+  ApplicationMap,
   ChangedEntity,
   ChangedFile,
   EntityImpact,
 } from '@graphentra/analyzer';
-import type { ApplicationContext, LegacyAnalysisResult } from './contracts';
+import { loadApplicationContext } from './context-contract';
+import type { LegacyAnalysisResult } from './contracts';
 import {
   formatImpactReport,
   generateImpactReport,
@@ -18,21 +19,33 @@ export interface GenerateReportResult {
   evidenceIdentity: string;
   qaReport: ImpactReport;
   markdownReport: string;
+  /** Non-fatal notes about the application context (migration, stale entries). */
+  contextWarnings: string[];
+}
+
+export interface GenerateReportExtras {
+  /** Deterministic application map from the same analysis run; enables where/how-to-test guidance. */
+  applicationMap?: ApplicationMap;
 }
 
 export async function generateQAReport(
   evidence: unknown,
   applicationContext: unknown,
   options?: LLMClientOptions,
+  extras: GenerateReportExtras = {},
 ): Promise<GenerateReportResult> {
   assertValidEvidenceEnvelope(evidence);
-  const context = assertApplicationContext(applicationContext, evidence.technicalGraph);
+  const { context, warnings } = loadApplicationContext(applicationContext, evidence.technicalGraph);
   const evidenceIdentity = computeDeterministicEvidenceIdentity(evidence);
-  const payload = buildLLMPayload(evidence.impacts, context);
+  const applicationMap = extras.applicationMap && extras.applicationMap.schemaVersion === '1.0' ? extras.applicationMap : undefined;
+  const payload = buildLLMPayload(evidence.impacts, context, {
+    applicationMap, relations: evidence.technicalGraph.relations, contextWarnings: warnings,
+  });
   const qaReport = await generateImpactReport({
     instruction: qaInstruction,
     evidence: payload,
     options,
+    allowedSurfaceIds: payload.applicationContext.allowedSurfaceIds,
   });
 
   const markdownReport = `# Graphentra QA Impact Report\n\nEvidence Identity: ${evidenceIdentity}\n\n${formatImpactReport(qaReport)}`;
@@ -41,6 +54,7 @@ export async function generateQAReport(
     evidenceIdentity,
     qaReport,
     markdownReport,
+    contextWarnings: warnings,
   };
 }
 
@@ -72,7 +86,7 @@ export function buildLegacyAnalysisResult(options: {
       'Dynamic calls are not analyzed.',
       'Deleted functions have no current graph entity; renamed or ambiguous functions may lack removed-code evidence.',
       'Overlapping function line ranges are skipped rather than sharing ambiguous evidence.',
-      'Application surfaces are not yet discovered.',
+      'Application surfaces come from static routing patterns; see application-map.json.',
       'Blast radius is limited to depth 6.',
     ],
   };

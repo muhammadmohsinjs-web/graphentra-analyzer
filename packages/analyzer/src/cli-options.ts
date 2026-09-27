@@ -9,6 +9,7 @@ export interface CliOptions {
   help?: boolean;
   version?: boolean;
   generateContext?: boolean;
+  refreshContext?: boolean;
 }
 
 const valueOptions = new Set(['target', 'base', 'head', 'report', 'output']);
@@ -36,7 +37,7 @@ export function parseCliOptions(args: string[], configuration: { reporting?: boo
     const name = argument.slice(2, separator === -1 ? undefined : separator);
 
     if (name === 'report' && !configuration.reporting) throw new Error('--report is a QA reporting option. Use npm run report.');
-    if (flagOptions.has(name) || (configuration.reporting && name === 'generate-context')) {
+    if (flagOptions.has(name) || (configuration.reporting && (name === 'generate-context' || name === 'refresh-context'))) {
       if (separator !== -1) {
         throw new Error(`Option --${name} does not take a value.`);
       }
@@ -97,6 +98,7 @@ export function parseCliOptions(args: string[], configuration: { reporting?: boo
   }
 
   if (flags.has('generate-context')) result.generateContext = true;
+  if (flags.has('refresh-context')) result.refreshContext = true;
   return result;
 }
 

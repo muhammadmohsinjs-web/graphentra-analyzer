@@ -1,212 +1,103 @@
 import * as fs from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import * as path from 'node:path';
-import type { TechnicalGraph } from '@graphentra/analyzer';
+import type { ApplicationMap, BusinessSignals, TechnicalGraph } from '@graphentra/analyzer';
+import type { ApplicationContext } from './contracts';
 import {
-  type ApplicationContext,
-  applicationContextSchema,
-} from './contracts';
+  loadApplicationContext, type AnyApplicationContext, type ApplicationContextV2, type LoadedApplicationContext,
+} from './context-contract';
 import {
-  createOpenRouterClient,
-  DEFAULT_OPENROUTER_MODEL,
-  OPENROUTER_MODEL,
-  withTransportRetries,
-  type LLMClientOptions,
-} from './llm-client';
+  generateApplicationContextV2, refreshApplicationContext, type RefreshSummary,
+} from './context-generator';
+import type { LLMClientOptions } from './llm-client';
 
+export const APPLICATION_CONTEXT_FILE = 'application-context.json';
+export const APPLICATION_CONTEXT_BACKUP_FILE = 'application-context.previous.json';
+
+/**
+ * Generates a v2 application context from repository evidence (see context-generator.ts).
+ * Kept with the historical signature; pass the application map and signals for best results.
+ */
 export async function generateApplicationContext(
   technicalGraph: TechnicalGraph,
   sourceFiles: Array<{ path: string; content: string }>,
   options?: LLMClientOptions,
-): Promise<ApplicationContext> {
-  const client = createOpenRouterClient(options);
-  const targetModel =
-    typeof options === 'object' && options?.model
-      ? options.model
-      : DEFAULT_OPENROUTER_MODEL;
-
-  const completion = await withTransportRetries(() =>
-    client.chat.completions.create({
-      model: targetModel,
-      messages: [
-        {
-          role: 'system',
-          content: `
-You are Graphentra's application-understanding assistant.
-
-You receive:
-
-1. A deterministic TypeScript technical graph.
-2. The application's TypeScript source code.
-
-The deterministic graph is authoritative for:
-- entity IDs,
-- functions,
-- files,
-- CALLS relationships.
-
-Your job is semantic interpretation only.
-
-Determine:
-- what the application does,
-- its main domains,
-- important business terminology,
-- the business/application meaning of technical entities,
-- useful application facts.
-
-Rules:
-
-- Never invent technical entities.
-- entityId values MUST exactly match IDs from technicalGraph.entities.
-- Never invent CALLS relationships.
-- Do not claim unsupported facts.
-- Use "unknowns" when information is unclear.
-- Keep descriptions concise.
-`.trim(),
-        },
-        {
-          role: 'user',
-          content: JSON.stringify(
-            {
-              technicalGraph,
-              sourceFiles,
-            },
-            null,
-            2,
-          ),
-        },
-      ],
-      response_format: {
-        type: 'json_schema',
-        json_schema: {
-          name: 'graphentra_application_context',
-          strict: true,
-          schema: {
-            type: 'object',
-            additionalProperties: false,
-            properties: {
-              schemaVersion: {
-                type: 'string',
-                enum: ['1.0'],
-              },
-              application: {
-                type: 'object',
-                additionalProperties: false,
-                properties: {
-                  name: { type: 'string' },
-                  summary: { type: 'string' },
-                  purpose: { type: 'string' },
-                },
-                required: ['name', 'summary', 'purpose'],
-              },
-              domains: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  additionalProperties: false,
-                  properties: {
-                    id: { type: 'string' },
-                    name: { type: 'string' },
-                    description: { type: 'string' },
-                  },
-                  required: ['id', 'name', 'description'],
-                },
-              },
-              terminology: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  additionalProperties: false,
-                  properties: {
-                    term: { type: 'string' },
-                    meaning: { type: 'string' },
-                  },
-                  required: ['term', 'meaning'],
-                },
-              },
-              entityAnnotations: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  additionalProperties: false,
-                  properties: {
-                    entityId: { type: 'string' },
-                    businessMeaning: { type: 'string' },
-                    domainIds: {
-                      type: 'array',
-                      items: { type: 'string' },
-                    },
-                    confidence: {
-                      type: 'string',
-                      enum: ['high', 'medium', 'low'],
-                    },
-                  },
-                  required: [
-                    'entityId',
-                    'businessMeaning',
-                    'domainIds',
-                    'confidence',
-                  ],
-                },
-              },
-              applicationFacts: {
-                type: 'array',
-                items: { type: 'string' },
-              },
-              unknowns: {
-                type: 'array',
-                items: { type: 'string' },
-              },
-            },
-            required: [
-              'schemaVersion',
-              'application',
-              'domains',
-              'terminology',
-              'entityAnnotations',
-              'applicationFacts',
-              'unknowns',
-            ],
-          },
-        },
-      },
-    }),
-  );
-
-  const content = completion.choices[0]?.message.content;
-  if (!content) {
-    throw new Error('Application Context LLM returned no content.');
-  }
-
-  const parsed = JSON.parse(content);
-  return applicationContextSchema.parse(parsed);
+  extras: { applicationMap?: ApplicationMap; signals?: BusinessSignals; onProgress?: (message: string) => void } = {},
+): Promise<ApplicationContextV2> {
+  return generateApplicationContextV2({ technicalGraph, sourceFiles, options, ...extras });
 }
 
-export function validateApplicationContext(
-  context: ApplicationContext,
-  technicalGraph: TechnicalGraph,
-): string[] {
+/** Returns annotation entity IDs that no longer exist in the graph (informational). */
+export function validateApplicationContext(context: AnyApplicationContext | ApplicationContext, technicalGraph: TechnicalGraph): string[] {
   const validIds = new Set(technicalGraph.entities.map(entity => entity.id));
-  const invalidIds = context.entityAnnotations
-    .map(annotation => annotation.entityId)
-    .filter(id => !validIds.has(id));
-
-  return invalidIds;
+  return context.entityAnnotations.map(annotation => annotation.entityId).filter(id => !validIds.has(id));
 }
 
-export async function getOrCreateApplicationContext(options: {
+/** Parses v1/v2 context and reconciles stale references with the current graph. */
+export function assertApplicationContext(value: unknown, graph: TechnicalGraph): ApplicationContextV2 {
+  return loadApplicationContext(value, graph).context;
+}
+
+function writeContextAtomically(contextDirectory: string, context: ApplicationContextV2, options: { replace: boolean }): 'written' | 'exists' {
+  fs.mkdirSync(contextDirectory, { recursive: true });
+  const contextPath = path.join(contextDirectory, APPLICATION_CONTEXT_FILE);
+  const temporary = path.join(contextDirectory, `.context.${randomUUID()}.tmp`);
+  try {
+    fs.writeFileSync(temporary, JSON.stringify(context, null, 2), { flag: 'wx', mode: 0o600 });
+    if (options.replace) {
+      if (fs.existsSync(contextPath)) fs.copyFileSync(contextPath, path.join(contextDirectory, APPLICATION_CONTEXT_BACKUP_FILE));
+      fs.renameSync(temporary, contextPath);
+    } else {
+      fs.linkSync(temporary, contextPath);
+    }
+    return 'written';
+  } catch (error: any) {
+    if (error.code !== 'EEXIST') throw error;
+    return 'exists';
+  } finally {
+    fs.rmSync(temporary, { force: true });
+  }
+}
+
+export interface ContextLifecycleOptions {
   contextDirectory: string;
   technicalGraph: TechnicalGraph;
   sourceFiles?: Array<{ path: string; content: string }>;
   generateContext?: boolean;
+  /** Incrementally update an existing context (new/changed functions and surfaces only). */
+  refreshContext?: boolean;
   llmOptions?: LLMClientOptions;
-}): Promise<ApplicationContext> {
+  applicationMap?: ApplicationMap;
+  signals?: BusinessSignals;
+  onProgress?: (message: string) => void;
+}
+
+export interface ContextLifecycleResult extends LoadedApplicationContext {
+  action: 'loaded' | 'generated' | 'refreshed';
+  refreshSummary?: RefreshSummary;
+}
+
+export async function loadOrCreateApplicationContext(options: ContextLifecycleOptions): Promise<ContextLifecycleResult> {
   const { contextDirectory, technicalGraph, sourceFiles, llmOptions } = options;
-  const contextPath = path.join(contextDirectory, 'application-context.json');
+  const contextPath = path.join(contextDirectory, APPLICATION_CONTEXT_FILE);
+  const generatorInput = () => ({
+    technicalGraph, sourceFiles: sourceFiles ?? [], options: llmOptions,
+    applicationMap: options.applicationMap, signals: options.signals, onProgress: options.onProgress,
+  });
 
   if (fs.existsSync(contextPath)) {
-    const parsed = JSON.parse(fs.readFileSync(contextPath, 'utf8'));
-    return assertApplicationContext(parsed, technicalGraph);
+    const loaded = loadApplicationContext(JSON.parse(fs.readFileSync(contextPath, 'utf8')), technicalGraph);
+    if (!options.refreshContext) return { ...loaded, action: 'loaded' };
+    if (!sourceFiles?.length) throw new Error('Refreshing application context requires the current source files.');
+    if (loaded.context.meta.migratedFrom === '1.0') {
+      // A v1 context cannot be refreshed incrementally; regenerate and keep the old file as a backup.
+      const context = await generateApplicationContextV2(generatorInput());
+      writeContextAtomically(contextDirectory, context, { replace: true });
+      return { context, warnings: ['Schema 1.0 context was replaced by a regenerated 2.0 context; the previous file was backed up.'], action: 'generated' };
+    }
+    const { context, summary } = await refreshApplicationContext(loaded.context, generatorInput());
+    writeContextAtomically(contextDirectory, context, { replace: true });
+    return { context, warnings: loaded.warnings, action: 'refreshed', refreshSummary: summary };
   }
 
   if (!options.generateContext || !sourceFiles || sourceFiles.length === 0) {
@@ -215,30 +106,14 @@ export async function getOrCreateApplicationContext(options: {
     );
   }
 
-  const clientOpts = llmOptions;
-  const context = await generateApplicationContext(technicalGraph, sourceFiles, clientOpts);
-  fs.mkdirSync(contextDirectory, { recursive: true });
-  assertApplicationContext(context, technicalGraph);
-  const temporary = path.join(contextDirectory, `.context.${randomUUID()}.tmp`);
-  try {
-    fs.writeFileSync(temporary, JSON.stringify(context, null, 2), { flag: 'wx', mode: 0o600 });
-    fs.linkSync(temporary, contextPath);
-  } catch (error: any) {
-    if (error.code !== 'EEXIST') throw error;
-    return assertApplicationContext(JSON.parse(fs.readFileSync(contextPath, 'utf8')), technicalGraph);
-  } finally { fs.rmSync(temporary, { force: true }); }
-
-  return context;
+  const context = await generateApplicationContextV2(generatorInput());
+  if (writeContextAtomically(contextDirectory, context, { replace: false }) === 'exists') {
+    // Another process onboarded concurrently; its file wins.
+    return { ...loadApplicationContext(JSON.parse(fs.readFileSync(contextPath, 'utf8')), technicalGraph), action: 'loaded' };
+  }
+  return { context, warnings: [], action: 'generated' };
 }
 
-export function assertApplicationContext(value: unknown, graph: TechnicalGraph): ApplicationContext {
-  const context = applicationContextSchema.parse(value);
-  const domainIds = context.domains.map(domain => domain.id);
-  const annotationIds = context.entityAnnotations.map(annotation => annotation.entityId);
-  if (validateApplicationContext(context, graph).length || new Set(domainIds).size !== domainIds.length ||
-      new Set(annotationIds).size !== annotationIds.length || context.entityAnnotations.some(annotation =>
-        annotation.domainIds.some(id => !domainIds.includes(id)))) {
-    throw new Error('Application context references invalid or duplicate entities/domains.');
-  }
-  return context;
+export async function getOrCreateApplicationContext(options: ContextLifecycleOptions): Promise<ApplicationContextV2> {
+  return (await loadOrCreateApplicationContext(options)).context;
 }

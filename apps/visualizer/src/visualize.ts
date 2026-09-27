@@ -1,6 +1,6 @@
+#!/usr/bin/env node
 import { validateEvidenceEnvelope, computeEvidenceIdentity } from './evidence';
 export { validateEvidenceEnvelope, computeEvidenceIdentity } from './evidence';
-#!/usr/bin/env node
 import { existsSync } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
 import { createServer } from 'node:http';
@@ -20,16 +20,17 @@ function isObject(value: unknown): value is Record<string, unknown> {
 async function readArtifact(directory: string, filename: string) {
   const file = path.join(directory, filename);
   const data: unknown = JSON.parse(await readFile(file, 'utf8'));
-  const version = filename === 'analysis.json' ? '1.1' : '1.0';
-  if (!isObject(data) || data.schemaVersion !== version) {
-    throw new Error(`Expected schemaVersion ${version}.`);
+  const isContext = filename === 'application-context.json';
+  const versions = filename === 'analysis.json' ? ['1.1'] : isContext ? ['1.0', '2.0'] : ['1.0'];
+  if (!isObject(data) || !versions.includes(data.schemaVersion as string)) {
+    throw new Error(`Expected schemaVersion ${versions.join(' or ')}.`);
   }
   const arrays =
     filename === 'technical-graph.json'
       ? ['entities', 'relations']
       : filename === 'analysis.json'
         ? ['changedFiles', 'changedEntities', 'impacts']
-        : ['domains', 'entityAnnotations'];
+        : data.schemaVersion === '2.0' ? ['features', 'entityAnnotations'] : ['domains', 'entityAnnotations'];
   if (arrays.some(key => !Array.isArray(data[key]))) {
     throw new Error(`Expected arrays: ${arrays.join(', ')}.`);
   }

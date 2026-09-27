@@ -1,0 +1,12 @@
+model Order {
+  id        String   @id
+  total     Decimal
+  status    OrderStatus
+  createdAt DateTime @default(now())
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+}

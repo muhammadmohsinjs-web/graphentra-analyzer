@@ -1,0 +1,17 @@
+{
+  "name": "shopfront",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Storefront where signed-in customers browse products, manage a cart, and place card-paid orders.",
+  "dependencies": {
+    "express": "^4.19.0",
+    "react": "^18.3.0",
+    "react-router-dom": "^6.26.0",
+    "stripe": "^16.0.0",
+    "@prisma/client": "^5.18.0",
+    "i18next": "^23.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.46.0"
+  }
+}
