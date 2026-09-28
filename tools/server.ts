@@ -5,11 +5,14 @@
 // - QA (default responses): the QA report plus business-friendly change info (who, which PR, which branch).
 // - Engineers (GET /reports/:id/technical): the stored evidence, graph, application context and map.
 import { createServer, type ServerResponse } from 'node:http';
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { config } from 'dotenv';
 import { z } from 'zod';
 import type { ApplicationMap } from '@graphentra/analyzer';
 import { DEFAULT_OPENROUTER_MODEL, formatImpactReport, generateQAReport, type ImpactReport } from '@graphentra/reporting';
+import { openApiDocument } from './openapi';
 
 config({ path: ['.env'], quiet: true });
 
@@ -88,10 +91,39 @@ const requestSchema = z.object({
 });
 
 const MAX_BODY_BYTES = 20 * 1024 * 1024;
+const swaggerUiDirectory = dirname(require.resolve('swagger-ui-dist/package.json'));
+const swaggerUiAssets: Record<string, { contentType: string; fileName: string }> = {
+  'swagger-ui.css': { contentType: 'text/css; charset=utf-8', fileName: 'swagger-ui.css' },
+  'swagger-ui-bundle.js': { contentType: 'application/javascript; charset=utf-8', fileName: 'swagger-ui-bundle.js' },
+  'swagger-ui-standalone-preset.js': { contentType: 'application/javascript; charset=utf-8', fileName: 'swagger-ui-standalone-preset.js' },
+};
+const swaggerUiHtml = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Graphentra Reports API — Swagger UI</title>
+    <link rel="stylesheet" href="/docs/assets/swagger-ui.css">
+  </head>
+  <body>
+    <div id="swagger-ui"></div>
+    <script src="/docs/assets/swagger-ui-bundle.js"></script>
+    <script src="/docs/assets/swagger-ui-standalone-preset.js"></script>
+    <script>
+      window.onload = () => window.SwaggerUIBundle({
+        url: '/openapi.json',
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [window.SwaggerUIBundle.presets.apis, window.SwaggerUIStandalonePreset],
+        layout: 'StandaloneLayout'
+      });
+    </script>
+  </body>
+</html>`;
 
 function send(res: ServerResponse, status: number, body: unknown, type = 'application/json'): void {
   res.writeHead(status, { 'content-type': type });
-  res.end(typeof body === 'string' ? body : JSON.stringify(body));
+  res.end(typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body));
 }
 
 /** What QA sees: the checklist, without surface IDs or other analyzer internals. */
@@ -146,6 +178,18 @@ const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url ?? '/', 'http://localhost');
     const [, resource, id, format] = url.pathname.split('/');
+    if (req.method === 'GET' && url.pathname === '/openapi.json') {
+      return send(res, 200, openApiDocument);
+    }
+    if (req.method === 'GET' && url.pathname === '/docs') {
+      return send(res, 200, swaggerUiHtml, 'text/html; charset=utf-8');
+    }
+    if (req.method === 'GET' && url.pathname.startsWith('/docs/assets/')) {
+      const asset = url.pathname.slice('/docs/assets/'.length);
+      const definition = swaggerUiAssets[asset];
+      if (!definition) return send(res, 404, { error: 'not found' });
+      return send(res, 200, readFileSync(resolve(swaggerUiDirectory, definition.fileName)), definition.contentType);
+    }
     if (resource !== 'reports') return send(res, 404, { error: 'not found' });
 
     // POST /reports  body: { evidence, applicationContext, applicationMap?, change? }
@@ -252,4 +296,4 @@ const server = createServer(async (req, res) => {
 });
 
 const port = Number(process.env.PORT ?? 3000);
-server.listen(port, process.env.HOST ?? '0.0.0.0', () => console.log(`Graphentra report server on http://localhost:${port}/reports`));
+server.listen(port, process.env.HOST ?? '0.0.0.0', () => console.log(`Graphentra report server on http://localhost:${port}/reports (API docs: /docs)`));

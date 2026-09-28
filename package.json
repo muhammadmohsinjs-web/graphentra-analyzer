@@ -53,6 +53,7 @@
     "@graphentra/ci-runner": "*",
     "dotenv": "^17.4.2",
     "openai": "^7.13.0",
+    "swagger-ui-dist": "^5.33.0",
     "zod": "^4.6.1"
   }
 }

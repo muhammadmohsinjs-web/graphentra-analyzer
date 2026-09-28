@@ -75,6 +75,7 @@ npm run publish:report -- --target ./fixtures/test-project \
   --pr 42 --pr-title "Change discount calculation" --base-branch main   # terminal 2
 ```
 - **`serve`** starts a small HTTP server at `http://localhost:3000` with a SQLite DB file (`reports.db`, or set `DB_PATH`).
+- Interactive API documentation is available at `http://localhost:3000/docs`; the OpenAPI 3.0 JSON specification is at `http://localhost:3000/openapi.json`.
 - **`publish:report`** reads `<target>/.graphentra/` (`evidence.json`, `application-context.json`, optional `application-map.json`), collects change info (repository, branch, commit, author, PR; from flags, the `GITHUB_*` CI environment, or the local git checkout) and sends `POST /reports`. It skips runs whose outcome is not `completed`.
 - `POST /reports` with body `{ evidence, applicationContext, applicationMap?, change? }`: **calls the LLM**, then **stores the row in the DB** (QA report, change info, and the technical inputs).
 - **QA-facing reads** (no technical data): `GET /reports` (filter with `?repository=`, `?pr=`, `?branch=`), `GET /reports/:id` (change info + QA report), `GET /reports/:id/md`.
