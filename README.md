@@ -20,6 +20,84 @@ The analyzer produces deterministic evidence. The CI adapter handles HTTP submis
 
 ---
 
+## How It Works (Simple Step-by-Step)
+
+In short: the **analyzer** reads your git changes and writes JSON files. The **LLM** is only called by the report command, and the **DB** is only written to by the report server.
+
+All output files go into `<target>/.graphentra/`.
+
+### Step 0: Setup (one time)
+```sh
+npm ci
+```
+Create `.env` with `OPENROUTER_API_KEY=...` (and optionally `OPENROUTER_MODEL`). You only need this for Steps 2, 3 and 5.
+
+### Step 1: Run the analyzer only (no LLM, no DB)
+```sh
+npm run analyze:core -- --target ./fixtures/test-project --working-tree
+```
+- **What it does:** reads the git diff (`--working-tree` = uncommitted changes, or `--base X --head Y` = compare two commits), parses the TypeScript files, finds the functions that changed and which functions call them (the "blast radius").
+- **File created:** `.graphentra/evidence.json`
+- **API calls:** none. **DB:** none.
+- **Output:** `Deterministic evidence created: <path>` plus a summary, diagnostics and limitations.
+
+### Step 2: First time only: generate application context (calls the LLM)
+```sh
+npm run report -- --target ./fixtures/test-project --working-tree --generate-context
+```
+- **What it does:** runs the analyzer (Step 1), then sends source code and repo signals to the LLM **(OpenRouter API)** in batches, which describes what each function and feature does in business terms.
+- **Files created:** `evidence.json`, `technical-graph.json`, `application-map.json`, `application-context.json`, and `analysis.json` (the QA report, if there were changes).
+- **API calls:** OpenRouter: once for the context (several batches), then once for the QA report.
+- **Output:** `Application context generated: X/Y functions described...` and then `QA report created for evidence <id>`.
+
+### Step 3: Every change after that: QA impact report (calls the LLM)
+```sh
+npm run report -- --target ./fixtures/test-project --working-tree --report ./qa-report.md
+```
+- **What it does:** runs the analyzer, **loads** the saved `application-context.json` (no LLM call for this), then asks the LLM what QA should test based on the changes.
+- **Files created/updated:** `evidence.json`, `technical-graph.json`, `application-map.json`, `analysis.json`, and `qa-report.md` if you pass `--report`.
+- **API calls:** OpenRouter, 1 call for the QA report. **No call** if nothing changed; it just prints "no changes".
+- **Output:** a loader showing `LLM triggered · QA impact report`, then `QA report created for evidence <id>`.
+- **Optional:** add `--refresh-context` to re-describe only new/changed functions (LLM call). The old file is kept as `application-context.previous.json`.
+
+### Step 4: View the results in the browser (no LLM, no DB)
+```sh
+npm run visualize -- ./fixtures/test-project
+```
+- **What it does:** starts a local server at `http://127.0.0.1:4173` that reads the `.graphentra/*.json` files and shows the graph and the QA report.
+- **Files created:** none (read only).
+
+### Step 5: Save reports to the database (optional)
+```sh
+npm run serve
+```
+- **What it does:** starts a small HTTP server at `http://localhost:3000` with a SQLite DB file (`reports.db`, or set `DB_PATH`).
+- `POST /reports` with body `{ evidence, applicationContext }`: **calls the LLM**, then **stores the row in the DB** (evidence, graph, context, QA report, markdown).
+- `GET /reports` lists saved reports. `GET /reports/:id` returns one report. `GET /reports/:id/md` returns the markdown.
+- This is the **only place data is written to a DB**.
+
+### Step 6: In CI / production (on a pull request)
+```sh
+graphentra-ci --target . --base <sha> --head <sha> --repo org/repo --pr 42
+```
+- **What it does:** runs the analyzer, saves `.graphentra/evidence.json`, then sends it with `POST <GRAPHENTRA_BACKEND_URL>/v1/analysis-runs` (needs `GRAPHENTRA_TOKEN`).
+- **API calls:** Graphentra backend only. The backend (not in this repo) calls the LLM and saves to its DB.
+- **Output:** `Analysis submitted to backend: Run ID: <id> (status: queued)`.
+- Use `--resubmit <evidence.json>` to send an existing file again without re-analyzing.
+
+### Quick summary
+
+| Command | Analyzer runs | LLM API called | Files written | DB write |
+|---|---|---|---|---|
+| `analyze:core` | Yes | No | `evidence.json` | No |
+| `report --generate-context` | Yes | Yes (context + report) | all `.graphentra/*.json` | No |
+| `report` | Yes | Yes (report only, if changes) | evidence, graph, map, analysis | No |
+| `visualize` | No | No | None | No |
+| `serve` + `POST /reports` | No | Yes | None | Yes (SQLite) |
+| `graphentra-ci` | Yes | No (backend does it) | `evidence.json` | Backend DB |
+
+---
+
 ## Workspace Structure & Package Ownership
 
 ```text
