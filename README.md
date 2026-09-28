@@ -69,11 +69,16 @@ npm run visualize -- ./fixtures/test-project
 
 ### Step 5: Save reports to the database (optional)
 ```sh
-npm run serve
+npm run serve                                                    # terminal 1
+npm run analyze:core -- --target ./fixtures/test-project --working-tree
+npm run publish:report -- --target ./fixtures/test-project \
+  --pr 42 --pr-title "Change discount calculation" --base-branch main   # terminal 2
 ```
-- **What it does:** starts a small HTTP server at `http://localhost:3000` with a SQLite DB file (`reports.db`, or set `DB_PATH`).
-- `POST /reports` with body `{ evidence, applicationContext }`: **calls the LLM**, then **stores the row in the DB** (evidence, graph, context, QA report, markdown).
-- `GET /reports` lists saved reports. `GET /reports/:id` returns one report. `GET /reports/:id/md` returns the markdown.
+- **`serve`** starts a small HTTP server at `http://localhost:3000` with a SQLite DB file (`reports.db`, or set `DB_PATH`).
+- **`publish:report`** reads `<target>/.graphentra/` (`evidence.json`, `application-context.json`, optional `application-map.json`), collects change info (repository, branch, commit, author, PR; from flags, the `GITHUB_*` CI environment, or the local git checkout) and sends `POST /reports`. It skips runs whose outcome is not `completed`.
+- `POST /reports` with body `{ evidence, applicationContext, applicationMap?, change? }`: **calls the LLM**, then **stores the row in the DB** (QA report, change info, and the technical inputs).
+- **QA-facing reads** (no technical data): `GET /reports` (filter with `?repository=`, `?pr=`, `?branch=`), `GET /reports/:id` (change info + QA report), `GET /reports/:id/md`.
+- **Engineer-facing read:** `GET /reports/:id/technical` returns the stored evidence, technical graph, application context and application map.
 - This is the **only place data is written to a DB**.
 
 ### Step 6: In CI / production (on a pull request)
@@ -94,6 +99,7 @@ graphentra-ci --target . --base <sha> --head <sha> --repo org/repo --pr 42
 | `report` | Yes | Yes (report only, if changes) | evidence, graph, map, analysis | No |
 | `visualize` | No | No | None | No |
 | `serve` + `POST /reports` | No | Yes | None | Yes (SQLite) |
+| `publish:report` | No | No (server does it) | None | Yes, via `POST /reports` |
 | `graphentra-ci` | Yes | No (backend does it) | `evidence.json` | Backend DB |
 
 ---

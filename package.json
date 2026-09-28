@@ -23,6 +23,7 @@
     "report": "tsx tools/report.ts",
     "visualize": "tsx apps/visualizer/src/visualize.ts",
     "serve": "tsx tools/server.ts",
+    "publish:report": "tsx tools/publish-report.ts",
     "verify:boundaries": "node tools/verify-boundaries.mjs",
     "verify:distribution": "node tools/verify-distribution.mjs",
     "sync:evidence-schema": "node tools/sync-evidence-schema.mjs",
