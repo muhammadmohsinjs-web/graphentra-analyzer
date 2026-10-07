@@ -1,11 +1,11 @@
 # graphentra output
 .graphentra-output/
 # Disposable artifacts only; application-context.json is persistent and may be committed.
-.graphentra/technical-graph.json
-.graphentra/analysis.json
-.graphentra/evidence.json
-.graphentra/application-map.json
-.graphentra/application-context.previous.json
+**/.graphentra/technical-graph.json
+**/.graphentra/analysis.json
+**/.graphentra/evidence.json
+**/.graphentra/application-map.json
+**/.graphentra/application-context.previous.json
 
 *.tgz
 
