@@ -232,18 +232,19 @@ test('visualizer prefers evidence.json and serves embedded graph and recorded im
     schemaVersion: '2.0',
     analyzerVersion: '0.4.0',
     target: { targetPath: '.' },
-    comparison: { mode: 'commit', resolvedBaseSha: '111', resolvedHeadSha: '222', comparedTo: '`HEAD`' },
-    sourceState: { checkoutSha: '222', isTrackedDirty: false, untrackedSourcePolicy: 'excluded' },
+    options: { excludePaths: [], sourcePolicy: 'git-tracked' },
+    comparison: { mode: 'commit', resolvedBaseSha: '1111111111111111111111111111111111111111', resolvedHeadSha: '2222222222222222222222222222222222222222', comparedTo: '`HEAD`' },
+    sourceState: { contentIdentity: '0'.repeat(64), checkoutSha: '2222222222222222222222222222222222222222', isTrackedDirty: false, untrackedSourcePolicy: 'excluded' },
     outcome: 'completed',
     technicalGraph: {
       schemaVersion: '1.0',
-      repository: { targetPath: '.', headSha: '222', analyzerVersion: '0.4.0' },
+      repository: { targetPath: '.', headSha: '2222222222222222222222222222222222222222', analyzerVersion: '0.4.0' },
       capabilities: { language: 'typescript', entityKinds: ['function'], relationTypes: ['CALLS'], maxBlastDepth: 6 },
       analyzedFiles: ['src/app.ts'],
       entities: [{ id: 'src/app.ts#run', kind: 'function', name: 'run', file: 'src/app.ts', startLine: 1, endLine: 3 }],
       relations: [],
     },
-    changedFiles: [],
+    changedFiles: [{ file: 'src/app.ts', changedLines: [2], addedCode: [], removedCode: [], diff: '', hunks: [] }],
     changedEntities: [{ entity: { id: 'src/app.ts#run', kind: 'function', name: 'run', file: 'src/app.ts', startLine: 1, endLine: 3 }, change: { file: 'src/app.ts', changedLines: [2], addedCode: [], removedCode: [], diff: '' } }],
     impacts: [{ changedEntity: { id: 'src/app.ts#run', kind: 'function', name: 'run', file: 'src/app.ts', startLine: 1, endLine: 3 }, change: { file: 'src/app.ts', changedLines: [2], addedCode: [], removedCode: [], diff: '' }, directDependents: [], blastRadius: { totalAffectedEntities: 0, entities: [], paths: [] }, terminalDependents: [] }],
     diagnostics: [],
@@ -256,7 +257,7 @@ test('visualizer prefers evidence.json and serves embedded graph and recorded im
   const data = JSON.parse(response.text);
   assert.ok(data.evidence);
   assert.equal(data.evidence.artifactKind, 'graphentra-evidence');
-  assert.equal(data.graph.repository.headSha, '222');
+  assert.equal(data.graph.repository.headSha, '2222222222222222222222222222222222222222');
   assert.equal(data.analysis.changedEntities.length, 1);
 });
 

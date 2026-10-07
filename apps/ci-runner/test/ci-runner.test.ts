@@ -79,7 +79,7 @@ function makeSampleEvidence(): DeterministicEvidence {
       entities: [{ id: 'src/app.ts#calc', kind: 'function', name: 'calc', file: 'src/app.ts', startLine: 1, endLine: 3 }],
       relations: [],
     },
-    changedFiles: [],
+    changedFiles: [{ file: 'src/app.ts', changedLines: [2], addedCode: [], removedCode: [], diff: '', hunks: [] }],
     changedEntities: [{ entity: { id: 'src/app.ts#calc', kind: 'function', name: 'calc', file: 'src/app.ts', startLine: 1, endLine: 3 }, change: { file: 'src/app.ts', changedLines: [2], addedCode: [], removedCode: [], diff: '' } }],
     impacts: [{ changedEntity: { id: 'src/app.ts#calc', kind: 'function', name: 'calc', file: 'src/app.ts', startLine: 1, endLine: 3 }, change: { file: 'src/app.ts', changedLines: [2], addedCode: [], removedCode: [], diff: '' }, directDependents: [], blastRadius: { totalAffectedEntities: 0, entities: [], paths: [] }, terminalDependents: [] }],
     diagnostics: [],
