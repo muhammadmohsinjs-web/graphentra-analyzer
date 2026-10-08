@@ -192,7 +192,11 @@ try {
 
   // 10. Standalone source build
   console.log('10. Testing standalone source build of @graphentra/analyzer outside workspace...');
-  const standaloneSourceDir = createTemp('graphentra-standalone-src-');
+  // Mirror the repo layout (packages/analyzer + fixtures) so tests that read ../../../fixtures still resolve.
+  const standaloneRootDir = createTemp('graphentra-standalone-src-');
+  const standaloneSourceDir = path.join(standaloneRootDir, 'packages/analyzer');
+  fs.mkdirSync(standaloneSourceDir, { recursive: true });
+  fs.cpSync(path.join(rootDir, 'fixtures/test-project'), path.join(standaloneRootDir, 'fixtures/test-project'), { recursive: true });
   const analyzerSrcDir = path.join(rootDir, 'packages/analyzer');
 
   // Copy analyzer source files

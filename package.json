@@ -27,7 +27,8 @@
     "verify:boundaries": "node tools/verify-boundaries.mjs",
     "verify:distribution": "node tools/verify-distribution.mjs",
     "sync:evidence-schema": "node tools/sync-evidence-schema.mjs",
-    "verify:schema": "node tools/sync-evidence-schema.mjs --check"
+    "verify:schema": "node tools/sync-evidence-schema.mjs --check",
+    "verify:all": "npm run build && npm run typecheck && npm test && npm run verify:boundaries && npm run verify:schema && npm run verify:distribution"
   },
   "repository": {
     "type": "git",
