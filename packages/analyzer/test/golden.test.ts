@@ -10,20 +10,25 @@ import { createRepo } from './helpers/git-fixture';
  * fixtures/test-project and compare the normalized evidence with saved JSON.
  * Regenerate deliberately with: UPDATE_GOLDENS=1 npm test --workspace=@graphentra/analyzer
  */
-const FIXTURE_DIR = path.resolve(__dirname, '../../../fixtures/test-project');
+const FIXTURES_ROOT = path.resolve(__dirname, '../../../fixtures');
 const GOLDEN_DIR = path.join(__dirname, 'golden');
 const UPDATE = process.env.UPDATE_GOLDENS === '1';
 
 type Files = Record<string, string>;
 
-function readFixture(): Files {
-  const files: Files = {};
-  for (const dir of ['src', 'tests']) {
-    for (const name of fs.readdirSync(path.join(FIXTURE_DIR, dir)).sort()) {
-      files[`${dir}/${name}`] = fs.readFileSync(path.join(FIXTURE_DIR, dir, name), 'utf8');
-    }
+function readDir(root: string, rel: string, files: Files) {
+  for (const entry of fs.readdirSync(path.join(root, rel), { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+    const relPath = `${rel}/${entry.name}`;
+    if (entry.isDirectory()) readDir(root, relPath, files);
+    else files[relPath] = fs.readFileSync(path.join(root, relPath), 'utf8');
   }
-  for (const name of ['package.json', 'tsconfig.json']) files[name] = fs.readFileSync(path.join(FIXTURE_DIR, name), 'utf8');
+}
+
+function readFixture(fixture: string): Files {
+  const root = path.join(FIXTURES_ROOT, fixture);
+  const files: Files = {};
+  for (const dir of ['src', 'tests']) readDir(root, dir, files);
+  for (const name of ['package.json', 'tsconfig.json']) files[name] = fs.readFileSync(path.join(root, name), 'utf8');
   return files;
 }
 
@@ -60,6 +65,8 @@ function expectGolden(name: string, actual: unknown) {
 
 type Scenario = {
   name: string;
+  /** Fixture folder under fixtures/. Defaults to test-project. */
+  fixture?: string;
   expectedOutcome: string;
   /** Returns the edited files; omitted files stay unchanged. Return undefined for no edit. */
   edit?: (files: Files) => Files;
@@ -84,13 +91,24 @@ const scenarios: Scenario[] = [
   { name: 'no-changes', expectedOutcome: 'no_changes' },
   { name: 'working-tree-mode', expectedOutcome: 'completed', mode: 'working-tree', edit: f => ({
     'src/billing.ts': replaceOnce(f['src/billing.ts'], 'amount <= 1', 'amount <= 5') }) },
+  // modern-app: the "before" baseline. Arrow functions, classes and components are not
+  // extracted yet, so these goldens should improve as Phases 1 to 4 land.
+  { name: 'modern-app-no-changes', fixture: 'modern-app', expectedOutcome: 'no_changes' },
+  { name: 'modern-app-arrow-function-edit', fixture: 'modern-app', expectedOutcome: 'no_supported_changes', edit: f => ({
+    'src/utils/format.ts': replaceOnce(f['src/utils/format.ts'], 'toFixed(2)', 'toFixed(3)') }) },
+  { name: 'modern-app-class-method-edit', fixture: 'modern-app', expectedOutcome: 'no_supported_changes', edit: f => ({
+    'src/services/order-service.ts': replaceOnce(f['src/services/order-service.ts'], 'formatPrice(0)', 'formatPrice(1)') }) },
+  { name: 'modern-app-component-edit', fixture: 'modern-app', expectedOutcome: 'no_supported_changes', edit: f => ({
+    'src/components/OrderList.tsx': f['src/components/OrderList.tsx'] + '\n// touched\nconst touched = () => 1;\n' }) },
+  { name: 'modern-app-named-function-edit', fixture: 'modern-app', expectedOutcome: 'completed', edit: f => ({
+    'src/utils/format.ts': replaceOnce(f['src/utils/format.ts'], '.trim()', '.trim().normalize()') }) },
 ];
 
 for (const scenario of scenarios) {
   test(`golden: ${scenario.name}`, () => {
     const repo = createRepo('graphentra-golden-');
     try {
-      const base = readFixture();
+      const base = readFixture(scenario.fixture ?? 'test-project');
       for (const [file, content] of Object.entries(base)) {
         fs.mkdirSync(path.dirname(path.join(repo.dir, file)), { recursive: true });
         fs.writeFileSync(path.join(repo.dir, file), content);

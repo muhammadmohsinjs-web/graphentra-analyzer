@@ -1,0 +1,9 @@
+{
+  "name": "graphentra-modern-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Modern TypeScript fixture (arrow functions, classes, React components) used as the Graphentra 'before' baseline",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}

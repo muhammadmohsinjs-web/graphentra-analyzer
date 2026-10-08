@@ -1,0 +1,226 @@
+{
+  "artifactKind": "graphentra-evidence",
+  "schemaVersion": "2.0",
+  "analyzerVersion": "<VERSION>",
+  "target": {
+    "targetPath": "."
+  },
+  "comparison": {
+    "mode": "commit",
+    "requestedBase": "<BASE>",
+    "requestedHead": "<HEAD>",
+    "resolvedBaseSha": "<BASE>",
+    "resolvedHeadSha": "<HEAD>",
+    "comparedTo": "`<HEAD>`"
+  },
+  "sourceState": {
+    "checkoutSha": "<HEAD>",
+    "isTrackedDirty": false,
+    "untrackedSourcePolicy": "excluded",
+    "contentIdentity": "<CONTENT>"
+  },
+  "options": {
+    "excludePaths": [],
+    "sourcePolicy": "git-tracked"
+  },
+  "outcome": "no_supported_changes",
+  "technicalGraph": {
+    "schemaVersion": "1.0",
+    "repository": {
+      "targetPath": ".",
+      "headSha": "<HEAD>",
+      "analyzerVersion": "0.4.0"
+    },
+    "capabilities": {
+      "language": "typescript",
+      "entityKinds": [
+        "function"
+      ],
+      "relationTypes": [
+        "CALLS"
+      ],
+      "maxBlastDepth": 6
+    },
+    "analyzedFiles": [
+      "src/app/orders/page.tsx",
+      "src/components/OrderList.tsx",
+      "src/components/OrderRow.tsx",
+      "src/components/Summary.tsx",
+      "src/server/app.ts",
+      "src/server/handlers.ts",
+      "src/server/router.ts",
+      "src/services/inventory.ts",
+      "src/services/logger.ts",
+      "src/services/order-service.ts",
+      "src/stubs/react.ts",
+      "src/types.ts",
+      "src/utils/format.ts",
+      "src/utils/ids.ts",
+      "src/utils/math.ts",
+      "tests/handlers.test.ts",
+      "tests/order-service.test.ts"
+    ],
+    "entities": [
+      {
+        "id": "src/stubs/react.ts#useState",
+        "kind": "function",
+        "name": "useState",
+        "file": "src/stubs/react.ts",
+        "startLine": 3,
+        "endLine": 6
+      },
+      {
+        "id": "src/stubs/react.ts#useEffect",
+        "kind": "function",
+        "name": "useEffect",
+        "file": "src/stubs/react.ts",
+        "startLine": 8,
+        "endLine": 11
+      },
+      {
+        "id": "src/stubs/react.ts#useMemo",
+        "kind": "function",
+        "name": "useMemo",
+        "file": "src/stubs/react.ts",
+        "startLine": 13,
+        "endLine": 16
+      },
+      {
+        "id": "src/utils/format.ts#slugify",
+        "kind": "function",
+        "name": "slugify",
+        "file": "src/utils/format.ts",
+        "startLine": 16,
+        "endLine": 22
+      },
+      {
+        "id": "src/utils/format.ts#titleCase",
+        "kind": "function",
+        "name": "titleCase",
+        "file": "src/utils/format.ts",
+        "startLine": 24,
+        "endLine": 29
+      },
+      {
+        "id": "src/components/OrderRow.tsx#OrderRow",
+        "kind": "function",
+        "name": "OrderRow",
+        "file": "src/components/OrderRow.tsx",
+        "startLine": 8,
+        "endLine": 16
+      },
+      {
+        "id": "src/app/orders/page.tsx#OrdersPage",
+        "kind": "function",
+        "name": "OrdersPage",
+        "file": "src/app/orders/page.tsx",
+        "startLine": 5,
+        "endLine": 16
+      },
+      {
+        "id": "src/utils/math.ts#clamp",
+        "kind": "function",
+        "name": "clamp",
+        "file": "src/utils/math.ts",
+        "startLine": 6,
+        "endLine": 8
+      },
+      {
+        "id": "src/utils/math.ts#add",
+        "kind": "function",
+        "name": "add",
+        "file": "src/utils/math.ts",
+        "startLine": 11,
+        "endLine": 13
+      }
+    ],
+    "relations": [
+      {
+        "from": "src/components/OrderRow.tsx#OrderRow",
+        "to": "src/stubs/react.ts#useMemo",
+        "type": "CALLS"
+      }
+    ]
+  },
+  "changedFiles": [
+    {
+      "file": "src/components/OrderList.tsx",
+      "oldFile": "src/components/OrderList.tsx",
+      "changedLines": [
+        29,
+        30,
+        31
+      ],
+      "addedCode": [
+        "",
+        "// touched",
+        "const touched = () => 1;"
+      ],
+      "removedCode": [],
+      "diff": "diff --git a/src/components/OrderList.tsx b/src/components/OrderList.tsx\nindex 20208a8..964dcfc 100644\n--- a/src/components/OrderList.tsx\n+++ b/src/components/OrderList.tsx\n@@ -26,3 +26,6 @@ export const OrderList = ({ orders }: { orders: Order[] }) => {\n     </div>\n   );\n };\n+\n+// touched\n+const touched = () => 1;",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "    </div>",
+              "oldLine": 26,
+              "newLine": 26
+            },
+            {
+              "kind": " ",
+              "code": "  );",
+              "oldLine": 27,
+              "newLine": 27
+            },
+            {
+              "kind": " ",
+              "code": "};",
+              "oldLine": 28,
+              "newLine": 28
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 29,
+              "newLine": 29
+            },
+            {
+              "kind": "+",
+              "code": "// touched",
+              "oldLine": 29,
+              "newLine": 30
+            },
+            {
+              "kind": "+",
+              "code": "const touched = () => 1;",
+              "oldLine": 29,
+              "newLine": 31
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "changedEntities": [],
+  "impacts": [],
+  "diagnostics": [
+    {
+      "code": "NO_SUPPORTED_CHANGES",
+      "severity": "warning",
+      "message": "Changes did not match supported current function declarations. This is not a no-risk result."
+    }
+  ],
+  "limitations": [
+    "Only TypeScript is analyzed.",
+    "Only named standalone function declarations are supported.",
+    "Only CALLS relationships are currently supported.",
+    "Class methods are not analyzed.",
+    "Arrow functions are not analyzed.",
+    "Dynamic calls are not analyzed.",
+    "Deleted functions have no current graph entity; renamed or ambiguous functions may lack removed-code evidence.",
+    "Overlapping function line ranges are skipped rather than sharing ambiguous evidence.",
+    "Application surfaces are not yet discovered.",
+    "Blast radius is limited to depth 6."
+  ]
+}
