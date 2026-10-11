@@ -2,7 +2,7 @@
   "name": "@graphentra/visualizer",
   "version": "1.0.0",
   "description": "Visualizer server and animated impact explorer for Graphentra",
-  "license": "ISC",
+  "license": "UNLICENSED",
   "main": "dist/visualize.js",
   "types": "dist/visualize.d.ts",
   "bin": {

@@ -2,7 +2,7 @@
   "name": "@graphentra/ci-runner",
   "version": "0.1.0",
   "description": "CI submission adapter and runner for Graphentra evidence",
-  "license": "ISC",
+  "license": "UNLICENSED",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
