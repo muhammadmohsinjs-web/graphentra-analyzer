@@ -14,6 +14,7 @@ import { captureSourceSnapshot } from './source-snapshot';
 import { createRepositoryContext } from './repository';
 import { extractTechnicalGraph, isTypeScriptFile, type ExtractedGraph } from './technical-graph';
 import { APPLICATION_MAP_SCHEMA_VERSION, extractApplicationMap, type ApplicationMap } from './application-map';
+import { toolchainDiagnostics } from './toolchain';
 import { assertValidEvidenceEnvelope } from './validator';
 
 export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
@@ -36,7 +37,7 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
     excludePaths: options.excludePaths,
   });
 
-  const diagnostics: DiagnosticItem[] = [];
+  const diagnostics: DiagnosticItem[] = [...toolchainDiagnostics()];
   let gitDiff = snapshot.gitDiff;
   if (repo.comparison.mode === 'working-tree') {
     for (const file of repo.listFiles(true).filter(isTypeScriptFile)) {
