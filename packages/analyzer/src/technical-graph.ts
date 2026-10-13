@@ -6,7 +6,9 @@ import { GraphentraError } from './errors';
 import {
   ANALYZER_VERSION,
   DEFAULT_ENGINE,
+  EXTENDED_ENTITY_KINDS,
   IGNORED_DIRECTORIES,
+  LEGACY_ENTITY_KINDS,
   MAX_BLAST_DEPTH,
   TYPESCRIPT_EXTENSIONS,
   type Entity,
@@ -144,7 +146,7 @@ export function extractTechnicalGraph(options: {
       },
       capabilities: {
         language: 'typescript',
-        entityKinds: ['function'],
+        entityKinds: [...((options.engine ?? DEFAULT_ENGINE) === 'extended' ? EXTENDED_ENTITY_KINDS : LEGACY_ENTITY_KINDS)],
         relationTypes: ['CALLS'],
         maxBlastDepth: MAX_BLAST_DEPTH,
       },
@@ -261,7 +263,7 @@ export function extractTechnicalGraph(options: {
     },
     capabilities: {
       language: 'typescript',
-      entityKinds: ['function'],
+      entityKinds: [...((options.engine ?? DEFAULT_ENGINE) === 'extended' ? EXTENDED_ENTITY_KINDS : LEGACY_ENTITY_KINDS)],
       relationTypes: ['CALLS'],
       maxBlastDepth: MAX_BLAST_DEPTH,
     },

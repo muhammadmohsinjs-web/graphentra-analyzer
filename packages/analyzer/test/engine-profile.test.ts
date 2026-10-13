@@ -13,7 +13,7 @@ function buildRepo() {
   return { repo, base, head };
 }
 
-test('engine profile: legacy, extended and default give identical evidence identity', () => {
+test('engine profile: legacy and default give identical evidence identity; extended differs (schema 2.1)', () => {
   const { repo, base, head } = buildRepo();
   try {
     const run = (engine?: 'legacy' | 'extended') =>
@@ -21,7 +21,7 @@ test('engine profile: legacy, extended and default give identical evidence ident
     const legacy = run('legacy');
     const extended = run('extended');
     const unset = run();
-    assert.equal(computeDeterministicEvidenceIdentity(legacy.evidence), computeDeterministicEvidenceIdentity(extended.evidence));
+    assert.notEqual(computeDeterministicEvidenceIdentity(legacy.evidence), computeDeterministicEvidenceIdentity(extended.evidence));
     assert.equal(computeDeterministicEvidenceIdentity(legacy.evidence), computeDeterministicEvidenceIdentity(unset.evidence));
   } finally {
     repo.cleanup();

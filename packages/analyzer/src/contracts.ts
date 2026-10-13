@@ -2,6 +2,8 @@ import type { ApplicationMap } from './application-map';
 
 export const ANALYZER_VERSION: string = require('../package.json').version;
 export const EVIDENCE_SCHEMA_VERSION = '2.0';
+export const EXTENDED_EVIDENCE_SCHEMA_VERSION = '2.1';
+export const EVIDENCE_SCHEMA_VERSIONS = ['2.0', '2.1'] as const;
 export const EVIDENCE_ARTIFACT_KIND = 'graphentra-evidence';
 
 export const MAX_BLAST_DEPTH = 6;
@@ -19,13 +21,23 @@ export const IGNORED_DIRECTORIES = new Set([
 
 export const TYPESCRIPT_EXTENSIONS = new Set(['.ts', '.tsx', '.mts', '.cts']);
 
+export type EntityKind = 'function' | 'method' | 'component' | 'module';
+export type EntityLanguage = 'typescript' | 'javascript';
+export const LEGACY_ENTITY_KINDS: EntityKind[] = ['function'];
+/** Sorted: the 2.1 validator requires capabilities.entityKinds in compareStrings order. */
+export const EXTENDED_ENTITY_KINDS: EntityKind[] = ['component', 'function', 'method', 'module'];
+
 export interface Entity {
   id: string;
-  kind: 'function';
+  kind: EntityKind;
   name: string;
   file: string;
   startLine: number;
   endLine: number;
+  language?: EntityLanguage;
+  container?: string;
+  exported?: boolean;
+  exportName?: string;
 }
 
 export interface Relation {
@@ -101,7 +113,7 @@ export interface TechnicalGraph {
   };
   capabilities: {
     language: 'typescript';
-    entityKinds: ['function'];
+    entityKinds: EntityKind[];
     relationTypes: ['CALLS'];
     maxBlastDepth: number;
   };
@@ -147,14 +159,15 @@ export interface EvidenceSourceState {
 
 export interface DeterministicEvidence {
   artifactKind: typeof EVIDENCE_ARTIFACT_KIND;
-  schemaVersion: typeof EVIDENCE_SCHEMA_VERSION;
+  schemaVersion: '2.0' | '2.1';
   analyzerVersion: string;
   target: {
     targetPath: string;
   };
   comparison: EvidenceComparison;
   sourceState: EvidenceSourceState;
-  options: { excludePaths: string[]; sourcePolicy: 'git-tracked-and-nonignored-untracked' | 'git-tracked' };
+  options: { excludePaths: string[]; sourcePolicy: 'git-tracked-and-nonignored-untracked' | 'git-tracked'; engine?: 'extended' };
+  toolchain?: { typescript: string; node: string };
   outcome: AnalysisOutcome;
   technicalGraph: TechnicalGraph;
   changedFiles: ChangedFile[];

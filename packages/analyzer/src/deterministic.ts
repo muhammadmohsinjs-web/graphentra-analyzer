@@ -17,11 +17,13 @@ const ordered = <T>(items: T[]): T[] => [...items].sort((a, b) => {
   return left < right ? -1 : left > right ? 1 : 0;
 });
 
-/** Complete evidence identity; only graph.repository.generatedAt is volatile. */
+/** Complete evidence identity; graph.repository.generatedAt and toolchain.node are volatile. */
 export function computeDeterministicEvidenceIdentity(evidence: DeterministicEvidence): string {
   const { generatedAt: _timestamp, ...repository } = evidence.technicalGraph.repository;
+  const { toolchain, ...rest } = evidence;
   const payload = {
-    ...evidence,
+    ...rest,
+    ...(toolchain ? { toolchain: { typescript: toolchain.typescript } } : {}),
     options: { ...evidence.options, excludePaths: ordered(evidence.options.excludePaths) },
     technicalGraph: { ...evidence.technicalGraph, repository,
       analyzedFiles: ordered(evidence.technicalGraph.analyzedFiles),

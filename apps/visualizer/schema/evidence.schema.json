@@ -8,7 +8,10 @@
       "const": "graphentra-evidence"
     },
     "schemaVersion": {
-      "const": "2.0"
+      "enum": [
+        "2.0",
+        "2.1"
+      ]
     },
     "analyzerVersion": {
       "type": "string",
@@ -45,11 +48,34 @@
             "git-tracked",
             "git-tracked-and-nonignored-untracked"
           ]
+        },
+        "engine": {
+          "enum": [
+            "extended"
+          ]
         }
       },
       "required": [
         "excludePaths",
         "sourcePolicy"
+      ],
+      "additionalProperties": false
+    },
+    "toolchain": {
+      "type": "object",
+      "properties": {
+        "typescript": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+"
+        },
+        "node": {
+          "type": "string",
+          "pattern": "^\\d+\\.x$"
+        }
+      },
+      "required": [
+        "typescript",
+        "node"
       ],
       "additionalProperties": false
     },
@@ -128,7 +154,12 @@
           "minLength": 1
         },
         "kind": {
-          "const": "function"
+          "enum": [
+            "function",
+            "method",
+            "component",
+            "module"
+          ]
         },
         "name": {
           "type": "string",
@@ -146,6 +177,23 @@
         "endLine": {
           "type": "integer",
           "minimum": 1
+        },
+        "language": {
+          "enum": [
+            "typescript",
+            "javascript"
+          ]
+        },
+        "container": {
+          "type": "string",
+          "minLength": 1
+        },
+        "exported": {
+          "type": "boolean"
+        },
+        "exportName": {
+          "type": "string",
+          "minLength": 1
         }
       },
       "required": [
@@ -461,9 +509,17 @@
               "const": "typescript"
             },
             "entityKinds": {
-              "const": [
-                "function"
-              ]
+              "type": "array",
+              "items": {
+                "enum": [
+                  "function",
+                  "method",
+                  "component",
+                  "module"
+                ]
+              },
+              "minItems": 1,
+              "uniqueItems": true
             },
             "relationTypes": {
               "const": [

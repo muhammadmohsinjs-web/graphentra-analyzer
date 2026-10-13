@@ -23,6 +23,18 @@ export const DEFAULT_LIMITATIONS = [
   'Blast radius is limited to depth 6.',
 ];
 
+export const EXTENDED_LIMITATIONS = [
+  'Only TypeScript and JavaScript are analyzed; JavaScript is not type-checked.',
+  'Entities are named functions, variable-bound arrow functions and function expressions, class and object-literal methods, constructors, accessors, React components, and module-level code.',
+  'Classes, interfaces, type aliases, and enums are not entities.',
+  'Only CALLS relationships are currently supported.',
+  'Dynamic calls and calls through interface-typed receivers are not analyzed.',
+  'Deleted entities have no current graph entity; renamed entities may lack removed-code evidence.',
+  'Partially overlapping entity line ranges are skipped rather than sharing ambiguous evidence.',
+  'Application surfaces are not yet discovered.',
+  'Blast radius is limited to depth 6.',
+];
+
 export function printChangedFile(change: ChangedFile): void {
   console.log('\n----------------------------------------');
   console.log(`📄 ${change.file}`);
