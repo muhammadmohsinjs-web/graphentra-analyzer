@@ -19,7 +19,7 @@ test('integration: root legacy entrypoint re-exports analyzer and reporting cont
   assert.equal(typeof createRepositoryContext, 'function');
   assert.equal(typeof parseCliOptions, 'function');
   assert.equal(typeof createVisualizerServer, 'function');
-  assert.equal(ANALYZER_VERSION, '0.4.0');
+  assert.equal(ANALYZER_VERSION, '0.5.0');
 });
 
 test('integration: end-to-end analyzer to visualizer flow using only new evidence.json', async () => {

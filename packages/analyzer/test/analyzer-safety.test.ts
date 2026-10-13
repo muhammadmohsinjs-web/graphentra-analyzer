@@ -18,7 +18,7 @@ test('importing analyzer index is side-effect-free and exports expected API', ()
   assert.equal(typeof extractTechnicalGraph, 'function');
   assert.equal(typeof createRepositoryContext, 'function');
   assert.equal(typeof parseCliOptions, 'function');
-  assert.equal(ANALYZER_VERSION, '0.4.0');
+  assert.equal(ANALYZER_VERSION, '0.5.0');
   assert.equal(MAX_BLAST_DEPTH, 6);
 });
 

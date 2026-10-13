@@ -104,7 +104,7 @@ try {
     if (typeof analyzer.analyzeRepository !== 'function') throw new Error('analyzeRepository missing');
     if (typeof analyzer.extractTechnicalGraph !== 'function') throw new Error('extractTechnicalGraph missing');
     if (typeof analyzer.validateEvidenceEnvelope !== 'function') throw new Error('validateEvidenceEnvelope missing');
-    if (analyzer.ANALYZER_VERSION !== '0.4.0') throw new Error('Wrong version');
+    if (analyzer.ANALYZER_VERSION !== '0.5.0') throw new Error('Wrong version');
     console.log('Library import verified successfully');
   `;
   run(`node -e "${testScript.replace(/\n/g, ' ')}"`, consumerDir);
@@ -129,7 +129,7 @@ try {
   console.log('7. Testing installed CLI binary directly...');
   const binPath = path.join(consumerDir, 'node_modules/.bin/graphentra-analyze');
   const binVersion = run(`"${binPath}" --version`, consumerDir);
-  if (binVersion.trim() !== '0.4.0') {
+  if (binVersion.trim() !== '0.5.0') {
     throw new Error(`Unexpected CLI version: ${binVersion}`);
   }
   const binHelp = run(`"${binPath}" --help`, consumerDir);
