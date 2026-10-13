@@ -20,6 +20,8 @@ export const IGNORED_DIRECTORIES = new Set([
 ]);
 
 export const TYPESCRIPT_EXTENSIONS = new Set(['.ts', '.tsx', '.mts', '.cts']);
+/** Analyzed only by the extended engine. */
+export const JAVASCRIPT_EXTENSIONS = new Set(['.js', '.jsx', '.mjs', '.cjs']);
 
 export type EntityKind = 'function' | 'method' | 'component' | 'module';
 export type EntityLanguage = 'typescript' | 'javascript';

@@ -79,7 +79,7 @@ export function analyzeFixture(options: {
  * Inline mini-repo. `head` files are written over `base`; files in `base` but absent from `head`
  * stay unchanged, and `removed` deletes base files (for renames). A default tsconfig.json is added when none is given.
  */
-export function analyzeSources(options: { base: Files; head: Files; engine: EngineProfile; removed?: string[] }): AnalyzeResult {
-  const base: Files = { 'tsconfig.json': DEFAULT_TSCONFIG, ...options.base };
+export function analyzeSources(options: { base: Files; head: Files; engine: EngineProfile; removed?: string[]; defaultTsconfig?: boolean }): AnalyzeResult {
+  const base: Files = { ...(options.defaultTsconfig === false ? {} : { 'tsconfig.json': DEFAULT_TSCONFIG }), ...options.base };
   return run(base, options.head, options.removed ?? [], options.engine, 'commit');
 }

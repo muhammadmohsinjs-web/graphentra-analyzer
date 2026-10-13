@@ -16,7 +16,7 @@ import { buildImpact, findChangedEntities } from './impact';
 import { DEFAULT_LIMITATIONS, EXTENDED_LIMITATIONS } from './output';
 import { captureSourceSnapshot } from './source-snapshot';
 import { createRepositoryContext } from './repository';
-import { extractTechnicalGraph, isTypeScriptFile, type ExtractedGraph } from './technical-graph';
+import { extractTechnicalGraph, isAnalyzableFile, type ExtractedGraph } from './technical-graph';
 import { APPLICATION_MAP_SCHEMA_VERSION, extractApplicationMap, type ApplicationMap } from './application-map';
 import { buildToolchainRecord, toolchainDiagnostics } from './toolchain';
 import { assertValidEvidenceEnvelope } from './validator';
@@ -29,12 +29,13 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
   const repo = createRepositoryContext(options.target, options.comparison, {
     gitTimeoutMs: options.gitTimeoutMs,
     excludePaths: options.excludePaths,
+    engine,
   });
 
   const targetPath = repo.projectInsideRepository;
   const headSha = repo.comparison.resolvedHeadSha ?? repo.sourceState.checkoutSha;
 
-  const snapshot = captureSourceSnapshot(repo);
+  const snapshot = captureSourceSnapshot(repo, engine);
   const extracted = extractTechnicalGraph({
     files: snapshot.files,
     compilerOptions: snapshot.compilerOptions,
@@ -46,13 +47,13 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
     engine,
   });
   // Extended engine: stamp language once, so graph, changed entities and impacts share the same objects.
-  if (engine === 'extended') for (const entity of extracted.entities) entity.language = 'typescript';
+  if (engine === 'extended') for (const entity of extracted.entities) entity.language ??= 'typescript';
 
   const diagnostics: DiagnosticItem[] = [...toolchainDiagnostics()];
   if (engine === 'extended') diagnostics.push(...extracted.diagnostics);
   let gitDiff = snapshot.gitDiff;
   if (repo.comparison.mode === 'working-tree') {
-    for (const file of repo.listFiles(true).filter(isTypeScriptFile)) {
+    for (const file of repo.listFiles(true).filter(file => isAnalyzableFile(file, engine))) {
       const content = snapshot.readFile(`${repo.projectRoot}/${file}`);
       if (content === undefined) continue;
       const lines = content.split('\n');
@@ -66,8 +67,8 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
   }
   const changedFiles = parseGitDiff(gitDiff, repo.gitPathToProjectPath)
     .filter(change => repo.includesPath(change.file));
-  const supportedChanges = changedFiles.filter(change => isTypeScriptFile(change.file));
-  if (changedFiles.some(change => !isTypeScriptFile(change.file))) {
+  const supportedChanges = changedFiles.filter(change => isAnalyzableFile(change.file, engine));
+  if (changedFiles.some(change => !isAnalyzableFile(change.file, engine))) {
     diagnostics.push({ code: 'OUTSIDE_SUPPORTED_SCOPE', severity: 'warning',
       message: 'Changes outside TypeScript extraction scope were not analyzed for function impact.' });
   }

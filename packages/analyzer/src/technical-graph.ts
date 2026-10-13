@@ -8,6 +8,7 @@ import {
   DEFAULT_ENGINE,
   EXTENDED_ENTITY_KINDS,
   IGNORED_DIRECTORIES,
+  JAVASCRIPT_EXTENSIONS,
   LEGACY_ENTITY_KINDS,
   MAX_BLAST_DEPTH,
   TYPESCRIPT_EXTENSIONS,
@@ -30,10 +31,20 @@ export function isTypeScriptFile(filePath: string): boolean {
   return TYPESCRIPT_EXTENSIONS.has(path.extname(filePath));
 }
 
+/** Engine-aware file selection: legacy is TypeScript only; extended also analyzes JavaScript. */
+export function isAnalyzableFile(filePath: string, engine: EngineProfile = DEFAULT_ENGINE): boolean {
+  if (isTypeScriptFile(filePath)) return true;
+  if (engine !== 'extended') return false;
+  const normalized = filePath.replace(/\\/g, '/');
+  if (normalized.endsWith('.min.js')) return false;
+  if (normalized.split('/').some(part => IGNORED_DIRECTORIES.has(part))) return false;
+  return JAVASCRIPT_EXTENSIONS.has(path.extname(filePath));
+}
+
 export function collectTypeScriptFiles(
   directory: string,
   projectRoot: string,
-  options?: { excludePaths?: string[] },
+  options?: { excludePaths?: string[]; engine?: EngineProfile },
 ): string[] {
   const results: string[] = [];
   const entries = fs.readdirSync(directory, {
@@ -57,7 +68,7 @@ export function collectTypeScriptFiles(
       continue;
     }
 
-    if (entry.isFile() && isTypeScriptFile(absolutePath)) {
+    if (entry.isFile() && isAnalyzableFile(absolutePath, options?.engine)) {
       results.push(absolutePath);
     }
   }
@@ -65,8 +76,12 @@ export function collectTypeScriptFiles(
   return results;
 }
 
-export function getCompilerOptions(projectRoot: string): ts.CompilerOptions {
-  const configPath = fs.existsSync(path.join(projectRoot, 'tsconfig.json')) ? path.join(projectRoot, 'tsconfig.json') : undefined;
+export function getCompilerOptions(projectRoot: string, engine: EngineProfile = DEFAULT_ENGINE): ts.CompilerOptions {
+  const extendedOptions = (options: ts.CompilerOptions): ts.CompilerOptions =>
+    engine === 'extended' ? { ...options, allowJs: true, checkJs: options.checkJs ?? false } : options;
+  const configPath = fs.existsSync(path.join(projectRoot, 'tsconfig.json')) ? path.join(projectRoot, 'tsconfig.json')
+    : engine === 'extended' && fs.existsSync(path.join(projectRoot, 'jsconfig.json')) ? path.join(projectRoot, 'jsconfig.json')
+    : undefined;
 
   if (configPath) {
     const config = ts.readConfigFile(configPath, ts.sys.readFile);
@@ -77,7 +92,7 @@ export function getCompilerOptions(projectRoot: string): ts.CompilerOptions {
         path.dirname(configPath),
       );
       return {
-        ...parsed.options,
+        ...extendedOptions(parsed.options),
         noEmit: true,
         skipLibCheck: true,
       };
@@ -85,6 +100,7 @@ export function getCompilerOptions(projectRoot: string): ts.CompilerOptions {
   }
 
   return {
+    ...(engine === 'extended' ? { allowJs: true, checkJs: false } : {}),
     target: ts.ScriptTarget.ES2022,
     module: ts.ModuleKind.CommonJS,
     moduleResolution: ts.ModuleResolutionKind.Node10,
@@ -134,7 +150,7 @@ export function extractTechnicalGraph(options: {
   engine?: EngineProfile;
 }): ExtractedGraph {
   const { projectRoot, headSha, targetPath = '.', excludePaths } = options;
-  const files = options.files ?? collectTypeScriptFiles(projectRoot, projectRoot, { excludePaths }).sort();
+  const files = options.files ?? collectTypeScriptFiles(projectRoot, projectRoot, { excludePaths, engine: options.engine }).sort();
 
   const originalFiles = new Map(files.map(file => [path.resolve(file).replace(/\\/g, '/'), file]));
   const normalizeProjectPath = (filePath: string): string =>
@@ -171,7 +187,7 @@ export function extractTechnicalGraph(options: {
     };
   }
 
-  const program = ts.createProgram(files, options.compilerOptions ?? getCompilerOptions(projectRoot), options.host);
+  const program = ts.createProgram(files, options.compilerOptions ?? getCompilerOptions(projectRoot, options.engine), options.host);
   const checker = program.getTypeChecker();
   const analyzedFileSet = new Set(files.map(file => path.resolve(file).replace(/\\/g, '/')));
 

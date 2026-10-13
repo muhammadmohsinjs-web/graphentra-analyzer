@@ -5,10 +5,11 @@ import * as ts from 'typescript';
 import { compareStrings } from './deterministic';
 import { GraphentraError } from './errors';
 import type { RepositoryContext } from './repository';
-import { isTypeScriptFile } from './technical-graph';
+import { DEFAULT_ENGINE, type EngineProfile } from './contracts';
+import { isAnalyzableFile } from './technical-graph';
 
 /** Captures compiler reads and verifies them again before returning evidence. */
-export function captureSourceSnapshot(repo: RepositoryContext) {
+export function captureSourceSnapshot(repo: RepositoryContext, engine: EngineProfile = DEFAULT_ENGINE) {
   const standardLibraryRoot = path.dirname(ts.getDefaultLibFilePath({}));
   const reads = new Map<string, Buffer | undefined>();
   const compilerPaths = new Map<string, string>();
@@ -42,7 +43,7 @@ export function captureSourceSnapshot(repo: RepositoryContext) {
   }
   function inventory() {
     return [...new Set([...repo.listFiles(), ...repo.listFiles(true)])]
-      .filter(isTypeScriptFile).filter(file => fs.existsSync(path.join(repo.projectRoot, file))).sort();
+      .filter(file => isAnalyzableFile(file, engine)).filter(file => fs.existsSync(path.join(repo.projectRoot, file))).sort();
   }
   const names = inventory();
   const files = names.map(file => path.join(repo.projectRoot, file));
@@ -56,8 +57,14 @@ export function captureSourceSnapshot(repo: RepositoryContext) {
   }
   const initialDiff = repo.getGitDiff();
   const initialTrackedState = repo.trackedState();
-  const configPath = path.join(repo.projectRoot, 'tsconfig.json');
-  const configText = readFile(configPath);
+  let configPath = path.join(repo.projectRoot, 'tsconfig.json');
+  let configText = readFile(configPath);
+  // Extended engine: a jsconfig.json is used only when there is no tsconfig.json; it is read through the captured readFile.
+  if (engine === 'extended' && configText === undefined) {
+    const jsConfigPath = path.join(repo.projectRoot, 'jsconfig.json');
+    const jsConfigText = readFile(jsConfigPath);
+    if (jsConfigText !== undefined) { configPath = jsConfigPath; configText = jsConfigText; }
+  }
   const fileExists = (file: string) => {
     // Do not let module resolution search unrelated parent workspaces.
     if (!inside(repo.gitRepositoryRoot, path.resolve(file)) && !inside(standardLibraryRoot, path.resolve(file))) return false;
@@ -79,6 +86,7 @@ export function captureSourceSnapshot(repo: RepositoryContext) {
     }
     compilerOptions = parsed.options;
   }
+  if (engine === 'extended') compilerOptions = { ...compilerOptions, allowJs: true, checkJs: compilerOptions.checkJs ?? false };
   compilerOptions = { ...compilerOptions, noEmit: true, skipLibCheck: true };
   const host = ts.createCompilerHost(compilerOptions);
   host.readFile = readFile;

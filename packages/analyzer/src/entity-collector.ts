@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import type { Entity, EngineProfile } from './contracts';
+import { JAVASCRIPT_EXTENSIONS, type Entity, type EntityLanguage, type EngineProfile } from './contracts';
 import {
   DEFAULT_EXPORT_SEGMENT,
   MODULE_SEGMENT,
@@ -21,6 +21,11 @@ export interface EntityCandidate {
   exportDefault?: boolean;
   /** Extended only: the base ID this candidate collided with before `~N` was appended. */
   disambiguatedFrom?: string;
+}
+
+export function languageForFile(file: string): EntityLanguage {
+  const dot = file.lastIndexOf('.');
+  return dot >= 0 && JAVASCRIPT_EXTENSIONS.has(file.slice(dot)) ? 'javascript' : 'typescript';
 }
 
 export interface CollectOptions {
@@ -81,6 +86,20 @@ function isFunctionInitializer(initializer: ts.Expression | undefined): boolean 
 const hasModifier = (node: ts.Node, kind: ts.SyntaxKind): boolean =>
   ts.canHaveModifiers(node) && !!ts.getModifiers(node)?.some(modifier => modifier.kind === kind);
 
+/** `exports.name = <fn>` / `module.exports.name = <fn>` as a statement. */
+function commonJsExportedFunction(statement: ts.ExpressionStatement): { name: ts.Identifier } | undefined {
+  const expression = statement.expression;
+  if (!ts.isBinaryExpression(expression) || expression.operatorToken.kind !== ts.SyntaxKind.EqualsToken) return undefined;
+  const left = expression.left;
+  if (!ts.isPropertyAccessExpression(left) || !ts.isIdentifier(left.name)) return undefined;
+  if (!isFunctionLike(unwrapExpression(expression.right))) return undefined;
+  const target = left.expression;
+  const isExports = ts.isIdentifier(target) && target.text === 'exports';
+  const isModuleExports = ts.isPropertyAccessExpression(target) && ts.isIdentifier(target.expression) &&
+    target.expression.text === 'module' && target.name.text === 'exports';
+  return isExports || isModuleExports ? { name: left.name } : undefined;
+}
+
 function collectExtendedEntities(sourceFile: ts.SourceFile, relativeFile: string): EntityCandidate[] {
   const candidates: EntityCandidate[] = [];
   const allocator = createIdAllocator();
@@ -108,6 +127,7 @@ function collectExtendedEntities(sourceFile: ts.SourceFile, relativeFile: string
       file: relativeFile,
       startLine: lineOf(rangeStart),
       endLine: lineOf(declarationNode.getEnd()),
+      language: languageForFile(relativeFile),
     };
     if (moduleLevel && extra.exported !== undefined) entity.exported = extra.exported;
     if (moduleLevel && extra.exportDefault) entity.exportName = DEFAULT_EXPORT_SEGMENT;
@@ -162,6 +182,9 @@ function collectExtendedEntities(sourceFile: ts.SourceFile, relativeFile: string
       });
     } else if (ts.isExportAssignment(node) && !node.isExportEquals && isFunctionLike(unwrapExpression(node.expression))) {
       next = add(DEFAULT_EXPORT_SEGMENT, parent, node, node.getStart(sourceFile), [], { exported: true, exportDefault: true });
+    } else if (ts.isExpressionStatement(node) && parent?.entity.kind === 'module') {
+      const cjs = commonJsExportedFunction(node);
+      if (cjs) next = add(cjs.name.text, parent, node, node.getStart(sourceFile), [cjs.name], { exported: true });
     }
 
     ts.forEachChild(node, child => visit(child, next));
@@ -174,6 +197,7 @@ function collectExtendedEntities(sourceFile: ts.SourceFile, relativeFile: string
     file: relativeFile,
     startLine: 1,
     endLine: Math.max(1, lineOf(sourceFile.getEnd())),
+    language: languageForFile(relativeFile),
   };
   const moduleCandidate: EntityCandidate = { entity: moduleEntity, declarationNode: sourceFile, symbolNodes: [] };
   candidates.push(moduleCandidate);

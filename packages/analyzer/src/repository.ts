@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { IGNORED_DIRECTORIES, type ComparisonOptions, type EvidenceComparison, type EvidenceSourceState } from './contracts';
+import { DEFAULT_ENGINE, IGNORED_DIRECTORIES, type ComparisonOptions, type EngineProfile, type EvidenceComparison, type EvidenceSourceState } from './contracts';
 import {
   BaselineSourceError,
   GraphentraError,
@@ -12,7 +12,7 @@ import {
   InvalidTargetError,
   RevisionError,
 } from './errors';
-import { isTypeScriptFile } from './technical-graph';
+import { isAnalyzableFile } from './technical-graph';
 
 export interface RepositoryContext {
   projectRoot: string;
@@ -36,7 +36,7 @@ export interface RepositoryContext {
 export function createRepositoryContext(
   projectRootInput: string,
   comparisonOptions: ComparisonOptions,
-  options: { gitTimeoutMs?: number; excludePaths?: string[] } = {},
+  options: { gitTimeoutMs?: number; excludePaths?: string[]; engine?: EngineProfile } = {},
 ): RepositoryContext {
   if (!comparisonOptions || typeof comparisonOptions !== 'object' ||
       !['commit', 'working-tree'].includes(comparisonOptions.mode)) {
@@ -211,7 +211,7 @@ export function createRepositoryContext(
     if (trackedState()) {
       throw new DirtySourceError('Target has uncommitted tracked changes.', 'DIRTY_TRACKED_SOURCE');
     }
-    const untrackedFiles = listFiles(true).filter(isTypeScriptFile);
+    const untrackedFiles = listFiles(true).filter(file => isAnalyzableFile(file, options.engine ?? DEFAULT_ENGINE));
 
     if (untrackedFiles.length > 0) {
       throw new DirtySourceError(
