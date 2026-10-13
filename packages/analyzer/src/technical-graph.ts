@@ -1,9 +1,11 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as ts from 'typescript';
+import { collectEntities } from './entity-collector';
 import { GraphentraError } from './errors';
 import {
   ANALYZER_VERSION,
+  DEFAULT_ENGINE,
   IGNORED_DIRECTORIES,
   MAX_BLAST_DEPTH,
   TYPESCRIPT_EXTENSIONS,
@@ -193,32 +195,19 @@ export function extractTechnicalGraph(options: {
 
     const relativeFile = normalizeProjectPath(sourceFile.fileName);
 
-    function visit(node: ts.Node): void {
-      if (ts.isFunctionDeclaration(node) && node.name) {
-        const start = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
-        const end = sourceFile.getLineAndCharacterOfPosition(node.getEnd());
-        const entity: Entity = {
-          id: `${relativeFile}#${node.name.text}`,
-          kind: 'function',
-          name: node.name.text,
-          file: relativeFile,
-          startLine: start.line + 1,
-          endLine: end.line + 1,
-        };
+    for (const candidate of collectEntities(sourceFile, { relativeFile, engine: options.engine ?? DEFAULT_ENGINE })) {
+      const entity = candidate.entity;
+      if (entityById.has(entity.id)) throw new GraphentraError('Duplicate function identity in source.', 'AMBIGUOUS_ENTITY_ID');
+      entities.push(entity);
+      entityById.set(entity.id, entity);
 
-        if (entityById.has(entity.id)) throw new GraphentraError('Duplicate function identity in source.', 'AMBIGUOUS_ENTITY_ID');
-        entities.push(entity);
-        entityById.set(entity.id, entity);
-
-        const symbol = resolveSymbol(node.name);
+      for (const symbolNode of candidate.symbolNodes) {
+        const symbol = resolveSymbol(symbolNode);
         if (symbol) {
           symbolToEntity.set(symbol, entity);
         }
       }
-      ts.forEachChild(node, visit);
     }
-
-    visit(sourceFile);
   }
 
   // Pass 2 - call relationships
