@@ -203,4 +203,6 @@ export interface AnalyzeResult {
   gitDiff: string;
   diagnostics: DiagnosticItem[];
   summaryMessage: string;
+  /** Extended engine only: share of changed lines attributed to code entities. Not part of the evidence. */
+  attribution?: { total: number; code: number; module: number; unattributed: number; ratio: number };
 }

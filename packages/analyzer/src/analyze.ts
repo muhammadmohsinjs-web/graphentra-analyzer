@@ -12,6 +12,7 @@ import {
 } from './contracts';
 import { GraphentraError } from './errors';
 import { parseGitDiff } from './change-evidence';
+import { computeAttribution } from './attribution';
 import { buildImpact, findChangedEntities } from './impact';
 import { DEFAULT_LIMITATIONS, EXTENDED_LIMITATIONS } from './output';
 import { captureSourceSnapshot } from './source-snapshot';
@@ -90,6 +91,12 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
     message: 'Changes did not match supported current function declarations. This is not a no-risk result.' });
   const sourcePolicy = repo.comparison.mode === 'commit' ? 'git-tracked' : 'git-tracked-and-nonignored-untracked';
   const extended = engine === 'extended';
+  const attribution = extended ? computeAttribution(supportedChanges, changedEntities) : undefined;
+  if (attribution && attribution.total > 0) {
+    const { code, total, ratio, module, unattributed } = attribution;
+    diagnostics.push({ code: 'ATTRIBUTED_LINE_RATIO', severity: 'info',
+      message: `${code} of ${total} changed lines attributed to code entities (ratio ${ratio.toFixed(4)}); ${module} module-level, ${unattributed} unattributed.` });
+  }
   const evidence: DeterministicEvidence = {
     artifactKind: EVIDENCE_ARTIFACT_KIND,
     schemaVersion: extended ? EXTENDED_EVIDENCE_SCHEMA_VERSION : EVIDENCE_SCHEMA_VERSION,
@@ -111,7 +118,7 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
     : outcome === 'no_source_files' ? 'No TypeScript files were found in the target repository.'
     : 'Changes did not match supported current function declarations.';
   return { outcome, technicalGraph: extracted.technicalGraph, evidence, applicationMap, changedFiles, changedEntities,
-    impacts, gitDiff, diagnostics, summaryMessage };
+    impacts, gitDiff, diagnostics, summaryMessage, ...(attribution ? { attribution } : {}) };
 }
 
 function emptyApplicationMap(headSha: string, reason?: string): ApplicationMap {
