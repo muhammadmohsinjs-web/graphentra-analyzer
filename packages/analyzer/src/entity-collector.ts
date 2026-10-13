@@ -1,5 +1,6 @@
 import * as ts from 'typescript';
 import { JAVASCRIPT_EXTENSIONS, type Entity, type EntityLanguage, type EngineProfile } from './contracts';
+import { isComponentCandidate } from './component-heuristic';
 import {
   DEFAULT_EXPORT_SEGMENT,
   MODULE_SEGMENT,
@@ -203,5 +204,6 @@ function collectExtendedEntities(sourceFile: ts.SourceFile, relativeFile: string
   candidates.push(moduleCandidate);
 
   visit(sourceFile, moduleCandidate);
+  for (const candidate of candidates) if (isComponentCandidate(candidate, sourceFile)) candidate.entity.kind = 'component';
   return candidates;
 }
