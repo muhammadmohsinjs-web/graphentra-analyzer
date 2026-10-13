@@ -72,13 +72,14 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
     diagnostics.push({ code: 'OUTSIDE_SUPPORTED_SCOPE', severity: 'warning',
       message: 'Changes outside TypeScript extraction scope were not analyzed for function impact.' });
   }
-  const { changedEntities, diagnostics: entityWarnings } = findChangedEntities({
+  const { changedEntities, diagnostics: entityWarnings, extraDiagnostics } = findChangedEntities({
     changedFiles: supportedChanges,
     entities: extracted.entities,
     parentById: extracted.parentById,
     getBaselineSource: oldFile => repo.getBaselineSource(oldFile, repo.comparison.resolvedBaseSha),
   }, engine);
   for (const message of entityWarnings) diagnostics.push({ code: 'AMBIGUOUS_FUNCTION_RANGE', severity: 'warning', message });
+  if (engine === 'extended') diagnostics.push(...extraDiagnostics);
   const impacts = changedEntities.map(changed => buildImpact(changed, extracted.reverseAdjacency, extracted.entityById));
   const outcome = extracted.files.length === 0 ? 'no_source_files'
     : changedFiles.length === 0 ? 'no_changes'

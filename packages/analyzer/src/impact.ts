@@ -10,6 +10,7 @@ import {
   type EngineProfile,
   type ChangedEntity,
   type ChangedFile,
+  type DiagnosticItem,
   type FunctionRange,
   type Entity,
   type EntityImpact,
@@ -148,6 +149,8 @@ export function findChangedEntities(options: {
 }, engine: EngineProfile = DEFAULT_ENGINE): {
   changedEntities: ChangedEntity[];
   diagnostics: string[];
+  /** Structured diagnostics (extended engine only; always empty for legacy). */
+  extraDiagnostics: DiagnosticItem[];
 } {
   const { changedFiles, entities, getBaselineSource, onWarning, parentById } = options;
   const extended = engine === 'extended';
@@ -159,12 +162,21 @@ export function findChangedEntities(options: {
   };
   const changedEntities: ChangedEntity[] = [];
   const diagnostics: string[] = [];
+  const extraDiagnostics: DiagnosticItem[] = [];
+  const errorClass = (error: unknown): string => error instanceof Error ? error.constructor.name : typeof error;
 
   for (const change of changedFiles) {
     const matchingEntities = entities.filter(entity => entity.file === change.file);
     if (matchingEntities.length === 0) continue;
 
-    const baseSource = change.oldFile ? getBaselineSource(change.oldFile) : undefined;
+    let baseSource: string | undefined;
+    let baselineFailure: string | undefined;
+    try {
+      baseSource = change.oldFile ? getBaselineSource(change.oldFile) : undefined;
+    } catch (error) {
+      if (!extended) throw error;
+      baselineFailure = errorClass(error);
+    }
     const previousRanges = !extended && change.oldFile && baseSource
       ? getFunctionRanges(change.oldFile, baseSource)
       : [];
@@ -174,18 +186,34 @@ export function findChangedEntities(options: {
     const baselineParent = new Map<string, string | undefined>();
     const baselineChildren = new Map<string, FunctionRange[]>();
     if (extended && change.oldFile && baseSource) {
-      const sourceFile = ts.createSourceFile(change.oldFile, baseSource, ts.ScriptTarget.Latest, true);
-      for (const candidate of collectEntities(sourceFile, { relativeFile: change.file, engine: 'extended' })) {
-        const { id, name, startLine, endLine } = candidate.entity;
-        const range = { name, startLine, endLine };
-        baselineById.set(id, range);
-        baselineParent.set(id, candidate.parent?.entity.id);
-        if (candidate.parent) {
-          const siblings = baselineChildren.get(candidate.parent.entity.id) ?? [];
-          siblings.push(range);
-          baselineChildren.set(candidate.parent.entity.id, siblings);
+      try {
+        const sourceFile = ts.createSourceFile(change.oldFile, baseSource, ts.ScriptTarget.Latest, true);
+        const collected = collectEntities(sourceFile, { relativeFile: change.file, engine: 'extended' });
+        for (const candidate of collected) {
+          const { id, name, startLine, endLine } = candidate.entity;
+          const range = { name, startLine, endLine };
+          baselineById.set(id, range);
+          baselineParent.set(id, candidate.parent?.entity.id);
+          if (candidate.parent) {
+            const siblings = baselineChildren.get(candidate.parent.entity.id) ?? [];
+            siblings.push(range);
+            baselineChildren.set(candidate.parent.entity.id, siblings);
+          }
         }
+      } catch (error) {
+        baselineFailure = errorClass(error);
+        baselineById.clear();
+        baselineParent.clear();
+        baselineChildren.clear();
       }
+    }
+    if (baselineFailure !== undefined) {
+      extraDiagnostics.push({
+        code: 'BASELINE_ANALYSIS_FAILED',
+        severity: 'warning',
+        file: change.file,
+        message: `Baseline entity collection failed (${baselineFailure}); removed-code evidence is unavailable for this file.`,
+      });
     }
     const isBaselineAncestor = (ancestorId: string, id: string): boolean => {
       for (let current = baselineParent.get(id); current !== undefined; current = baselineParent.get(current)) {
@@ -238,5 +266,6 @@ export function findChangedEntities(options: {
   return {
     changedEntities,
     diagnostics,
+    extraDiagnostics,
   };
 }

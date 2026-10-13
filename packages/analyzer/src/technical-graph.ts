@@ -200,6 +200,8 @@ export function extractTechnicalGraph(options: {
   const entityById = new Map<string, Entity>();
   const symbolToEntity = new Map<ts.Symbol, Entity>();
   const relationKeys = new Set<string>();
+  const failedFiles = new Set<string>();
+  const errorClassName = (error: unknown): string => error instanceof Error ? error.constructor.name : typeof error;
 
   function resolveSymbol(node: ts.Node): ts.Symbol | undefined {
     let symbol = checker.getSymbolAtLocation(node);
@@ -224,36 +226,74 @@ export function extractTechnicalGraph(options: {
 
     const relativeFile = normalizeProjectPath(sourceFile.fileName);
 
-    for (const candidate of collectEntities(sourceFile, { relativeFile, engine: options.engine ?? DEFAULT_ENGINE })) {
-      const entity = candidate.entity;
-      if (entityById.has(entity.id)) throw new GraphentraError('Duplicate function identity in source.', 'AMBIGUOUS_ENTITY_ID');
-      entities.push(entity);
-      entityById.set(entity.id, entity);
-      if (extendedEngine) {
-        parentById.set(entity.id, candidate.parent?.entity.id);
-        declarationToEntity.set(candidate.declarationNode, entity);
-      }
-      if (candidate.disambiguatedFrom !== undefined) {
+    if (extendedEngine) {
+      const syntaxErrors = program.getSyntacticDiagnostics(sourceFile).length;
+      if (syntaxErrors > 0) {
         diagnostics.push({
-          code: 'DUPLICATE_ENTITY_ID_DISAMBIGUATED',
-          severity: 'info',
-          message: `Entity ID ${candidate.disambiguatedFrom} is declared more than once; this declaration was assigned ${entity.id}.`,
-          file: entity.file,
-          entityId: entity.id,
+          code: 'FILE_PARSE_ERRORS',
+          severity: 'warning',
+          file: relativeFile,
+          message: `${syntaxErrors} syntax error(s); entities were collected from the parts that parse.`,
         });
       }
+    }
 
-      for (const symbolNode of candidate.symbolNodes) {
-        const symbol = resolveSymbol(symbolNode);
-        if (symbol) {
-          symbolToEntity.set(symbol, entity);
+    // Extended: a failing file is rolled back and skipped; legacy keeps today's behavior (errors propagate).
+    const registered: Entity[] = [];
+    const registeredDiagnostics = diagnostics.length;
+    try {
+      for (const candidate of collectEntities(sourceFile, { relativeFile, engine: options.engine ?? DEFAULT_ENGINE })) {
+        const entity = candidate.entity;
+        if (entityById.has(entity.id)) throw new GraphentraError('Duplicate function identity in source.', 'AMBIGUOUS_ENTITY_ID');
+        entities.push(entity);
+        entityById.set(entity.id, entity);
+        registered.push(entity);
+        if (extendedEngine) {
+          parentById.set(entity.id, candidate.parent?.entity.id);
+          declarationToEntity.set(candidate.declarationNode, entity);
+        }
+        if (candidate.disambiguatedFrom !== undefined) {
+          diagnostics.push({
+            code: 'DUPLICATE_ENTITY_ID_DISAMBIGUATED',
+            severity: 'info',
+            message: `Entity ID ${candidate.disambiguatedFrom} is declared more than once; this declaration was assigned ${entity.id}.`,
+            file: entity.file,
+            entityId: entity.id,
+          });
+        }
+
+        for (const symbolNode of candidate.symbolNodes) {
+          const symbol = resolveSymbol(symbolNode);
+          if (symbol) {
+            symbolToEntity.set(symbol, entity);
+          }
+        }
+        if (candidate.exportDefault) {
+          let defaultSymbol = checker.getSymbolAtLocation(sourceFile)?.exports?.get('default' as ts.__String);
+          if (defaultSymbol && defaultSymbol.flags & ts.SymbolFlags.Alias) defaultSymbol = checker.getAliasedSymbol(defaultSymbol);
+          if (defaultSymbol) symbolToEntity.set(defaultSymbol, entity);
         }
       }
-      if (candidate.exportDefault) {
-        let defaultSymbol = checker.getSymbolAtLocation(sourceFile)?.exports?.get('default' as ts.__String);
-        if (defaultSymbol && defaultSymbol.flags & ts.SymbolFlags.Alias) defaultSymbol = checker.getAliasedSymbol(defaultSymbol);
-        if (defaultSymbol) symbolToEntity.set(defaultSymbol, entity);
+    } catch (error) {
+      if (!extendedEngine) throw error;
+      const registeredIds = new Set(registered.map(entity => entity.id));
+      for (let index = entities.length - 1; index >= 0 && registeredIds.size > 0; index--) {
+        if (registeredIds.delete(entities[index].id)) entities.splice(index, 1);
       }
+      for (const entity of registered) {
+        entityById.delete(entity.id);
+        parentById.delete(entity.id);
+      }
+      for (const [node, entity] of declarationToEntity) if (entity.file === relativeFile) declarationToEntity.delete(node);
+      for (const [symbol, entity] of symbolToEntity) if (entity.file === relativeFile) symbolToEntity.delete(symbol);
+      diagnostics.length = registeredDiagnostics;
+      failedFiles.add(sourceFile.fileName);
+      diagnostics.push({
+        code: 'FILE_ANALYSIS_FAILED',
+        severity: 'warning',
+        file: relativeFile,
+        message: `Entity collection failed (${errorClassName(error)}); the file was skipped.`,
+      });
     }
   }
 
@@ -261,6 +301,14 @@ export function extractTechnicalGraph(options: {
   for (const sourceFile of program.getSourceFiles()) {
     if (sourceFile.isDeclarationFile) continue;
     if (!analyzedFileSet.has(path.resolve(sourceFile.fileName).replace(/\\/g, '/'))) continue;
+    if (failedFiles.has(sourceFile.fileName)) continue;
+
+    // Relations are buffered per file and added all or nothing under the extended engine.
+    const fileRelations: Relation[] = [];
+    const emit = (relation: Relation): void => {
+      if (extendedEngine) fileRelations.push(relation);
+      else addRelation(relation);
+    };
 
     function visit(node: ts.Node): void {
       if (ts.isCallExpression(node) && extendedEngine) {
@@ -270,7 +318,7 @@ export function extractTechnicalGraph(options: {
         while (enclosing && !(caller = declarationToEntity.get(enclosing))) enclosing = enclosing.parent;
         const calledSymbol = resolveSymbol(node.expression);
         const called = calledSymbol ? symbolToEntity.get(calledSymbol) : undefined;
-        if (caller && called) addRelation({ from: caller.id, to: called.id, type: 'CALLS' });
+        if (caller && called) emit({ from: caller.id, to: called.id, type: 'CALLS' });
       } else if (ts.isCallExpression(node)) {
         const calledSymbol = resolveSymbol(node.expression);
         const callerFunction = findEnclosingFunction(node);
@@ -282,7 +330,7 @@ export function extractTechnicalGraph(options: {
             const called = symbolToEntity.get(calledSymbol);
 
             if (caller && called) {
-              addRelation({
+              emit({
                 from: caller.id,
                 to: called.id,
                 type: 'CALLS',
@@ -294,7 +342,21 @@ export function extractTechnicalGraph(options: {
       ts.forEachChild(node, visit);
     }
 
-    visit(sourceFile);
+    if (!extendedEngine) {
+      visit(sourceFile);
+      continue;
+    }
+    try {
+      visit(sourceFile);
+      for (const relation of fileRelations) addRelation(relation);
+    } catch (error) {
+      diagnostics.push({
+        code: 'FILE_ANALYSIS_FAILED',
+        severity: 'warning',
+        file: normalizeProjectPath(sourceFile.fileName),
+        message: `Call extraction failed (${errorClassName(error)}); calls from this file were skipped.`,
+      });
+    }
   }
 
   // Reverse graph
