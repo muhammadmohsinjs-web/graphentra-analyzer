@@ -2,11 +2,21 @@ export function isTest(file) {
   return /(^|\/)(test|tests|__tests__)\//i.test(file.replace(/\\/g, '/')) || /(^|\/)(test|[^/]+\.(test|spec))\.(ts|tsx|mts|cts)$/i.test(file);
 }
 
+// Unknown or missing kinds fall back to the generic style; the class suffix is always CSS-safe.
+export function kindOf(entity) {
+  return typeof entity?.kind === 'string' && entity.kind ? entity.kind : 'function';
+}
+export const kindClass = entity => `kind-${kindOf(entity).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'unknown'}`;
+// Module entities are all named `<module>`; append the file name so the label identifies the file.
+export function displayName(entity) {
+  return entity.name === '<module>' ? `<module> (${entity.file.replace(/\\/g, '/').split('/').at(-1)})` : entity.name;
+}
+
 export const edgeKey = (from, to) => JSON.stringify([from, to]);
 
 export function prepareData(data) {
   const { graph } = data;
-  if (data.evidence && (data.evidence.artifactKind !== 'graphentra-evidence' || data.evidence.schemaVersion !== '2.0' || !['completed','no_changes','no_supported_changes','no_source_files'].includes(data.evidence.outcome))) throw new Error('Invalid evidence envelope.');
+  if (data.evidence && (data.evidence.artifactKind !== 'graphentra-evidence' || !['2.0', '2.1'].includes(data.evidence.schemaVersion) || !['completed','no_changes','no_supported_changes','no_source_files'].includes(data.evidence.outcome))) throw new Error('Invalid evidence envelope.');
   if (graph?.schemaVersion !== '1.0' || !Array.isArray(graph.entities) || !Array.isArray(graph.relations)) {
     throw new Error('Unsupported technical graph. Regenerate it with the analyzer.');
   }
@@ -14,7 +24,7 @@ export function prepareData(data) {
   for (const entity of graph.entities) {
     if (!entity || typeof entity.id !== 'string' || typeof entity.name !== 'string' || typeof entity.file !== 'string'
       || !Number.isInteger(entity.startLine) || !Number.isInteger(entity.endLine) || entities.has(entity.id)) {
-      throw new Error('The graph contains invalid or duplicate function identities. Regenerate it before visualizing.');
+      throw new Error('The graph contains invalid or duplicate entity identities. Regenerate it before visualizing.');
     }
     entities.set(entity.id, entity);
   }
@@ -61,7 +71,7 @@ export function prepareData(data) {
       analysis = null;
     }
   }
-  return { graph, entities, relations, analysis, context: data.context, warnings, maxDepth, outcome: data.evidence?.outcome, diagnostics: data.evidence?.diagnostics ?? [], limitations: data.evidence?.limitations ?? [], provenance: data.evidence ? { comparison: data.evidence.comparison, sourceState: data.evidence.sourceState, options: data.evidence.options } : undefined };
+  return { schemaVersion: data.evidence?.schemaVersion, graph, entities, relations, analysis, context: data.context, warnings, maxDepth, outcome: data.evidence?.outcome, diagnostics: data.evidence?.diagnostics ?? [], limitations: data.evidence?.limitations ?? [], provenance: data.evidence ? { comparison: data.evidence.comparison, sourceState: data.evidence.sourceState, options: data.evidence.options } : undefined };
 }
 
 // Recorded paths remain the authority; reverse traversal is only used in explicit what-if mode.

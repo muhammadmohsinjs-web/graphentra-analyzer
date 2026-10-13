@@ -908,3 +908,10 @@ footer {
     animation: none !important;
   }
 }
+
+.node .kind-badge {
+  fill: #7f8a99;
+  font-size: 9px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
