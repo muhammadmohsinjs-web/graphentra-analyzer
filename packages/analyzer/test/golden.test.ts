@@ -47,6 +47,7 @@ function normalize(value: unknown, shas: { base?: string; head?: string }, engin
   const parsed = JSON.parse(text);
   delete parsed.technicalGraph?.repository?.generatedAt;
   if (parsed.analyzerVersion) parsed.analyzerVersion = '<VERSION>';
+  if (parsed.technicalGraph?.repository?.analyzerVersion) parsed.technicalGraph.repository.analyzerVersion = '<VERSION>';
   if (parsed.sourceState?.contentIdentity) parsed.sourceState.contentIdentity = '<CONTENT>';
   // The Node major varies by machine; the pinned TypeScript version stays literal.
   if (engine === 'extended' && parsed.toolchain?.node) parsed.toolchain.node = '<NODE>';

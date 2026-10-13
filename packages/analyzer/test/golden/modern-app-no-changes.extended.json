@@ -34,7 +34,7 @@
     "repository": {
       "targetPath": ".",
       "headSha": "<BASE>",
-      "analyzerVersion": "0.4.0"
+      "analyzerVersion": "<VERSION>"
     },
     "capabilities": {
       "language": "typescript",
