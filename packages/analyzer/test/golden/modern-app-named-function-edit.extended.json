@@ -1,0 +1,1191 @@
+{
+  "artifactKind": "graphentra-evidence",
+  "schemaVersion": "2.1",
+  "analyzerVersion": "<VERSION>",
+  "target": {
+    "targetPath": "."
+  },
+  "comparison": {
+    "mode": "commit",
+    "requestedBase": "<BASE>",
+    "requestedHead": "<HEAD>",
+    "resolvedBaseSha": "<BASE>",
+    "resolvedHeadSha": "<HEAD>",
+    "comparedTo": "`<HEAD>`"
+  },
+  "sourceState": {
+    "checkoutSha": "<HEAD>",
+    "isTrackedDirty": false,
+    "untrackedSourcePolicy": "excluded",
+    "contentIdentity": "<CONTENT>"
+  },
+  "options": {
+    "excludePaths": [],
+    "sourcePolicy": "git-tracked",
+    "engine": "extended"
+  },
+  "toolchain": {
+    "typescript": "5.8.2",
+    "node": "<NODE>"
+  },
+  "outcome": "completed",
+  "technicalGraph": {
+    "schemaVersion": "1.0",
+    "repository": {
+      "targetPath": ".",
+      "headSha": "<HEAD>",
+      "analyzerVersion": "0.4.0"
+    },
+    "capabilities": {
+      "language": "typescript",
+      "entityKinds": [
+        "component",
+        "function",
+        "method",
+        "module"
+      ],
+      "relationTypes": [
+        "CALLS"
+      ],
+      "maxBlastDepth": 6
+    },
+    "analyzedFiles": [
+      "src/app/orders/page.tsx",
+      "src/components/OrderList.tsx",
+      "src/components/OrderRow.tsx",
+      "src/components/Summary.tsx",
+      "src/legacy/Badge.jsx",
+      "src/legacy/cjs-module.js",
+      "src/legacy/esm.mjs",
+      "src/legacy/use-legacy.js",
+      "src/server/app.ts",
+      "src/server/handlers.ts",
+      "src/server/router.ts",
+      "src/services/inventory.ts",
+      "src/services/logger.ts",
+      "src/services/order-service.ts",
+      "src/stubs/react.ts",
+      "src/types.ts",
+      "src/utils/format.ts",
+      "src/utils/ids.ts",
+      "src/utils/math.ts",
+      "tests/handlers.test.ts",
+      "tests/order-service.test.ts"
+    ],
+    "entities": [
+      {
+        "id": "src/types.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/types.ts",
+        "startLine": 1,
+        "endLine": 11,
+        "language": "typescript"
+      },
+      {
+        "id": "src/stubs/react.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/stubs/react.ts",
+        "startLine": 1,
+        "endLine": 17,
+        "language": "typescript"
+      },
+      {
+        "id": "src/stubs/react.ts#useState",
+        "kind": "function",
+        "name": "useState",
+        "file": "src/stubs/react.ts",
+        "startLine": 3,
+        "endLine": 6,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/stubs/react.ts#useEffect",
+        "kind": "function",
+        "name": "useEffect",
+        "file": "src/stubs/react.ts",
+        "startLine": 8,
+        "endLine": 11,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/stubs/react.ts#useMemo",
+        "kind": "function",
+        "name": "useMemo",
+        "file": "src/stubs/react.ts",
+        "startLine": 13,
+        "endLine": 16,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/utils/format.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/utils/format.ts",
+        "startLine": 1,
+        "endLine": 30,
+        "language": "typescript"
+      },
+      {
+        "id": "src/utils/format.ts#formatPrice",
+        "kind": "function",
+        "name": "formatPrice",
+        "file": "src/utils/format.ts",
+        "startLine": 3,
+        "endLine": 6,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/utils/format.ts#pad",
+        "kind": "function",
+        "name": "pad",
+        "file": "src/utils/format.ts",
+        "startLine": 8,
+        "endLine": 14,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/utils/format.ts#slugify",
+        "kind": "function",
+        "name": "slugify",
+        "file": "src/utils/format.ts",
+        "startLine": 16,
+        "endLine": 22,
+        "language": "typescript",
+        "exported": true,
+        "exportName": "default"
+      },
+      {
+        "id": "src/utils/format.ts#titleCase",
+        "kind": "function",
+        "name": "titleCase",
+        "file": "src/utils/format.ts",
+        "startLine": 24,
+        "endLine": 29,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/components/OrderRow.tsx#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/components/OrderRow.tsx",
+        "startLine": 1,
+        "endLine": 17,
+        "language": "typescript"
+      },
+      {
+        "id": "src/components/OrderRow.tsx#orderTotal",
+        "kind": "function",
+        "name": "orderTotal",
+        "file": "src/components/OrderRow.tsx",
+        "startLine": 5,
+        "endLine": 6,
+        "language": "typescript",
+        "exported": false
+      },
+      {
+        "id": "src/components/OrderRow.tsx#OrderRow",
+        "kind": "component",
+        "name": "OrderRow",
+        "file": "src/components/OrderRow.tsx",
+        "startLine": 8,
+        "endLine": 16,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/components/OrderRow.tsx#OrderRow>total",
+        "kind": "function",
+        "name": "OrderRow>total",
+        "file": "src/components/OrderRow.tsx",
+        "startLine": 9,
+        "endLine": 9,
+        "language": "typescript"
+      },
+      {
+        "id": "src/components/Summary.tsx#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/components/Summary.tsx",
+        "startLine": 1,
+        "endLine": 16,
+        "language": "typescript"
+      },
+      {
+        "id": "src/components/Summary.tsx#Summary",
+        "kind": "component",
+        "name": "Summary",
+        "file": "src/components/Summary.tsx",
+        "startLine": 5,
+        "endLine": 13,
+        "language": "typescript",
+        "exported": false
+      },
+      {
+        "id": "src/components/Summary.tsx#Summary>count",
+        "kind": "function",
+        "name": "Summary>count",
+        "file": "src/components/Summary.tsx",
+        "startLine": 6,
+        "endLine": 6,
+        "language": "typescript"
+      },
+      {
+        "id": "src/components/OrderList.tsx#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/components/OrderList.tsx",
+        "startLine": 1,
+        "endLine": 29,
+        "language": "typescript"
+      },
+      {
+        "id": "src/components/OrderList.tsx#OrderList",
+        "kind": "component",
+        "name": "OrderList",
+        "file": "src/components/OrderList.tsx",
+        "startLine": 6,
+        "endLine": 28,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/components/OrderList.tsx#OrderList>handleClear",
+        "kind": "function",
+        "name": "OrderList>handleClear",
+        "file": "src/components/OrderList.tsx",
+        "startLine": 15,
+        "endLine": 15,
+        "language": "typescript"
+      },
+      {
+        "id": "src/components/OrderList.tsx#OrderList>renderRow",
+        "kind": "function",
+        "name": "OrderList>renderRow",
+        "file": "src/components/OrderList.tsx",
+        "startLine": 17,
+        "endLine": 19,
+        "language": "typescript"
+      },
+      {
+        "id": "src/app/orders/page.tsx#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/app/orders/page.tsx",
+        "startLine": 1,
+        "endLine": 17,
+        "language": "typescript"
+      },
+      {
+        "id": "src/app/orders/page.tsx#OrdersPage",
+        "kind": "component",
+        "name": "OrdersPage",
+        "file": "src/app/orders/page.tsx",
+        "startLine": 5,
+        "endLine": 16,
+        "language": "typescript",
+        "exported": true,
+        "exportName": "default"
+      },
+      {
+        "id": "src/app/orders/page.tsx#OrdersPage>loadOrders",
+        "kind": "function",
+        "name": "OrdersPage>loadOrders",
+        "file": "src/app/orders/page.tsx",
+        "startLine": 6,
+        "endLine": 8,
+        "language": "typescript"
+      },
+      {
+        "id": "src/legacy/Badge.jsx#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/legacy/Badge.jsx",
+        "startLine": 1,
+        "endLine": 2,
+        "language": "javascript"
+      },
+      {
+        "id": "src/legacy/Badge.jsx#Badge",
+        "kind": "component",
+        "name": "Badge",
+        "file": "src/legacy/Badge.jsx",
+        "startLine": 1,
+        "endLine": 1,
+        "language": "javascript",
+        "exported": true
+      },
+      {
+        "id": "src/legacy/cjs-module.js#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/legacy/cjs-module.js",
+        "startLine": 1,
+        "endLine": 9,
+        "language": "javascript"
+      },
+      {
+        "id": "src/legacy/cjs-module.js#formatName",
+        "kind": "function",
+        "name": "formatName",
+        "file": "src/legacy/cjs-module.js",
+        "startLine": 2,
+        "endLine": 4,
+        "language": "javascript",
+        "exported": false
+      },
+      {
+        "id": "src/legacy/cjs-module.js#shout",
+        "kind": "function",
+        "name": "shout",
+        "file": "src/legacy/cjs-module.js",
+        "startLine": 6,
+        "endLine": 6,
+        "language": "javascript",
+        "exported": true
+      },
+      {
+        "id": "src/legacy/esm.mjs#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/legacy/esm.mjs",
+        "startLine": 1,
+        "endLine": 9,
+        "language": "javascript"
+      },
+      {
+        "id": "src/legacy/esm.mjs#describePrice",
+        "kind": "function",
+        "name": "describePrice",
+        "file": "src/legacy/esm.mjs",
+        "startLine": 4,
+        "endLine": 4,
+        "language": "javascript",
+        "exported": true
+      },
+      {
+        "id": "src/legacy/esm.mjs#describeAll",
+        "kind": "function",
+        "name": "describeAll",
+        "file": "src/legacy/esm.mjs",
+        "startLine": 6,
+        "endLine": 8,
+        "language": "javascript",
+        "exported": true
+      },
+      {
+        "id": "src/legacy/use-legacy.js#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/legacy/use-legacy.js",
+        "startLine": 1,
+        "endLine": 10,
+        "language": "javascript"
+      },
+      {
+        "id": "src/legacy/use-legacy.js#greet",
+        "kind": "function",
+        "name": "greet",
+        "file": "src/legacy/use-legacy.js",
+        "startLine": 5,
+        "endLine": 7,
+        "language": "javascript",
+        "exported": false
+      },
+      {
+        "id": "src/server/router.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/server/router.ts",
+        "startLine": 1,
+        "endLine": 49,
+        "language": "typescript"
+      },
+      {
+        "id": "src/server/router.ts#Router.get",
+        "kind": "method",
+        "name": "Router.get",
+        "file": "src/server/router.ts",
+        "startLine": 26,
+        "endLine": 29,
+        "language": "typescript",
+        "container": "Router"
+      },
+      {
+        "id": "src/server/router.ts#Router.post",
+        "kind": "method",
+        "name": "Router.post",
+        "file": "src/server/router.ts",
+        "startLine": 31,
+        "endLine": 34,
+        "language": "typescript",
+        "container": "Router"
+      },
+      {
+        "id": "src/server/router.ts#Router.use",
+        "kind": "method",
+        "name": "Router.use",
+        "file": "src/server/router.ts",
+        "startLine": 36,
+        "endLine": 39,
+        "language": "typescript",
+        "container": "Router"
+      },
+      {
+        "id": "src/server/router.ts#Router.dispatch",
+        "kind": "method",
+        "name": "Router.dispatch",
+        "file": "src/server/router.ts",
+        "startLine": 41,
+        "endLine": 47,
+        "language": "typescript",
+        "container": "Router"
+      },
+      {
+        "id": "src/utils/math.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/utils/math.ts",
+        "startLine": 1,
+        "endLine": 25,
+        "language": "typescript"
+      },
+      {
+        "id": "src/utils/math.ts#clamp",
+        "kind": "function",
+        "name": "clamp",
+        "file": "src/utils/math.ts",
+        "startLine": 6,
+        "endLine": 8,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/utils/math.ts#sum",
+        "kind": "function",
+        "name": "sum",
+        "file": "src/utils/math.ts",
+        "startLine": 10,
+        "endLine": 19,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/utils/math.ts#sum>add",
+        "kind": "function",
+        "name": "sum>add",
+        "file": "src/utils/math.ts",
+        "startLine": 11,
+        "endLine": 13,
+        "language": "typescript"
+      },
+      {
+        "id": "src/utils/math.ts#orderTotal",
+        "kind": "function",
+        "name": "orderTotal",
+        "file": "src/utils/math.ts",
+        "startLine": 21,
+        "endLine": 24,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/services/logger.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/services/logger.ts",
+        "startLine": 1,
+        "endLine": 18,
+        "language": "typescript"
+      },
+      {
+        "id": "src/services/logger.ts#Logger.constructor",
+        "kind": "method",
+        "name": "Logger.constructor",
+        "file": "src/services/logger.ts",
+        "startLine": 4,
+        "endLine": 4,
+        "language": "typescript",
+        "container": "Logger"
+      },
+      {
+        "id": "src/services/logger.ts#Logger.create",
+        "kind": "method",
+        "name": "Logger.create",
+        "file": "src/services/logger.ts",
+        "startLine": 6,
+        "endLine": 8,
+        "language": "typescript",
+        "container": "Logger"
+      },
+      {
+        "id": "src/services/logger.ts#Logger.info",
+        "kind": "method",
+        "name": "Logger.info",
+        "file": "src/services/logger.ts",
+        "startLine": 10,
+        "endLine": 12,
+        "language": "typescript",
+        "container": "Logger"
+      },
+      {
+        "id": "src/services/logger.ts#Logger.get lineCount",
+        "kind": "method",
+        "name": "Logger.get lineCount",
+        "file": "src/services/logger.ts",
+        "startLine": 14,
+        "endLine": 16,
+        "language": "typescript",
+        "container": "Logger"
+      },
+      {
+        "id": "src/services/order-service.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/services/order-service.ts",
+        "startLine": 1,
+        "endLine": 35,
+        "language": "typescript"
+      },
+      {
+        "id": "src/services/order-service.ts#OrderService.constructor",
+        "kind": "method",
+        "name": "OrderService.constructor",
+        "file": "src/services/order-service.ts",
+        "startLine": 9,
+        "endLine": 9,
+        "language": "typescript",
+        "container": "OrderService"
+      },
+      {
+        "id": "src/services/order-service.ts#OrderService.create",
+        "kind": "method",
+        "name": "OrderService.create",
+        "file": "src/services/order-service.ts",
+        "startLine": 11,
+        "endLine": 13,
+        "language": "typescript",
+        "container": "OrderService"
+      },
+      {
+        "id": "src/services/order-service.ts#OrderService.add",
+        "kind": "method",
+        "name": "OrderService.add",
+        "file": "src/services/order-service.ts",
+        "startLine": 15,
+        "endLine": 18,
+        "language": "typescript",
+        "container": "OrderService"
+      },
+      {
+        "id": "src/services/order-service.ts#OrderService.total",
+        "kind": "method",
+        "name": "OrderService.total",
+        "file": "src/services/order-service.ts",
+        "startLine": 20,
+        "endLine": 23,
+        "language": "typescript",
+        "container": "OrderService"
+      },
+      {
+        "id": "src/services/order-service.ts#OrderService.get count",
+        "kind": "method",
+        "name": "OrderService.get count",
+        "file": "src/services/order-service.ts",
+        "startLine": 25,
+        "endLine": 27,
+        "language": "typescript",
+        "container": "OrderService"
+      },
+      {
+        "id": "src/services/order-service.ts#OrderService.record",
+        "kind": "method",
+        "name": "OrderService.record",
+        "file": "src/services/order-service.ts",
+        "startLine": 29,
+        "endLine": 31,
+        "language": "typescript",
+        "container": "OrderService"
+      },
+      {
+        "id": "src/services/order-service.ts#createDefaultService",
+        "kind": "function",
+        "name": "createDefaultService",
+        "file": "src/services/order-service.ts",
+        "startLine": 34,
+        "endLine": 34,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/services/inventory.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/services/inventory.ts",
+        "startLine": 1,
+        "endLine": 17,
+        "language": "typescript"
+      },
+      {
+        "id": "src/services/inventory.ts#clamp",
+        "kind": "function",
+        "name": "clamp",
+        "file": "src/services/inventory.ts",
+        "startLine": 1,
+        "endLine": 1,
+        "language": "typescript",
+        "exported": false
+      },
+      {
+        "id": "src/services/inventory.ts#inventory.reserve",
+        "kind": "method",
+        "name": "inventory.reserve",
+        "file": "src/services/inventory.ts",
+        "startLine": 5,
+        "endLine": 9,
+        "language": "typescript",
+        "container": "inventory"
+      },
+      {
+        "id": "src/services/inventory.ts#inventory.release",
+        "kind": "method",
+        "name": "inventory.release",
+        "file": "src/services/inventory.ts",
+        "startLine": 10,
+        "endLine": 13,
+        "language": "typescript",
+        "container": "inventory"
+      },
+      {
+        "id": "src/services/inventory.ts#checkStock",
+        "kind": "function",
+        "name": "checkStock",
+        "file": "src/services/inventory.ts",
+        "startLine": 16,
+        "endLine": 16,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/server/handlers.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/server/handlers.ts",
+        "startLine": 1,
+        "endLine": 27,
+        "language": "typescript"
+      },
+      {
+        "id": "src/server/handlers.ts#listOrders",
+        "kind": "function",
+        "name": "listOrders",
+        "file": "src/server/handlers.ts",
+        "startLine": 9,
+        "endLine": 11,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/server/handlers.ts#createOrder",
+        "kind": "function",
+        "name": "createOrder",
+        "file": "src/server/handlers.ts",
+        "startLine": 13,
+        "endLine": 22,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/server/handlers.ts#health",
+        "kind": "function",
+        "name": "health",
+        "file": "src/server/handlers.ts",
+        "startLine": 24,
+        "endLine": 26,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/server/app.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/server/app.ts",
+        "startLine": 1,
+        "endLine": 17,
+        "language": "typescript"
+      },
+      {
+        "id": "src/server/app.ts#logRequest",
+        "kind": "function",
+        "name": "logRequest",
+        "file": "src/server/app.ts",
+        "startLine": 5,
+        "endLine": 7,
+        "language": "typescript",
+        "exported": false
+      },
+      {
+        "id": "src/server/app.ts#buildApp",
+        "kind": "function",
+        "name": "buildApp",
+        "file": "src/server/app.ts",
+        "startLine": 9,
+        "endLine": 16,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/utils/ids.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/utils/ids.ts",
+        "startLine": 1,
+        "endLine": 9,
+        "language": "typescript"
+      },
+      {
+        "id": "src/utils/ids.ts#counter",
+        "kind": "function",
+        "name": "counter",
+        "file": "src/utils/ids.ts",
+        "startLine": 3,
+        "endLine": 6,
+        "language": "typescript",
+        "exported": false
+      },
+      {
+        "id": "src/utils/ids.ts#makeId",
+        "kind": "function",
+        "name": "makeId",
+        "file": "src/utils/ids.ts",
+        "startLine": 8,
+        "endLine": 8,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "tests/handlers.test.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "tests/handlers.test.ts",
+        "startLine": 1,
+        "endLine": 48,
+        "language": "typescript"
+      },
+      {
+        "id": "tests/handlers.test.ts#fakeRes",
+        "kind": "function",
+        "name": "fakeRes",
+        "file": "tests/handlers.test.ts",
+        "startLine": 7,
+        "endLine": 22,
+        "language": "typescript",
+        "exported": false
+      },
+      {
+        "id": "tests/handlers.test.ts#fakeRes>res.status",
+        "kind": "method",
+        "name": "fakeRes>res.status",
+        "file": "tests/handlers.test.ts",
+        "startLine": 10,
+        "endLine": 13,
+        "language": "typescript",
+        "container": "fakeRes>res"
+      },
+      {
+        "id": "tests/handlers.test.ts#fakeRes>res.json",
+        "kind": "method",
+        "name": "fakeRes>res.json",
+        "file": "tests/handlers.test.ts",
+        "startLine": 14,
+        "endLine": 16,
+        "language": "typescript",
+        "container": "fakeRes>res"
+      },
+      {
+        "id": "tests/handlers.test.ts#fakeRes>res.send",
+        "kind": "method",
+        "name": "fakeRes>res.send",
+        "file": "tests/handlers.test.ts",
+        "startLine": 17,
+        "endLine": 19,
+        "language": "typescript",
+        "container": "fakeRes>res"
+      },
+      {
+        "id": "tests/order-service.test.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "tests/order-service.test.ts",
+        "startLine": 1,
+        "endLine": 24,
+        "language": "typescript"
+      }
+    ],
+    "relations": [
+      {
+        "from": "src/components/OrderRow.tsx#OrderRow>total",
+        "to": "src/stubs/react.ts#useMemo",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/components/OrderRow.tsx#OrderRow>total",
+        "to": "src/components/OrderRow.tsx#orderTotal",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/components/OrderRow.tsx#OrderRow",
+        "to": "src/utils/format.ts#formatPrice",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/components/Summary.tsx#Summary>count",
+        "to": "src/stubs/react.ts#useMemo",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/components/Summary.tsx#Summary",
+        "to": "src/utils/format.ts#formatPrice",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/components/OrderList.tsx#OrderList",
+        "to": "src/stubs/react.ts#useState",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/components/OrderList.tsx#OrderList",
+        "to": "src/stubs/react.ts#useEffect",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/app/orders/page.tsx#OrdersPage",
+        "to": "src/app/orders/page.tsx#OrdersPage>loadOrders",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/legacy/esm.mjs#describePrice",
+        "to": "src/utils/format.ts#formatPrice",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/legacy/use-legacy.js#greet",
+        "to": "src/legacy/cjs-module.js#formatName",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/legacy/use-legacy.js#greet",
+        "to": "src/legacy/esm.mjs#describePrice",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/utils/math.ts#sum",
+        "to": "src/utils/math.ts#sum>add",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/utils/math.ts#orderTotal",
+        "to": "src/utils/math.ts#clamp",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/utils/math.ts#orderTotal",
+        "to": "src/utils/math.ts#sum",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/services/order-service.ts#OrderService.create",
+        "to": "src/services/logger.ts#Logger.create",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/services/order-service.ts#OrderService.add",
+        "to": "src/services/order-service.ts#OrderService.record",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/services/order-service.ts#OrderService.total",
+        "to": "src/utils/format.ts#formatPrice",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/services/order-service.ts#OrderService.total",
+        "to": "src/utils/math.ts#orderTotal",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/services/order-service.ts#OrderService.record",
+        "to": "src/services/logger.ts#Logger.info",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/services/inventory.ts#inventory.reserve",
+        "to": "src/services/inventory.ts#clamp",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/services/inventory.ts#inventory.release",
+        "to": "src/services/inventory.ts#inventory.reserve",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/server/handlers.ts#<module>",
+        "to": "src/services/order-service.ts#createDefaultService",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/server/handlers.ts#createOrder",
+        "to": "src/services/inventory.ts#checkStock",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/server/handlers.ts#createOrder",
+        "to": "src/services/order-service.ts#OrderService.add",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/server/handlers.ts#createOrder",
+        "to": "src/utils/math.ts#orderTotal",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/server/handlers.ts#createOrder",
+        "to": "src/services/order-service.ts#OrderService.total",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/server/app.ts#buildApp",
+        "to": "src/server/router.ts#Router.use",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/server/app.ts#buildApp",
+        "to": "src/server/router.ts#Router.get",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/server/app.ts#buildApp",
+        "to": "src/server/router.ts#Router.post",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/utils/ids.ts#makeId",
+        "to": "src/utils/ids.ts#counter",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/handlers.test.ts#<module>",
+        "to": "tests/handlers.test.ts#fakeRes",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/handlers.test.ts#<module>",
+        "to": "src/server/handlers.ts#health",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/handlers.test.ts#<module>",
+        "to": "src/server/handlers.ts#listOrders",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/handlers.test.ts#<module>",
+        "to": "src/server/handlers.ts#createOrder",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/handlers.test.ts#<module>",
+        "to": "src/server/app.ts#buildApp",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/handlers.test.ts#<module>",
+        "to": "src/server/router.ts#Router.dispatch",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/order-service.test.ts#<module>",
+        "to": "src/utils/math.ts#orderTotal",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/order-service.test.ts#<module>",
+        "to": "src/utils/math.ts#sum",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/order-service.test.ts#<module>",
+        "to": "src/services/order-service.ts#OrderService.create",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/order-service.test.ts#<module>",
+        "to": "src/services/order-service.ts#OrderService.add",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/order-service.test.ts#<module>",
+        "to": "src/services/order-service.ts#OrderService.total",
+        "type": "CALLS"
+      }
+    ]
+  },
+  "changedFiles": [
+    {
+      "file": "src/utils/format.ts",
+      "oldFile": "src/utils/format.ts",
+      "changedLines": [
+        19
+      ],
+      "addedCode": [
+        "    .trim().normalize()"
+      ],
+      "removedCode": [
+        "    .trim()"
+      ],
+      "diff": "diff --git a/src/utils/format.ts b/src/utils/format.ts\nindex 3c65101..b704bc6 100644\n--- a/src/utils/format.ts\n+++ b/src/utils/format.ts\n@@ -16,7 +16,7 @@ export const pad = function (s: string, width: number): string {\n export default function slugify(s: string): string {\n   return s\n     .toLowerCase()\n-    .trim()\n+    .trim().normalize()\n     .replace(/[^a-z0-9]+/g, '-')\n     .replace(/^-+|-+$/g, '');\n }",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "export default function slugify(s: string): string {",
+              "oldLine": 16,
+              "newLine": 16
+            },
+            {
+              "kind": " ",
+              "code": "  return s",
+              "oldLine": 17,
+              "newLine": 17
+            },
+            {
+              "kind": " ",
+              "code": "    .toLowerCase()",
+              "oldLine": 18,
+              "newLine": 18
+            },
+            {
+              "kind": "-",
+              "code": "    .trim()",
+              "oldLine": 19,
+              "newLine": 19
+            },
+            {
+              "kind": "+",
+              "code": "    .trim().normalize()",
+              "oldLine": 20,
+              "newLine": 19
+            },
+            {
+              "kind": " ",
+              "code": "    .replace(/[^a-z0-9]+/g, '-')",
+              "oldLine": 20,
+              "newLine": 20
+            },
+            {
+              "kind": " ",
+              "code": "    .replace(/^-+|-+$/g, '');",
+              "oldLine": 21,
+              "newLine": 21
+            },
+            {
+              "kind": " ",
+              "code": "}",
+              "oldLine": 22,
+              "newLine": 22
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "changedEntities": [
+    {
+      "entity": {
+        "id": "src/utils/format.ts#slugify",
+        "kind": "function",
+        "name": "slugify",
+        "file": "src/utils/format.ts",
+        "startLine": 16,
+        "endLine": 22,
+        "language": "typescript",
+        "exported": true,
+        "exportName": "default"
+      },
+      "change": {
+        "file": "src/utils/format.ts",
+        "changedLines": [
+          19
+        ],
+        "addedCode": [
+          "    .trim().normalize()"
+        ],
+        "removedCode": [
+          "    .trim()"
+        ],
+        "diff": "--- a/src/utils/format.ts\n+++ b/src/utils/format.ts\n@@ -16,7 +16,7 @@\n export default function slugify(s: string): string {\n   return s\n     .toLowerCase()\n-    .trim()\n+    .trim().normalize()\n     .replace(/[^a-z0-9]+/g, '-')\n     .replace(/^-+|-+$/g, '');\n }"
+      }
+    }
+  ],
+  "impacts": [
+    {
+      "changedEntity": {
+        "id": "src/utils/format.ts#slugify",
+        "kind": "function",
+        "name": "slugify",
+        "file": "src/utils/format.ts",
+        "startLine": 16,
+        "endLine": 22,
+        "language": "typescript",
+        "exported": true,
+        "exportName": "default"
+      },
+      "change": {
+        "file": "src/utils/format.ts",
+        "changedLines": [
+          19
+        ],
+        "addedCode": [
+          "    .trim().normalize()"
+        ],
+        "removedCode": [
+          "    .trim()"
+        ],
+        "diff": "--- a/src/utils/format.ts\n+++ b/src/utils/format.ts\n@@ -16,7 +16,7 @@\n export default function slugify(s: string): string {\n   return s\n     .toLowerCase()\n-    .trim()\n+    .trim().normalize()\n     .replace(/[^a-z0-9]+/g, '-')\n     .replace(/^-+|-+$/g, '');\n }"
+      },
+      "directDependents": [],
+      "blastRadius": {
+        "totalAffectedEntities": 0,
+        "entities": [],
+        "paths": []
+      },
+      "terminalDependents": []
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "ATTRIBUTED_LINE_RATIO",
+      "severity": "info",
+      "message": "2 of 2 changed lines attributed to code entities (ratio 1.0000); 0 module-level, 0 unattributed."
+    }
+  ],
+  "limitations": [
+    "Only TypeScript and JavaScript are analyzed; JavaScript is not type-checked.",
+    "Entities are named functions, variable-bound arrow functions and function expressions, class and object-literal methods, constructors, accessors, React components, and module-level code.",
+    "Classes, interfaces, type aliases, and enums are not entities.",
+    "Only CALLS relationships are currently supported.",
+    "Dynamic calls and calls through interface-typed receivers are not analyzed.",
+    "Deleted entities have no current graph entity; renamed entities may lack removed-code evidence.",
+    "Partially overlapping entity line ranges are skipped rather than sharing ambiguous evidence.",
+    "Application surfaces are not yet discovered.",
+    "Blast radius is limited to depth 6."
+  ]
+}
