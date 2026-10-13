@@ -1,0 +1,4 @@
+# Ignore generated run artifacts in modern-app
+.graphentra/evidence.json
+dist/
+node_modules/

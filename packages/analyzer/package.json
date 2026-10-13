@@ -2,7 +2,7 @@
   "name": "@graphentra/analyzer",
   "version": "0.4.0",
   "description": "Deterministic change-evidence and graph analyzer for TypeScript",
-  "license": "ISC",
+  "license": "UNLICENSED",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "ajv": "8.17.1",
-    "typescript": "^5.8.2"
+    "typescript": "5.8.2"
   },
   "devDependencies": {
     "@types/node": "^22.20.2",

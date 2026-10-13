@@ -2,7 +2,7 @@
   "name": "@graphentra/ci-runner",
   "version": "0.1.0",
   "description": "CI submission adapter and runner for Graphentra evidence",
-  "license": "ISC",
+  "license": "UNLICENSED",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
@@ -33,7 +33,7 @@
   "devDependencies": {
     "@types/node": "^22.20.2",
     "tsx": "^4.23.13",
-    "typescript": "^5.8.2"
+    "typescript": "5.8.2"
   },
   "engines": {
     "node": ">=20.0.0"

@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as ts from 'typescript';
+import { compareStrings } from './deterministic';
 import { GraphentraError } from './errors';
 import type { RepositoryContext } from './repository';
 import { isTypeScriptFile } from './technical-graph';
@@ -88,13 +89,15 @@ export function captureSourceSnapshot(repo: RepositoryContext) {
     const content = readFile(file);
     return content === undefined ? undefined : ts.createSourceFile(compilerPaths.get(file) ?? file, content, languageVersion, true);
   };
+  /** Relative path with `/` separators, so the identity hash is the same on Windows. */
+  const posixRelative = (from: string, to: string) => path.relative(from, to).split(path.sep).join('/');
   function identity() {
     const hash = createHash('sha256');
     const manifest = [...reads].map(([file, bytes]) => [
-      inside(standardLibraryRoot, file) ? `typescript/${path.relative(standardLibraryRoot, file)}`
-        : `repository/${path.relative(repo.gitRepositoryRoot, file)}`,
+      inside(standardLibraryRoot, file) ? `typescript/${posixRelative(standardLibraryRoot, file)}`
+        : `repository/${posixRelative(repo.gitRepositoryRoot, file)}`,
       bytes?.toString('base64') ?? null,
-    ] as const).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0);
+    ] as const).sort(([a], [b]) => compareStrings(a, b));
     hash.update(JSON.stringify(manifest));
     hash.update(JSON.stringify(names));
     return hash.digest('hex');

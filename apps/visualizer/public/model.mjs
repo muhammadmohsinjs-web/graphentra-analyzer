@@ -122,11 +122,11 @@ export function layoutGraph(entities) {
   const positions = new Map();
   const groups = [];
   const rows = Array(columns).fill(32);
-  [...files].sort(([a], [b]) => a.localeCompare(b)).forEach(([file, members], index) => {
+  [...files].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).forEach(([file, members], index) => {
     const column = index % columns;
     const x = 32 + column * 350;
     const y = rows[column];
-    members.sort((a, b) => a.startLine - b.startLine || a.id.localeCompare(b.id));
+    members.sort((a, b) => a.startLine - b.startLine || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
     const height = 76 + members.length * 50;
     groups.push({ file, x, y, width: 310, height, members });
     members.forEach((entity, i) => positions.set(entity.id, { x: x + 24, y: y + 58 + i * 50, width: 262, height: 34 }));

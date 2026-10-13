@@ -8,6 +8,7 @@ import {
   joinRoute, lineOf, propertyName, receiverText, routeMatches, stringArray, stringValue, toPath, unwrapExpression,
 } from './application-map-ast';
 import { extractE2EFlows, type E2EFlow } from './application-map-e2e';
+import { compareStrings } from './deterministic';
 
 export type { E2EFlow } from './application-map-e2e';
 export { routeMatches } from './application-map-ast';
@@ -388,7 +389,7 @@ export function extractApplicationMap(input: ExtractApplicationMapInput): Applic
       if (from !== to && !callKeys.has(`${from}|${to}`)) supplemental.push({ from, to, type });
     }
   }
-  supplemental.sort((a, b) => `${a.from}|${a.to}`.localeCompare(`${b.from}|${b.to}`));
+  supplemental.sort((a, b) => compareStrings(`${a.from}|${a.to}`, `${b.from}|${b.to}`));
   const forward = new Map<string, Set<string>>();
   for (const relation of [...input.relations, ...supplemental]) {
     if (!forward.has(relation.from)) forward.set(relation.from, new Set());
@@ -1056,7 +1057,7 @@ export function extractApplicationMap(input: ExtractApplicationMapInput): Applic
     entityFingerprints[entity.id] = fingerprintSource(lines.join('\n'));
   }
 
-  const surfaceList = [...surfaces.values()].sort((a, b) => a.id.localeCompare(b.id));
+  const surfaceList = [...surfaces.values()].sort((a, b) => compareStrings(a.id, b.id));
   const hasJsx = sourceFiles.some(sourceFile => sourceFile.fileName.endsWith('.tsx'));
   return {
     schemaVersion: APPLICATION_MAP_SCHEMA_VERSION,
@@ -1068,7 +1069,7 @@ export function extractApplicationMap(input: ExtractApplicationMapInput): Applic
       frameworks: [...frameworks].sort(),
     },
     surfaces: surfaceList,
-    navigation: navigation.sort((a, b) => `${a.file}:${a.line}`.localeCompare(`${b.file}:${b.line}`)),
+    navigation: navigation.sort((a, b) => compareStrings(`${a.file}:${a.line}`, `${b.file}:${b.line}`)),
     requests,
     e2eFlows,
     relations: supplemental,

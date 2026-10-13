@@ -1,10 +1,13 @@
 import { createHash } from 'node:crypto';
 import type { DeterministicEvidence } from './contracts';
 
+/** Locale-independent string order (UTF-16 code units). Never use localeCompare: its order depends on the machine. */
+export const compareStrings = (a: string, b: string): number => a < b ? -1 : a > b ? 1 : 0;
+
 function canonical(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonical);
   if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value)
-    .filter(([, item]) => item !== undefined).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)
+    .filter(([, item]) => item !== undefined).sort(([a], [b]) => compareStrings(a, b))
     .map(([key, item]) => [key, canonical(item)]));
   return value;
 }

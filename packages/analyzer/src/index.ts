@@ -11,4 +11,5 @@ export * from './validator';
 export * from './deterministic';
 export * from './application-map';
 export * from './business-signals';
+export * from './toolchain';
 export { isTestPath, routeMatcher } from './application-map-ast';
