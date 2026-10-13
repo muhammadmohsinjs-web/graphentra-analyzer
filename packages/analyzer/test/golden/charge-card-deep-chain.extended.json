@@ -1,0 +1,977 @@
+{
+  "artifactKind": "graphentra-evidence",
+  "schemaVersion": "2.1",
+  "analyzerVersion": "<VERSION>",
+  "target": {
+    "targetPath": "."
+  },
+  "comparison": {
+    "mode": "commit",
+    "requestedBase": "<BASE>",
+    "requestedHead": "<HEAD>",
+    "resolvedBaseSha": "<BASE>",
+    "resolvedHeadSha": "<HEAD>",
+    "comparedTo": "`<HEAD>`"
+  },
+  "sourceState": {
+    "checkoutSha": "<HEAD>",
+    "isTrackedDirty": false,
+    "untrackedSourcePolicy": "excluded",
+    "contentIdentity": "<CONTENT>"
+  },
+  "options": {
+    "excludePaths": [],
+    "sourcePolicy": "git-tracked",
+    "engine": "extended"
+  },
+  "toolchain": {
+    "typescript": "5.8.2",
+    "node": "<NODE>"
+  },
+  "outcome": "completed",
+  "technicalGraph": {
+    "schemaVersion": "1.0",
+    "repository": {
+      "targetPath": ".",
+      "headSha": "<HEAD>",
+      "analyzerVersion": "<VERSION>"
+    },
+    "capabilities": {
+      "language": "typescript",
+      "entityKinds": [
+        "component",
+        "function",
+        "method",
+        "module"
+      ],
+      "relationTypes": [
+        "CALLS"
+      ],
+      "maxBlastDepth": 6
+    },
+    "analyzedFiles": [
+      "src/billing.ts",
+      "src/inventory.ts",
+      "src/notifications.ts",
+      "src/orders.ts",
+      "src/pricing.ts",
+      "src/standalone.ts",
+      "src/utils.ts",
+      "tests/orders.test.ts"
+    ],
+    "entities": [
+      {
+        "id": "src/utils.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/utils.ts",
+        "startLine": 1,
+        "endLine": 22,
+        "language": "typescript"
+      },
+      {
+        "id": "src/utils.ts#roundToTwo",
+        "kind": "function",
+        "name": "roundToTwo",
+        "file": "src/utils.ts",
+        "startLine": 1,
+        "endLine": 3,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/utils.ts#formatCurrency",
+        "kind": "function",
+        "name": "formatCurrency",
+        "file": "src/utils.ts",
+        "startLine": 5,
+        "endLine": 8,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/utils.ts#slugify",
+        "kind": "function",
+        "name": "slugify",
+        "file": "src/utils.ts",
+        "startLine": 10,
+        "endLine": 17,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/utils.ts#generateId",
+        "kind": "function",
+        "name": "generateId",
+        "file": "src/utils.ts",
+        "startLine": 19,
+        "endLine": 21,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/billing.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/billing.ts",
+        "startLine": 1,
+        "endLine": 18,
+        "language": "typescript"
+      },
+      {
+        "id": "src/billing.ts#chargeCard",
+        "kind": "function",
+        "name": "chargeCard",
+        "file": "src/billing.ts",
+        "startLine": 3,
+        "endLine": 8,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/billing.ts#processPayment",
+        "kind": "function",
+        "name": "processPayment",
+        "file": "src/billing.ts",
+        "startLine": 10,
+        "endLine": 12,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/billing.ts#renderInvoiceSummary",
+        "kind": "function",
+        "name": "renderInvoiceSummary",
+        "file": "src/billing.ts",
+        "startLine": 14,
+        "endLine": 17,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/inventory.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/inventory.ts",
+        "startLine": 1,
+        "endLine": 20,
+        "language": "typescript"
+      },
+      {
+        "id": "src/inventory.ts#sanitizeSku",
+        "kind": "function",
+        "name": "sanitizeSku",
+        "file": "src/inventory.ts",
+        "startLine": 1,
+        "endLine": 3,
+        "language": "typescript",
+        "exported": false
+      },
+      {
+        "id": "src/inventory.ts#checkInventory",
+        "kind": "function",
+        "name": "checkInventory",
+        "file": "src/inventory.ts",
+        "startLine": 5,
+        "endLine": 11,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/inventory.ts#reserveStock",
+        "kind": "function",
+        "name": "reserveStock",
+        "file": "src/inventory.ts",
+        "startLine": 13,
+        "endLine": 19,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/notifications.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/notifications.ts",
+        "startLine": 1,
+        "endLine": 20,
+        "language": "typescript"
+      },
+      {
+        "id": "src/notifications.ts#sendEmail",
+        "kind": "function",
+        "name": "sendEmail",
+        "file": "src/notifications.ts",
+        "startLine": 3,
+        "endLine": 8,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/notifications.ts#sendOrderConfirmation",
+        "kind": "function",
+        "name": "sendOrderConfirmation",
+        "file": "src/notifications.ts",
+        "startLine": 10,
+        "endLine": 14,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/notifications.ts#sendReceiptEmail",
+        "kind": "function",
+        "name": "sendReceiptEmail",
+        "file": "src/notifications.ts",
+        "startLine": 16,
+        "endLine": 19,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/pricing.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/pricing.ts",
+        "startLine": 1,
+        "endLine": 24,
+        "language": "typescript"
+      },
+      {
+        "id": "src/pricing.ts#calculateTax",
+        "kind": "function",
+        "name": "calculateTax",
+        "file": "src/pricing.ts",
+        "startLine": 3,
+        "endLine": 8,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/pricing.ts#applyDiscount",
+        "kind": "function",
+        "name": "applyDiscount",
+        "file": "src/pricing.ts",
+        "startLine": 10,
+        "endLine": 16,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/pricing.ts#calculateOrderTotal",
+        "kind": "function",
+        "name": "calculateOrderTotal",
+        "file": "src/pricing.ts",
+        "startLine": 18,
+        "endLine": 23,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/orders.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/orders.ts",
+        "startLine": 1,
+        "endLine": 40,
+        "language": "typescript"
+      },
+      {
+        "id": "src/orders.ts#submitOrder",
+        "kind": "function",
+        "name": "submitOrder",
+        "file": "src/orders.ts",
+        "startLine": 6,
+        "endLine": 28,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/orders.ts#handleCheckout",
+        "kind": "function",
+        "name": "handleCheckout",
+        "file": "src/orders.ts",
+        "startLine": 30,
+        "endLine": 39,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/standalone.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/standalone.ts",
+        "startLine": 1,
+        "endLine": 30,
+        "language": "typescript"
+      },
+      {
+        "id": "src/standalone.ts#validateZipCode",
+        "kind": "function",
+        "name": "validateZipCode",
+        "file": "src/standalone.ts",
+        "startLine": 1,
+        "endLine": 4,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/standalone.ts#hashString",
+        "kind": "function",
+        "name": "hashString",
+        "file": "src/standalone.ts",
+        "startLine": 6,
+        "endLine": 14,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/standalone.ts#parseQueryString",
+        "kind": "function",
+        "name": "parseQueryString",
+        "file": "src/standalone.ts",
+        "startLine": 16,
+        "endLine": 29,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "tests/orders.test.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "tests/orders.test.ts",
+        "startLine": 1,
+        "endLine": 32,
+        "language": "typescript"
+      },
+      {
+        "id": "tests/orders.test.ts#testSubmitOrder",
+        "kind": "function",
+        "name": "testSubmitOrder",
+        "file": "tests/orders.test.ts",
+        "startLine": 5,
+        "endLine": 10,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "tests/orders.test.ts#testHandleCheckout",
+        "kind": "function",
+        "name": "testHandleCheckout",
+        "file": "tests/orders.test.ts",
+        "startLine": 12,
+        "endLine": 17,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "tests/orders.test.ts#testOrderTotalCalculation",
+        "kind": "function",
+        "name": "testOrderTotalCalculation",
+        "file": "tests/orders.test.ts",
+        "startLine": 19,
+        "endLine": 24,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "tests/orders.test.ts#testStandaloneZipValidation",
+        "kind": "function",
+        "name": "testStandaloneZipValidation",
+        "file": "tests/orders.test.ts",
+        "startLine": 26,
+        "endLine": 31,
+        "language": "typescript",
+        "exported": true
+      }
+    ],
+    "relations": [
+      {
+        "from": "src/utils.ts#formatCurrency",
+        "to": "src/utils.ts#roundToTwo",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/billing.ts#processPayment",
+        "to": "src/billing.ts#chargeCard",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/billing.ts#renderInvoiceSummary",
+        "to": "src/utils.ts#formatCurrency",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/inventory.ts#checkInventory",
+        "to": "src/inventory.ts#sanitizeSku",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/inventory.ts#reserveStock",
+        "to": "src/inventory.ts#checkInventory",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/notifications.ts#sendOrderConfirmation",
+        "to": "src/notifications.ts#sendEmail",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/notifications.ts#sendReceiptEmail",
+        "to": "src/utils.ts#formatCurrency",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/notifications.ts#sendReceiptEmail",
+        "to": "src/notifications.ts#sendEmail",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/pricing.ts#calculateOrderTotal",
+        "to": "src/pricing.ts#applyDiscount",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/pricing.ts#calculateOrderTotal",
+        "to": "src/pricing.ts#calculateTax",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/pricing.ts#calculateOrderTotal",
+        "to": "src/utils.ts#formatCurrency",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/orders.ts#submitOrder",
+        "to": "src/inventory.ts#reserveStock",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/orders.ts#submitOrder",
+        "to": "src/pricing.ts#calculateOrderTotal",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/orders.ts#submitOrder",
+        "to": "src/billing.ts#processPayment",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/orders.ts#submitOrder",
+        "to": "src/notifications.ts#sendOrderConfirmation",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/orders.ts#handleCheckout",
+        "to": "src/orders.ts#submitOrder",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/orders.test.ts#testSubmitOrder",
+        "to": "src/orders.ts#submitOrder",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/orders.test.ts#testHandleCheckout",
+        "to": "src/orders.ts#handleCheckout",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/orders.test.ts#testOrderTotalCalculation",
+        "to": "src/pricing.ts#calculateOrderTotal",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/orders.test.ts#testStandaloneZipValidation",
+        "to": "src/standalone.ts#validateZipCode",
+        "type": "CALLS"
+      }
+    ]
+  },
+  "changedFiles": [
+    {
+      "file": "src/billing.ts",
+      "oldFile": "src/billing.ts",
+      "changedLines": [
+        4
+      ],
+      "addedCode": [
+        "  if (!cardToken || amount <= 5) {"
+      ],
+      "removedCode": [
+        "  if (!cardToken || amount <= 1) {"
+      ],
+      "diff": "diff --git a/src/billing.ts b/src/billing.ts\nindex 4fb41ba..671e44f 100644\n--- a/src/billing.ts\n+++ b/src/billing.ts\n@@ -1,7 +1,7 @@\n import { formatCurrency } from './utils';\n \n export function chargeCard(amount: number, cardToken: string): boolean {\n-  if (!cardToken || amount <= 1) {\n+  if (!cardToken || amount <= 5) {\n     return false;\n   }\n   return true;",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "import { formatCurrency } from './utils';",
+              "oldLine": 1,
+              "newLine": 1
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 2,
+              "newLine": 2
+            },
+            {
+              "kind": " ",
+              "code": "export function chargeCard(amount: number, cardToken: string): boolean {",
+              "oldLine": 3,
+              "newLine": 3
+            },
+            {
+              "kind": "-",
+              "code": "  if (!cardToken || amount <= 1) {",
+              "oldLine": 4,
+              "newLine": 4
+            },
+            {
+              "kind": "+",
+              "code": "  if (!cardToken || amount <= 5) {",
+              "oldLine": 5,
+              "newLine": 4
+            },
+            {
+              "kind": " ",
+              "code": "    return false;",
+              "oldLine": 5,
+              "newLine": 5
+            },
+            {
+              "kind": " ",
+              "code": "  }",
+              "oldLine": 6,
+              "newLine": 6
+            },
+            {
+              "kind": " ",
+              "code": "  return true;",
+              "oldLine": 7,
+              "newLine": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "changedEntities": [
+    {
+      "entity": {
+        "id": "src/billing.ts#chargeCard",
+        "kind": "function",
+        "name": "chargeCard",
+        "file": "src/billing.ts",
+        "startLine": 3,
+        "endLine": 8,
+        "language": "typescript",
+        "exported": true
+      },
+      "change": {
+        "file": "src/billing.ts",
+        "changedLines": [
+          4
+        ],
+        "addedCode": [
+          "  if (!cardToken || amount <= 5) {"
+        ],
+        "removedCode": [
+          "  if (!cardToken || amount <= 1) {"
+        ],
+        "diff": "--- a/src/billing.ts\n+++ b/src/billing.ts\n@@ -3,5 +3,5 @@\n export function chargeCard(amount: number, cardToken: string): boolean {\n-  if (!cardToken || amount <= 1) {\n+  if (!cardToken || amount <= 5) {\n     return false;\n   }\n   return true;"
+      }
+    }
+  ],
+  "impacts": [
+    {
+      "changedEntity": {
+        "id": "src/billing.ts#chargeCard",
+        "kind": "function",
+        "name": "chargeCard",
+        "file": "src/billing.ts",
+        "startLine": 3,
+        "endLine": 8,
+        "language": "typescript",
+        "exported": true
+      },
+      "change": {
+        "file": "src/billing.ts",
+        "changedLines": [
+          4
+        ],
+        "addedCode": [
+          "  if (!cardToken || amount <= 5) {"
+        ],
+        "removedCode": [
+          "  if (!cardToken || amount <= 1) {"
+        ],
+        "diff": "--- a/src/billing.ts\n+++ b/src/billing.ts\n@@ -3,5 +3,5 @@\n export function chargeCard(amount: number, cardToken: string): boolean {\n-  if (!cardToken || amount <= 1) {\n+  if (!cardToken || amount <= 5) {\n     return false;\n   }\n   return true;"
+      },
+      "directDependents": [
+        {
+          "id": "src/billing.ts#processPayment",
+          "kind": "function",
+          "name": "processPayment",
+          "file": "src/billing.ts",
+          "startLine": 10,
+          "endLine": 12,
+          "language": "typescript",
+          "exported": true
+        }
+      ],
+      "blastRadius": {
+        "totalAffectedEntities": 5,
+        "entities": [
+          {
+            "id": "src/billing.ts#processPayment",
+            "kind": "function",
+            "name": "processPayment",
+            "file": "src/billing.ts",
+            "startLine": 10,
+            "endLine": 12,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/orders.ts#submitOrder",
+            "kind": "function",
+            "name": "submitOrder",
+            "file": "src/orders.ts",
+            "startLine": 6,
+            "endLine": 28,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/orders.ts#handleCheckout",
+            "kind": "function",
+            "name": "handleCheckout",
+            "file": "src/orders.ts",
+            "startLine": 30,
+            "endLine": 39,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "tests/orders.test.ts#testSubmitOrder",
+            "kind": "function",
+            "name": "testSubmitOrder",
+            "file": "tests/orders.test.ts",
+            "startLine": 5,
+            "endLine": 10,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "tests/orders.test.ts#testHandleCheckout",
+            "kind": "function",
+            "name": "testHandleCheckout",
+            "file": "tests/orders.test.ts",
+            "startLine": 12,
+            "endLine": 17,
+            "language": "typescript",
+            "exported": true
+          }
+        ],
+        "paths": [
+          {
+            "target": {
+              "id": "src/billing.ts#processPayment",
+              "kind": "function",
+              "name": "processPayment",
+              "file": "src/billing.ts",
+              "startLine": 10,
+              "endLine": 12,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/billing.ts#chargeCard",
+                "kind": "function",
+                "name": "chargeCard",
+                "file": "src/billing.ts",
+                "startLine": 3,
+                "endLine": 8,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/billing.ts#processPayment",
+                "kind": "function",
+                "name": "processPayment",
+                "file": "src/billing.ts",
+                "startLine": 10,
+                "endLine": 12,
+                "language": "typescript",
+                "exported": true
+              }
+            ]
+          },
+          {
+            "target": {
+              "id": "src/orders.ts#submitOrder",
+              "kind": "function",
+              "name": "submitOrder",
+              "file": "src/orders.ts",
+              "startLine": 6,
+              "endLine": 28,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 2,
+            "path": [
+              {
+                "id": "src/billing.ts#chargeCard",
+                "kind": "function",
+                "name": "chargeCard",
+                "file": "src/billing.ts",
+                "startLine": 3,
+                "endLine": 8,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/billing.ts#processPayment",
+                "kind": "function",
+                "name": "processPayment",
+                "file": "src/billing.ts",
+                "startLine": 10,
+                "endLine": 12,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/orders.ts#submitOrder",
+                "kind": "function",
+                "name": "submitOrder",
+                "file": "src/orders.ts",
+                "startLine": 6,
+                "endLine": 28,
+                "language": "typescript",
+                "exported": true
+              }
+            ]
+          },
+          {
+            "target": {
+              "id": "src/orders.ts#handleCheckout",
+              "kind": "function",
+              "name": "handleCheckout",
+              "file": "src/orders.ts",
+              "startLine": 30,
+              "endLine": 39,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 3,
+            "path": [
+              {
+                "id": "src/billing.ts#chargeCard",
+                "kind": "function",
+                "name": "chargeCard",
+                "file": "src/billing.ts",
+                "startLine": 3,
+                "endLine": 8,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/billing.ts#processPayment",
+                "kind": "function",
+                "name": "processPayment",
+                "file": "src/billing.ts",
+                "startLine": 10,
+                "endLine": 12,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/orders.ts#submitOrder",
+                "kind": "function",
+                "name": "submitOrder",
+                "file": "src/orders.ts",
+                "startLine": 6,
+                "endLine": 28,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/orders.ts#handleCheckout",
+                "kind": "function",
+                "name": "handleCheckout",
+                "file": "src/orders.ts",
+                "startLine": 30,
+                "endLine": 39,
+                "language": "typescript",
+                "exported": true
+              }
+            ]
+          },
+          {
+            "target": {
+              "id": "tests/orders.test.ts#testSubmitOrder",
+              "kind": "function",
+              "name": "testSubmitOrder",
+              "file": "tests/orders.test.ts",
+              "startLine": 5,
+              "endLine": 10,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 3,
+            "path": [
+              {
+                "id": "src/billing.ts#chargeCard",
+                "kind": "function",
+                "name": "chargeCard",
+                "file": "src/billing.ts",
+                "startLine": 3,
+                "endLine": 8,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/billing.ts#processPayment",
+                "kind": "function",
+                "name": "processPayment",
+                "file": "src/billing.ts",
+                "startLine": 10,
+                "endLine": 12,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/orders.ts#submitOrder",
+                "kind": "function",
+                "name": "submitOrder",
+                "file": "src/orders.ts",
+                "startLine": 6,
+                "endLine": 28,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "tests/orders.test.ts#testSubmitOrder",
+                "kind": "function",
+                "name": "testSubmitOrder",
+                "file": "tests/orders.test.ts",
+                "startLine": 5,
+                "endLine": 10,
+                "language": "typescript",
+                "exported": true
+              }
+            ]
+          },
+          {
+            "target": {
+              "id": "tests/orders.test.ts#testHandleCheckout",
+              "kind": "function",
+              "name": "testHandleCheckout",
+              "file": "tests/orders.test.ts",
+              "startLine": 12,
+              "endLine": 17,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 4,
+            "path": [
+              {
+                "id": "src/billing.ts#chargeCard",
+                "kind": "function",
+                "name": "chargeCard",
+                "file": "src/billing.ts",
+                "startLine": 3,
+                "endLine": 8,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/billing.ts#processPayment",
+                "kind": "function",
+                "name": "processPayment",
+                "file": "src/billing.ts",
+                "startLine": 10,
+                "endLine": 12,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/orders.ts#submitOrder",
+                "kind": "function",
+                "name": "submitOrder",
+                "file": "src/orders.ts",
+                "startLine": 6,
+                "endLine": 28,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/orders.ts#handleCheckout",
+                "kind": "function",
+                "name": "handleCheckout",
+                "file": "src/orders.ts",
+                "startLine": 30,
+                "endLine": 39,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "tests/orders.test.ts#testHandleCheckout",
+                "kind": "function",
+                "name": "testHandleCheckout",
+                "file": "tests/orders.test.ts",
+                "startLine": 12,
+                "endLine": 17,
+                "language": "typescript",
+                "exported": true
+              }
+            ]
+          }
+        ]
+      },
+      "terminalDependents": [
+        {
+          "id": "tests/orders.test.ts#testSubmitOrder",
+          "kind": "function",
+          "name": "testSubmitOrder",
+          "file": "tests/orders.test.ts",
+          "startLine": 5,
+          "endLine": 10,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "tests/orders.test.ts#testHandleCheckout",
+          "kind": "function",
+          "name": "testHandleCheckout",
+          "file": "tests/orders.test.ts",
+          "startLine": 12,
+          "endLine": 17,
+          "language": "typescript",
+          "exported": true
+        }
+      ]
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "ATTRIBUTED_LINE_RATIO",
+      "severity": "info",
+      "message": "2 of 2 changed lines attributed to code entities (ratio 1.0000); 0 module-level, 0 unattributed."
+    }
+  ],
+  "limitations": [
+    "Only TypeScript and JavaScript are analyzed; JavaScript is not type-checked.",
+    "Entities are named functions, variable-bound arrow functions and function expressions, class and object-literal methods, constructors, accessors, React components, and module-level code.",
+    "Classes, interfaces, type aliases, and enums are not entities.",
+    "Only CALLS relationships are currently supported.",
+    "Dynamic calls and calls through interface-typed receivers are not analyzed.",
+    "Deleted entities have no current graph entity; renamed entities may lack removed-code evidence.",
+    "Partially overlapping entity line ranges are skipped rather than sharing ambiguous evidence.",
+    "Application surfaces are not yet discovered.",
+    "Blast radius is limited to depth 6."
+  ]
+}

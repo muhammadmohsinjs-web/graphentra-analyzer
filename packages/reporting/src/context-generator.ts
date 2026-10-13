@@ -6,6 +6,7 @@ import {
   CONTEXT_PROMPT_VERSION, basisSchema, criticalitySchema, loadApplicationContext,
   type ApplicationContextV2, type Basis,
 } from './context-contract';
+import { isExtendedGraph } from './extended-graph';
 import { DEFAULT_OPENROUTER_MODEL, generateStructured, type LLMClientOptions } from './llm-client';
 
 export interface GenerateContextInput {
@@ -202,7 +203,8 @@ const slug = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, '-').re
 const json = (value: unknown) => JSON.stringify(value);
 
 function eligibleEntities(graph: TechnicalGraph): Entity[] {
-  return graph.entities.filter(entity => !isTestPath(entity.file));
+  // "module" entities are synthetic whole-file entities (extended engine); they are never described.
+  return graph.entities.filter(entity => !isTestPath(entity.file) && entity.kind !== 'module');
 }
 
 function resolveTextKeys(keys: string[], signals?: BusinessSignals): string[] {
@@ -255,7 +257,10 @@ function moduleInput(input: GenerateContextInput, batch: ModuleBatch): string {
       packageName: signals?.packageInfo.name, description: signals?.packageInfo.description,
       readme: signals?.documents[0]?.excerpt.slice(0, 2500), capabilityHints: signals?.packageInfo.capabilityHints,
     },
-    entitiesToDescribe: batch.entities.map(entity => ({ id: entity.id, name: entity.name, file: entity.file, lines: `${entity.startLine}-${entity.endLine}` })),
+    entitiesToDescribe: batch.entities.map(entity => ({
+      id: entity.id, name: entity.name, file: entity.file, lines: `${entity.startLine}-${entity.endLine}`,
+      ...(isExtendedGraph(input.technicalGraph) ? { kind: entity.kind, ...(entity.container ? { container: entity.container } : {}) } : {}),
+    })),
     callers: input.technicalGraph.relations.filter(relation => ids.has(relation.to)).slice(0, 200).map(relation => `${relation.from} calls ${relation.to}`),
     surfacesUsingTheseEntities: surfaces.map(surface => ({ id: surface.id, route: surface.route, method: surface.method, uiText: surface.uiText.slice(0, 8) })),
     signals: signals ? {
@@ -511,7 +516,7 @@ function assemble(input: GenerateContextInput, modules: ModuleResult[], synthesi
  */
 export async function generateApplicationContextV2(input: GenerateContextInput): Promise<ApplicationContextV2> {
   const targets = eligibleEntities(input.technicalGraph);
-  input.onProgress?.(`describing ${targets.length} functions`);
+  input.onProgress?.(`describing ${targets.length} ${isExtendedGraph(input.technicalGraph) ? 'entities' : 'functions'}`);
   const modules = targets.length ? await describeModules(input, targets) : [];
   const synthesis = await synthesize(input, modules);
   const meanings = new Map(modules.flatMap(result => result.entityAnnotations).map(annotation => [annotation.entityId, annotation.businessMeaning]));
@@ -537,7 +542,7 @@ export async function refreshApplicationContext(existing: ApplicationContextV2, 
     if (annotation?.basis === 'reviewed') return false;
     return !annotation || !annotation.fingerprint || (fingerprints[entity.id] !== undefined && annotation.fingerprint !== fingerprints[entity.id]);
   });
-  input.onProgress?.(`refreshing ${targets.length} new or changed functions`);
+  input.onProgress?.(`refreshing ${targets.length} new or changed ${isExtendedGraph(graph) ? 'entities' : 'functions'}`);
   const modules = targets.length ? await describeModules(input, targets) : [];
   const redone = new Set(targets.map(entity => entity.id));
   const entityById = new Map(graph.entities.map(entity => [entity.id, entity]));

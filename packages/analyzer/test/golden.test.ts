@@ -38,7 +38,7 @@ function replaceOnce(source: string, from: string, to: string): string {
 }
 
 /** Replace volatile values (SHAs, version, timestamp, content hash) with stable placeholders. */
-function normalize(value: unknown, shas: { base?: string; head?: string }): unknown {
+function normalize(value: unknown, shas: { base?: string; head?: string }, engine: 'legacy' | 'extended' = 'legacy'): unknown {
   const json = JSON.stringify(value);
   const text = json
     .split(shas.base ?? '\u0000').join('<BASE>')
@@ -47,7 +47,10 @@ function normalize(value: unknown, shas: { base?: string; head?: string }): unkn
   const parsed = JSON.parse(text);
   delete parsed.technicalGraph?.repository?.generatedAt;
   if (parsed.analyzerVersion) parsed.analyzerVersion = '<VERSION>';
+  if (parsed.technicalGraph?.repository?.analyzerVersion) parsed.technicalGraph.repository.analyzerVersion = '<VERSION>';
   if (parsed.sourceState?.contentIdentity) parsed.sourceState.contentIdentity = '<CONTENT>';
+  // The Node major varies by machine; the pinned TypeScript version stays literal.
+  if (engine === 'extended' && parsed.toolchain?.node) parsed.toolchain.node = '<NODE>';
   return parsed;
 }
 
@@ -68,6 +71,8 @@ type Scenario = {
   /** Fixture folder under fixtures/. Defaults to test-project. */
   fixture?: string;
   expectedOutcome: string;
+  /** Outcome under the extended engine when it differs from the legacy one. */
+  expectedOutcomeExtended?: string;
   /** Returns the edited files; omitted files stay unchanged. Return undefined for no edit. */
   edit?: (files: Files) => Files;
   mode?: 'commit' | 'working-tree';
@@ -83,10 +88,10 @@ const scenarios: Scenario[] = [
   { name: 'two-edits-one-file', expectedOutcome: 'completed', edit: f => ({
     'src/utils.ts': replaceOnce(replaceOnce(f['src/utils.ts'], 'toFixed(2)', 'toFixed(3)'),
       '.trim()', '.trim().normalize()') }) },
-  { name: 'comment-only-edit', expectedOutcome: 'no_supported_changes', edit: f => ({
+  { name: 'comment-only-edit', expectedOutcome: 'no_supported_changes', expectedOutcomeExtended: 'completed', edit: f => ({
     'src/utils.ts': replaceOnce(f['src/utils.ts'], 'export function generateId',
       '// ids are time based\nexport function generateId') }) },
-  { name: 'unsupported-constructs-only', expectedOutcome: 'no_supported_changes', edit: () => ({
+  { name: 'unsupported-constructs-only', expectedOutcome: 'no_supported_changes', expectedOutcomeExtended: 'completed', edit: () => ({
     'src/arrows.ts': 'export const double = (n: number) => n * 2;\nexport const triple = (n: number) => n * 3;\n' }) },
   { name: 'no-changes', expectedOutcome: 'no_changes' },
   { name: 'working-tree-mode', expectedOutcome: 'completed', mode: 'working-tree', edit: f => ({
@@ -94,18 +99,19 @@ const scenarios: Scenario[] = [
   // modern-app: the "before" baseline. Arrow functions, classes and components are not
   // extracted yet, so these goldens should improve as Phases 1 to 4 land.
   { name: 'modern-app-no-changes', fixture: 'modern-app', expectedOutcome: 'no_changes' },
-  { name: 'modern-app-arrow-function-edit', fixture: 'modern-app', expectedOutcome: 'no_supported_changes', edit: f => ({
+  { name: 'modern-app-arrow-function-edit', fixture: 'modern-app', expectedOutcome: 'no_supported_changes', expectedOutcomeExtended: 'completed', edit: f => ({
     'src/utils/format.ts': replaceOnce(f['src/utils/format.ts'], 'toFixed(2)', 'toFixed(3)') }) },
-  { name: 'modern-app-class-method-edit', fixture: 'modern-app', expectedOutcome: 'no_supported_changes', edit: f => ({
+  { name: 'modern-app-class-method-edit', fixture: 'modern-app', expectedOutcome: 'no_supported_changes', expectedOutcomeExtended: 'completed', edit: f => ({
     'src/services/order-service.ts': replaceOnce(f['src/services/order-service.ts'], 'formatPrice(0)', 'formatPrice(1)') }) },
-  { name: 'modern-app-component-edit', fixture: 'modern-app', expectedOutcome: 'no_supported_changes', edit: f => ({
+  { name: 'modern-app-component-edit', fixture: 'modern-app', expectedOutcome: 'no_supported_changes', expectedOutcomeExtended: 'completed', edit: f => ({
     'src/components/OrderList.tsx': f['src/components/OrderList.tsx'] + '\n// touched\nconst touched = () => 1;\n' }) },
   { name: 'modern-app-named-function-edit', fixture: 'modern-app', expectedOutcome: 'completed', edit: f => ({
     'src/utils/format.ts': replaceOnce(f['src/utils/format.ts'], '.trim()', '.trim().normalize()') }) },
 ];
 
-for (const scenario of scenarios) {
-  test(`golden: ${scenario.name}`, () => {
+for (const engine of ['legacy', 'extended'] as const) for (const scenario of scenarios) {
+  const suffix = engine === 'extended' ? '.extended' : '';
+  test(`golden: ${scenario.name}${suffix}`, () => {
     const repo = createRepo('graphentra-golden-');
     try {
       const base = readFixture(scenario.fixture ?? 'test-project');
@@ -130,9 +136,13 @@ for (const scenario of scenarios) {
         ? { mode: 'working-tree' as const, base: 'HEAD' }
         : { mode: 'commit' as const, base: baseSha, head: headSha };
 
-      const result = analyzeRepository({ target: repo.dir, comparison });
-      assert.equal(result.outcome, scenario.expectedOutcome);
-      expectGolden(scenario.name, normalize(result.evidence, { base: baseSha, head: headSha }));
+      const result = analyzeRepository({ target: repo.dir, comparison, engine });
+      assert.equal(result.outcome, engine === 'extended' ? scenario.expectedOutcomeExtended ?? scenario.expectedOutcome : scenario.expectedOutcome);
+      const shas = { base: baseSha, head: headSha };
+      expectGolden(`${scenario.name}${suffix}`, normalize(result.evidence, shas, engine));
+      if (engine === 'extended' && scenario.name === 'modern-app-component-edit') {
+        expectGolden('modern-app-application-map.extended', normalize(result.applicationMap, shas, engine));
+      }
     } finally {
       repo.cleanup();
     }

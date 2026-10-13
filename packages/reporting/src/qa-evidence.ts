@@ -1,4 +1,5 @@
-import type { ApplicationMap, Entity, EntityImpact, Relation } from '@graphentra/analyzer';
+import type { ApplicationMap, Entity, EntityImpact, Relation, TechnicalGraph } from '@graphentra/analyzer';
+import { isExtendedGraph } from './extended-graph';
 import type { ApplicationContext } from './contracts';
 import { migrateApplicationContextV1, type AnyApplicationContext, type ApplicationContextV2 } from './context-contract';
 import { buildContextPack } from './context-pack';
@@ -104,6 +105,8 @@ export interface BuildPayloadOptions {
   /** Full graph relations; needed to map changes to surfaces beyond the recorded blast radius. */
   relations?: Relation[];
   contextWarnings?: string[];
+  /** Graph capabilities; extended (2.1) graphs report entity granularity and kinds. */
+  capabilities?: TechnicalGraph['capabilities'];
 }
 
 function toV2(context: AnyApplicationContext, impacts: EntityImpact[]): ApplicationContextV2 {
@@ -121,10 +124,13 @@ export function buildLLMPayload(impacts: EntityImpact[], context: AnyApplication
     ...entity,
     sourceRole: getSourceRole(entity.file),
   });
+  const extended = options.capabilities ? isExtendedGraph({ capabilities: options.capabilities }) : false;
   return {
     analysisScope: {
       language: 'typescript',
-      entityGranularity: 'function',
+      ...(extended
+        ? { entityGranularity: 'entity', entityKinds: [...options.capabilities!.entityKinds] }
+        : { entityGranularity: 'function' }),
       relationTypes: ['CALLS'],
       maxBlastDepth: 6,
       changedFunctionCount: impacts.length,

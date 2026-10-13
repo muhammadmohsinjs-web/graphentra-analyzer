@@ -5,6 +5,7 @@ export * from './change-evidence';
 export * from './impact';
 export * from './output';
 export * from './analyze';
+export { computeAttribution, type AttributionResult } from './attribution';
 export * from './cli-options';
 export * from './errors';
 export * from './validator';

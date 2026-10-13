@@ -132,9 +132,13 @@ export function extractEntityChange(
   file: ChangedFile,
   entity: FunctionRange,
   previousEntity: FunctionRange | undefined,
+  exclusions?: { current: FunctionRange[]; previous: FunctionRange[] },
 ): EntityChange | undefined {
-  const within = (line: number, range: FunctionRange | undefined) =>
-    !!range && line >= range.startLine && line <= range.endLine;
+  const inRange = (line: number, range: FunctionRange) => line >= range.startLine && line <= range.endLine;
+  const within = (line: number, range: FunctionRange | undefined, excluded: FunctionRange[] = []) =>
+    !!range && inRange(line, range) && !excluded.some(child => inRange(line, child));
+  const own = exclusions?.current;
+  const ownPrevious = exclusions?.previous;
   const addedCode: string[] = [];
   const removedCode: string[] = [];
   const changedLines = new Set<number>();
@@ -161,10 +165,10 @@ export function extractEntityChange(
 
     for (const line of hunk.lines) {
       const belongs = line.kind === '-'
-        ? within(line.oldLine, previousEntity)
+        ? within(line.oldLine, previousEntity, ownPrevious)
         : line.kind === '+'
-          ? within(line.newLine, entity)
-          : within(line.newLine, entity) && within(line.oldLine, previousEntity);
+          ? within(line.newLine, entity, own)
+          : within(line.newLine, entity, own) && within(line.oldLine, previousEntity, ownPrevious);
       if (!belongs) {
         // A replacement lists all removals before additions, including neighboring
         // functions. Keep this entity's paired sides together across excluded edits.

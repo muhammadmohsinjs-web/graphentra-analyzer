@@ -15,7 +15,7 @@ const quiet = (t: { mock: { method: (object: object, name: string, fn: () => voi
 
 function onboardingInput(dir: string, client: unknown) {
   const comparison = { mode: 'working-tree' as const };
-  const result = analyzeRepository({ target: dir, comparison });
+  const result = analyzeRepository({ target: dir, comparison, engine: 'legacy' });
   return {
     result,
     input: {
@@ -91,7 +91,7 @@ test('context pack maps a backend change to its API, the pages that call it, nav
     const fake = createFakeLlm();
     const context = await generateApplicationContextV2(onboardingInput(repo.dir, fake.client).input);
     applyPaymentThresholdChange(repo.edit);
-    const changed = analyzeRepository({ target: repo.dir, comparison: { mode: 'working-tree' } });
+    const changed = analyzeRepository({ target: repo.dir, comparison: { mode: 'working-tree' }, engine: 'legacy' });
     const pack = buildContextPack(context, changed.impacts, { applicationMap: changed.applicationMap, relations: changed.technicalGraph.relations });
     const [change] = pack.changes;
     assert.equal(change!.changedEntityId, 'src/server/orderService.ts#chargeCard');
@@ -116,7 +116,7 @@ test('QA report returns navigable test areas and rejects invented surfaces with 
     const fake = createFakeLlm({ inventSurfaceOnce: true });
     const context = await generateApplicationContextV2(onboardingInput(repo.dir, fake.client).input);
     applyPaymentThresholdChange(repo.edit);
-    const changed = analyzeRepository({ target: repo.dir, comparison: { mode: 'working-tree' } });
+    const changed = analyzeRepository({ target: repo.dir, comparison: { mode: 'working-tree' }, engine: 'legacy' });
     const report = await generateQAReport(changed.evidence, context, { client: fake.client, model: 'offline' }, { applicationMap: changed.applicationMap });
     const qaCalls = fake.calls.filter(call => call.schema === 'qa_change_impact_report');
     assert.equal(qaCalls.length, 2, 'invented surface must trigger exactly one correction');

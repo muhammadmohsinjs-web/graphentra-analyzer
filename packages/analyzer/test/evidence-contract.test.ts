@@ -23,6 +23,7 @@ test('evidence contract: all four successful outcomes produce valid envelopes', 
   try {
     repo1.commitFile('README.md', '# Just readme', 'Initial');
     const result = analyzeRepository({
+      engine: 'legacy',
       target: repo1.dir,
       comparison: { mode: 'working-tree' },
     });
@@ -39,6 +40,7 @@ test('evidence contract: all four successful outcomes produce valid envelopes', 
   try {
     repo2.commitFile('src/calc.ts', 'export function add(a: number, b: number): number { return a + b; }', 'Initial');
     const result = analyzeRepository({
+      engine: 'legacy',
       target: repo2.dir,
       comparison: { mode: 'working-tree' },
     });
@@ -61,6 +63,7 @@ test('evidence contract: all four successful outcomes produce valid envelopes', 
       'utf8',
     );
     const result = analyzeRepository({
+      engine: 'legacy',
       target: repo3.dir,
       comparison: { mode: 'working-tree' },
     });
@@ -78,6 +81,7 @@ test('evidence contract: all four successful outcomes produce valid envelopes', 
     const baseSha = repo4.commitFile('src/calc.ts', 'export function add(a: number, b: number): number { return a + b; }', 'Initial');
     const headSha = repo4.commitFile('src/calc.ts', 'export function add(a: number, b: number): number { return a + b + 0; }', 'Update');
     const result = analyzeRepository({
+      engine: 'legacy',
       target: repo4.dir,
       comparison: { mode: 'commit', base: baseSha, head: headSha },
     });
@@ -227,11 +231,13 @@ test('evidence contract: portability and deterministic equivalence across checko
     execFileSync('git', ['clone', repoA.dir, repoBDir], { encoding: 'utf8' });
 
     const resultA = analyzeRepository({
+      engine: 'legacy',
       target: repoA.dir,
       comparison: { mode: 'commit', base: baseA, head: headA },
     });
 
     const resultB = analyzeRepository({
+      engine: 'legacy',
       target: repoBDir,
       comparison: { mode: 'commit', base: baseA, head: headA },
     });

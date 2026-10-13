@@ -1,11 +1,17 @@
+import * as ts from 'typescript';
+import { collectEntities } from './entity-collector';
 import {
   extractEntityChange,
   getFunctionRanges,
 } from './change-evidence';
 import {
+  DEFAULT_ENGINE,
   MAX_BLAST_DEPTH,
+  type EngineProfile,
   type ChangedEntity,
   type ChangedFile,
+  type DiagnosticItem,
+  type FunctionRange,
   type Entity,
   type EntityImpact,
   type ImpactPath,
@@ -137,44 +143,116 @@ export function findChangedEntities(options: {
   changedFiles: ChangedFile[];
   entities: Entity[];
   getBaselineSource: (oldFile: string) => string | undefined;
+  /** Extended engine: entity id to enclosing entity id. */
+  parentById?: Map<string, string | undefined>;
   onWarning?: (message: string) => void;
-}): {
+}, engine: EngineProfile = DEFAULT_ENGINE): {
   changedEntities: ChangedEntity[];
   diagnostics: string[];
+  /** Structured diagnostics (extended engine only; always empty for legacy). */
+  extraDiagnostics: DiagnosticItem[];
 } {
-  const { changedFiles, entities, getBaselineSource, onWarning } = options;
+  const { changedFiles, entities, getBaselineSource, onWarning, parentById } = options;
+  const extended = engine === 'extended';
+  const isAncestor = (ancestorId: string, id: string): boolean => {
+    for (let current = parentById?.get(id); current !== undefined; current = parentById?.get(current)) {
+      if (current === ancestorId) return true;
+    }
+    return false;
+  };
   const changedEntities: ChangedEntity[] = [];
   const diagnostics: string[] = [];
+  const extraDiagnostics: DiagnosticItem[] = [];
+  const errorClass = (error: unknown): string => error instanceof Error ? error.constructor.name : typeof error;
 
   for (const change of changedFiles) {
     const matchingEntities = entities.filter(entity => entity.file === change.file);
     if (matchingEntities.length === 0) continue;
 
-    const baseSource = change.oldFile ? getBaselineSource(change.oldFile) : undefined;
-    const previousRanges = change.oldFile && baseSource
+    let baseSource: string | undefined;
+    let baselineFailure: string | undefined;
+    try {
+      baseSource = change.oldFile ? getBaselineSource(change.oldFile) : undefined;
+    } catch (error) {
+      if (!extended) throw error;
+      baselineFailure = errorClass(error);
+    }
+    const previousRanges = !extended && change.oldFile && baseSource
       ? getFunctionRanges(change.oldFile, baseSource)
       : [];
+
+    // Extended: the baseline goes through the same collector and is matched by entity ID, never by bare name.
+    const baselineById = new Map<string, FunctionRange>();
+    const baselineParent = new Map<string, string | undefined>();
+    const baselineChildren = new Map<string, FunctionRange[]>();
+    if (extended && change.oldFile && baseSource) {
+      try {
+        const sourceFile = ts.createSourceFile(change.oldFile, baseSource, ts.ScriptTarget.Latest, true);
+        const collected = collectEntities(sourceFile, { relativeFile: change.file, engine: 'extended' });
+        for (const candidate of collected) {
+          const { id, name, startLine, endLine } = candidate.entity;
+          const range = { name, startLine, endLine };
+          baselineById.set(id, range);
+          baselineParent.set(id, candidate.parent?.entity.id);
+          if (candidate.parent) {
+            const siblings = baselineChildren.get(candidate.parent.entity.id) ?? [];
+            siblings.push(range);
+            baselineChildren.set(candidate.parent.entity.id, siblings);
+          }
+        }
+      } catch (error) {
+        baselineFailure = errorClass(error);
+        baselineById.clear();
+        baselineParent.clear();
+        baselineChildren.clear();
+      }
+    }
+    if (baselineFailure !== undefined) {
+      extraDiagnostics.push({
+        code: 'BASELINE_ANALYSIS_FAILED',
+        severity: 'warning',
+        file: change.file,
+        message: `Baseline entity collection failed (${baselineFailure}); removed-code evidence is unavailable for this file.`,
+      });
+    }
+    const isBaselineAncestor = (ancestorId: string, id: string): boolean => {
+      for (let current = baselineParent.get(id); current !== undefined; current = baselineParent.get(current)) {
+        if (current === ancestorId) return true;
+      }
+      return false;
+    };
 
     for (const entity of matchingEntities) {
       const candidates = previousRanges.filter(previous => previous.name === entity.name);
       // Ambiguous old identities must not leak another function's removed code.
-      const previous = candidates.length === 1 ? candidates[0] : undefined;
+      const previous = extended ? baselineById.get(entity.id) : candidates.length === 1 ? candidates[0] : undefined;
       const overlaps = (
         a: { startLine: number; endLine: number },
         b: { startLine: number; endLine: number },
       ) => a.startLine <= b.endLine && b.startLine <= a.endLine;
 
-      if (
-        matchingEntities.some(other => other !== entity && overlaps(entity, other)) ||
-        (previous && previousRanges.some(other => other !== previous && overlaps(previous, other)))
-      ) {
+      // Extended: nested entities may overlap their ancestors; only partial overlap without ancestry is ambiguous.
+      const ambiguous = extended
+        ? matchingEntities.some(other => other !== entity && overlaps(entity, other) &&
+            !isAncestor(entity.id, other.id) && !isAncestor(other.id, entity.id)) ||
+          (!!previous && [...baselineById].some(([otherId, other]) => otherId !== entity.id && overlaps(previous, other) &&
+            !isBaselineAncestor(entity.id, otherId) && !isBaselineAncestor(otherId, entity.id)))
+        : matchingEntities.some(other => other !== entity && overlaps(entity, other)) ||
+          (previous && previousRanges.some(other => other !== previous && overlaps(previous, other)));
+
+      if (ambiguous) {
         const warning = `Skipping ambiguous overlapping function ranges: ${entity.id}`;
         diagnostics.push(warning);
         onWarning?.(warning);
         continue;
       }
 
-      const entityChange = extractEntityChange(change, entity, previous);
+      const entityChange = extended
+        ? extractEntityChange(change, entity, previous, {
+          current: matchingEntities.filter(other => parentById?.get(other.id) === entity.id),
+          previous: baselineChildren.get(entity.id) ?? [],
+        })
+        : extractEntityChange(change, entity, previous);
 
       if (entityChange) {
         changedEntities.push({
@@ -188,5 +266,6 @@ export function findChangedEntities(options: {
   return {
     changedEntities,
     diagnostics,
+    extraDiagnostics,
   };
 }

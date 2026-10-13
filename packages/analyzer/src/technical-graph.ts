@@ -1,13 +1,20 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as ts from 'typescript';
+import { collectEntities } from './entity-collector';
 import { GraphentraError } from './errors';
 import {
   ANALYZER_VERSION,
+  DEFAULT_ENGINE,
+  EXTENDED_ENTITY_KINDS,
   IGNORED_DIRECTORIES,
+  JAVASCRIPT_EXTENSIONS,
+  LEGACY_ENTITY_KINDS,
   MAX_BLAST_DEPTH,
   TYPESCRIPT_EXTENSIONS,
+  type DiagnosticItem,
   type Entity,
+  type EngineProfile,
   type Relation,
   type TechnicalGraph,
 } from './contracts';
@@ -24,10 +31,20 @@ export function isTypeScriptFile(filePath: string): boolean {
   return TYPESCRIPT_EXTENSIONS.has(path.extname(filePath));
 }
 
+/** Engine-aware file selection: legacy is TypeScript only; extended also analyzes JavaScript. */
+export function isAnalyzableFile(filePath: string, engine: EngineProfile = DEFAULT_ENGINE): boolean {
+  if (isTypeScriptFile(filePath)) return true;
+  if (engine !== 'extended') return false;
+  const normalized = filePath.replace(/\\/g, '/');
+  if (normalized.endsWith('.min.js')) return false;
+  if (normalized.split('/').some(part => IGNORED_DIRECTORIES.has(part))) return false;
+  return JAVASCRIPT_EXTENSIONS.has(path.extname(filePath));
+}
+
 export function collectTypeScriptFiles(
   directory: string,
   projectRoot: string,
-  options?: { excludePaths?: string[] },
+  options?: { excludePaths?: string[]; engine?: EngineProfile },
 ): string[] {
   const results: string[] = [];
   const entries = fs.readdirSync(directory, {
@@ -51,7 +68,7 @@ export function collectTypeScriptFiles(
       continue;
     }
 
-    if (entry.isFile() && isTypeScriptFile(absolutePath)) {
+    if (entry.isFile() && isAnalyzableFile(absolutePath, options?.engine)) {
       results.push(absolutePath);
     }
   }
@@ -59,8 +76,12 @@ export function collectTypeScriptFiles(
   return results;
 }
 
-export function getCompilerOptions(projectRoot: string): ts.CompilerOptions {
-  const configPath = fs.existsSync(path.join(projectRoot, 'tsconfig.json')) ? path.join(projectRoot, 'tsconfig.json') : undefined;
+export function getCompilerOptions(projectRoot: string, engine: EngineProfile = DEFAULT_ENGINE): ts.CompilerOptions {
+  const extendedOptions = (options: ts.CompilerOptions): ts.CompilerOptions =>
+    engine === 'extended' ? { ...options, allowJs: true, checkJs: options.checkJs ?? false } : options;
+  const configPath = fs.existsSync(path.join(projectRoot, 'tsconfig.json')) ? path.join(projectRoot, 'tsconfig.json')
+    : engine === 'extended' && fs.existsSync(path.join(projectRoot, 'jsconfig.json')) ? path.join(projectRoot, 'jsconfig.json')
+    : undefined;
 
   if (configPath) {
     const config = ts.readConfigFile(configPath, ts.sys.readFile);
@@ -71,7 +92,7 @@ export function getCompilerOptions(projectRoot: string): ts.CompilerOptions {
         path.dirname(configPath),
       );
       return {
-        ...parsed.options,
+        ...extendedOptions(parsed.options),
         noEmit: true,
         skipLibCheck: true,
       };
@@ -79,6 +100,7 @@ export function getCompilerOptions(projectRoot: string): ts.CompilerOptions {
   }
 
   return {
+    ...(engine === 'extended' ? { allowJs: true, checkJs: false } : {}),
     target: ts.ScriptTarget.ES2022,
     module: ts.ModuleKind.CommonJS,
     moduleResolution: ts.ModuleResolutionKind.Node10,
@@ -103,6 +125,10 @@ export interface ExtractedGraph {
   technicalGraph: TechnicalGraph;
   entities: Entity[];
   relations: Relation[];
+  /** Extended engine only (always empty for legacy). */
+  diagnostics: DiagnosticItem[];
+  /** Extended engine only (empty for legacy): entity id to enclosing entity id (undefined for module entities). */
+  parentById: Map<string, string | undefined>;
   entityById: Map<string, Entity>;
   reverseAdjacency: Map<string, Relation[]>;
   files: string[];
@@ -121,9 +147,10 @@ export function extractTechnicalGraph(options: {
   compilerOptions?: ts.CompilerOptions;
   host?: ts.CompilerHost;
   excludePaths?: string[];
+  engine?: EngineProfile;
 }): ExtractedGraph {
   const { projectRoot, headSha, targetPath = '.', excludePaths } = options;
-  const files = options.files ?? collectTypeScriptFiles(projectRoot, projectRoot, { excludePaths }).sort();
+  const files = options.files ?? collectTypeScriptFiles(projectRoot, projectRoot, { excludePaths, engine: options.engine }).sort();
 
   const originalFiles = new Map(files.map(file => [path.resolve(file).replace(/\\/g, '/'), file]));
   const normalizeProjectPath = (filePath: string): string =>
@@ -140,7 +167,7 @@ export function extractTechnicalGraph(options: {
       },
       capabilities: {
         language: 'typescript',
-        entityKinds: ['function'],
+        entityKinds: [...((options.engine ?? DEFAULT_ENGINE) === 'extended' ? EXTENDED_ENTITY_KINDS : LEGACY_ENTITY_KINDS)],
         relationTypes: ['CALLS'],
         maxBlastDepth: MAX_BLAST_DEPTH,
       },
@@ -152,21 +179,29 @@ export function extractTechnicalGraph(options: {
       technicalGraph: emptyGraph,
       entities: [],
       relations: [],
+      diagnostics: [],
+      parentById: new Map(),
       entityById: new Map(),
       reverseAdjacency: new Map(),
       files: [],
     };
   }
 
-  const program = ts.createProgram(files, options.compilerOptions ?? getCompilerOptions(projectRoot), options.host);
+  const program = ts.createProgram(files, options.compilerOptions ?? getCompilerOptions(projectRoot, options.engine), options.host);
   const checker = program.getTypeChecker();
   const analyzedFileSet = new Set(files.map(file => path.resolve(file).replace(/\\/g, '/')));
 
   const entities: Entity[] = [];
   const relations: Relation[] = [];
+  const diagnostics: DiagnosticItem[] = [];
+  const parentById = new Map<string, string | undefined>();
+  const declarationToEntity = new Map<ts.Node, Entity>();
+  const extendedEngine = (options.engine ?? DEFAULT_ENGINE) === 'extended';
   const entityById = new Map<string, Entity>();
   const symbolToEntity = new Map<ts.Symbol, Entity>();
   const relationKeys = new Set<string>();
+  const failedFiles = new Set<string>();
+  const errorClassName = (error: unknown): string => error instanceof Error ? error.constructor.name : typeof error;
 
   function resolveSymbol(node: ts.Node): ts.Symbol | undefined {
     let symbol = checker.getSymbolAtLocation(node);
@@ -191,41 +226,104 @@ export function extractTechnicalGraph(options: {
 
     const relativeFile = normalizeProjectPath(sourceFile.fileName);
 
-    function visit(node: ts.Node): void {
-      if (ts.isFunctionDeclaration(node) && node.name) {
-        const start = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
-        const end = sourceFile.getLineAndCharacterOfPosition(node.getEnd());
-        const entity: Entity = {
-          id: `${relativeFile}#${node.name.text}`,
-          kind: 'function',
-          name: node.name.text,
+    if (extendedEngine) {
+      const syntaxErrors = program.getSyntacticDiagnostics(sourceFile).length;
+      if (syntaxErrors > 0) {
+        diagnostics.push({
+          code: 'FILE_PARSE_ERRORS',
+          severity: 'warning',
           file: relativeFile,
-          startLine: start.line + 1,
-          endLine: end.line + 1,
-        };
+          message: `${syntaxErrors} syntax error(s); entities were collected from the parts that parse.`,
+        });
+      }
+    }
 
+    // Extended: a failing file is rolled back and skipped; legacy keeps today's behavior (errors propagate).
+    const registered: Entity[] = [];
+    const registeredDiagnostics = diagnostics.length;
+    try {
+      for (const candidate of collectEntities(sourceFile, { relativeFile, engine: options.engine ?? DEFAULT_ENGINE })) {
+        const entity = candidate.entity;
         if (entityById.has(entity.id)) throw new GraphentraError('Duplicate function identity in source.', 'AMBIGUOUS_ENTITY_ID');
         entities.push(entity);
         entityById.set(entity.id, entity);
+        registered.push(entity);
+        if (extendedEngine) {
+          parentById.set(entity.id, candidate.parent?.entity.id);
+          declarationToEntity.set(candidate.declarationNode, entity);
+        }
+        if (candidate.disambiguatedFrom !== undefined) {
+          diagnostics.push({
+            code: 'DUPLICATE_ENTITY_ID_DISAMBIGUATED',
+            severity: 'info',
+            message: `Entity ID ${candidate.disambiguatedFrom} is declared more than once; this declaration was assigned ${entity.id}.`,
+            file: entity.file,
+            entityId: entity.id,
+          });
+        }
 
-        const symbol = resolveSymbol(node.name);
-        if (symbol) {
-          symbolToEntity.set(symbol, entity);
+        for (const symbolNode of candidate.symbolNodes) {
+          const symbol = resolveSymbol(symbolNode);
+          if (symbol) {
+            symbolToEntity.set(symbol, entity);
+          }
+        }
+        if (candidate.exportDefault) {
+          let defaultSymbol = checker.getSymbolAtLocation(sourceFile)?.exports?.get('default' as ts.__String);
+          if (defaultSymbol && defaultSymbol.flags & ts.SymbolFlags.Alias) defaultSymbol = checker.getAliasedSymbol(defaultSymbol);
+          if (defaultSymbol) symbolToEntity.set(defaultSymbol, entity);
         }
       }
-      ts.forEachChild(node, visit);
+    } catch (error) {
+      if (!extendedEngine) throw error;
+      const registeredIds = new Set(registered.map(entity => entity.id));
+      for (let index = entities.length - 1; index >= 0 && registeredIds.size > 0; index--) {
+        if (registeredIds.delete(entities[index].id)) entities.splice(index, 1);
+      }
+      for (const entity of registered) {
+        entityById.delete(entity.id);
+        parentById.delete(entity.id);
+      }
+      for (const [node, entity] of declarationToEntity) if (entity.file === relativeFile) declarationToEntity.delete(node);
+      for (const [symbol, entity] of symbolToEntity) if (entity.file === relativeFile) symbolToEntity.delete(symbol);
+      diagnostics.length = registeredDiagnostics;
+      failedFiles.add(sourceFile.fileName);
+      diagnostics.push({
+        code: 'FILE_ANALYSIS_FAILED',
+        severity: 'warning',
+        file: relativeFile,
+        message: `Entity collection failed (${errorClassName(error)}); the file was skipped.`,
+      });
     }
-
-    visit(sourceFile);
   }
 
   // Pass 2 - call relationships
   for (const sourceFile of program.getSourceFiles()) {
     if (sourceFile.isDeclarationFile) continue;
     if (!analyzedFileSet.has(path.resolve(sourceFile.fileName).replace(/\\/g, '/'))) continue;
+    if (failedFiles.has(sourceFile.fileName)) continue;
+
+    // Relations are buffered per file and added all or nothing under the extended engine.
+    const fileRelations: Relation[] = [];
+    const emit = (relation: Relation): void => {
+      if (extendedEngine) fileRelations.push(relation);
+      else addRelation(relation);
+    };
 
     function visit(node: ts.Node): void {
-      if (ts.isCallExpression(node)) {
+      if (ts.isCallExpression(node) && extendedEngine) {
+        // Innermost enclosing entity; the source file node maps to the module entity.
+        let enclosing: ts.Node | undefined = node.parent;
+        let caller: Entity | undefined;
+        while (enclosing && !(caller = declarationToEntity.get(enclosing))) enclosing = enclosing.parent;
+        const calledSymbol = resolveSymbol(node.expression);
+        // Widened object-literal types hand back cloned property symbols, so fall back to the single declaration node.
+        const calledDeclaration = calledSymbol?.declarations?.length === 1 ? calledSymbol.declarations[0] : undefined;
+        const called = calledSymbol
+          ? symbolToEntity.get(calledSymbol) ?? (calledDeclaration ? declarationToEntity.get(calledDeclaration) : undefined)
+          : undefined;
+        if (caller && called) emit({ from: caller.id, to: called.id, type: 'CALLS' });
+      } else if (ts.isCallExpression(node)) {
         const calledSymbol = resolveSymbol(node.expression);
         const callerFunction = findEnclosingFunction(node);
 
@@ -236,7 +334,7 @@ export function extractTechnicalGraph(options: {
             const called = symbolToEntity.get(calledSymbol);
 
             if (caller && called) {
-              addRelation({
+              emit({
                 from: caller.id,
                 to: called.id,
                 type: 'CALLS',
@@ -248,7 +346,21 @@ export function extractTechnicalGraph(options: {
       ts.forEachChild(node, visit);
     }
 
-    visit(sourceFile);
+    if (!extendedEngine) {
+      visit(sourceFile);
+      continue;
+    }
+    try {
+      visit(sourceFile);
+      for (const relation of fileRelations) addRelation(relation);
+    } catch (error) {
+      diagnostics.push({
+        code: 'FILE_ANALYSIS_FAILED',
+        severity: 'warning',
+        file: normalizeProjectPath(sourceFile.fileName),
+        message: `Call extraction failed (${errorClassName(error)}); calls from this file were skipped.`,
+      });
+    }
   }
 
   // Reverse graph
@@ -270,7 +382,7 @@ export function extractTechnicalGraph(options: {
     },
     capabilities: {
       language: 'typescript',
-      entityKinds: ['function'],
+      entityKinds: [...((options.engine ?? DEFAULT_ENGINE) === 'extended' ? EXTENDED_ENTITY_KINDS : LEGACY_ENTITY_KINDS)],
       relationTypes: ['CALLS'],
       maxBlastDepth: MAX_BLAST_DEPTH,
     },
@@ -283,6 +395,8 @@ export function extractTechnicalGraph(options: {
     technicalGraph,
     entities,
     relations,
+    diagnostics,
+    parentById,
     entityById,
     reverseAdjacency,
     files,

@@ -3,12 +3,13 @@ const structuralValidator = new Ajv2020({ allErrors: true, strict: true }).compi
 import {
   ANALYZER_VERSION,
   EVIDENCE_ARTIFACT_KIND,
-  EVIDENCE_SCHEMA_VERSION,
+  EVIDENCE_SCHEMA_VERSIONS,
   MAX_BLAST_DEPTH,
   type DeterministicEvidence,
   type Entity,
   type Relation,
 } from './contracts';
+import { compareStrings } from './deterministic';
 import { EvidenceValidationError } from './errors';
 
 export interface ValidationResult {
@@ -32,9 +33,13 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
   if (data.artifactKind !== EVIDENCE_ARTIFACT_KIND) {
     errors.push(`Expected artifactKind "${EVIDENCE_ARTIFACT_KIND}", got "${String(data.artifactKind)}".`);
   }
-  if (data.schemaVersion !== EVIDENCE_SCHEMA_VERSION) {
-    errors.push(`Expected schemaVersion "${EVIDENCE_SCHEMA_VERSION}", got "${String(data.schemaVersion)}".`);
+  if (!(EVIDENCE_SCHEMA_VERSIONS as readonly unknown[]).includes(data.schemaVersion)) {
+    errors.push(`Expected schemaVersion one of ${EVIDENCE_SCHEMA_VERSIONS.map(v => `"${v}"`).join(', ')}, got "${String(data.schemaVersion)}".`);
   }
+  const isExtendedSchema = data.schemaVersion === '2.1';
+  const entityKindsField = isObject(data.technicalGraph) && isObject(data.technicalGraph.capabilities)
+    ? data.technicalGraph.capabilities.entityKinds : undefined;
+  const declaredKinds: string[] = Array.isArray(entityKindsField) ? entityKindsField : [];
   if (typeof data.analyzerVersion !== 'string' || !data.analyzerVersion) {
     errors.push('Expected non-empty string for analyzerVersion.');
   }
@@ -83,6 +88,20 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
       data.sourceState.untrackedSourcePolicy !== 'included'
     ) {
       errors.push('sourceState.untrackedSourcePolicy must be "excluded" or "included".');
+    }
+  }
+
+  if (isExtendedSchema) {
+    if (data.toolchain === undefined) errors.push('toolchain is required in schema 2.1.');
+    if (!isObject(data.options) || data.options.engine !== 'extended') errors.push('options.engine must be "extended" in schema 2.1.');
+    if (declaredKinds.some((kind, i) => i > 0 && compareStrings(declaredKinds[i - 1], kind) >= 0)) {
+      errors.push('technicalGraph.capabilities.entityKinds must be sorted.');
+    }
+  } else {
+    if (data.toolchain !== undefined) errors.push('toolchain is not allowed in schema 2.0.');
+    if (isObject(data.options) && data.options.engine !== undefined) errors.push('options.engine is not allowed in schema 2.0.');
+    if (declaredKinds.length !== 1 || declaredKinds[0] !== 'function') {
+      errors.push('technicalGraph.capabilities.entityKinds must be ["function"] in schema 2.0.');
     }
   }
 
@@ -138,8 +157,21 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
           seenEntityIds.add(entity.id);
           entityMap.set(entity.id, entity);
         }
-        if (entity.kind !== 'function') {
-          errors.push(`technicalGraph.entities[${i}].kind must be "function".`);
+        if (isExtendedSchema) {
+          if (entity.language === undefined) errors.push(`technicalGraph.entities[${i}].language is required in schema 2.1.`);
+          if (entity.kind === 'method' && (typeof entity.container !== 'string' || !entity.container)) {
+            errors.push(`technicalGraph.entities[${i}] of kind "method" requires a non-empty container.`);
+          }
+          if (!declaredKinds.includes(entity.kind)) {
+            errors.push(`technicalGraph.entities[${i}].kind "${entity.kind}" is not listed in capabilities.entityKinds.`);
+          }
+        } else {
+          if (entity.kind !== 'function') {
+            errors.push(`technicalGraph.entities[${i}].kind must be "function".`);
+          }
+          for (const field of ['language', 'container', 'exported', 'exportName'] as const) {
+            if (entity[field] !== undefined) errors.push(`technicalGraph.entities[${i}].${field} is not allowed in schema 2.0.`);
+          }
         }
         if (typeof entity.startLine !== 'number' || entity.startLine < 1) {
           errors.push(`Entity "${entity.id}" has invalid startLine: ${entity.startLine}. Must be >= 1.`);

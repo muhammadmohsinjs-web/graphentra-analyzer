@@ -1,4 +1,4 @@
-import { prepareData, buildTraversal, layoutGraph, edgeKey, isTest } from '/model.mjs';
+import { prepareData, buildTraversal, layoutGraph, edgeKey, isTest, kindOf, kindClass, displayName } from '/model.mjs';
 
 const $ = id => document.getElementById(id);
 const svgNS = 'http://www.w3.org/2000/svg';
@@ -20,6 +20,12 @@ async function main() {
   const data = await response.json();
   if (!response.ok) throw new Error(data.error ?? 'Could not load local artifacts.');
   const model = prepareData(data);
+  const extended = model.schemaVersion === '2.1';
+  if (extended) {
+    document.querySelector('#function-count + span').textContent = 'ENTITIES';
+    document.querySelector('label[for="search"]').textContent = 'FILTER ENTITIES';
+    $('graph').setAttribute('aria-label', 'Interactive entity dependency graph. Select nodes for evidence; drag the background to pan.');
+  }
   const layout = layoutGraph(model.entities);
   const recorded = model.analysis?.impacts ?? [];
   let simulated = recorded.length === 0;
@@ -48,7 +54,9 @@ async function main() {
   const warnings = [
     ...model.warnings,
     ...(model.analysis?.limitations ?? []).filter(value => typeof value === 'string'),
-    'Only discovered named TypeScript functions and static CALLS edges are shown. Methods, arrow functions, dynamic calls and application surfaces are not modeled.',
+    extended ? 'Functions, methods, React components and module-level code from TypeScript and JavaScript, with static CALLS edges, are shown. Dynamic calls and application surfaces are not modeled.'
+      : 'Only discovered named TypeScript functions and static CALLS edges are shown. Methods, arrow functions, dynamic calls and application surfaces are not modeled.',
+    ...(extended ? model.limitations.filter(value => typeof value === 'string') : []),
     `Traversal stops at depth ${model.maxDepth}. The recorded artifacts do not identify a truncated frontier.`,
     'Test labels use filename heuristics, not measured coverage. Nothing here indicates a passing test or a confirmed regression.',
     'The graph describes the analyzer working tree; matching commit IDs cannot guarantee it matches the compared revisions.',
@@ -135,9 +143,15 @@ async function main() {
     const node = svg('g', { transform: `translate(${position.x}, ${position.y})`, class: 'node', tabindex: 0, role: 'button', 'aria-label': `${entity.name}, ${entity.file}. Inspect evidence.` });
     node.append(svg('rect', { width: position.width, height: position.height, rx: 5 }), svg('circle', { cx: 13, cy: 17, r: 3 }));
     const label = svg('text', { x: 24, y: 21 });
-    label.textContent = entity.name.length > 31 ? `${entity.name.slice(0, 28)}...` : entity.name;
-    const title = svg('title'); title.textContent = `${entity.name}\n${entity.file}:${entity.startLine}-${entity.endLine}`;
+    const kind = kindOf(entity);
+    const badged = kind !== 'function';
+    const shown = displayName(entity);
+    const limit = badged ? 23 : 31;
+    label.textContent = shown.length > limit ? `${shown.slice(0, limit - 3)}...` : shown;
+    if (badged) node.append(svg('text', { x: position.width - 8, y: 21, 'text-anchor': 'end', class: 'kind-badge' }));
+    const title = svg('title'); title.textContent = `${entity.name}${badged ? ` (${kind})` : ''}\n${entity.file}:${entity.startLine}-${entity.endLine}`;
     node.append(label, title);
+    if (badged) node.querySelector('.kind-badge').textContent = kind.length > 9 ? `${kind.slice(0, 8)}…` : kind;
     node.addEventListener('click', () => inspect(id));
     node.addEventListener('keydown', event => {
       if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); inspect(id); }
@@ -250,7 +264,7 @@ async function main() {
       const depth = traversal.depths.get(id);
       const active = depth !== undefined && depth <= layer;
       const seed = traversal.seeds.has(id);
-      node.setAttribute('class', ['node', isTest(model.entities.get(id).file) ? 'test' : '', seed ? 'seed' : '', active && !seed ? 'reached' : '', active && depth === layer && layer > 0 ? 'fresh' : '', selected === id ? 'selected' : ''].join(' '));
+      node.setAttribute('class', ['node', kindClass(model.entities.get(id)), isTest(model.entities.get(id).file) ? 'test' : '', seed ? 'seed' : '', active && !seed ? 'reached' : '', active && depth === layer && layer > 0 ? 'fresh' : '', selected === id ? 'selected' : ''].join(' '));
       node.setAttribute('aria-pressed', String(selected === id));
       miniNodes.get(id).setAttribute('class', seed ? 'mini-seed' : active ? 'mini-reached' : '');
     }
@@ -325,7 +339,7 @@ async function main() {
     const depth = traversal.depths.get(selected);
     const seed = traversal.seeds.has(selected);
     info.append(text('span', seed ? simulated ? 'SIMULATED START' : 'CHANGED FUNCTION' : depth !== undefined ? `POTENTIAL IMPACT / DEPTH ${depth}` : 'GRAPH CONTEXT', 'badge'));
-    info.append(text('h3', entity.name, 'inspector-name'), text('div', `${entity.file}:${entity.startLine}-${entity.endLine}`, 'file-location'));
+    info.append(text('h3', displayName(entity), 'inspector-name'), text('div', `${entity.file}:${entity.startLine}-${entity.endLine}`, 'file-location'));
     if (isTest(entity.file)) info.append(text('p', 'Test function (filename heuristic). No execution or coverage data.', 'small'));
     root.append(info);
     const pathSection = text('section', '', 'evidence-section');

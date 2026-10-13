@@ -1,32 +1,42 @@
 import {
   ANALYZER_VERSION,
+  DEFAULT_ENGINE,
+  ENGINE_PROFILES,
   EVIDENCE_ARTIFACT_KIND,
   EVIDENCE_SCHEMA_VERSION,
+  EXTENDED_EVIDENCE_SCHEMA_VERSION,
   type AnalyzeOptions,
   type AnalyzeResult,
   type DiagnosticItem,
   type DeterministicEvidence,
 } from './contracts';
+import { GraphentraError } from './errors';
 import { parseGitDiff } from './change-evidence';
+import { computeAttribution } from './attribution';
 import { buildImpact, findChangedEntities } from './impact';
-import { DEFAULT_LIMITATIONS } from './output';
+import { DEFAULT_LIMITATIONS, EXTENDED_LIMITATIONS } from './output';
 import { captureSourceSnapshot } from './source-snapshot';
 import { createRepositoryContext } from './repository';
-import { extractTechnicalGraph, isTypeScriptFile, type ExtractedGraph } from './technical-graph';
+import { extractTechnicalGraph, isAnalyzableFile, type ExtractedGraph } from './technical-graph';
 import { APPLICATION_MAP_SCHEMA_VERSION, extractApplicationMap, type ApplicationMap } from './application-map';
-import { toolchainDiagnostics } from './toolchain';
+import { buildToolchainRecord, toolchainDiagnostics } from './toolchain';
 import { assertValidEvidenceEnvelope } from './validator';
 
 export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
+  if (options.engine !== undefined && !ENGINE_PROFILES.includes(options.engine)) {
+    throw new GraphentraError(`Unknown engine "${String(options.engine)}". Expected one of: ${ENGINE_PROFILES.join(', ')}.`, 'INVALID_OPTIONS');
+  }
+  const engine = options.engine ?? DEFAULT_ENGINE;
   const repo = createRepositoryContext(options.target, options.comparison, {
     gitTimeoutMs: options.gitTimeoutMs,
     excludePaths: options.excludePaths,
+    engine,
   });
 
   const targetPath = repo.projectInsideRepository;
   const headSha = repo.comparison.resolvedHeadSha ?? repo.sourceState.checkoutSha;
 
-  const snapshot = captureSourceSnapshot(repo);
+  const snapshot = captureSourceSnapshot(repo, engine);
   const extracted = extractTechnicalGraph({
     files: snapshot.files,
     compilerOptions: snapshot.compilerOptions,
@@ -35,12 +45,16 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
     headSha,
     targetPath,
     excludePaths: options.excludePaths,
+    engine,
   });
+  // Extended engine: stamp language once, so graph, changed entities and impacts share the same objects.
+  if (engine === 'extended') for (const entity of extracted.entities) entity.language ??= 'typescript';
 
   const diagnostics: DiagnosticItem[] = [...toolchainDiagnostics()];
+  if (engine === 'extended') diagnostics.push(...extracted.diagnostics);
   let gitDiff = snapshot.gitDiff;
   if (repo.comparison.mode === 'working-tree') {
-    for (const file of repo.listFiles(true).filter(isTypeScriptFile)) {
+    for (const file of repo.listFiles(true).filter(file => isAnalyzableFile(file, engine))) {
       const content = snapshot.readFile(`${repo.projectRoot}/${file}`);
       if (content === undefined) continue;
       const lines = content.split('\n');
@@ -54,17 +68,19 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
   }
   const changedFiles = parseGitDiff(gitDiff, repo.gitPathToProjectPath)
     .filter(change => repo.includesPath(change.file));
-  const supportedChanges = changedFiles.filter(change => isTypeScriptFile(change.file));
-  if (changedFiles.some(change => !isTypeScriptFile(change.file))) {
+  const supportedChanges = changedFiles.filter(change => isAnalyzableFile(change.file, engine));
+  if (changedFiles.some(change => !isAnalyzableFile(change.file, engine))) {
     diagnostics.push({ code: 'OUTSIDE_SUPPORTED_SCOPE', severity: 'warning',
       message: 'Changes outside TypeScript extraction scope were not analyzed for function impact.' });
   }
-  const { changedEntities, diagnostics: entityWarnings } = findChangedEntities({
+  const { changedEntities, diagnostics: entityWarnings, extraDiagnostics } = findChangedEntities({
     changedFiles: supportedChanges,
     entities: extracted.entities,
+    parentById: extracted.parentById,
     getBaselineSource: oldFile => repo.getBaselineSource(oldFile, repo.comparison.resolvedBaseSha),
-  });
+  }, engine);
   for (const message of entityWarnings) diagnostics.push({ code: 'AMBIGUOUS_FUNCTION_RANGE', severity: 'warning', message });
+  if (engine === 'extended') diagnostics.push(...extraDiagnostics);
   const impacts = changedEntities.map(changed => buildImpact(changed, extracted.reverseAdjacency, extracted.entityById));
   const outcome = extracted.files.length === 0 ? 'no_source_files'
     : changedFiles.length === 0 ? 'no_changes'
@@ -73,17 +89,26 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
     message: 'No current supported TypeScript source files are present; deletion evidence may remain.' });
   if (outcome === 'no_supported_changes') diagnostics.push({ code: 'NO_SUPPORTED_CHANGES', severity: 'warning',
     message: 'Changes did not match supported current function declarations. This is not a no-risk result.' });
+  const sourcePolicy = repo.comparison.mode === 'commit' ? 'git-tracked' : 'git-tracked-and-nonignored-untracked';
+  const extended = engine === 'extended';
+  const attribution = extended ? computeAttribution(supportedChanges, changedEntities) : undefined;
+  if (attribution && attribution.total > 0) {
+    const { code, total, ratio, module, unattributed } = attribution;
+    diagnostics.push({ code: 'ATTRIBUTED_LINE_RATIO', severity: 'info',
+      message: `${code} of ${total} changed lines attributed to code entities (ratio ${ratio.toFixed(4)}); ${module} module-level, ${unattributed} unattributed.` });
+  }
   const evidence: DeterministicEvidence = {
     artifactKind: EVIDENCE_ARTIFACT_KIND,
-    schemaVersion: EVIDENCE_SCHEMA_VERSION,
+    schemaVersion: extended ? EXTENDED_EVIDENCE_SCHEMA_VERSION : EVIDENCE_SCHEMA_VERSION,
     analyzerVersion: ANALYZER_VERSION,
     target: { targetPath },
     comparison: repo.comparison,
     sourceState: { ...repo.sourceState, contentIdentity: snapshot.identity() },
-    options: { excludePaths: repo.excludePaths, sourcePolicy: repo.comparison.mode === 'commit'
-      ? 'git-tracked' : 'git-tracked-and-nonignored-untracked' },
+    options: extended ? { excludePaths: repo.excludePaths, sourcePolicy, engine: 'extended' }
+      : { excludePaths: repo.excludePaths, sourcePolicy },
+    ...(extended ? { toolchain: buildToolchainRecord() } : {}),
     outcome, technicalGraph: extracted.technicalGraph, changedFiles, changedEntities, impacts,
-    diagnostics, limitations: [...DEFAULT_LIMITATIONS],
+    diagnostics, limitations: [...(extended ? EXTENDED_LIMITATIONS : DEFAULT_LIMITATIONS)],
   };
   snapshot.verify();
   assertValidEvidenceEnvelope(evidence);
@@ -93,7 +118,7 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
     : outcome === 'no_source_files' ? 'No TypeScript files were found in the target repository.'
     : 'Changes did not match supported current function declarations.';
   return { outcome, technicalGraph: extracted.technicalGraph, evidence, applicationMap, changedFiles, changedEntities,
-    impacts, gitDiff, diagnostics, summaryMessage };
+    impacts, gitDiff, diagnostics, summaryMessage, ...(attribution ? { attribution } : {}) };
 }
 
 function emptyApplicationMap(headSha: string, reason?: string): ApplicationMap {

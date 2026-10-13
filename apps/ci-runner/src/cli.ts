@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import * as path from 'node:path';
+import { ENGINE_PROFILES, type EngineProfile } from '@graphentra/analyzer';
 import { CI_RUNNER_VERSION } from './contracts';
 import { analyzeAndSubmit, resubmitEvidenceFile } from './runner';
 
@@ -28,6 +29,7 @@ Options:
   --pr <number>          Pull request number
   --resubmit <file>      Resubmit an existing valid evidence.json file without re-analyzing
   --output <path>        Path or directory to write evidence.json
+  --engine <profile>     Analysis engine profile: extended or legacy (default: extended)
   --help, -h             Show this help message
   --version, -v          Show runner version
 `);
@@ -99,6 +101,12 @@ Options:
     }
   }
 
+  const engine = values.get('engine');
+  if (engine !== undefined && !ENGINE_PROFILES.includes(engine as EngineProfile)) {
+    console.error(`❌ Unknown engine "${engine}". Expected one of: ${ENGINE_PROFILES.join(', ')}.`);
+    process.exit(1);
+  }
+
   const target = path.resolve(values.get('target') ?? process.cwd());
   const isWorkingTree = flags.has('working-tree');
   const base = values.get('base') ?? (isWorkingTree ? undefined : process.env.BASE_SHA?.trim() ?? 'HEAD~1');
@@ -118,6 +126,7 @@ Options:
       backendUrl,
       token,
       outputEvidencePath: values.get('output'),
+      engine: engine as EngineProfile | undefined,
     });
 
     console.log(`\n✅ Deterministic evidence saved to: ${result.evidencePath}`);

@@ -17,7 +17,7 @@ function analyze(files: Record<string, [string, string]>) {
     let head = '';
     for (const [file, [before]] of Object.entries(files)) base = repo.commitFile(file, before, `base ${file}`);
     for (const [file, [, after]] of Object.entries(files)) head = repo.commitFile(file, after, `head ${file}`);
-    const result = analyzeRepository({ target: repo.dir, comparison: { mode: 'commit', base, head } });
+    const result = analyzeRepository({ target: repo.dir, comparison: { mode: 'commit', base, head }, engine: 'legacy' });
     return { result, identity: computeDeterministicEvidenceIdentity(result.evidence) };
   } finally {
     repo.cleanup();
@@ -74,4 +74,4 @@ test('golden hash: the same fixture gives the same identity hash on every OS', (
     'If this changed on purpose (analyzer version or evidence shape), update GOLDEN_IDENTITY. If it differs only on one OS, that is a determinism bug.');
 });
 
-const GOLDEN_IDENTITY = '349f7f61bb892c0769b708869559b43fd33e7c339d18e1b138116ee3dfc5c570';
+const GOLDEN_IDENTITY = '7bc69cba35311ea667fe2d6a1f71a565a2057aa11594be1480d4504d55ac2209';

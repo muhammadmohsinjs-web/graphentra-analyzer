@@ -48,6 +48,18 @@ test('CLI safety: invalid arguments exit with nonzero status', () => {
   assert.match(res.stderr, /INVALID_TARGET/);
 });
 
+test('CLI safety: unknown --engine value exits 2 with INVALID_OPTIONS', () => {
+  const res = runAnalyzerCli(['--target', '.', '--engine', 'bogus']);
+  assert.equal(res.status, 2);
+  assert.match(res.stderr, /INVALID_OPTIONS/);
+});
+
+test('CLI safety: --engine without a value exits 2', () => {
+  const res = runAnalyzerCli(['--target', '.', '--engine']);
+  assert.equal(res.status, 2);
+  assert.match(res.stderr, /--engine requires a value/);
+});
+
 test('CLI safety: writes evidence to exact file path specified by --output', () => {
   const repo = createRepo('graphentra-custom-output-');
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'graphentra-out-'));
@@ -68,7 +80,7 @@ test('CLI safety: writes evidence to exact file path specified by --output', () 
 
     const content = JSON.parse(fs.readFileSync(customEvidencePath, 'utf8'));
     assert.equal(content.artifactKind, 'graphentra-evidence');
-    assert.equal(content.schemaVersion, '2.0');
+    assert.equal(content.schemaVersion, '2.1');
     assert.equal(content.outcome, 'no_changes');
   } finally {
     repo.cleanup();

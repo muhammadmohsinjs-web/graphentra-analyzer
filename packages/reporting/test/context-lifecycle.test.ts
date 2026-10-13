@@ -193,3 +193,47 @@ test('context lifecycle: throws when context is missing and no sourceFiles provi
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
 });
+
+test('context lifecycle: v2 context with qualified extended-engine entity IDs is preserved and stale IDs are dropped', async () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'graphentra-ctx-ext-'));
+  try {
+    const entity = (name: string, kind: 'function' | 'method' | 'module', extra: object = {}) => ({
+      id: `src/a.ts#${name}`, kind, name, file: 'src/a.ts', startLine: 1, endLine: 5, language: 'typescript' as const, ...extra,
+    });
+    const graph: TechnicalGraph = {
+      schemaVersion: '1.0',
+      repository: { targetPath: '.', headSha: '123', analyzerVersion: '0.4.0' },
+      capabilities: { language: 'typescript', entityKinds: ['component', 'function', 'method', 'module'], relationTypes: ['CALLS'], maxBlastDepth: 6 },
+      analyzedFiles: ['src/a.ts'],
+      entities: [entity('Cart.add', 'method', { container: 'Cart' }), entity('<module>', 'module'), entity('sum>add', 'function')],
+      relations: [],
+    };
+    const annotation = (name: string) => ({
+      entityId: `src/a.ts#${name}`, businessMeaning: `meaning ${name}`, userVisibleEffect: '', featureIds: ['core'],
+      basis: 'code', confidence: 'high',
+    });
+    const existing = {
+      schemaVersion: '2.0',
+      meta: {
+        generatedAt: '2026-01-01T00:00:00.000Z', generator: { model: 'm', promptVersion: 'p' }, sourceHeadSha: '123', analyzerVersion: '0.4.0',
+        coverage: { eligibleEntities: 2, annotatedEntities: 3, surfaces: 0, describedSurfaces: 0 }, unassignedFiles: [],
+      },
+      application: { name: 'App', summary: 's', purpose: 'p', platform: 'unknown', userRoles: [] },
+      features: [{ id: 'core', name: 'Core', description: 'd', criticality: 'normal', criticalityReason: '', files: ['src/a.ts'], surfaceIds: [], basis: 'code' }],
+      surfaces: [],
+      glossary: [],
+      entityAnnotations: [annotation('Cart.add'), annotation('sum>add'), annotation('Cart.gone')],
+      rules: [{ id: 'r1', statement: 'Rule', kind: 'observed', entityIds: ['src/a.ts#Cart.add', 'src/a.ts#<module>', 'src/a.ts#Cart.gone'], featureIds: ['core'], basis: 'code' }],
+      openQuestions: [{ id: 'q-1', question: 'Q?', entityIds: ['src/a.ts#sum>add', 'src/a.ts#stale'], featureIds: [] }],
+      unknowns: [],
+    };
+    fs.writeFileSync(path.join(tmpDir, 'application-context.json'), JSON.stringify(existing), 'utf8');
+
+    const loaded = await getOrCreateApplicationContext({ contextDirectory: tmpDir, technicalGraph: graph });
+    assert.deepEqual(loaded.entityAnnotations.map(item => item.entityId), ['src/a.ts#Cart.add', 'src/a.ts#sum>add']);
+    assert.deepEqual(loaded.rules[0]!.entityIds, ['src/a.ts#Cart.add', 'src/a.ts#<module>']);
+    assert.deepEqual(loaded.openQuestions[0]!.entityIds, ['src/a.ts#sum>add']);
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});

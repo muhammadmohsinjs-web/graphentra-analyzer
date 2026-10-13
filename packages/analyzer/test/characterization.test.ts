@@ -46,6 +46,7 @@ export class Calculator {
     const { entities, entityById } = extractTechnicalGraph({
       projectRoot: dir,
       headSha: '0000000000000000000000000000000000000000',
+      engine: 'legacy',
     });
 
     const entityIds = entities.map(e => e.id).sort();
@@ -287,6 +288,7 @@ export function calculateOrder(): number {
     const headSha = repo.commitFile('src/order.ts', modifiedCode, 'Update tax rate');
 
     const result = analyzeRepository({
+      engine: 'legacy',
       target: repo.dir,
       comparison: {
         mode: 'commit',
