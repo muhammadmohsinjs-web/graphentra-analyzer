@@ -49,6 +49,7 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
   if (engine === 'extended') for (const entity of extracted.entities) entity.language = 'typescript';
 
   const diagnostics: DiagnosticItem[] = [...toolchainDiagnostics()];
+  if (engine === 'extended') diagnostics.push(...extracted.diagnostics);
   let gitDiff = snapshot.gitDiff;
   if (repo.comparison.mode === 'working-tree') {
     for (const file of repo.listFiles(true).filter(isTypeScriptFile)) {

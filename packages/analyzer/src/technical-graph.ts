@@ -11,6 +11,7 @@ import {
   LEGACY_ENTITY_KINDS,
   MAX_BLAST_DEPTH,
   TYPESCRIPT_EXTENSIONS,
+  type DiagnosticItem,
   type Entity,
   type EngineProfile,
   type Relation,
@@ -108,6 +109,8 @@ export interface ExtractedGraph {
   technicalGraph: TechnicalGraph;
   entities: Entity[];
   relations: Relation[];
+  /** Extended engine only (always empty for legacy). */
+  diagnostics: DiagnosticItem[];
   entityById: Map<string, Entity>;
   reverseAdjacency: Map<string, Relation[]>;
   files: string[];
@@ -158,6 +161,7 @@ export function extractTechnicalGraph(options: {
       technicalGraph: emptyGraph,
       entities: [],
       relations: [],
+      diagnostics: [],
       entityById: new Map(),
       reverseAdjacency: new Map(),
       files: [],
@@ -170,6 +174,7 @@ export function extractTechnicalGraph(options: {
 
   const entities: Entity[] = [];
   const relations: Relation[] = [];
+  const diagnostics: DiagnosticItem[] = [];
   const entityById = new Map<string, Entity>();
   const symbolToEntity = new Map<ts.Symbol, Entity>();
   const relationKeys = new Set<string>();
@@ -202,12 +207,26 @@ export function extractTechnicalGraph(options: {
       if (entityById.has(entity.id)) throw new GraphentraError('Duplicate function identity in source.', 'AMBIGUOUS_ENTITY_ID');
       entities.push(entity);
       entityById.set(entity.id, entity);
+      if (candidate.disambiguatedFrom !== undefined) {
+        diagnostics.push({
+          code: 'DUPLICATE_ENTITY_ID_DISAMBIGUATED',
+          severity: 'info',
+          message: `Entity ID ${candidate.disambiguatedFrom} is declared more than once; this declaration was assigned ${entity.id}.`,
+          file: entity.file,
+          entityId: entity.id,
+        });
+      }
 
       for (const symbolNode of candidate.symbolNodes) {
         const symbol = resolveSymbol(symbolNode);
         if (symbol) {
           symbolToEntity.set(symbol, entity);
         }
+      }
+      if (candidate.exportDefault) {
+        let defaultSymbol = checker.getSymbolAtLocation(sourceFile)?.exports?.get('default' as ts.__String);
+        if (defaultSymbol && defaultSymbol.flags & ts.SymbolFlags.Alias) defaultSymbol = checker.getAliasedSymbol(defaultSymbol);
+        if (defaultSymbol) symbolToEntity.set(defaultSymbol, entity);
       }
     }
   }
@@ -276,6 +295,7 @@ export function extractTechnicalGraph(options: {
     technicalGraph,
     entities,
     relations,
+    diagnostics,
     entityById,
     reverseAdjacency,
     files,

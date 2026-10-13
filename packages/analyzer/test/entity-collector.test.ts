@@ -35,9 +35,10 @@ test('symbolNodes[0] is the name identifier', () => {
   assert.equal(first.symbolNodes[0], first.declarationNode.name);
 });
 
-test('extended engine matches legacy', () => {
-  const sf = parse();
-  const strip = (engine: 'legacy' | 'extended') =>
-    collectEntities(sf, { relativeFile: 'a.ts', engine }).map(c => c.entity);
-  assert.deepEqual(strip('extended'), strip('legacy'));
+test('extended engine adds nesting, variable-bound functions and exported flags', () => {
+  const candidates = collectEntities(parse(), { relativeFile: 'a.ts', engine: 'extended' });
+  assert.deepEqual(candidates.map(c => c.entity.id), ['a.ts#outer', 'a.ts#outer>inner', 'a.ts#f', 'a.ts#last']);
+  assert.equal(candidates[1]!.parent, candidates[0]);
+  assert.equal(candidates[0]!.entity.exported, true);
+  assert.equal(candidates[2]!.entity.exported, false);
 });
