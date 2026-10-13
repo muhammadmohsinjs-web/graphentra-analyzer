@@ -317,7 +317,11 @@ export function extractTechnicalGraph(options: {
         let caller: Entity | undefined;
         while (enclosing && !(caller = declarationToEntity.get(enclosing))) enclosing = enclosing.parent;
         const calledSymbol = resolveSymbol(node.expression);
-        const called = calledSymbol ? symbolToEntity.get(calledSymbol) : undefined;
+        // Widened object-literal types hand back cloned property symbols, so fall back to the single declaration node.
+        const calledDeclaration = calledSymbol?.declarations?.length === 1 ? calledSymbol.declarations[0] : undefined;
+        const called = calledSymbol
+          ? symbolToEntity.get(calledSymbol) ?? (calledDeclaration ? declarationToEntity.get(calledDeclaration) : undefined)
+          : undefined;
         if (caller && called) emit({ from: caller.id, to: called.id, type: 'CALLS' });
       } else if (ts.isCallExpression(node)) {
         const calledSymbol = resolveSymbol(node.expression);
