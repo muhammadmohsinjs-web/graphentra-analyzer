@@ -203,6 +203,68 @@ test('ambiguity: a nested entity with the same range as its parent is not ambigu
   const base = 'export function outer() { function inner() { return 1; } return inner(); }\n';
   const result = analyzeSources({ base: { 'src/n.ts': base }, head: { 'src/n.ts': base.replace('return 1', 'return 2') }, engine: 'extended' });
   assert.equal(result.diagnostics.filter(item => item.code === 'AMBIGUOUS_FUNCTION_RANGE').length, 0);
-  // Baseline attribution is still name-based here (removals can still land on outer); P1-9 tightens this.
-  assert.ok(changedIds(result).includes('src/n.ts#outer>inner'));
+  assert.deepEqual(changedIds(result), ['src/n.ts#outer>inner']);
+});
+
+// ---- P1-9: the baseline uses the same collector and is matched by ID ----
+
+test('baseline: removed code is attributed by ID, not bare name', () => {
+  const source = [
+    'export function a() {',
+    '  function helper() {',
+    "    return 'L';",
+    '  }',
+    '  return helper();',
+    '}',
+    'export function b() {',
+    '  function helper() {',
+    "    return 'M';",
+    '  }',
+    '  return helper();',
+    '}',
+    '',
+  ].join('\n');
+  const edited = source.replace("    return 'M';\n", '');
+  const run = (engine: 'legacy' | 'extended') =>
+    analyzeSources({ base: { 'src/h.ts': source }, head: { 'src/h.ts': edited }, engine });
+  throwsCode(() => run('legacy'), 'AMBIGUOUS_ENTITY_ID');
+  const result = run('extended');
+  assert.deepEqual(changedIds(result), ['src/h.ts#b>helper']);
+  assert.deepEqual(result.changedEntities[0]!.change.removedCode, ["    return 'M';"]);
+  assert.equal(result.diagnostics.filter(item => item.code === 'AMBIGUOUS_FUNCTION_RANGE').length, 0);
+  assertValid(result);
+});
+
+test('baseline: a file rename plus an edit inside an arrow keeps removedCode attribution', () => {
+  const oldSource = [
+    "import { x } from './x';",
+    'export const compute = (n: number): number => {',
+    '  const doubled = n * 2;',
+    '  const bumped = doubled + x;',
+    '  return bumped;',
+    '};',
+    'export const other = () => 1;',
+    '',
+  ].join('\n');
+  const newSource = oldSource.replace('doubled + x', 'doubled + x + 1');
+  const result = analyzeSources({
+    base: { 'src/old-name.ts': oldSource, 'src/x.ts': 'export const x = 1;\n' },
+    head: { 'src/new-name.ts': newSource },
+    removed: ['src/old-name.ts'],
+    engine: 'extended',
+  });
+  assert.equal(result.changedFiles[0]!.oldFile, 'src/old-name.ts');
+  assert.deepEqual(changedIds(result), ['src/new-name.ts#compute']);
+  assert.deepEqual(result.changedEntities[0]!.change.removedCode, ['  const bumped = doubled + x;']);
+  assert.deepEqual(result.changedEntities[0]!.change.addedCode, ['  const bumped = doubled + x + 1;']);
+  assertValid(result);
+});
+
+test('baseline: a line removed from formatPrice appears in its removedCode', () => {
+  const result = analyzeFixture({ fixture: 'modern-app', engine: 'extended', edits: files => ({
+    'src/utils/format.ts': replaceOnce(files['src/utils/format.ts']!, "  const rounded = Math.round(n * 100) / 100;\n", ''),
+  }) });
+  assert.deepEqual(changedIds(result), ['src/utils/format.ts#formatPrice']);
+  assert.deepEqual(result.changedEntities[0]!.change.removedCode, ['  const rounded = Math.round(n * 100) / 100;']);
+  assertValid(result);
 });

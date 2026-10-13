@@ -1,3 +1,5 @@
+import * as ts from 'typescript';
+import { collectEntities } from './entity-collector';
 import {
   extractEntityChange,
   getFunctionRanges,
@@ -8,6 +10,7 @@ import {
   type EngineProfile,
   type ChangedEntity,
   type ChangedFile,
+  type FunctionRange,
   type Entity,
   type EntityImpact,
   type ImpactPath,
@@ -162,14 +165,39 @@ export function findChangedEntities(options: {
     if (matchingEntities.length === 0) continue;
 
     const baseSource = change.oldFile ? getBaselineSource(change.oldFile) : undefined;
-    const previousRanges = change.oldFile && baseSource
+    const previousRanges = !extended && change.oldFile && baseSource
       ? getFunctionRanges(change.oldFile, baseSource)
       : [];
+
+    // Extended: the baseline goes through the same collector and is matched by entity ID, never by bare name.
+    const baselineById = new Map<string, FunctionRange>();
+    const baselineParent = new Map<string, string | undefined>();
+    const baselineChildren = new Map<string, FunctionRange[]>();
+    if (extended && change.oldFile && baseSource) {
+      const sourceFile = ts.createSourceFile(change.oldFile, baseSource, ts.ScriptTarget.Latest, true);
+      for (const candidate of collectEntities(sourceFile, { relativeFile: change.file, engine: 'extended' })) {
+        const { id, name, startLine, endLine } = candidate.entity;
+        const range = { name, startLine, endLine };
+        baselineById.set(id, range);
+        baselineParent.set(id, candidate.parent?.entity.id);
+        if (candidate.parent) {
+          const siblings = baselineChildren.get(candidate.parent.entity.id) ?? [];
+          siblings.push(range);
+          baselineChildren.set(candidate.parent.entity.id, siblings);
+        }
+      }
+    }
+    const isBaselineAncestor = (ancestorId: string, id: string): boolean => {
+      for (let current = baselineParent.get(id); current !== undefined; current = baselineParent.get(current)) {
+        if (current === ancestorId) return true;
+      }
+      return false;
+    };
 
     for (const entity of matchingEntities) {
       const candidates = previousRanges.filter(previous => previous.name === entity.name);
       // Ambiguous old identities must not leak another function's removed code.
-      const previous = candidates.length === 1 ? candidates[0] : undefined;
+      const previous = extended ? baselineById.get(entity.id) : candidates.length === 1 ? candidates[0] : undefined;
       const overlaps = (
         a: { startLine: number; endLine: number },
         b: { startLine: number; endLine: number },
@@ -178,7 +206,9 @@ export function findChangedEntities(options: {
       // Extended: nested entities may overlap their ancestors; only partial overlap without ancestry is ambiguous.
       const ambiguous = extended
         ? matchingEntities.some(other => other !== entity && overlaps(entity, other) &&
-            !isAncestor(entity.id, other.id) && !isAncestor(other.id, entity.id))
+            !isAncestor(entity.id, other.id) && !isAncestor(other.id, entity.id)) ||
+          (!!previous && [...baselineById].some(([otherId, other]) => otherId !== entity.id && overlaps(previous, other) &&
+            !isBaselineAncestor(entity.id, otherId) && !isBaselineAncestor(otherId, entity.id)))
         : matchingEntities.some(other => other !== entity && overlaps(entity, other)) ||
           (previous && previousRanges.some(other => other !== previous && overlaps(previous, other)));
 
@@ -192,7 +222,7 @@ export function findChangedEntities(options: {
       const entityChange = extended
         ? extractEntityChange(change, entity, previous, {
           current: matchingEntities.filter(other => parentById?.get(other.id) === entity.id),
-          previous: [],
+          previous: baselineChildren.get(entity.id) ?? [],
         })
         : extractEntityChange(change, entity, previous);
 
