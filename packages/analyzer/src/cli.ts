@@ -13,20 +13,21 @@ export function runCli(argv: string[] = process.argv.slice(2)): void {
   try {
     options = parseCliOptions(argv);
     if (options.help) {
-      console.log(`Graphentra Analyzer v${ANALYZER_VERSION}\nUsage: graphentra-analyze --target <dir> [--base <ref> --head <ref> | --working-tree] [--output <file>]\n--output names one evidence file (default: <target>/.graphentra/evidence.json).\n--help, -h   Show help\n--version, -v   Show version\nQA Markdown: npm run report -- --report <file>`);
+      console.log(`Graphentra Analyzer v${ANALYZER_VERSION}\nUsage: graphentra-analyze --target <dir> [--base <ref> --head <ref> | --working-tree] [--output <file>] [--engine legacy|extended]\n--output names one evidence file (default: <target>/.graphentra/evidence.json).\n--help, -h   Show help\n--version, -v   Show version\nQA Markdown: npm run report -- --report <file>`);
       return;
     }
     if (options.version) { console.log(ANALYZER_VERSION); return; }
     comparison = resolveCliComparison(options, process.env);
   } catch (error) {
-    console.error(error instanceof Error ? error.message : 'Invalid command options.');
+    console.error(error instanceof GraphentraError ? `[${error.code}] ${error.message}`
+      : error instanceof Error ? error.message : 'Invalid command options.');
     process.exitCode = 2;
     return;
   }
   try {
     const target = path.resolve(options.target);
     const output = path.resolve(options.output ?? path.join(target, '.graphentra/evidence.json'));
-    const result = analyzeRepository({ target, comparison });
+    const result = analyzeRepository({ target, comparison, engine: options.engine });
     const canonical = (file: string): string => {
       if (fs.existsSync(file)) return fs.realpathSync(file);
       const parent = path.dirname(file);

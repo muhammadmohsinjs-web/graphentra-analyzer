@@ -13,6 +13,7 @@ import {
   resubmitEvidenceFile,
   submitEvidence,
 } from '../src/index';
+import { runCi } from '../src/cli';
 
 interface MockRequest {
   method?: string;
@@ -380,5 +381,38 @@ test('ci-runner: analyzer failure never attempts submission and does not submit 
     assert.equal(backendCalled, false, 'Backend must not be contacted when analysis fails');
   } finally {
     await new Promise<void>(resolve => server.close(() => resolve()));
+  }
+});
+
+test('ci-runner CLI: unknown --engine value exits non-zero with a clear error', async () => {
+  const originalExit = process.exit;
+  const originalError = console.error;
+  const errors: string[] = [];
+  console.error = (...args: unknown[]) => { errors.push(args.join(' ')); };
+  (process as any).exit = (code?: number) => { throw new Error(`exit:${code}`); };
+  try {
+    await assert.rejects(
+      runCi(['--backend-url', 'http://localhost', '--token', 't', '--repo', 'o/r', '--engine', 'bogus']),
+      /exit:1/,
+    );
+    assert.match(errors.join('\n'), /Unknown engine "bogus"\. Expected one of: legacy, extended\./);
+  } finally {
+    process.exit = originalExit;
+    console.error = originalError;
+  }
+});
+
+test('ci-runner CLI: --engine without a value exits non-zero', async () => {
+  const originalExit = process.exit;
+  const originalError = console.error;
+  const errors: string[] = [];
+  console.error = (...args: unknown[]) => { errors.push(args.join(' ')); };
+  (process as any).exit = (code?: number) => { throw new Error(`exit:${code}`); };
+  try {
+    await assert.rejects(runCi(['--engine']), /exit:1/);
+    assert.match(errors.join('\n'), /--engine requires a value/);
+  } finally {
+    process.exit = originalExit;
+    console.error = originalError;
   }
 });

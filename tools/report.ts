@@ -105,7 +105,7 @@ export async function runReport(argv: string[] = process.argv.slice(2), dependen
     const canonical = (file: string): string => fs.existsSync(file) ? fs.realpathSync(file)
       : path.dirname(file) === file ? file : path.join(canonical(path.dirname(file)), path.basename(file));
     if (new Set(destinations.map(canonical)).size !== destinations.length) throw new Error('Reporting output paths collide.');
-    const result = analyzeRepository({ target, comparison });
+    const result = analyzeRepository({ target, comparison, engine: options.engine });
     if (destinations.filter(file => file !== contextPath).some(destination =>
       [...result.technicalGraph.analyzedFiles, 'tsconfig.json', 'package.json'].some(file => canonical(path.join(target, file)) === canonical(destination)))) {
       throw new Error('Reporting output collides with analyzed input.');
@@ -139,7 +139,7 @@ export async function runReport(argv: string[] = process.argv.slice(2), dependen
         : 'Generating application context sends eligible TypeScript source, documentation excerpts, and derived repository signals to the configured provider in bounded batches.');
       sourceFiles = result.technicalGraph.analyzedFiles.map(file => ({ path: file, content: fs.readFileSync(path.join(target, file), 'utf8') }));
       signals = collectBusinessSignals({ projectRoot: target, files: listProjectFiles({ target, comparison }), technicalGraph: result.technicalGraph });
-      const current = analyzeRepository({ target, comparison });
+      const current = analyzeRepository({ target, comparison, engine: options.engine });
       if (current.evidence.sourceState.contentIdentity !== result.evidence.sourceState.contentIdentity) throw new Error('Source changed before context generation.');
     }
     const model = llmOptions.model ?? DEFAULT_OPENROUTER_MODEL;

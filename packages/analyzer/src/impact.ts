@@ -3,7 +3,9 @@ import {
   getFunctionRanges,
 } from './change-evidence';
 import {
+  DEFAULT_ENGINE,
   MAX_BLAST_DEPTH,
+  type EngineProfile,
   type ChangedEntity,
   type ChangedFile,
   type Entity,
@@ -138,7 +140,7 @@ export function findChangedEntities(options: {
   entities: Entity[];
   getBaselineSource: (oldFile: string) => string | undefined;
   onWarning?: (message: string) => void;
-}): {
+}, engine: EngineProfile = DEFAULT_ENGINE): {
   changedEntities: ChangedEntity[];
   diagnostics: string[];
 } {

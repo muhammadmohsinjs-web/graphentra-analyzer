@@ -1,4 +1,5 @@
-import type { ComparisonOptions } from './contracts';
+import { ENGINE_PROFILES, type ComparisonOptions, type EngineProfile } from './contracts';
+import { GraphentraError } from './errors';
 export interface CliOptions {
   target: string;
   base?: string;
@@ -10,9 +11,10 @@ export interface CliOptions {
   version?: boolean;
   generateContext?: boolean;
   refreshContext?: boolean;
+  engine?: EngineProfile;
 }
 
-const valueOptions = new Set(['target', 'base', 'head', 'report', 'output']);
+const valueOptions = new Set(['target', 'base', 'head', 'report', 'output', 'engine']);
 const flagOptions = new Set(['working-tree', 'help', 'version']);
 
 export function parseCliOptions(args: string[], configuration: { reporting?: boolean } = {}): CliOptions {
@@ -60,6 +62,10 @@ export function parseCliOptions(args: string[], configuration: { reporting?: boo
       throw new Error(`Option --${name} may only be provided once.`);
     }
 
+    if (name === 'engine' && !ENGINE_PROFILES.includes(value as EngineProfile)) {
+      throw new GraphentraError(`Unknown engine "${value}". Expected one of: ${ENGINE_PROFILES.join(', ')}.`, 'INVALID_OPTIONS');
+    }
+
     values.set(name, value);
   }
 
@@ -96,6 +102,9 @@ export function parseCliOptions(args: string[], configuration: { reporting?: boo
   if (output !== undefined) {
     result.output = output;
   }
+
+  const engine = values.get('engine');
+  if (engine !== undefined) result.engine = engine as EngineProfile;
 
   if (flags.has('generate-context')) result.generateContext = true;
   if (flags.has('refresh-context')) result.refreshContext = true;

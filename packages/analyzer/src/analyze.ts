@@ -1,5 +1,7 @@
 import {
   ANALYZER_VERSION,
+  DEFAULT_ENGINE,
+  ENGINE_PROFILES,
   EVIDENCE_ARTIFACT_KIND,
   EVIDENCE_SCHEMA_VERSION,
   type AnalyzeOptions,
@@ -7,6 +9,7 @@ import {
   type DiagnosticItem,
   type DeterministicEvidence,
 } from './contracts';
+import { GraphentraError } from './errors';
 import { parseGitDiff } from './change-evidence';
 import { buildImpact, findChangedEntities } from './impact';
 import { DEFAULT_LIMITATIONS } from './output';
@@ -18,6 +21,10 @@ import { toolchainDiagnostics } from './toolchain';
 import { assertValidEvidenceEnvelope } from './validator';
 
 export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
+  if (options.engine !== undefined && !ENGINE_PROFILES.includes(options.engine)) {
+    throw new GraphentraError(`Unknown engine "${String(options.engine)}". Expected one of: ${ENGINE_PROFILES.join(', ')}.`, 'INVALID_OPTIONS');
+  }
+  const engine = options.engine ?? DEFAULT_ENGINE;
   const repo = createRepositoryContext(options.target, options.comparison, {
     gitTimeoutMs: options.gitTimeoutMs,
     excludePaths: options.excludePaths,
@@ -35,6 +42,7 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
     headSha,
     targetPath,
     excludePaths: options.excludePaths,
+    engine,
   });
 
   const diagnostics: DiagnosticItem[] = [...toolchainDiagnostics()];
@@ -63,7 +71,7 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
     changedFiles: supportedChanges,
     entities: extracted.entities,
     getBaselineSource: oldFile => repo.getBaselineSource(oldFile, repo.comparison.resolvedBaseSha),
-  });
+  }, engine);
   for (const message of entityWarnings) diagnostics.push({ code: 'AMBIGUOUS_FUNCTION_RANGE', severity: 'warning', message });
   const impacts = changedEntities.map(changed => buildImpact(changed, extracted.reverseAdjacency, extracted.entityById));
   const outcome = extracted.files.length === 0 ? 'no_source_files'

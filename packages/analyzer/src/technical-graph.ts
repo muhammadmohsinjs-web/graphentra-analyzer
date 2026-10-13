@@ -8,6 +8,7 @@ import {
   MAX_BLAST_DEPTH,
   TYPESCRIPT_EXTENSIONS,
   type Entity,
+  type EngineProfile,
   type Relation,
   type TechnicalGraph,
 } from './contracts';
@@ -121,6 +122,7 @@ export function extractTechnicalGraph(options: {
   compilerOptions?: ts.CompilerOptions;
   host?: ts.CompilerHost;
   excludePaths?: string[];
+  engine?: EngineProfile;
 }): ExtractedGraph {
   const { projectRoot, headSha, targetPath = '.', excludePaths } = options;
   const files = options.files ?? collectTypeScriptFiles(projectRoot, projectRoot, { excludePaths }).sort();

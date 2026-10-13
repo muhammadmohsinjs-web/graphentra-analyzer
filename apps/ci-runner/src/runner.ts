@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import {
   type ComparisonOptions,
   type DeterministicEvidence,
+  type EngineProfile,
   analyzeRepository,
   assertValidEvidenceEnvelope,
   writeJsonArtifact,
@@ -26,6 +27,7 @@ export interface AnalyzeAndSubmitOptions {
   outputDir?: string;
   outputEvidencePath?: string;
   allowHttpForTesting?: boolean;
+  engine?: EngineProfile;
 }
 
 export interface AnalyzeAndSubmitResult {
@@ -48,12 +50,14 @@ export async function analyzeAndSubmit(
     outputDir = path.join(path.resolve(target), '.graphentra'),
     outputEvidencePath,
     allowHttpForTesting,
+    engine,
   } = options;
 
   // 1. Run deterministic analyzer
   const analysisResult = analyzeRepository({
     target,
     comparison,
+    engine,
   });
 
   // 2. Persist evidence to disk immediately
