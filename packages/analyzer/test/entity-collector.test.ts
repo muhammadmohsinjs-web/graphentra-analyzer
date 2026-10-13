@@ -37,8 +37,10 @@ test('symbolNodes[0] is the name identifier', () => {
 
 test('extended engine adds nesting, variable-bound functions and exported flags', () => {
   const candidates = collectEntities(parse(), { relativeFile: 'a.ts', engine: 'extended' });
-  assert.deepEqual(candidates.map(c => c.entity.id), ['a.ts#outer', 'a.ts#outer>inner', 'a.ts#f', 'a.ts#last']);
+  assert.deepEqual(candidates.map(c => c.entity.id), ['a.ts#<module>', 'a.ts#outer', 'a.ts#outer>inner', 'a.ts#f', 'a.ts#last']);
+  assert.equal(candidates[0]!.entity.kind, 'module');
   assert.equal(candidates[1]!.parent, candidates[0]);
-  assert.equal(candidates[0]!.entity.exported, true);
-  assert.equal(candidates[2]!.entity.exported, false);
+  assert.equal(candidates[2]!.parent, candidates[1]);
+  assert.equal(candidates[1]!.entity.exported, true);
+  assert.equal(candidates[3]!.entity.exported, false);
 });

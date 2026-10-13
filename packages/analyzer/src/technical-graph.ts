@@ -111,6 +111,8 @@ export interface ExtractedGraph {
   relations: Relation[];
   /** Extended engine only (always empty for legacy). */
   diagnostics: DiagnosticItem[];
+  /** Extended engine only (empty for legacy): entity id to enclosing entity id (undefined for module entities). */
+  parentById: Map<string, string | undefined>;
   entityById: Map<string, Entity>;
   reverseAdjacency: Map<string, Relation[]>;
   files: string[];
@@ -162,6 +164,7 @@ export function extractTechnicalGraph(options: {
       entities: [],
       relations: [],
       diagnostics: [],
+      parentById: new Map(),
       entityById: new Map(),
       reverseAdjacency: new Map(),
       files: [],
@@ -175,6 +178,9 @@ export function extractTechnicalGraph(options: {
   const entities: Entity[] = [];
   const relations: Relation[] = [];
   const diagnostics: DiagnosticItem[] = [];
+  const parentById = new Map<string, string | undefined>();
+  const declarationToEntity = new Map<ts.Node, Entity>();
+  const extendedEngine = (options.engine ?? DEFAULT_ENGINE) === 'extended';
   const entityById = new Map<string, Entity>();
   const symbolToEntity = new Map<ts.Symbol, Entity>();
   const relationKeys = new Set<string>();
@@ -207,6 +213,10 @@ export function extractTechnicalGraph(options: {
       if (entityById.has(entity.id)) throw new GraphentraError('Duplicate function identity in source.', 'AMBIGUOUS_ENTITY_ID');
       entities.push(entity);
       entityById.set(entity.id, entity);
+      if (extendedEngine) {
+        parentById.set(entity.id, candidate.parent?.entity.id);
+        declarationToEntity.set(candidate.declarationNode, entity);
+      }
       if (candidate.disambiguatedFrom !== undefined) {
         diagnostics.push({
           code: 'DUPLICATE_ENTITY_ID_DISAMBIGUATED',
@@ -237,7 +247,15 @@ export function extractTechnicalGraph(options: {
     if (!analyzedFileSet.has(path.resolve(sourceFile.fileName).replace(/\\/g, '/'))) continue;
 
     function visit(node: ts.Node): void {
-      if (ts.isCallExpression(node)) {
+      if (ts.isCallExpression(node) && extendedEngine) {
+        // Innermost enclosing entity; the source file node maps to the module entity.
+        let enclosing: ts.Node | undefined = node.parent;
+        let caller: Entity | undefined;
+        while (enclosing && !(caller = declarationToEntity.get(enclosing))) enclosing = enclosing.parent;
+        const calledSymbol = resolveSymbol(node.expression);
+        const called = calledSymbol ? symbolToEntity.get(calledSymbol) : undefined;
+        if (caller && called) addRelation({ from: caller.id, to: called.id, type: 'CALLS' });
+      } else if (ts.isCallExpression(node)) {
         const calledSymbol = resolveSymbol(node.expression);
         const callerFunction = findEnclosingFunction(node);
 
@@ -296,6 +314,7 @@ export function extractTechnicalGraph(options: {
     entities,
     relations,
     diagnostics,
+    parentById,
     entityById,
     reverseAdjacency,
     files,

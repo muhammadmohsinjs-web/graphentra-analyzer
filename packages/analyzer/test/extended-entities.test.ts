@@ -90,7 +90,7 @@ test('overloads: legacy throws AMBIGUOUS_ENTITY_ID, extended yields one entity s
     analyzeSources({ base: { 'src/o.ts': source }, head: { 'src/o.ts': edited }, engine });
   throwsCode(() => run('legacy'), 'AMBIGUOUS_ENTITY_ID');
   const result = run('extended');
-  const entities = result.technicalGraph.entities.filter(entity => entity.file === 'src/o.ts');
+  const entities = result.technicalGraph.entities.filter(entity => entity.file === 'src/o.ts' && entity.kind !== 'module');
   assert.equal(entities.length, 1);
   assert.deepEqual([entities[0]!.id, entities[0]!.startLine, entities[0]!.endLine], ['src/o.ts#f', 1, 5]);
   assert.equal(result.outcome, 'completed');
@@ -132,4 +132,77 @@ test('extended: default imports create CALLS edges to named and anonymous defaul
     assert.ok(hasEdge(result, 'src/app.ts#run', target), `missing edge to ${target}`);
     assertValid(result);
   }
+});
+
+// ---- P1-8: module entity, enclosing entity for calls, innermost attribution ----
+
+const mathEdit = (from: string, to: string) => (files: Record<string, string>) => ({
+  'src/utils/math.ts': replaceOnce(files['src/utils/math.ts']!, from, to),
+});
+
+test('extended: every file has a <module> entity', () => {
+  const result = analyzeFixture({ fixture: 'modern-app', engine: 'extended' });
+  const module = byId(result).get('src/utils/math.ts#<module>')!;
+  assert.equal(module.kind, 'module');
+  assert.equal(module.name, '<module>');
+  assert.equal(module.startLine, 1);
+  assert.ok(module.endLine >= 24);
+  assert.equal(byId(result).get('src/utils/math.ts#sum')!.name, 'sum');
+});
+
+test('attribution: a formatPrice body edit changes formatPrice only, not <module>', () => {
+  const result = analyzeFixture({ fixture: 'modern-app', engine: 'extended', edits: formatEdit });
+  assert.deepEqual(changedIds(result), ['src/utils/format.ts#formatPrice']);
+  assertValid(result);
+});
+
+test('attribution: an import line edit changes <module> only', () => {
+  const result = analyzeFixture({ fixture: 'modern-app', engine: 'extended', edits: mathEdit("import { Order } from '../types';", "import type { Order } from '../types';") });
+  assert.deepEqual(changedIds(result), ['src/utils/math.ts#<module>']);
+  assertValid(result);
+});
+
+test('attribution: an edit inside a nested function changes the nested entity only', () => {
+  const result = analyzeFixture({ fixture: 'modern-app', engine: 'extended', edits: mathEdit('return a + b;', 'return a + b + 0;') });
+  assert.deepEqual(changedIds(result), ['src/utils/math.ts#sum>add']);
+  assertValid(result);
+});
+
+test('attribution: an edit in the parent outside the nested function changes the parent only', () => {
+  const result = analyzeFixture({ fixture: 'modern-app', engine: 'extended', edits: mathEdit('let total = 0;', 'let total = 1;') });
+  assert.deepEqual(changedIds(result), ['src/utils/math.ts#sum']);
+  assertValid(result);
+});
+
+test('calls: arrow-function callers and module-level callers produce CALLS edges', () => {
+  const result = analyzeFixture({ fixture: 'modern-app', engine: 'extended', edits: mathEdit('let total = 0;', 'let total = 1;') });
+  assert.ok(hasEdge(result, 'src/utils/math.ts#orderTotal', 'src/utils/math.ts#sum'));
+  assert.ok(hasEdge(result, 'src/utils/math.ts#orderTotal', 'src/utils/math.ts#clamp'));
+  assert.ok(hasEdge(result, 'src/utils/math.ts#sum', 'src/utils/math.ts#sum>add'));
+  assert.ok(hasEdge(result, 'src/server/handlers.ts#<module>', 'src/services/order-service.ts#createDefaultService'));
+});
+
+test('calls: recursion keeps its self edge', () => {
+  const source = 'export const fact = (n: number): number => (n <= 1 ? 1 : n * fact(n - 1));\n';
+  const result = analyzeSources({ base: { 'src/r.ts': source }, head: { 'src/r.ts': `${source}// x\n` }, engine: 'extended' });
+  assert.ok(hasEdge(result, 'src/r.ts#fact', 'src/r.ts#fact'));
+});
+
+test('ambiguity: two entities partially sharing a line are both skipped with a warning', () => {
+  const base = 'const a = () => 1, b = () => 2;\nexport const c = () => 3;\n';
+  const result = analyzeSources({ base: { 'src/one.ts': base }, head: { 'src/one.ts': base.replace('=> 2', '=> 20') }, engine: 'extended' });
+  const warnings = result.diagnostics.filter(item => item.code === 'AMBIGUOUS_FUNCTION_RANGE').map(item => item.message);
+  assert.deepEqual(warnings, [
+    'Skipping ambiguous overlapping function ranges: src/one.ts#a',
+    'Skipping ambiguous overlapping function ranges: src/one.ts#b',
+  ]);
+  assert.ok(!changedIds(result).includes('src/one.ts#a') && !changedIds(result).includes('src/one.ts#b'));
+});
+
+test('ambiguity: a nested entity with the same range as its parent is not ambiguous', () => {
+  const base = 'export function outer() { function inner() { return 1; } return inner(); }\n';
+  const result = analyzeSources({ base: { 'src/n.ts': base }, head: { 'src/n.ts': base.replace('return 1', 'return 2') }, engine: 'extended' });
+  assert.equal(result.diagnostics.filter(item => item.code === 'AMBIGUOUS_FUNCTION_RANGE').length, 0);
+  // Baseline attribution is still name-based here (removals can still land on outer); P1-9 tightens this.
+  assert.ok(changedIds(result).includes('src/n.ts#outer>inner'));
 });

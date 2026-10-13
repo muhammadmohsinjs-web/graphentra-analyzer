@@ -139,12 +139,21 @@ export function findChangedEntities(options: {
   changedFiles: ChangedFile[];
   entities: Entity[];
   getBaselineSource: (oldFile: string) => string | undefined;
+  /** Extended engine: entity id to enclosing entity id. */
+  parentById?: Map<string, string | undefined>;
   onWarning?: (message: string) => void;
 }, engine: EngineProfile = DEFAULT_ENGINE): {
   changedEntities: ChangedEntity[];
   diagnostics: string[];
 } {
-  const { changedFiles, entities, getBaselineSource, onWarning } = options;
+  const { changedFiles, entities, getBaselineSource, onWarning, parentById } = options;
+  const extended = engine === 'extended';
+  const isAncestor = (ancestorId: string, id: string): boolean => {
+    for (let current = parentById?.get(id); current !== undefined; current = parentById?.get(current)) {
+      if (current === ancestorId) return true;
+    }
+    return false;
+  };
   const changedEntities: ChangedEntity[] = [];
   const diagnostics: string[] = [];
 
@@ -166,17 +175,26 @@ export function findChangedEntities(options: {
         b: { startLine: number; endLine: number },
       ) => a.startLine <= b.endLine && b.startLine <= a.endLine;
 
-      if (
-        matchingEntities.some(other => other !== entity && overlaps(entity, other)) ||
-        (previous && previousRanges.some(other => other !== previous && overlaps(previous, other)))
-      ) {
+      // Extended: nested entities may overlap their ancestors; only partial overlap without ancestry is ambiguous.
+      const ambiguous = extended
+        ? matchingEntities.some(other => other !== entity && overlaps(entity, other) &&
+            !isAncestor(entity.id, other.id) && !isAncestor(other.id, entity.id))
+        : matchingEntities.some(other => other !== entity && overlaps(entity, other)) ||
+          (previous && previousRanges.some(other => other !== previous && overlaps(previous, other)));
+
+      if (ambiguous) {
         const warning = `Skipping ambiguous overlapping function ranges: ${entity.id}`;
         diagnostics.push(warning);
         onWarning?.(warning);
         continue;
       }
 
-      const entityChange = extractEntityChange(change, entity, previous);
+      const entityChange = extended
+        ? extractEntityChange(change, entity, previous, {
+          current: matchingEntities.filter(other => parentById?.get(other.id) === entity.id),
+          previous: [],
+        })
+        : extractEntityChange(change, entity, previous);
 
       if (entityChange) {
         changedEntities.push({

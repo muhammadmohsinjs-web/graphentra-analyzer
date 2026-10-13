@@ -2,6 +2,7 @@ import * as ts from 'typescript';
 import type { Entity, EngineProfile } from './contracts';
 import {
   DEFAULT_EXPORT_SEGMENT,
+  MODULE_SEGMENT,
   buildEntityId,
   createIdAllocator,
   escapeSegment,
@@ -95,7 +96,9 @@ function collectExtendedEntities(sourceFile: ts.SourceFile, relativeFile: string
     extra: { exported?: boolean; exportDefault?: boolean },
   ): EntityCandidate {
     const segment = escapeSegment(rawName);
-    const baseName = parent ? nestedName(parent.entity.name, segment) : segment;
+    // Only a non-module parent contributes a qualified-name prefix.
+    const moduleLevel = !parent || parent.entity.kind === 'module';
+    const baseName = moduleLevel ? segment : nestedName(parent.entity.name, segment);
     const baseId = buildEntityId(relativeFile, baseName);
     const allocated = allocator.allocate(baseId);
     const entity: Entity = {
@@ -106,8 +109,8 @@ function collectExtendedEntities(sourceFile: ts.SourceFile, relativeFile: string
       startLine: lineOf(rangeStart),
       endLine: lineOf(declarationNode.getEnd()),
     };
-    if (!parent && extra.exported !== undefined) entity.exported = extra.exported;
-    if (!parent && extra.exportDefault) entity.exportName = DEFAULT_EXPORT_SEGMENT;
+    if (moduleLevel && extra.exported !== undefined) entity.exported = extra.exported;
+    if (moduleLevel && extra.exportDefault) entity.exportName = DEFAULT_EXPORT_SEGMENT;
     const candidate: EntityCandidate = { entity, declarationNode, symbolNodes };
     if (parent) candidate.parent = parent;
     if (extra.exportDefault) candidate.exportDefault = true;
@@ -164,6 +167,17 @@ function collectExtendedEntities(sourceFile: ts.SourceFile, relativeFile: string
     ts.forEachChild(node, child => visit(child, next));
   }
 
-  visit(sourceFile, undefined);
+  const moduleEntity: Entity = {
+    id: allocator.allocate(buildEntityId(relativeFile, MODULE_SEGMENT)).id,
+    kind: 'module',
+    name: MODULE_SEGMENT,
+    file: relativeFile,
+    startLine: 1,
+    endLine: Math.max(1, lineOf(sourceFile.getEnd())),
+  };
+  const moduleCandidate: EntityCandidate = { entity: moduleEntity, declarationNode: sourceFile, symbolNodes: [] };
+  candidates.push(moduleCandidate);
+
+  visit(sourceFile, moduleCandidate);
   return candidates;
 }

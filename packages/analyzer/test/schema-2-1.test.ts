@@ -59,7 +59,7 @@ test('validator applies per-version rules', () => {
     const file = evidence.technicalGraph.entities[0].file;
     evidence.technicalGraph.entities.push({ id: `${file}#C.m`, kind: 'method', name: 'C.m', file,
       startLine: 1, endLine: 1, language: 'typescript', ...(container ? { container } : {}) });
-    evidence.technicalGraph.capabilities.entityKinds = ['function', 'method'];
+    evidence.technicalGraph.capabilities.entityKinds = ['function', 'method', 'module'];
     return evidence;
   };
   assert.deepEqual(validateEvidenceEnvelope(withMethod('C')).errors, []);

@@ -74,6 +74,7 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
   const { changedEntities, diagnostics: entityWarnings } = findChangedEntities({
     changedFiles: supportedChanges,
     entities: extracted.entities,
+    parentById: extracted.parentById,
     getBaselineSource: oldFile => repo.getBaselineSource(oldFile, repo.comparison.resolvedBaseSha),
   }, engine);
   for (const message of entityWarnings) diagnostics.push({ code: 'AMBIGUOUS_FUNCTION_RANGE', severity: 'warning', message });
