@@ -160,7 +160,8 @@ npm run visualize -- ./fixtures/test-project
 
 ## Deterministic Evidence Contract
 
-The analyzer emits an authoritative, runtime-validated `evidence.json` envelope (`artifactKind: "graphentra-evidence"`, `schemaVersion: "2.0"`):
+The analyzer emits an authoritative, runtime-validated `evidence.json` envelope (`artifactKind: "graphentra-evidence"`, `schemaVersion: "2.1"` from the default `extended` engine, or `"2.0"` with `--engine legacy`):
+- **Entity Coverage:** The default `extended` engine covers functions, arrow functions, class and object-literal methods, React components and per-file `<module>` entities in TypeScript and JavaScript. `--engine legacy` keeps the pre-0.5 named-function-only behavior.
 - **Graph & Analysis together:** The technical graph and analysis are packed in one result envelope, preventing mixed-run graph/evidence bundles.
 - **Portable:** Host-specific absolute paths are excluded; target paths are repository-relative.
 - **Deterministic Identity:** Stable SHA-256 hash across canonical deterministic fields (`computeDeterministicEvidenceIdentity`), excluding volatile timestamps.
