@@ -319,6 +319,61 @@ test('ci-runner: resubmitEvidenceFile submits existing valid file without runnin
   }
 });
 
+function makeExtendedSampleEvidence(): DeterministicEvidence {
+  const base = makeSampleEvidence();
+  const entity = { ...base.technicalGraph.entities[0]!, language: 'typescript' as const };
+  const moduleEntity = { id: 'src/app.ts#<module>', kind: 'module' as const, name: '<module>', file: 'src/app.ts', startLine: 1, endLine: 3, language: 'typescript' as const };
+  return {
+    ...base,
+    schemaVersion: '2.1',
+    options: { ...base.options, engine: 'extended' },
+    toolchain: { typescript: '5.8.2', node: '22.x' },
+    technicalGraph: {
+      ...base.technicalGraph,
+      capabilities: { ...base.technicalGraph.capabilities, entityKinds: ['component', 'function', 'method', 'module'] },
+      entities: [entity, moduleEntity],
+    },
+    changedEntities: [{ ...base.changedEntities[0]!, entity }],
+    impacts: [{ ...base.impacts[0]!, changedEntity: entity }],
+  } as unknown as DeterministicEvidence;
+}
+
+test('ci-runner: resubmitEvidenceFile accepts a valid 2.1 (extended engine) envelope', async () => {
+  const { server, url, requests } = await createMockServer((req, res) => {
+    res.writeHead(202, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ id: 'run_resubmit_21', status: 'queued' }));
+  });
+
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'graphentra-resubmit-21-'));
+  const filePath = path.join(tmpDir, 'evidence.json');
+  fs.writeFileSync(filePath, JSON.stringify(makeExtendedSampleEvidence(), null, 2), 'utf8');
+
+  try {
+    const res = await resubmitEvidenceFile({
+      evidencePath: filePath,
+      repository: { name: 'acme/webapp' },
+      backendUrl: url,
+      token: 'test-token',
+      allowHttpForTesting: true,
+    });
+    assert.equal(res.id, 'run_resubmit_21');
+    assert.equal(requests.length, 1);
+    assert.equal(JSON.parse(requests[0]!.body).evidence.schemaVersion, '2.1');
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+    await new Promise<void>(resolve => server.close(() => resolve()));
+  }
+});
+
+test('ci-runner: idempotency key differs between 2.0 and 2.1 evidence and is stable per version', () => {
+  const repository = { name: 'acme/webapp' };
+  const key = (evidence: DeterministicEvidence) =>
+    computeSubmissionIdempotencyKey({ repository, comparisonPolicy: 'merge-base-to-head', evidence });
+  assert.equal(key(makeSampleEvidence()), key(makeSampleEvidence()));
+  assert.equal(key(makeExtendedSampleEvidence()), key(makeExtendedSampleEvidence()));
+  assert.notEqual(key(makeSampleEvidence()), key(makeExtendedSampleEvidence()));
+});
+
 test('ci-runner: analyzeAndSubmit saves evidence even if submission fails', async () => {
   const { server, url } = await createMockServer((req, res) => {
     res.writeHead(500, { 'Content-Type': 'text/plain' });

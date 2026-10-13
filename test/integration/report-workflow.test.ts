@@ -76,3 +76,32 @@ test('onboarding generates a v2 context once, reports where to test, and refresh
     assert.ok(fs.existsSync(path.join(graphentra, 'application-context.previous.json')));
   } finally { process.exitCode = previousExit; repo.cleanup(); }
 });
+
+test('extended engine: writes valid 2.1 evidence, generates a context without module entities, and reports offline', async t => {
+  t.mock.method(console, 'info', () => {});
+  t.mock.method(console, 'log', () => {});
+  t.mock.method(console, 'warn', () => {});
+  const repo = createWebAppRepository();
+  const previousExit = process.exitCode;
+  try {
+    process.exitCode = undefined;
+    applyPaymentThresholdChange(repo.edit);
+    const fake = createFakeLlm();
+    const args = ['--target', repo.dir, '--working-tree', '--engine', 'extended', '--generate-context'];
+    await runReport(args, { environment: {}, loadEnvironment: false, llmOptions: { client: fake.client, model: 'offline' } });
+    assert.equal(process.exitCode, undefined);
+    const graphentra = path.join(repo.dir, '.graphentra');
+    const evidence = JSON.parse(fs.readFileSync(path.join(graphentra, 'evidence.json'), 'utf8'));
+    assert.equal(evidence.schemaVersion, '2.1');
+    assert.equal(validateEvidenceEnvelope(evidence).valid, true);
+    assert.ok(evidence.technicalGraph.entities.some((entity: { kind: string }) => entity.kind === 'module'));
+    const context = JSON.parse(fs.readFileSync(path.join(graphentra, 'application-context.json'), 'utf8'));
+    assert.equal(context.schemaVersion, '2.0');
+    assert.ok(context.entityAnnotations.length > 0);
+    assert.ok(context.entityAnnotations.every((annotation: { entityId: string }) => !annotation.entityId.endsWith('#<module>')));
+    const described = fake.calls.filter(call => call.schema === 'graphentra_context_module').flatMap(call => call.user.entitiesToDescribe);
+    assert.ok(described.every((entity: { kind: string }) => entity.kind !== 'module'));
+    const analysis = JSON.parse(fs.readFileSync(path.join(graphentra, 'analysis.json'), 'utf8'));
+    assert.ok(analysis.qaReport);
+  } finally { process.exitCode = previousExit; repo.cleanup(); }
+});

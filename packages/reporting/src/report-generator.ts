@@ -40,6 +40,7 @@ export async function generateQAReport(
   const applicationMap = extras.applicationMap && extras.applicationMap.schemaVersion === '1.0' ? extras.applicationMap : undefined;
   const payload = buildLLMPayload(evidence.impacts, context, {
     applicationMap, relations: evidence.technicalGraph.relations, contextWarnings: warnings,
+    capabilities: evidence.technicalGraph.capabilities,
   });
   const qaReport = await generateImpactReport({
     instruction: qaInstruction,

@@ -25,7 +25,7 @@ export const openApiDocument = {
                 type: 'object',
                 required: ['evidence', 'applicationContext'],
                 properties: {
-                  evidence: { type: 'object', required: ['outcome'], properties: { outcome: { type: 'string', enum: ['completed', 'no_changes', 'no_supported_changes', 'no_source_files'] } }, additionalProperties: true, description: 'Graphentra analysis evidence. outcome must be completed to generate a report.' },
+                  evidence: { type: 'object', required: ['outcome'], properties: { outcome: { type: 'string', enum: ['completed', 'no_changes', 'no_supported_changes', 'no_source_files'] } }, additionalProperties: true, description: 'Graphentra analysis evidence (graphentra-evidence schema 2.0 from the legacy engine, or 2.1 from the extended engine). outcome must be completed to generate a report.' },
                   applicationContext: { type: 'object', additionalProperties: true, description: 'Business context used to describe the impact in QA language.' },
                   applicationMap: { type: 'object', nullable: true, additionalProperties: true, description: 'Optional application surface map.' },
                   change: { $ref: '#/components/schemas/ChangeInfo' },
