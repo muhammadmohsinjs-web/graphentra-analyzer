@@ -13,7 +13,7 @@ export function runCli(argv: string[] = process.argv.slice(2)): void {
   try {
     options = parseCliOptions(argv);
     if (options.help) {
-      console.log(`Graphentra Analyzer v${ANALYZER_VERSION}\nUsage: graphentra-analyze --target <dir> [--base <ref> --head <ref> | --working-tree] [--output <file>] [--engine legacy|extended]\n--output names one evidence file (default: <target>/.graphentra/evidence.json).\n--help, -h   Show help\n--version, -v   Show version\nQA Markdown: npm run report -- --report <file>`);
+      console.log(`Graphentra Analyzer v${ANALYZER_VERSION}\nUsage: graphentra-analyze --target <dir> [--base <ref> --head <ref> | --working-tree] [--output <file>] [--engine extended|legacy (default: extended)]\n--output names one evidence file (default: <target>/.graphentra/evidence.json).\n--help, -h   Show help\n--version, -v   Show version\nQA Markdown: npm run report -- --report <file>`);
       return;
     }
     if (options.version) { console.log(ANALYZER_VERSION); return; }

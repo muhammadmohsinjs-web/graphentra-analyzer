@@ -39,6 +39,7 @@ test('analyzeRepository handles clean disposable repository without crashing', (
     git(['commit', '-m', 'Initial commit']);
 
     const result = analyzeRepository({
+      engine: 'legacy',
       target: dir,
       comparison: {
         mode: 'working-tree',

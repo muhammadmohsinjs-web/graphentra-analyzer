@@ -80,7 +80,7 @@ test('CLI safety: writes evidence to exact file path specified by --output', () 
 
     const content = JSON.parse(fs.readFileSync(customEvidencePath, 'utf8'));
     assert.equal(content.artifactKind, 'graphentra-evidence');
-    assert.equal(content.schemaVersion, '2.0');
+    assert.equal(content.schemaVersion, '2.1');
     assert.equal(content.outcome, 'no_changes');
   } finally {
     repo.cleanup();

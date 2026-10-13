@@ -13,7 +13,7 @@ function buildRepo() {
   return { repo, base, head };
 }
 
-test('engine profile: legacy and default give identical evidence identity; extended differs (schema 2.1)', () => {
+test('engine profile: default engine is extended: default matches extended identity, legacy differs (schema 2.1)', () => {
   const { repo, base, head } = buildRepo();
   try {
     const run = (engine?: 'legacy' | 'extended') =>
@@ -22,7 +22,9 @@ test('engine profile: legacy and default give identical evidence identity; exten
     const extended = run('extended');
     const unset = run();
     assert.notEqual(computeDeterministicEvidenceIdentity(legacy.evidence), computeDeterministicEvidenceIdentity(extended.evidence));
-    assert.equal(computeDeterministicEvidenceIdentity(legacy.evidence), computeDeterministicEvidenceIdentity(unset.evidence));
+    assert.equal(computeDeterministicEvidenceIdentity(extended.evidence), computeDeterministicEvidenceIdentity(unset.evidence));
+    assert.equal(unset.evidence.schemaVersion, '2.1');
+    assert.equal(legacy.evidence.schemaVersion, '2.0');
   } finally {
     repo.cleanup();
   }

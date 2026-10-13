@@ -181,7 +181,7 @@ export interface DeterministicEvidence {
 
 export type EngineProfile = 'legacy' | 'extended';
 export const ENGINE_PROFILES: readonly EngineProfile[] = ['legacy', 'extended'];
-export const DEFAULT_ENGINE: EngineProfile = 'legacy';
+export const DEFAULT_ENGINE: EngineProfile = 'extended';
 
 export interface AnalyzeOptions {
   target: string;

@@ -29,7 +29,7 @@ Options:
   --pr <number>          Pull request number
   --resubmit <file>      Resubmit an existing valid evidence.json file without re-analyzing
   --output <path>        Path or directory to write evidence.json
-  --engine <profile>     Analysis engine profile: legacy or extended (default: legacy)
+  --engine <profile>     Analysis engine profile: extended or legacy (default: extended)
   --help, -h             Show this help message
   --version, -v          Show runner version
 `);

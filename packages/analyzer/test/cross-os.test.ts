@@ -17,7 +17,7 @@ function analyze(files: Record<string, [string, string]>) {
     let head = '';
     for (const [file, [before]] of Object.entries(files)) base = repo.commitFile(file, before, `base ${file}`);
     for (const [file, [, after]] of Object.entries(files)) head = repo.commitFile(file, after, `head ${file}`);
-    const result = analyzeRepository({ target: repo.dir, comparison: { mode: 'commit', base, head } });
+    const result = analyzeRepository({ target: repo.dir, comparison: { mode: 'commit', base, head }, engine: 'legacy' });
     return { result, identity: computeDeterministicEvidenceIdentity(result.evidence) };
   } finally {
     repo.cleanup();

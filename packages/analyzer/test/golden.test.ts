@@ -135,7 +135,7 @@ for (const engine of ['legacy', 'extended'] as const) for (const scenario of sce
         ? { mode: 'working-tree' as const, base: 'HEAD' }
         : { mode: 'commit' as const, base: baseSha, head: headSha };
 
-      const result = analyzeRepository(engine === 'extended' ? { target: repo.dir, comparison, engine } : { target: repo.dir, comparison });
+      const result = analyzeRepository({ target: repo.dir, comparison, engine });
       assert.equal(result.outcome, engine === 'extended' ? scenario.expectedOutcomeExtended ?? scenario.expectedOutcome : scenario.expectedOutcome);
       const shas = { base: baseSha, head: headSha };
       expectGolden(`${scenario.name}${suffix}`, normalize(result.evidence, shas, engine));

@@ -64,7 +64,7 @@ test('legacy (2.0) evidence keeps its exact prompt payload, progress text and an
     assert.ok(described.every(entity => !('kind' in entity) && !('container' in entity)));
     assert.ok(progress.some(message => /^describing \d+ functions$/.test(message)));
     applyPaymentThresholdChange(repo.edit);
-    const changed = analyzeRepository({ target: repo.dir, comparison: { mode: 'working-tree' } });
+    const changed = analyzeRepository({ target: repo.dir, comparison: { mode: 'working-tree' }, engine: 'legacy' });
     const payload = buildLLMPayload(changed.evidence.impacts, context, { capabilities: changed.evidence.technicalGraph.capabilities });
     assert.deepEqual(payload.analysisScope, {
       language: 'typescript', entityGranularity: 'function', relationTypes: ['CALLS'], maxBlastDepth: 6, changedFunctionCount: changed.evidence.impacts.length,
