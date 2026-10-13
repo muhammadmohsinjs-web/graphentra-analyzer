@@ -1,0 +1,5 @@
+# Keep fixtures and goldens byte-identical on every OS (P0-11).
+* text=auto eol=lf
+*.png binary
+*.ico binary
+*.db binary

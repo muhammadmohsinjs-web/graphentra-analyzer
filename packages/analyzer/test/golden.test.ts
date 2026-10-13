@@ -17,7 +17,7 @@ const UPDATE = process.env.UPDATE_GOLDENS === '1';
 type Files = Record<string, string>;
 
 function readDir(root: string, rel: string, files: Files) {
-  for (const entry of fs.readdirSync(path.join(root, rel), { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+  for (const entry of fs.readdirSync(path.join(root, rel), { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))) {
     const relPath = `${rel}/${entry.name}`;
     if (entry.isDirectory()) readDir(root, relPath, files);
     else files[relPath] = fs.readFileSync(path.join(root, relPath), 'utf8');

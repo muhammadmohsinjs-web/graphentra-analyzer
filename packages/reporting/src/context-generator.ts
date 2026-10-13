@@ -224,7 +224,7 @@ function buildBatches(input: GenerateContextInput, targetEntities: Entity[]): Mo
   const batches: ModuleBatch[] = [];
   let current: ModuleBatch = { files: [], entities: [] };
   let size = 0;
-  for (const [file, entities] of [...byFile].sort(([a], [b]) => a.localeCompare(b))) {
+  for (const [file, entities] of [...byFile].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) {
     let source = sources.get(file) ?? '';
     if (source.length > budget) {
       // Oversized file: send each entity's own lines instead of the whole file.

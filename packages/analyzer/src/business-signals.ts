@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import * as ts from 'typescript';
 import type { Entity, TechnicalGraph } from './contracts';
 import { calleeName, clean, isTestPath, lineOf, propertyName, stringValue, unwrapExpression } from './application-map-ast';
+import { compareStrings } from './deterministic';
 
 /**
  * Deterministic, repository-only hints about business meaning. Nothing here is interpreted;
@@ -130,7 +131,7 @@ export function collectBusinessSignals(input: CollectBusinessSignalsInput): Busi
     !/(^|\/)(CODE_OF_CONDUCT|CONTRIBUTING|SECURITY)\./i.test(file))
     .sort((a, b) => {
       const rank = (file: string) => /^readme\./i.test(file) ? 0 : /(^|\/)readme\./i.test(file) ? 1 : /(^|\/)(docs?|documentation|wiki|specs?|requirements)\//i.test(file) ? 2 : 3;
-      return rank(a) - rank(b) || a.localeCompare(b);
+      return rank(a) - rank(b) || compareStrings(a, b);
     });
   let docBudget = DOC_BUDGET;
   for (const file of docs) {
@@ -151,7 +152,7 @@ export function collectBusinessSignals(input: CollectBusinessSignalsInput): Busi
 
   // Translations: prefer English locale files.
   const localeFiles = files.filter(file => /\.json$/i.test(file) && /(^|\/)(locales?|i18n|lang|translations?|messages)\//i.test(file))
-    .sort((a, b) => Number(!/(^|[/._-])en([/._-]|$)/i.test(a)) - Number(!/(^|[/._-])en([/._-]|$)/i.test(b)) || a.localeCompare(b));
+    .sort((a, b) => Number(!/(^|[/._-])en([/._-]|$)/i.test(a)) - Number(!/(^|[/._-])en([/._-]|$)/i.test(b)) || compareStrings(a, b));
   let translationBudget = MAX_TRANSLATIONS;
   for (const file of localeFiles) {
     if (translationBudget <= 0) { truncated.push('translations'); break; }
