@@ -87,7 +87,7 @@ test('relation types beyond CALLS are accepted only in schema 2.1', () => {
   };
   const extended = run('extended');
   const legacy = run('legacy');
-  assert.deepEqual(extended.technicalGraph.capabilities.relationTypes, ['CALLS']);
+  assert.deepEqual(extended.technicalGraph.capabilities.relationTypes, ['CALLS', 'INSTANTIATES', 'REFERENCES', 'RENDERS']);
   assert.deepEqual(legacy.technicalGraph.capabilities.relationTypes, ['CALLS']);
 
   assert.deepEqual(validateEvidenceEnvelope(withRenders(extended, ['CALLS', 'RENDERS'])).errors, []);

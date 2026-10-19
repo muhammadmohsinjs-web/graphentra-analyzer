@@ -5,7 +5,7 @@ Deterministic change-evidence and graph analyzer for TypeScript repositories.
 ## Overview
 
 `@graphentra/analyzer` extracts:
-- A technical `CALLS` graph of TypeScript and JavaScript entities: functions (declarations and variable-bound arrows), class and object-literal methods, React components, and one `<module>` entity per file.
+- A technical `CALLS` graph of TypeScript and JavaScript entities: functions (declarations and variable-bound arrows), class and object-literal methods, React components, and one `<module>` entity per file. Under the extended engine, `new C()` also adds an `INSTANTIATES` edge to the constructor that runs (an inherited one included); a class with no constructor in its chain gets no edge. JSX use of a component adds `RENDERS`, and a function passed or stored as a value (`onClick={h}`, `app.get('/x', h)`, `{ h }`, `const f = h`, `return h`) adds `REFERENCES`; getter reads and `useMemo` values are not function references.
 - Entity-attributed Git change evidence (additions, deletions, line coordinates).
 - Reverse dependency reachability and blast-radius traversal (up to depth 6).
 

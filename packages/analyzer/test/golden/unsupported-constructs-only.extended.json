@@ -45,7 +45,10 @@
         "module"
       ],
       "relationTypes": [
-        "CALLS"
+        "CALLS",
+        "INSTANTIATES",
+        "REFERENCES",
+        "RENDERS"
       ],
       "maxBlastDepth": 6
     },

@@ -32,7 +32,7 @@ export const EXTENDED_ENTITY_KINDS: EntityKind[] = ['component', 'function', 'me
 export type RelationType = 'CALLS' | 'RENDERS' | 'REFERENCES' | 'INSTANTIATES';
 export const LEGACY_RELATION_TYPES: RelationType[] = ['CALLS'];
 /** Types the extended engine emits today; each edge task adds its type when it lands. Sorted, like EXTENDED_ENTITY_KINDS. */
-export const EXTENDED_RELATION_TYPES: RelationType[] = ['CALLS'];
+export const EXTENDED_RELATION_TYPES: RelationType[] = ['CALLS', 'INSTANTIATES', 'REFERENCES', 'RENDERS'];
 
 export interface Entity {
   id: string;
