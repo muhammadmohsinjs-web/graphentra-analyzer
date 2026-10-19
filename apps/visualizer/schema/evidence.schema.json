@@ -214,7 +214,12 @@
           "minLength": 1
         },
         "type": {
-          "const": "CALLS"
+          "enum": [
+            "CALLS",
+            "RENDERS",
+            "REFERENCES",
+            "INSTANTIATES"
+          ]
         },
         "from": {
           "type": "string",
@@ -522,9 +527,17 @@
               "uniqueItems": true
             },
             "relationTypes": {
-              "const": [
-                "CALLS"
-              ]
+              "type": "array",
+              "items": {
+                "enum": [
+                  "CALLS",
+                  "RENDERS",
+                  "REFERENCES",
+                  "INSTANTIATES"
+                ]
+              },
+              "minItems": 1,
+              "uniqueItems": true
             },
             "maxBlastDepth": {
               "const": 6

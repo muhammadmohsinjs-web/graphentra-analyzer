@@ -29,6 +29,11 @@ export const LEGACY_ENTITY_KINDS: EntityKind[] = ['function'];
 /** Sorted: the 2.1 validator requires capabilities.entityKinds in compareStrings order. */
 export const EXTENDED_ENTITY_KINDS: EntityKind[] = ['component', 'function', 'method', 'module'];
 
+export type RelationType = 'CALLS' | 'RENDERS' | 'REFERENCES' | 'INSTANTIATES';
+export const LEGACY_RELATION_TYPES: RelationType[] = ['CALLS'];
+/** Types the extended engine emits today; each edge task adds its type when it lands. Sorted, like EXTENDED_ENTITY_KINDS. */
+export const EXTENDED_RELATION_TYPES: RelationType[] = ['CALLS'];
+
 export interface Entity {
   id: string;
   kind: EntityKind;
@@ -45,7 +50,7 @@ export interface Entity {
 export interface Relation {
   from: string;
   to: string;
-  type: 'CALLS';
+  type: RelationType;
 }
 
 export interface EntityChange {
@@ -116,7 +121,7 @@ export interface TechnicalGraph {
   capabilities: {
     language: 'typescript';
     entityKinds: EntityKind[];
-    relationTypes: ['CALLS'];
+    relationTypes: RelationType[];
     maxBlastDepth: number;
   };
   analyzedFiles: string[];
