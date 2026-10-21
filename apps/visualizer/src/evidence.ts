@@ -33,11 +33,12 @@ export function validateEvidenceEnvelope(value: unknown): { valid: boolean; erro
   const entities = new Map<string, any>(graph.entities.map((entity: any) => [entity.id, entity]));
   const edge = (from: string, to: string) => JSON.stringify([from, to]);
   const edges = new Set<string>(graph.relations.map((relation: any) => edge(relation.from, relation.to)));
+  const typedEdges = new Set<string>(graph.relations.map((relation: any) => JSON.stringify([relation.from, relation.type, relation.to])));
   const check = (condition: boolean, message: string) => { if (!condition) errors.push(message); };
   const reference = (entity: any) => check(equal(entities.get(entity.id), entity), 'Entity reference mismatch.');
   const sameSet = (actual: string[], expected: string[]) => new Set(actual).size === actual.length && equal([...actual].sort(), [...new Set(expected)].sort());
   check(entities.size === graph.entities.length, 'Duplicate entity.');
-  check(edges.size === graph.relations.length, 'Duplicate relation.');
+  check(typedEdges.size === graph.relations.length, 'Duplicate relation.');
   for (const entity of graph.entities) check(entity.id === `${entity.file}#${entity.name}` && graph.analyzedFiles.includes(entity.file) && entity.startLine <= entity.endLine, 'Invalid entity identity or range.');
   for (const relation of graph.relations) check(entities.has(relation.from) && entities.has(relation.to), 'Missing relation endpoint.');
   check(graph.repository.targetPath === data.target.targetPath && graph.repository.analyzerVersion === data.analyzerVersion && graph.repository.headSha === data.sourceState.checkoutSha, 'Graph provenance mismatch.');
@@ -58,7 +59,11 @@ export function validateEvidenceEnvelope(value: unknown): { valid: boolean; erro
       const ids = record.path.map((entity: any) => entity.id);
       for (const entity of [...record.path, record.target]) reference(entity);
       check(ids[0] === impact.changedEntity.id && ids.at(-1) === record.target.id && record.depth === ids.length - 1 && new Set(ids).size === ids.length, 'Path endpoints, depth or cycle invalid.');
-      check(ids.slice(1).every((id: string, index: number) => edges.has(edge(id, ids[index]))), 'Reverse CALLS path mismatch.');
+      check(ids.slice(1).every((id: string, index: number) => edges.has(edge(id, ids[index]))), 'Reverse relation path mismatch.');
+      if (record.stepTypes !== undefined) {
+        check(Array.isArray(record.stepTypes) && record.stepTypes.length === ids.length - 1
+          && record.stepTypes.every((type: string, index: number) => typedEdges.has(JSON.stringify([ids[index + 1], type, ids[index]]))), 'Path step types mismatch.');
+      }
       check(!paths.has(JSON.stringify(ids)), 'Duplicate path.'); paths.add(JSON.stringify(ids));
     }
     const affected = impact.blastRadius.paths.map((item: any) => item.target.id);

@@ -9,6 +9,7 @@ import {
   MAX_AFFECTED_ENTITIES,
   MAX_BLAST_DEPTH,
   MAX_SHORTEST_PATH_COUNT,
+  STEP_TYPE_PRECEDENCE,
   type EngineProfile,
   type ChangedEntity,
   type ChangedFile,
@@ -18,6 +19,7 @@ import {
   type EntityImpact,
   type ImpactPath,
   type Relation,
+  type RelationType,
 } from './contracts';
 
 export function getCallers(
@@ -97,6 +99,11 @@ export function getBlastRadiusPaths(
   }
 
   return results;
+}
+
+function getStepType(calleeId: string, callerId: string, reverseAdjacency: Map<string, Relation[]>): RelationType {
+  const types = new Set((reverseAdjacency.get(calleeId) ?? []).filter(relation => relation.from === callerId).map(relation => relation.type));
+  return STEP_TYPE_PRECEDENCE.find(type => types.has(type))!;
 }
 
 const byId = (left: Entity, right: Entity): number => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0);
@@ -183,6 +190,7 @@ export function getBlastRadiusShortestPaths(
       depth: chain.length - 1,
       path: chain,
       pathCount: pathCount.get(target.id)!,
+      stepTypes: chain.slice(1).map((caller, i) => getStepType(chain[i].id, caller.id, reverseAdjacency)),
     };
   });
 

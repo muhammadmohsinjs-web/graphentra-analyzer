@@ -7,6 +7,9 @@ import type {
   ChangedFile,
   DiagnosticItem,
   DeterministicEvidence,
+  Entity,
+  ImpactPath,
+  RelationType,
   TechnicalGraph,
 } from './contracts';
 
@@ -27,7 +30,7 @@ export const EXTENDED_LIMITATIONS = [
   'Only TypeScript and JavaScript are analyzed; JavaScript is not type-checked.',
   'Entities are named functions, variable-bound arrow functions and function expressions, class and object-literal methods, constructors, accessors, React components, and module-level code.',
   'Classes, interfaces, type aliases, and enums are not entities.',
-  'Only CALLS relationships are currently supported.',
+  'Relationships are CALLS, RENDERS (JSX elements), INSTANTIATES (new expressions), and REFERENCES (functions passed or stored as values).',
   'Dynamic calls and calls through interface-typed receivers are not analyzed.',
   'Deleted entities have no current graph entity; renamed entities may lack removed-code evidence.',
   'Partially overlapping entity line ranges are skipped rather than sharing ambiguous evidence.',
@@ -108,6 +111,25 @@ export function writeMarkdownReport(reportPath: string, content: string): void {
   }
 }
 
+/** Reads a path step backwards: in `a → called by b`, b has a relation of this type to a. */
+export const STEP_LABELS: Record<RelationType, string> = {
+  CALLS: 'called by',
+  RENDERS: 'rendered by',
+  INSTANTIATES: 'constructed by',
+  REFERENCES: 'referenced by',
+};
+/** Typed paths printed per impact; the rest are summarized as a count. */
+export const MAX_REPORTED_PATHS = 10;
+
+/** Formats a typed path, e.g. "`OrderRow` → rendered by `OrderList` → rendered by `OrdersPage`". */
+export function formatTypedPath(path: ImpactPath): string {
+  // Module entities are all named `<module>`, so name the file too.
+  const name = (entity: Entity) => `\`${entity.name === '<module>' ? `<module> (${entity.file})` : entity.name}\``;
+  return path.path
+    .map((entity, i) => (i === 0 ? name(entity) : `${STEP_LABELS[path.stepTypes![i - 1]]} ${name(entity)}`))
+    .join(' → ');
+}
+
 export function formatDeterministicMarkdown(result: AnalyzeResult): string {
   const lines: string[] = [
     '# Graphentra Deterministic Analysis Report',
@@ -135,6 +157,17 @@ export function formatDeterministicMarkdown(result: AnalyzeResult): string {
       lines.push(`- Terminal dependents: ${impact.terminalDependents.length}`);
       if (impact.directDependents.length > 0) {
         lines.push('  - Direct: ' + impact.directDependents.map(d => `\`${d.id}\``).join(', '));
+      }
+      // Extended evidence only: legacy paths carry no step types, so legacy reports are unchanged.
+      const typed = impact.blastRadius.paths.filter(path => path.stepTypes);
+      if (typed.length > 0) {
+        const terminalIds = new Set(impact.terminalDependents.map(entity => entity.id));
+        const shown = [...typed]
+          .sort((a, b) => Number(terminalIds.has(b.target.id)) - Number(terminalIds.has(a.target.id)) || b.depth - a.depth)
+          .slice(0, MAX_REPORTED_PATHS);
+        lines.push('- Paths:');
+        for (const path of shown) lines.push(`  - ${formatTypedPath(path)}`);
+        if (typed.length > shown.length) lines.push(`  - …and ${typed.length - shown.length} more`);
       }
       lines.push('');
     }

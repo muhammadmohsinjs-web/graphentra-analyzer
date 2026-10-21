@@ -14,6 +14,15 @@ export function displayName(entity) {
 
 export const edgeKey = (from, to) => JSON.stringify([from, to]);
 
+export const RELATION_TYPES = ['CALLS', 'RENDERS', 'INSTANTIATES', 'REFERENCES'];
+// Verb for the forward relation ("a renders b"); impact travels in reverse.
+export const RELATION_VERBS = { CALLS: 'calls', RENDERS: 'renders', INSTANTIATES: 'constructs', REFERENCES: 'references' };
+// Reads a path step backwards, matching the analyzer report: "OrderRow → rendered by OrderList".
+export const STEP_LABELS = { CALLS: 'called by', RENDERS: 'rendered by', INSTANTIATES: 'constructed by', REFERENCES: 'referenced by' };
+// One pair of entities can have several relation types; the edge is styled by the first in RELATION_TYPES.
+export const edgeType = types => RELATION_TYPES.find(type => types.includes(type)) ?? 'CALLS';
+export const edgeClass = type => `edge-${type.toLowerCase()}`;
+
 export function prepareData(data) {
   const { graph } = data;
   if (data.evidence && (data.evidence.artifactKind !== 'graphentra-evidence' || !['2.0', '2.1'].includes(data.evidence.schemaVersion) || !['completed','no_changes','no_supported_changes','no_source_files'].includes(data.evidence.outcome))) throw new Error('Invalid evidence envelope.');
@@ -28,15 +37,22 @@ export function prepareData(data) {
     }
     entities.set(entity.id, entity);
   }
+  // One relation per entity pair; `types` lists every relation type between them.
   const relations = [];
-  const calls = new Set();
+  const calls = new Map();
   for (const relation of graph.relations) {
-    if (relation?.type !== 'CALLS' || !entities.has(relation.from) || !entities.has(relation.to)) {
-      throw new Error('The graph contains an invalid CALLS relationship.');
+    if (!RELATION_TYPES.includes(relation?.type) || !entities.has(relation.from) || !entities.has(relation.to)) {
+      throw new Error('The graph contains an invalid relationship.');
     }
     const key = edgeKey(relation.from, relation.to);
-    if (!calls.has(key)) relations.push(relation);
-    calls.add(key);
+    if (!calls.has(key)) {
+      const merged = { from: relation.from, to: relation.to, type: relation.type, types: [] };
+      relations.push(merged);
+      calls.set(key, merged);
+    }
+    const merged = calls.get(key);
+    if (!merged.types.includes(relation.type)) merged.types.push(relation.type);
+    merged.type = edgeType(merged.types);
   }
   const warnings = [...(data.warnings ?? [])];
   let analysis = data.analysis;
@@ -56,7 +72,9 @@ export function prepareData(data) {
           if (ids[0] !== seed || ids.at(-1) !== path.target.id || path.depth !== ids.length - 1
             || path.depth < 1 || path.depth > maxDepth || new Set(ids).size !== ids.length
             || ids.some(id => !entities.has(id))
-            || ids.slice(1).some((id, i) => !calls.has(edgeKey(id, ids[i])))) throw new Error();
+            || ids.slice(1).some((id, i) => !calls.has(edgeKey(id, ids[i])))
+            || (path.stepTypes !== undefined && (!Array.isArray(path.stepTypes) || path.stepTypes.length !== path.depth
+              || path.stepTypes.some((type, i) => !calls.get(edgeKey(ids[i + 1], ids[i])).types.includes(type))))) throw new Error();
         }
         const targets = new Set(impact.blastRadius.paths.map(path => path.target.id));
         if (!Array.isArray(impact.blastRadius.entities)

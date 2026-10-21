@@ -1465,7 +1465,10 @@
                 "exported": true
               }
             ],
-            "pathCount": 1
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ]
           },
           {
             "target": {
@@ -1501,7 +1504,10 @@
                 "exported": false
               }
             ],
-            "pathCount": 1
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ]
           },
           {
             "target": {
@@ -1537,7 +1543,10 @@
                 "exported": true
               }
             ],
-            "pathCount": 1
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ]
           },
           {
             "target": {
@@ -1573,7 +1582,10 @@
                 "container": "OrderService"
               }
             ],
-            "pathCount": 1
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ]
           },
           {
             "target": {
@@ -1621,7 +1633,11 @@
                 "exportName": "default"
               }
             ],
-            "pathCount": 1
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS",
+              "RENDERS"
+            ]
           },
           {
             "target": {
@@ -1667,7 +1683,11 @@
                 "exported": true
               }
             ],
-            "pathCount": 1
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS",
+              "RENDERS"
+            ]
           },
           {
             "target": {
@@ -1711,7 +1731,11 @@
                 "language": "typescript"
               }
             ],
-            "pathCount": 1
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS",
+              "RENDERS"
+            ]
           },
           {
             "target": {
@@ -1757,7 +1781,11 @@
                 "exported": true
               }
             ],
-            "pathCount": 1
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS",
+              "REFERENCES"
+            ]
           },
           {
             "target": {
@@ -1803,7 +1831,11 @@
                 "exported": false
               }
             ],
-            "pathCount": 1
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS",
+              "CALLS"
+            ]
           },
           {
             "target": {
@@ -1849,7 +1881,11 @@
                 "exported": true
               }
             ],
-            "pathCount": 1
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS",
+              "CALLS"
+            ]
           },
           {
             "target": {
@@ -1893,7 +1929,11 @@
                 "language": "typescript"
               }
             ],
-            "pathCount": 1
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS",
+              "CALLS"
+            ]
           },
           {
             "target": {
@@ -1947,7 +1987,12 @@
                 "language": "javascript"
               }
             ],
-            "pathCount": 1
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS",
+              "CALLS",
+              "REFERENCES"
+            ]
           },
           {
             "target": {
@@ -2003,7 +2048,12 @@
                 "exported": true
               }
             ],
-            "pathCount": 1
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS",
+              "CALLS",
+              "REFERENCES"
+            ]
           },
           {
             "target": {
@@ -2057,7 +2107,12 @@
                 "language": "typescript"
               }
             ],
-            "pathCount": 1
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS",
+              "CALLS",
+              "CALLS"
+            ]
           }
         ],
         "truncated": false
@@ -2125,7 +2180,7 @@
     "Only TypeScript and JavaScript are analyzed; JavaScript is not type-checked.",
     "Entities are named functions, variable-bound arrow functions and function expressions, class and object-literal methods, constructors, accessors, React components, and module-level code.",
     "Classes, interfaces, type aliases, and enums are not entities.",
-    "Only CALLS relationships are currently supported.",
+    "Relationships are CALLS, RENDERS (JSX elements), INSTANTIATES (new expressions), and REFERENCES (functions passed or stored as values).",
     "Dynamic calls and calls through interface-typed receivers are not analyzed.",
     "Deleted entities have no current graph entity; renamed entities may lack removed-code evidence.",
     "Partially overlapping entity line ranges are skipped rather than sharing ambiguous evidence.",

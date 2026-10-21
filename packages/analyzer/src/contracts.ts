@@ -37,6 +37,8 @@ export type RelationType = 'CALLS' | 'RENDERS' | 'REFERENCES' | 'INSTANTIATES';
 export const LEGACY_RELATION_TYPES: RelationType[] = ['CALLS'];
 /** Types the extended engine emits today; each edge task adds its type when it lands. Sorted, like EXTENDED_ENTITY_KINDS. */
 export const EXTENDED_RELATION_TYPES: RelationType[] = ['CALLS', 'INSTANTIATES', 'REFERENCES', 'RENDERS'];
+/** When one pair of entities has more than one relation, a path step reports the first type in this list. */
+export const STEP_TYPE_PRECEDENCE: RelationType[] = ['RENDERS', 'INSTANTIATES', 'CALLS', 'REFERENCES'];
 
 export interface Entity {
   id: string;
@@ -94,6 +96,8 @@ export interface ImpactPath {
   path: Entity[];
   /** Extended engine: number of distinct shortest paths to target (capped at MAX_SHORTEST_PATH_COUNT). */
   pathCount?: number;
+  /** Extended engine: stepTypes[i] is the type of the relation from path[i + 1] to path[i]. */
+  stepTypes?: RelationType[];
 }
 
 export interface EntityImpact {

@@ -134,6 +134,7 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
   // Technical graph
   const entityMap = new Map<string, Entity>();
   const relationPairSet = new Set<string>();
+  const relationTripleSet = new Set<string>();
 
   if (!isObject(data.technicalGraph)) {
     errors.push('Expected technicalGraph to be an object.');
@@ -214,6 +215,7 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
           errors.push(`technicalGraph.relations[${i}].to endpoint "${relation.to}" not found in entities.`);
         }
         relationPairSet.add(`${relation.from}->${relation.to}`);
+        relationTripleSet.add(`${relation.from}|${relation.type}|${relation.to}`);
       }
     }
   }
@@ -263,6 +265,18 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
             const caller = pathArr[step + 1];
             if (!relationPairSet.has(`${caller.id}->${callee.id}`)) {
               errors.push(`Path discontinuity at step ${step}: "${caller.id}" does not call "${callee.id}".`);
+            }
+          }
+          if (pathInfo.stepTypes !== undefined) {
+            const stepTypes = pathInfo.stepTypes as unknown[];
+            if (!Array.isArray(stepTypes) || stepTypes.length !== pathArr.length - 1) {
+              errors.push(`impacts[${i}].blastRadius.paths[${pIdx}] stepTypes length must equal depth.`);
+            } else {
+              stepTypes.forEach((type, step) => {
+                if (!relationTripleSet.has(`${pathArr[step + 1].id}|${type}|${pathArr[step].id}`)) {
+                  errors.push(`impacts[${i}].blastRadius.paths[${pIdx}] stepTypes[${step}] "${String(type)}" has no matching relation.`);
+                }
+              });
             }
           }
         }

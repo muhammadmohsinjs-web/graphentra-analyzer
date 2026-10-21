@@ -411,6 +411,19 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 1000000
+        },
+        "stepTypes": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "CALLS",
+              "RENDERS",
+              "REFERENCES",
+              "INSTANTIATES"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 6
         }
       },
       "required": [
