@@ -615,7 +615,8 @@
       "blastRadius": {
         "totalAffectedEntities": 0,
         "entities": [],
-        "paths": []
+        "paths": [],
+        "truncated": false
       },
       "terminalDependents": []
     }

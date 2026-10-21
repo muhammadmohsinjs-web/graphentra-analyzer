@@ -831,7 +831,8 @@
                 "language": "typescript",
                 "exported": true
               }
-            ]
+            ],
+            "pathCount": 1
           },
           {
             "target": {
@@ -866,7 +867,8 @@
                 "language": "typescript",
                 "exported": true
               }
-            ]
+            ],
+            "pathCount": 1
           },
           {
             "target": {
@@ -901,7 +903,8 @@
                 "language": "typescript",
                 "exported": true
               }
-            ]
+            ],
+            "pathCount": 1
           },
           {
             "target": {
@@ -946,7 +949,8 @@
                 "language": "typescript",
                 "exported": true
               }
-            ]
+            ],
+            "pathCount": 1
           },
           {
             "target": {
@@ -991,7 +995,8 @@
                 "language": "typescript",
                 "exported": true
               }
-            ]
+            ],
+            "pathCount": 1
           },
           {
             "target": {
@@ -1046,7 +1051,8 @@
                 "language": "typescript",
                 "exported": true
               }
-            ]
+            ],
+            "pathCount": 1
           },
           {
             "target": {
@@ -1101,7 +1107,8 @@
                 "language": "typescript",
                 "exported": true
               }
-            ]
+            ],
+            "pathCount": 1
           },
           {
             "target": {
@@ -1166,9 +1173,11 @@
                 "language": "typescript",
                 "exported": true
               }
-            ]
+            ],
+            "pathCount": 1
           }
-        ]
+        ],
+        "truncated": false
       },
       "terminalDependents": [
         {
@@ -1251,7 +1260,8 @@
       "blastRadius": {
         "totalAffectedEntities": 0,
         "entities": [],
-        "paths": []
+        "paths": [],
+        "truncated": false
       },
       "terminalDependents": []
     }

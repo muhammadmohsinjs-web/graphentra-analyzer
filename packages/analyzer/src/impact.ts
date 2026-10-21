@@ -6,7 +6,9 @@ import {
 } from './change-evidence';
 import {
   DEFAULT_ENGINE,
+  MAX_AFFECTED_ENTITIES,
   MAX_BLAST_DEPTH,
+  MAX_SHORTEST_PATH_COUNT,
   type EngineProfile,
   type ChangedEntity,
   type ChangedFile,
@@ -97,18 +99,109 @@ export function getBlastRadiusPaths(
   return results;
 }
 
+const byId = (left: Entity, right: Entity): number => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0);
+
+/**
+ * Extended engine: one shortest path per affected entity instead of every simple path.
+ * Levels are expanded in ID order and each entity's parent is its smallest-ID predecessor
+ * at the previous depth, so output does not depend on relation order. Output is capped at
+ * `maxAffected` entities, keeping the shallowest and then lowest-ID ones.
+ */
+export function getBlastRadiusShortestPaths(
+  entityId: string,
+  reverseAdjacency: Map<string, Relation[]>,
+  entityById: Map<string, Entity>,
+  maxDepth: number = MAX_BLAST_DEPTH,
+  maxAffected: number = MAX_AFFECTED_ENTITIES,
+): { paths: ImpactPath[]; truncated: boolean } {
+  const start = entityById.get(entityId);
+  if (!start) {
+    return { paths: [], truncated: false };
+  }
+
+  const depthById = new Map<string, number>([[start.id, 0]]);
+  const levels: Entity[][] = [[start]];
+  for (let depth = 0; depth < maxDepth; depth++) {
+    const next = new Map<string, Entity>();
+    for (const node of levels[depth]) {
+      for (const caller of getCallers(node.id, reverseAdjacency, entityById)) {
+        if (!depthById.has(caller.id)) next.set(caller.id, caller);
+      }
+    }
+    if (next.size === 0) break;
+    const level = [...next.values()].sort(byId);
+    for (const entity of level) depthById.set(entity.id, depth + 1);
+    levels.push(level);
+  }
+
+  // Keep the shallowest entities first; the cut level is already in ID order.
+  const kept: Entity[][] = [];
+  let remaining = maxAffected;
+  let truncated = false;
+  for (const level of levels.slice(1)) {
+    if (level.length <= remaining) {
+      kept.push(level);
+      remaining -= level.length;
+    } else {
+      kept.push(level.slice(0, remaining));
+      truncated = true;
+      break;
+    }
+  }
+  const keptTargets = kept.flat();
+
+  // Shortest-path predecessors: u precedes c when c calls u (c is a caller of u) and depth(c) = depth(u) + 1.
+  const predecessors = new Map<string, Entity[]>();
+  for (const level of levels) {
+    for (const node of level) {
+      for (const caller of getCallers(node.id, reverseAdjacency, entityById)) {
+        if (depthById.get(caller.id) !== depthById.get(node.id)! + 1) continue;
+        const list = predecessors.get(caller.id) ?? [];
+        list.push(node);
+        predecessors.set(caller.id, list);
+      }
+    }
+  }
+
+  const pathCount = new Map<string, number>([[start.id, 1]]);
+  const parent = new Map<string, Entity>();
+  for (const target of keptTargets) {
+    const preds = [...(predecessors.get(target.id) ?? [])].sort(byId);
+    parent.set(target.id, preds[0]);
+    const count = preds.reduce((sum, pred) => sum + (pathCount.get(pred.id) ?? 0), 0);
+    pathCount.set(target.id, Math.min(count, MAX_SHORTEST_PATH_COUNT));
+  }
+
+  const paths: ImpactPath[] = keptTargets.map(target => {
+    const chain: Entity[] = [target];
+    for (let current = parent.get(target.id); current; current = parent.get(current.id)) {
+      chain.push(current);
+    }
+    chain.reverse();
+    return {
+      target,
+      depth: chain.length - 1,
+      path: chain,
+      pathCount: pathCount.get(target.id)!,
+    };
+  });
+
+  return { paths, truncated };
+}
+
 export function buildImpact(
   changedEntity: ChangedEntity,
   reverseAdjacency: Map<string, Relation[]>,
   entityById: Map<string, Entity>,
   maxDepth: number = MAX_BLAST_DEPTH,
+  engine: EngineProfile = DEFAULT_ENGINE,
+  maxAffectedEntities: number = MAX_AFFECTED_ENTITIES,
 ): EntityImpact {
-  const paths = getBlastRadiusPaths(
-    changedEntity.entity.id,
-    reverseAdjacency,
-    entityById,
-    maxDepth,
-  );
+  const extended = engine === 'extended';
+  const search = extended
+    ? getBlastRadiusShortestPaths(changedEntity.entity.id, reverseAdjacency, entityById, maxDepth, maxAffectedEntities)
+    : { paths: getBlastRadiusPaths(changedEntity.entity.id, reverseAdjacency, entityById, maxDepth), truncated: false };
+  const paths = search.paths;
 
   const affected = new Map<string, Entity>();
   const direct = new Map<string, Entity>();
@@ -134,6 +227,7 @@ export function buildImpact(
       totalAffectedEntities: affectedEntities.length,
       entities: affectedEntities,
       paths,
+      ...(extended ? { truncated: search.truncated } : {}),
     },
     terminalDependents,
   };

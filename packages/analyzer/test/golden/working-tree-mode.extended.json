@@ -709,7 +709,8 @@
                 "language": "typescript",
                 "exported": true
               }
-            ]
+            ],
+            "pathCount": 1
           },
           {
             "target": {
@@ -754,7 +755,8 @@
                 "language": "typescript",
                 "exported": true
               }
-            ]
+            ],
+            "pathCount": 1
           },
           {
             "target": {
@@ -809,7 +811,8 @@
                 "language": "typescript",
                 "exported": true
               }
-            ]
+            ],
+            "pathCount": 1
           },
           {
             "target": {
@@ -864,7 +867,8 @@
                 "language": "typescript",
                 "exported": true
               }
-            ]
+            ],
+            "pathCount": 1
           },
           {
             "target": {
@@ -929,9 +933,11 @@
                 "language": "typescript",
                 "exported": true
               }
-            ]
+            ],
+            "pathCount": 1
           }
-        ]
+        ],
+        "truncated": false
       },
       "terminalDependents": [
         {

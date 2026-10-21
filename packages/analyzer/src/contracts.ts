@@ -7,6 +7,10 @@ export const EVIDENCE_SCHEMA_VERSIONS = ['2.0', '2.1'] as const;
 export const EVIDENCE_ARTIFACT_KIND = 'graphentra-evidence';
 
 export const MAX_BLAST_DEPTH = 6;
+/** Extended engine: cap on affected entities reported per changed entity (deterministic: shallowest, then lexicographic IDs). */
+export const MAX_AFFECTED_ENTITIES = 2000;
+/** Extended engine: pathCount saturates here so counting stays bounded on dense fan-in. */
+export const MAX_SHORTEST_PATH_COUNT = 1_000_000;
 
 export const IGNORED_DIRECTORIES = new Set([
   'node_modules',
@@ -88,6 +92,8 @@ export interface ImpactPath {
   target: Entity;
   depth: number;
   path: Entity[];
+  /** Extended engine: number of distinct shortest paths to target (capped at MAX_SHORTEST_PATH_COUNT). */
+  pathCount?: number;
 }
 
 export interface EntityImpact {
@@ -98,6 +104,8 @@ export interface EntityImpact {
     totalAffectedEntities: number;
     entities: Entity[];
     paths: ImpactPath[];
+    /** Extended engine: true when affected entities were cut at maxAffectedEntities. */
+    truncated?: boolean;
   };
   terminalDependents: Entity[];
 }
@@ -194,6 +202,8 @@ export interface AnalyzeOptions {
   excludePaths?: string[];
   gitTimeoutMs?: number;
   engine?: EngineProfile;
+  /** Extended engine: cap on affected entities per changed entity (default MAX_AFFECTED_ENTITIES). */
+  maxAffectedEntities?: number;
 }
 
 export interface AnalyzeResult {

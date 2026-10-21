@@ -3,6 +3,7 @@ import {
   DEFAULT_ENGINE,
   ENGINE_PROFILES,
   EVIDENCE_ARTIFACT_KIND,
+  MAX_AFFECTED_ENTITIES,
   EVIDENCE_SCHEMA_VERSION,
   EXTENDED_EVIDENCE_SCHEMA_VERSION,
   type AnalyzeOptions,
@@ -26,8 +27,12 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
   if (options.engine !== undefined && !ENGINE_PROFILES.includes(options.engine)) {
     throw new GraphentraError(`Unknown engine "${String(options.engine)}". Expected one of: ${ENGINE_PROFILES.join(', ')}.`, 'INVALID_OPTIONS');
   }
+  const maxAffected = options.maxAffectedEntities ?? MAX_AFFECTED_ENTITIES;
+  if (!Number.isSafeInteger(maxAffected) || maxAffected < 1) {
+    throw new GraphentraError(`maxAffectedEntities must be a positive integer, got ${String(options.maxAffectedEntities)}.`, 'INVALID_OPTIONS');
+  }
   const engine = options.engine ?? DEFAULT_ENGINE;
-  const repo = createRepositoryContext(options.target, options.comparison, {
+  const repo =createRepositoryContext(options.target, options.comparison, {
     gitTimeoutMs: options.gitTimeoutMs,
     excludePaths: options.excludePaths,
     engine,
@@ -81,7 +86,14 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
   }, engine);
   for (const message of entityWarnings) diagnostics.push({ code: 'AMBIGUOUS_FUNCTION_RANGE', severity: 'warning', message });
   if (engine === 'extended') diagnostics.push(...extraDiagnostics);
-  const impacts = changedEntities.map(changed => buildImpact(changed, extracted.reverseAdjacency, extracted.entityById));
+  const impacts = changedEntities.map(changed => buildImpact(changed, extracted.reverseAdjacency, extracted.entityById,
+    undefined, engine, maxAffected));
+  for (const impact of impacts) {
+    if (impact.blastRadius.truncated) {
+      diagnostics.push({ code: 'BLAST_RADIUS_TRUNCATED', severity: 'info', entityId: impact.changedEntity.id,
+        message: `Blast radius for ${impact.changedEntity.id} was cut at ${maxAffected} affected entities; shallowest and lowest-ID entities are kept.` });
+    }
+  }
   const outcome = extracted.files.length === 0 ? 'no_source_files'
     : changedFiles.length === 0 ? 'no_changes'
     : changedEntities.length === 0 ? 'no_supported_changes' : 'completed';

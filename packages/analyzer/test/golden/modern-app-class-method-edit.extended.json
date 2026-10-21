@@ -1344,7 +1344,8 @@
                 "language": "typescript",
                 "exported": true
               }
-            ]
+            ],
+            "pathCount": 1
           },
           {
             "target": {
@@ -1377,7 +1378,8 @@
                 "endLine": 24,
                 "language": "typescript"
               }
-            ]
+            ],
+            "pathCount": 1
           },
           {
             "target": {
@@ -1422,7 +1424,8 @@
                 "language": "typescript",
                 "exported": true
               }
-            ]
+            ],
+            "pathCount": 1
           },
           {
             "target": {
@@ -1465,62 +1468,11 @@
                 "endLine": 48,
                 "language": "typescript"
               }
-            ]
-          },
-          {
-            "target": {
-              "id": "tests/handlers.test.ts#<module>",
-              "kind": "module",
-              "name": "<module>",
-              "file": "tests/handlers.test.ts",
-              "startLine": 1,
-              "endLine": 48,
-              "language": "typescript"
-            },
-            "depth": 3,
-            "path": [
-              {
-                "id": "src/services/order-service.ts#OrderService.total",
-                "kind": "method",
-                "name": "OrderService.total",
-                "file": "src/services/order-service.ts",
-                "startLine": 20,
-                "endLine": 23,
-                "language": "typescript",
-                "container": "OrderService"
-              },
-              {
-                "id": "src/server/handlers.ts#createOrder",
-                "kind": "function",
-                "name": "createOrder",
-                "file": "src/server/handlers.ts",
-                "startLine": 13,
-                "endLine": 22,
-                "language": "typescript",
-                "exported": true
-              },
-              {
-                "id": "src/server/app.ts#buildApp",
-                "kind": "function",
-                "name": "buildApp",
-                "file": "src/server/app.ts",
-                "startLine": 9,
-                "endLine": 16,
-                "language": "typescript",
-                "exported": true
-              },
-              {
-                "id": "tests/handlers.test.ts#<module>",
-                "kind": "module",
-                "name": "<module>",
-                "file": "tests/handlers.test.ts",
-                "startLine": 1,
-                "endLine": 48,
-                "language": "typescript"
-              }
-            ]
+            ],
+            "pathCount": 1
           }
-        ]
+        ],
+        "truncated": false
       },
       "terminalDependents": [
         {
