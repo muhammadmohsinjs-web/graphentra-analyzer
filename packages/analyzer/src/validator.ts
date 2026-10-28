@@ -3,6 +3,7 @@ const structuralValidator = new Ajv2020({ allErrors: true, strict: true }).compi
 import {
   ANALYZER_VERSION,
   EVIDENCE_ARTIFACT_KIND,
+  CHANGE_CLASSES,
   EVIDENCE_SCHEMA_VERSIONS,
   MAX_BLAST_DEPTH,
   type DeterministicEvidence,
@@ -19,6 +20,63 @@ export interface ValidationResult {
 
 function isObject(val: unknown): val is Record<string, unknown> {
   return typeof val === 'object' && val !== null && !Array.isArray(val);
+}
+
+const relationKey = (relation: Relation): string => `${relation.from}|${relation.type}|${relation.to}`;
+
+/** Returns true when keys are strictly ascending (sorted and unique). */
+function strictlyAscending(keys: string[]): boolean {
+  return keys.every((key, i) => i === 0 || compareStrings(keys[i - 1], key) < 0);
+}
+
+function validatePhase3Fields(evidence: DeterministicEvidence, isExtendedSchema: boolean, errors: string[]): void {
+  if (!isExtendedSchema) {
+    for (const field of ['baseEntities', 'skippedEntities'] as const) {
+      if (evidence[field] !== undefined) errors.push(`${field} is not allowed in schema 2.0.`);
+    }
+    evidence.changedEntities.forEach((changed, i) => {
+      for (const field of ['changeKind', 'baseEntity', 'changeClasses', 'edgeDeltas'] as const) {
+        if (changed[field] !== undefined) errors.push(`changedEntities[${i}].${field} is not allowed in schema 2.0.`);
+      }
+    });
+    evidence.impacts.forEach((impact, i) => {
+      if (impact.contractRisk !== undefined) errors.push(`impacts[${i}].contractRisk is not allowed in schema 2.0.`);
+      impact.blastRadius.paths.forEach((path, p) => {
+        if (path.contractRisk !== undefined) errors.push(`impacts[${i}].blastRadius.paths[${p}].contractRisk is not allowed in schema 2.0.`);
+      });
+    });
+    return;
+  }
+  const baseIds = new Set((evidence.baseEntities ?? []).map(item => item.id));
+  if (evidence.baseEntities !== undefined) {
+    if (!strictlyAscending(evidence.baseEntities.map(item => item.id))) errors.push('baseEntities must be sorted by id with unique ids.');
+  }
+  if (evidence.skippedEntities !== undefined) {
+    if (evidence.skippedEntities.some((item, i) => i > 0 && compareStrings(evidence.skippedEntities![i - 1].entityId, item.entityId) > 0)) {
+      errors.push('skippedEntities must be sorted by entityId.');
+    }
+  }
+  evidence.changedEntities.forEach((changed, i) => {
+    const label = `changedEntities[${i}]`;
+    if (changed.changeKind === 'deleted') {
+      if (!changed.baseEntity) errors.push(`${label}.baseEntity is required when changeKind is "deleted".`);
+      else if (!baseIds.has(changed.baseEntity.id)) errors.push(`${label}.baseEntity.id "${changed.baseEntity.id}" must appear in baseEntities.`);
+    }
+    if (changed.changeKind === 'renamed' && !changed.baseEntity) errors.push(`${label}.baseEntity is required when changeKind is "renamed".`);
+    if (changed.changeClasses !== undefined) {
+      if (changed.changeClasses.some(value => !(CHANGE_CLASSES as readonly string[]).includes(value))) {
+        errors.push(`${label}.changeClasses must only contain ${CHANGE_CLASSES.join(', ')}.`);
+      }
+      if (!strictlyAscending(changed.changeClasses)) errors.push(`${label}.changeClasses must be sorted ascending and unique.`);
+    }
+    if (changed.edgeDeltas !== undefined) {
+      for (const side of ['added', 'removed'] as const) {
+        if (!strictlyAscending(changed.edgeDeltas[side].map(relationKey))) {
+          errors.push(`${label}.edgeDeltas.${side} must be sorted by from|type|to and unique.`);
+        }
+      }
+    }
+  });
 }
 
 export function validateEvidenceEnvelope(data: unknown): ValidationResult {
@@ -221,6 +279,13 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
   }
 
   // Changed files, changed entities, impacts
+  // Deleted entities live only in the base snapshot, so they may be absent from technicalGraph.
+  const deletedIds = new Set<string>();
+  if (Array.isArray(data.changedEntities)) {
+    for (const item of data.changedEntities) {
+      if (isObject(item) && item.changeKind === 'deleted' && isObject(item.entity) && typeof item.entity.id === 'string') deletedIds.add(item.entity.id);
+    }
+  }
   if (!Array.isArray(data.changedFiles)) {
     errors.push('changedFiles must be an array.');
   }
@@ -237,7 +302,7 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
         continue;
       }
       const changedEntity = impact.changedEntity as Entity | undefined;
-      if (!isObject(changedEntity) || typeof changedEntity.id !== 'string' || !entityMap.has(changedEntity.id)) {
+      if (!isObject(changedEntity) || typeof changedEntity.id !== 'string' || (!entityMap.has(changedEntity.id) && !deletedIds.has(changedEntity.id))) {
         errors.push(`impacts[${i}].changedEntity must exist in technicalGraph.entities.`);
       }
       if (isObject(impact.blastRadius) && Array.isArray(impact.blastRadius.paths)) {
@@ -294,6 +359,7 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
       : value);
   }
   function canonicalEntity(entity: Entity) {
+    if (deletedIds.has(entity.id) && !entityMap.has(entity.id)) return;
     if (!equal(entityMap.get(entity.id), entity)) errors.push('Embedded entity differs from canonical graph entity.');
   }
   function sameSet(actual: string[], expected: string[], label: string) {
@@ -339,6 +405,7 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
     for (const entity of [...impact.blastRadius.entities, ...impact.directDependents, ...impact.terminalDependents]) canonicalEntity(entity);
     if (impact.blastRadius.totalAffectedEntities !== new Set(affected).size) errors.push('Affected entity count mismatch.');
   }
+  validatePhase3Fields(evidence, isExtendedSchema, errors);
   for (const diagnostic of evidence.diagnostics) {
     if (diagnostic.entityId && !entityMap.has(diagnostic.entityId)) errors.push('Diagnostic entity is absent from graph.');
   }

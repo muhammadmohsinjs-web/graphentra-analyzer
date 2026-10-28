@@ -85,9 +85,32 @@ export interface FunctionRange {
   endLine: number;
 }
 
+/** Schema 2.1: how a changed entity differs between the base and head snapshots. */
+export type ChangeKind = 'added' | 'deleted' | 'modified' | 'renamed';
+
+/** Schema 2.1: sorted ascending in evidence; the validator requires compareStrings order. */
+export const CHANGE_CLASSES = ['added', 'body', 'cosmetic', 'deleted', 'export_surface', 'log_only', 'renamed', 'signature', 'test_only'] as const;
+export type ChangeClass = typeof CHANGE_CLASSES[number];
+
+/** Schema 2.1: where an entity lived in the base snapshot. */
+export interface EntityCoordinates {
+  id: string;
+  file: string;
+  startLine: number;
+  endLine: number;
+}
+
 export interface ChangedEntity {
   entity: Entity;
   change: EntityChange;
+  /** Schema 2.1: deleted entities may be absent from technicalGraph (head snapshot). */
+  changeKind?: ChangeKind;
+  /** Schema 2.1: base-snapshot location; required for 'deleted' and 'renamed', and listed in evidence.baseEntities when deleted. */
+  baseEntity?: EntityCoordinates;
+  /** Schema 2.1: sorted, unique. */
+  changeClasses?: ChangeClass[];
+  /** Schema 2.1: relation edges added/removed for this entity, each sorted by from|type|to and unique. */
+  edgeDeltas?: { added: Relation[]; removed: Relation[] };
 }
 
 export interface ImpactPath {
@@ -98,6 +121,8 @@ export interface ImpactPath {
   pathCount?: number;
   /** Extended engine: stepTypes[i] is the type of the relation from path[i + 1] to path[i]. */
   stepTypes?: RelationType[];
+  /** Schema 2.1: set on depth-1 paths when the changed entity's contract changed. */
+  contractRisk?: boolean;
 }
 
 export interface EntityImpact {
@@ -112,6 +137,8 @@ export interface EntityImpact {
     truncated?: boolean;
   };
   terminalDependents: Entity[];
+  /** Schema 2.1: true when the changed entity's contract changed. */
+  contractRisk?: boolean;
 }
 
 export interface DiagnosticItem {
@@ -194,6 +221,10 @@ export interface DeterministicEvidence {
   impacts: EntityImpact[];
   diagnostics: DiagnosticItem[];
   limitations: string[];
+  /** Schema 2.1: base-snapshot coordinates of deleted entities, sorted and unique by id. */
+  baseEntities?: EntityCoordinates[];
+  /** Schema 2.1: changed entities skipped from impact analysis, sorted by entityId. */
+  skippedEntities?: Array<{ entityId: string; reason: 'cosmetic' | 'test_only' }>;
 }
 
 export type EngineProfile = 'legacy' | 'extended';

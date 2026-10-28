@@ -126,6 +126,35 @@
         "type": "string",
         "minLength": 1
       }
+    },
+    "baseEntities": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/entityCoordinates"
+      }
+    },
+    "skippedEntities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "entityId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "enum": [
+              "cosmetic",
+              "test_only"
+            ]
+          }
+        },
+        "required": [
+          "entityId",
+          "reason"
+        ],
+        "additionalProperties": false
+      }
     }
   },
   "required": [
@@ -380,6 +409,56 @@
         },
         "change": {
           "$ref": "#/$defs/change"
+        },
+        "changeKind": {
+          "enum": [
+            "added",
+            "deleted",
+            "modified",
+            "renamed"
+          ]
+        },
+        "baseEntity": {
+          "$ref": "#/$defs/entityCoordinates"
+        },
+        "changeClasses": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "added",
+              "body",
+              "cosmetic",
+              "deleted",
+              "export_surface",
+              "log_only",
+              "renamed",
+              "signature",
+              "test_only"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "edgeDeltas": {
+          "type": "object",
+          "properties": {
+            "added": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/relation"
+              }
+            },
+            "removed": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/relation"
+              }
+            }
+          },
+          "required": [
+            "added",
+            "removed"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -424,6 +503,9 @@
           },
           "minItems": 1,
           "maxItems": 6
+        },
+        "contractRisk": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -483,6 +565,9 @@
           "items": {
             "$ref": "#/$defs/entity"
           }
+        },
+        "contractRisk": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -730,6 +815,34 @@
         "code",
         "severity",
         "message"
+      ],
+      "additionalProperties": false
+    },
+    "entityCoordinates": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "file": {
+          "type": "string",
+          "minLength": 1
+        },
+        "startLine": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "endLine": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "id",
+        "file",
+        "startLine",
+        "endLine"
       ],
       "additionalProperties": false
     }
