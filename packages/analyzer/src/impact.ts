@@ -12,6 +12,8 @@ import {
   STEP_TYPE_PRECEDENCE,
   type EngineProfile,
   type ChangedEntity,
+  type EntityChange,
+  type EntityCoordinates,
   type ChangedFile,
   type DiagnosticItem,
   type FunctionRange,
@@ -21,6 +23,9 @@ import {
   type Relation,
   type RelationType,
 } from './contracts';
+import { baseToHeadId, correspond, type Correspondence, type FingerprintedEntity } from './correspondence';
+import { compareStrings } from './deterministic';
+import type { ExtractedGraph } from './technical-graph';
 
 export function getCallers(
   entityId: string,
@@ -369,5 +374,154 @@ export function findChangedEntities(options: {
     changedEntities,
     diagnostics,
     extraDiagnostics,
+  };
+}
+
+/** Entities and relations of one snapshot, as needed to compare the base graph with the head graph. */
+export type GraphView = Pick<ExtractedGraph, 'entities' | 'relations' | 'parentById' | 'entityById' | 'reverseAdjacency'>;
+
+const relationKey = (relation: Relation): string => `${relation.from}|${relation.type}|${relation.to}`;
+
+export const entityCoordinates = ({ id, file, startLine, endLine }: Entity): EntityCoordinates => ({ id, file, startLine, endLine });
+
+/**
+ * Pairs base and head entities of the changed files only. Entities without a fingerprint never pair by
+ * fingerprint, so they stay deleted + added. Returned entities are the graph's own objects.
+ */
+export function correspondChangedFiles(options: {
+  changedFiles: ChangedFile[];
+  head: GraphView;
+  base: GraphView;
+  headFingerprints: Map<string, string>;
+  baseFingerprints: Map<string, string>;
+}): Correspondence {
+  const { changedFiles, head, base, headFingerprints, baseFingerprints } = options;
+  const headFiles = new Set(changedFiles.map(change => change.file));
+  const baseFiles = new Set(changedFiles.flatMap(change => change.oldFile ? [change.oldFile] : []));
+  const prepare = (graph: GraphView, files: Set<string>, fingerprints: Map<string, string>, side: string): FingerprintedEntity[] =>
+    graph.entities.filter(entity => files.has(entity.file))
+      .map(entity => ({ ...entity, fp: fingerprints.get(entity.id) ?? `\0${side}:${entity.id}` }));
+  const result = correspond(prepare(base, baseFiles, baseFingerprints, 'base'), prepare(head, headFiles, headFingerprints, 'head'));
+  const baseOf = (entity: Entity): Entity => base.entityById.get(entity.id) ?? entity;
+  const headOf = (entity: Entity): Entity => head.entityById.get(entity.id) ?? entity;
+  const pairs = (list: Correspondence['matched']) => list.map(pair => ({ base: baseOf(pair.base), head: headOf(pair.head) }));
+  return {
+    matched: pairs(result.matched), renamed: pairs(result.renamed), moved: pairs(result.moved),
+    added: result.added.map(headOf), deleted: result.deleted.map(baseOf),
+    ambiguous: result.ambiguous.map(group => ({ fp: group.fp, base: group.base.map(baseOf), head: group.head.map(headOf) })),
+  };
+}
+
+function outgoingByEntity(relations: Relation[]): Map<string, Relation[]> {
+  const outgoing = new Map<string, Relation[]>();
+  for (const relation of relations) {
+    const list = outgoing.get(relation.from) ?? [];
+    list.push(relation);
+    outgoing.set(relation.from, list);
+  }
+  return outgoing;
+}
+
+const sortedRelations = (relations: Map<string, Relation>): Relation[] =>
+  [...relations].sort(([a], [b]) => compareStrings(a, b)).map(([, relation]) => relation);
+
+/** Base ids go through the correspondence before the set difference, so a rename alone is not an edge change (D8). */
+function edgeDeltas(
+  headOut: Relation[], baseOut: Relation[], toHead: Map<string, string>,
+): ChangedEntity['edgeDeltas'] {
+  const current = new Map(headOut.map(relation => [relationKey(relation), relation]));
+  const previous = new Map<string, Relation>();
+  for (const relation of baseOut) {
+    const mapped: Relation = { from: toHead.get(relation.from) ?? relation.from, to: toHead.get(relation.to) ?? relation.to, type: relation.type };
+    previous.set(relationKey(mapped), mapped);
+  }
+  const added = sortedRelations(new Map([...current].filter(([key]) => !previous.has(key))));
+  const removed = sortedRelations(new Map([...previous].filter(([key]) => !current.has(key))));
+  return added.length || removed.length ? { added, removed } : undefined;
+}
+
+/** A deleted entity's change is its removed lines, in base line numbers (it has no head location). */
+function deletedEntityChange(entity: Entity, base: GraphView, changedFiles: ChangedFile[]): EntityChange {
+  const file = changedFiles.find(change => (change.oldFile ?? change.file) === entity.file);
+  const children = base.entities.filter(other => base.parentById.get(other.id) === entity.id);
+  const own = (line: number) => line >= entity.startLine && line <= entity.endLine &&
+    !children.some(child => line >= child.startLine && line <= child.endLine);
+  const change = file && extractEntityChange(file, { name: entity.name, startLine: 0, endLine: -1 },
+    { name: entity.name, startLine: entity.startLine, endLine: entity.endLine }, { current: [], previous: children });
+  const changedLines = new Set<number>();
+  for (const line of file?.hunks.flatMap(hunk => hunk.lines) ?? []) {
+    if (line.kind === '-' && own(line.oldLine)) changedLines.add(line.oldLine);
+  }
+  return {
+    file: entity.file,
+    changedLines: [...changedLines].sort((a, b) => a - b),
+    addedCode: [],
+    removedCode: change?.removedCode ?? [],
+    diff: change?.diff ?? `--- a/${entity.file}\n+++ /dev/null`,
+  };
+}
+
+/**
+ * Head changed entities gain changeKind/baseEntity/edgeDeltas; base-only entities become 'deleted' changes
+ * appended in id order. Extended engine only.
+ */
+export function applyCorrespondence(options: {
+  changedEntities: ChangedEntity[];
+  changedFiles: ChangedFile[];
+  head: GraphView;
+  base: GraphView;
+  correspondence: Correspondence;
+}): ChangedEntity[] {
+  const { changedEntities, changedFiles, head, base, correspondence } = options;
+  const toHead = baseToHeadId(correspondence);
+  const headOut = outgoingByEntity(head.relations);
+  const baseOut = outgoingByEntity(base.relations);
+  const counterpart = new Map<string, { base: Entity; kind: 'modified' | 'renamed' }>();
+  for (const pair of correspondence.matched) counterpart.set(pair.head.id, { base: pair.base, kind: 'modified' });
+  for (const pair of [...correspondence.renamed, ...correspondence.moved]) counterpart.set(pair.head.id, { base: pair.base, kind: 'renamed' });
+
+  const annotated = changedEntities.map((changed): ChangedEntity => {
+    const pair = counterpart.get(changed.entity.id);
+    if (!pair) return { ...changed, changeKind: 'added' };
+    const deltas = edgeDeltas(headOut.get(changed.entity.id) ?? [], baseOut.get(pair.base.id) ?? [], toHead);
+    return {
+      ...changed,
+      changeKind: pair.kind,
+      ...(pair.kind === 'renamed' ? { baseEntity: entityCoordinates(pair.base) } : {}),
+      ...(deltas ? { edgeDeltas: deltas } : {}),
+    };
+  });
+  const deleted = correspondence.deleted.map((entity): ChangedEntity => {
+    const removed = sortedRelations(new Map((baseOut.get(entity.id) ?? []).map(relation => [relationKey(relation), relation])));
+    return {
+      entity,
+      change: deletedEntityChange(entity, base, changedFiles),
+      changeKind: 'deleted',
+      baseEntity: entityCoordinates(entity),
+      ...(removed.length ? { edgeDeltas: { added: [], removed } } : {}),
+    };
+  });
+  return [...annotated, ...deleted];
+}
+
+/** D7: callers of a deleted entity as they were in the base graph; entities that survive are reported as their head versions. */
+export function buildDeletedImpact(
+  changed: ChangedEntity,
+  base: GraphView,
+  head: GraphView,
+  toHead: Map<string, string>,
+  maxAffectedEntities: number,
+): EntityImpact {
+  const impact = buildImpact(changed, base.reverseAdjacency, base.entityById, undefined, 'extended', maxAffectedEntities);
+  const current = (entity: Entity): Entity => head.entityById.get(toHead.get(entity.id) ?? entity.id) ?? entity;
+  return {
+    ...impact,
+    directDependents: impact.directDependents.map(current),
+    blastRadius: {
+      ...impact.blastRadius,
+      entities: impact.blastRadius.entities.map(current),
+      paths: impact.blastRadius.paths.map(path => ({ ...path, target: current(path.target), path: path.path.map(current) })),
+    },
+    terminalDependents: impact.terminalDependents.map(current),
   };
 }

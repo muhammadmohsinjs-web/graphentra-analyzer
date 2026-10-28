@@ -286,6 +286,14 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
       if (isObject(item) && item.changeKind === 'deleted' && isObject(item.entity) && typeof item.entity.id === 'string') deletedIds.add(item.entity.id);
     }
   }
+  // Deleted-entity impacts walk the base graph: their paths may pass through entities listed in baseEntities,
+  // and the base relations are not in evidence, so relation continuity is not checked for them.
+  const baseCoordinates = new Map<string, unknown>();
+  if (Array.isArray(data.baseEntities)) {
+    for (const item of data.baseEntities) {
+      if (isObject(item) && typeof item.id === 'string') baseCoordinates.set(item.id, item);
+    }
+  }
   if (!Array.isArray(data.changedFiles)) {
     errors.push('changedFiles must be an array.');
   }
@@ -324,8 +332,16 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
           if (depth > MAX_BLAST_DEPTH) {
             errors.push(`impacts[${i}].blastRadius.paths[${pIdx}] depth (${depth}) exceeds MAX_BLAST_DEPTH (${MAX_BLAST_DEPTH}).`);
           }
+          const baseWalk = typeof changedEntity?.id === 'string' && deletedIds.has(changedEntity.id);
+          if (baseWalk) {
+            for (const node of pathArr) {
+              if (!entityMap.has(node.id) && !baseCoordinates.has(node.id)) {
+                errors.push(`impacts[${i}].blastRadius.paths[${pIdx}] entity "${node.id}" must exist in technicalGraph.entities or baseEntities.`);
+              }
+            }
+          }
           // Path continuity check: each step is connected by relation in reverse (caller -> callee)
-          for (let step = 0; step < pathArr.length - 1; step++) {
+          for (let step = 0; step < pathArr.length - 1 && !baseWalk; step++) {
             const callee = pathArr[step];
             const caller = pathArr[step + 1];
             if (!relationPairSet.has(`${caller.id}->${callee.id}`)) {
@@ -337,7 +353,7 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
             if (!Array.isArray(stepTypes) || stepTypes.length !== pathArr.length - 1) {
               errors.push(`impacts[${i}].blastRadius.paths[${pIdx}] stepTypes length must equal depth.`);
             } else {
-              stepTypes.forEach((type, step) => {
+              if (!baseWalk) stepTypes.forEach((type, step) => {
                 if (!relationTripleSet.has(`${pathArr[step + 1].id}|${type}|${pathArr[step].id}`)) {
                   errors.push(`impacts[${i}].blastRadius.paths[${pIdx}] stepTypes[${step}] "${String(type)}" has no matching relation.`);
                 }
@@ -358,7 +374,14 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
         : Object.fromEntries(Object.keys(value).sort().map(key => [key, JSON.parse(canonical(value[key]))]))
       : value);
   }
-  function canonicalEntity(entity: Entity) {
+  function canonicalEntity(entity: Entity, baseWalk = false) {
+    if (baseWalk && !entityMap.has(entity.id)) {
+      const listed = baseCoordinates.get(entity.id) as Entity | undefined;
+      if (!listed || listed.file !== entity.file || listed.startLine !== entity.startLine || listed.endLine !== entity.endLine) {
+        errors.push('Embedded base entity differs from baseEntities coordinates.');
+      }
+      return;
+    }
     if (deletedIds.has(entity.id) && !entityMap.has(entity.id)) return;
     if (!equal(entityMap.get(entity.id), entity)) errors.push('Embedded entity differs from canonical graph entity.');
   }
@@ -385,13 +408,14 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
     if (changed.change.file !== changed.entity.file || changed.change.changedLines.some(line => line < changed.entity.startLine || line > changed.entity.endLine)) errors.push('Changed lines or file outside entity.');
   }
   for (const impact of evidence.impacts) {
+    const baseWalk = deletedIds.has(impact.changedEntity.id);
     canonicalEntity(impact.changedEntity);
     const changed = evidence.changedEntities.find(item => item.entity.id === impact.changedEntity.id);
     if (!changed || !equal(changed.change, impact.change)) errors.push('Impact change does not match changed entity.');
     const keys = new Set<string>();
     for (const recorded of impact.blastRadius.paths) {
       const nodes = recorded.path;
-      for (const entity of [...nodes, recorded.target]) canonicalEntity(entity);
+      for (const entity of [...nodes, recorded.target]) canonicalEntity(entity, baseWalk);
       if (nodes[0].id !== impact.changedEntity.id || nodes.at(-1)!.id !== recorded.target.id ||
           new Set(nodes.map(entity => entity.id)).size !== nodes.length) errors.push('Invalid path start, target, or cycle.');
       const key = JSON.stringify(nodes.map(entity => entity.id));
@@ -401,8 +425,9 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
     const affected = impact.blastRadius.paths.map(item => item.target.id);
     sameSet(impact.blastRadius.entities.map(item => item.id), affected, 'Affected entities');
     sameSet(impact.directDependents.map(item => item.id), impact.blastRadius.paths.filter(item => item.depth === 1).map(item => item.target.id), 'Direct dependents');
-    sameSet(impact.terminalDependents.map(item => item.id), affected.filter(id => !graph.relations.some(relation => relation.to === id)), 'Terminal dependents');
-    for (const entity of [...impact.blastRadius.entities, ...impact.directDependents, ...impact.terminalDependents]) canonicalEntity(entity);
+    // Terminal dependents of a deleted entity are decided on the base graph, which evidence does not carry.
+    if (!baseWalk) sameSet(impact.terminalDependents.map(item => item.id), affected.filter(id => !graph.relations.some(relation => relation.to === id)), 'Terminal dependents');
+    for (const entity of [...impact.blastRadius.entities, ...impact.directDependents, ...impact.terminalDependents]) canonicalEntity(entity, baseWalk);
     if (impact.blastRadius.totalAffectedEntities !== new Set(affected).size) errors.push('Affected entity count mismatch.');
   }
   validatePhase3Fields(evidence, isExtendedSchema, errors);

@@ -9,6 +9,9 @@ import {
   type AnalyzeOptions,
   type AnalyzeResult,
   type DiagnosticItem,
+  type Entity,
+  type EntityCoordinates,
+  type EntityImpact,
   type EngineProfile,
   type DeterministicEvidence,
 } from './contracts';
@@ -16,7 +19,11 @@ import { compareStrings } from './deterministic';
 import { GraphentraError } from './errors';
 import { parseGitDiff } from './change-evidence';
 import { computeAttribution } from './attribution';
-import { buildImpact, findChangedEntities } from './impact';
+import { baseToHeadId } from './correspondence';
+import {
+  applyCorrespondence, buildDeletedImpact, buildImpact, correspondChangedFiles, entityCoordinates, findChangedEntities,
+} from './impact';
+import { fingerprint, normalizeNode } from './ast-normalize';
 import { DEFAULT_LIMITATIONS, EXTENDED_LIMITATIONS } from './output';
 import { createBaselineSnapshot } from './baseline-host';
 import { captureSourceSnapshot } from './source-snapshot';
@@ -47,6 +54,7 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
   const headSha = repo.comparison.resolvedHeadSha ?? repo.sourceState.checkoutSha;
 
   const snapshot = captureSourceSnapshot(repo, engine);
+  const headFingerprints = new Map<string, string>();
   const extracted = extractTechnicalGraph({
     files: snapshot.files,
     compilerOptions: snapshot.compilerOptions,
@@ -56,6 +64,7 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
     targetPath,
     excludePaths: options.excludePaths,
     engine,
+    onEntityNode: engine === 'extended' ? fingerprintCollector(headFingerprints) : undefined,
   });
   // Extended engine: stamp language once, so graph, changed entities and impacts share the same objects.
   if (engine === 'extended') for (const entity of extracted.entities) entity.language ??= 'typescript';
@@ -95,16 +104,16 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
         message: `Changes in non-source files were reported but not traversed: ${nonSource.map(item => `${item.file} (${item.origin})`).join(', ')}` });
     }
   }
-  // Base graph (P3-1): internal until the evidence schema carries it; D11 skips it when nothing analyzable changed.
-  const baseGraph = engine === 'extended' && supportedChanges.length > 0
-    ? extractBaseGraph(repo, engine, { headCompilerOptions: snapshot.compilerOptions })
+  // D11: the base graph is only built when something analyzable changed.
+  const baseFingerprints = new Map<string, string>();
+  const baseGraph = engine === 'extended' && supportedChanges.length > 0 && extracted.files.length > 0
+    ? extractBaseGraph(repo, engine, { headCompilerOptions: snapshot.compilerOptions, onEntityNode: fingerprintCollector(baseFingerprints) }).graph
     : undefined;
-  void baseGraph;
   if (changedFiles.some(change => !isAnalyzableFile(change.file, engine))) {
     diagnostics.push({ code: 'OUTSIDE_SUPPORTED_SCOPE', severity: 'warning',
       message: 'Changes outside TypeScript extraction scope were not analyzed for function impact.' });
   }
-  const { changedEntities, diagnostics: entityWarnings, extraDiagnostics } = findChangedEntities({
+  const { changedEntities: headChangedEntities, diagnostics: entityWarnings, extraDiagnostics } = findChangedEntities({
     changedFiles: supportedChanges,
     entities: extracted.entities,
     parentById: extracted.parentById,
@@ -112,8 +121,37 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
   }, engine);
   for (const message of entityWarnings) diagnostics.push({ code: 'AMBIGUOUS_FUNCTION_RANGE', severity: 'warning', message });
   if (engine === 'extended') diagnostics.push(...extraDiagnostics);
-  const impacts = changedEntities.map(changed => buildImpact(changed, extracted.reverseAdjacency, extracted.entityById,
-    undefined, engine, maxAffected));
+  let changedEntities = headChangedEntities;
+  let impacts: EntityImpact[];
+  const baseOnly = new Map<string, EntityCoordinates>();
+  if (baseGraph) {
+    const correspondence = correspondChangedFiles({ changedFiles: supportedChanges, head: extracted, base: baseGraph,
+      headFingerprints, baseFingerprints });
+    for (const group of correspondence.ambiguous) {
+      diagnostics.push({ code: 'AMBIGUOUS_CORRESPONDENCE', severity: 'warning',
+        message: `Ambiguous correspondence between base [${group.base.map(entity => entity.id).join(', ')}] and head [${group.head.map(entity => entity.id).join(', ')}]; treated as deleted plus added.` });
+    }
+    changedEntities = applyCorrespondence({ changedEntities: headChangedEntities, changedFiles: supportedChanges,
+      head: extracted, base: baseGraph, correspondence });
+    const toHead = baseToHeadId(correspondence);
+    impacts = changedEntities.map(changed => changed.changeKind === 'deleted'
+      ? buildDeletedImpact(changed, baseGraph, extracted, toHead, maxAffected)
+      : buildImpact(changed, extracted.reverseAdjacency, extracted.entityById, undefined, engine, maxAffected));
+    const noteBaseOnly = (entity: Entity) => {
+      if (!extracted.entityById.has(entity.id)) baseOnly.set(entity.id, entityCoordinates(entity));
+    };
+    for (const changed of changedEntities) {
+      if (changed.baseEntity) baseOnly.set(changed.baseEntity.id, changed.baseEntity);
+    }
+    for (const impact of impacts) {
+      noteBaseOnly(impact.changedEntity);
+      for (const path of impact.blastRadius.paths) path.path.forEach(noteBaseOnly);
+    }
+  } else {
+    impacts = changedEntities.map(changed => buildImpact(changed, extracted.reverseAdjacency, extracted.entityById,
+      undefined, engine, maxAffected));
+  }
+  const baseEntities = [...baseOnly.values()].sort((a, b) => compareStrings(a.id, b.id));
   for (const impact of impacts) {
     if (impact.blastRadius.truncated) {
       diagnostics.push({ code: 'BLAST_RADIUS_TRUNCATED', severity: 'info', entityId: impact.changedEntity.id,
@@ -147,6 +185,7 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
     ...(extended ? { toolchain: buildToolchainRecord() } : {}),
     outcome, technicalGraph: extracted.technicalGraph, changedFiles, changedEntities, impacts,
     diagnostics, limitations: [...(extended ? EXTENDED_LIMITATIONS : DEFAULT_LIMITATIONS)],
+    ...(baseEntities.length > 0 ? { baseEntities } : {}),
   };
   snapshot.verify();
   assertValidEvidenceEnvelope(evidence);
@@ -160,6 +199,18 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
 }
 
 type BaseNodeHook = NonNullable<Parameters<typeof extractTechnicalGraph>[0]['onEntityNode']>;
+
+/** Fingerprints are computed while the AST is alive (D3); module entities pair by id only and are not fingerprinted. */
+function fingerprintCollector(into: Map<string, string>): BaseNodeHook {
+  return (entity, node) => {
+    if (entity.kind === 'module') return;
+    try {
+      into.set(entity.id, fingerprint(normalizeNode(node, { renameParams: true })));
+    } catch {
+      // An unfingerprintable entity never pairs by fingerprint, so it stays deleted plus added.
+    }
+  };
+}
 
 /** Graph of the base revision, built from Git objects through a host that never touches the head snapshot's reads. */
 export function extractBaseGraph(

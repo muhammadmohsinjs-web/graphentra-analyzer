@@ -254,9 +254,11 @@ test('baseline: a file rename plus an edit inside an arrow keeps removedCode att
     engine: 'extended',
   });
   assert.equal(result.changedFiles[0]!.oldFile, 'src/old-name.ts');
-  assert.deepEqual(changedIds(result), ['src/new-name.ts#compute']);
-  assert.deepEqual(result.changedEntities[0]!.change.removedCode, ['  const bumped = doubled + x;']);
-  assert.deepEqual(result.changedEntities[0]!.change.addedCode, ['  const bumped = doubled + x + 1;']);
+  // An edited body does not fingerprint-match across the rename, so the old entities are deleted (conservative).
+  assert.deepEqual(changedIds(result), ['src/new-name.ts#compute', 'src/old-name.ts#<module>', 'src/old-name.ts#compute']);
+  const compute = result.changedEntities.find(changed => changed.entity.id === 'src/new-name.ts#compute')!;
+  assert.deepEqual(compute.change.removedCode, ['  const bumped = doubled + x;']);
+  assert.deepEqual(compute.change.addedCode, ['  const bumped = doubled + x + 1;']);
   assertValid(result);
 });
 

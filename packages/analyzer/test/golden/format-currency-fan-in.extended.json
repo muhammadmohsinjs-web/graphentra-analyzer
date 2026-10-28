@@ -583,7 +583,8 @@
           "  return `$${rounded.toFixed(2)}`;"
         ],
         "diff": "--- a/src/utils.ts\n+++ b/src/utils.ts\n@@ -5,4 +5,4 @@\n export function formatCurrency(amount: number): string {\n   const rounded = roundToTwo(amount);\n-  return `$${rounded.toFixed(2)}`;\n+  return `$${rounded.toFixed(3)}`;\n }"
-      }
+      },
+      "changeKind": "modified"
     }
   ],
   "impacts": [
@@ -1209,7 +1210,7 @@
     "Classes, interfaces, type aliases, and enums are not entities.",
     "Relationships are CALLS, RENDERS (JSX elements), INSTANTIATES (new expressions), and REFERENCES (functions passed or stored as values).",
     "Dynamic calls and calls through interface-typed receivers are not analyzed.",
-    "Deleted entities have no current graph entity; renamed entities may lack removed-code evidence.",
+    "Renamed entities may lack removed-code evidence.",
     "Partially overlapping entity line ranges are skipped rather than sharing ambiguous evidence.",
     "Application surfaces are not yet discovered.",
     "Blast radius is limited to depth 6."

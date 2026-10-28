@@ -64,7 +64,9 @@ for (const direction of ['incoming', 'outgoing', 'internal']) {
         comparison: { mode: 'commit', base, head: 'HEAD' } });
       assert.ok(result.changedFiles.length > 0);
       assert.ok(result.changedFiles.every(item => !item.file.startsWith('../') && !item.file.startsWith('target/')));
-      assert.equal(result.outcome, direction === 'outgoing' ? 'no_supported_changes' : 'completed');
+      assert.equal(result.outcome, 'completed');
+      // Leaving the target is a deletion from the target's point of view (the extended engine reports it).
+      if (direction === 'outgoing') assert.deepEqual(result.changedEntities.map(item => `${item.entity.id}:${item.changeKind}`), ['before.ts#<module>:deleted', 'before.ts#renamed:deleted']);
       if (direction === 'incoming') assert.equal(result.changedFiles[0]?.oldFile, undefined);
       if (direction === 'internal') assert.equal(result.changedFiles[0]?.oldFile, 'before.ts');
     } finally { repo.cleanup(); }
