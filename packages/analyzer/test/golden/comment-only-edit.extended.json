@@ -572,42 +572,20 @@
         ],
         "removedCode": [],
         "diff": "--- a/src/utils.ts\n+++ b/src/utils.ts\n@@ -18,1 +18,2 @@\n \n+// ids are time based"
-      }
+      },
+      "changeKind": "modified",
+      "changeClasses": [
+        "cosmetic"
+      ]
     }
   ],
-  "impacts": [
-    {
-      "changedEntity": {
-        "id": "src/utils.ts#<module>",
-        "kind": "module",
-        "name": "<module>",
-        "file": "src/utils.ts",
-        "startLine": 1,
-        "endLine": 23,
-        "language": "typescript"
-      },
-      "change": {
-        "file": "src/utils.ts",
-        "changedLines": [
-          19
-        ],
-        "addedCode": [
-          "// ids are time based"
-        ],
-        "removedCode": [],
-        "diff": "--- a/src/utils.ts\n+++ b/src/utils.ts\n@@ -18,1 +18,2 @@\n \n+// ids are time based"
-      },
-      "directDependents": [],
-      "blastRadius": {
-        "totalAffectedEntities": 0,
-        "entities": [],
-        "paths": [],
-        "truncated": false
-      },
-      "terminalDependents": []
-    }
-  ],
+  "impacts": [],
   "diagnostics": [
+    {
+      "code": "COSMETIC_CHANGES_SKIPPED",
+      "severity": "info",
+      "message": "Formatting- or comment-only changes were not traversed: src/utils.ts#<module>"
+    },
     {
       "code": "ATTRIBUTED_LINE_RATIO",
       "severity": "info",
@@ -620,9 +598,15 @@
     "Classes, interfaces, type aliases, and enums are not entities.",
     "Relationships are CALLS, RENDERS (JSX elements), INSTANTIATES (new expressions), and REFERENCES (functions passed or stored as values).",
     "Dynamic calls and calls through interface-typed receivers are not analyzed.",
-    "Deleted entities have no current graph entity; renamed entities may lack removed-code evidence.",
+    "Renamed entities may lack removed-code evidence.",
     "Partially overlapping entity line ranges are skipped rather than sharing ambiguous evidence.",
     "Application surfaces are not yet discovered.",
     "Blast radius is limited to depth 6."
+  ],
+  "skippedEntities": [
+    {
+      "entityId": "src/utils.ts#<module>",
+      "reason": "cosmetic"
+    }
   ]
 }

@@ -34,7 +34,7 @@ function readFixture(fixture: string): Files {
 
 function replaceOnce(source: string, from: string, to: string): string {
   assert.ok(source.includes(from), `fixture no longer contains: ${from}`);
-  return source.replace(from, to);
+  return source.replace(from, () => to);
 }
 
 /** Replace volatile values (SHAs, version, timestamp, content hash) with stable placeholders. */
@@ -76,6 +76,8 @@ type Scenario = {
   /** Returns the edited files; omitted files stay unchanged. Return undefined for no edit. */
   edit?: (files: Files) => Files;
   mode?: 'commit' | 'working-tree';
+  /** Base-snapshot evidence (P3-3, P3-4) exists only in the extended engine. */
+  extendedOnly?: boolean;
 };
 
 const scenarios: Scenario[] = [
@@ -107,9 +109,41 @@ const scenarios: Scenario[] = [
     'src/components/OrderList.tsx': f['src/components/OrderList.tsx'] + '\n// touched\nconst touched = () => 1;\n' }) },
   { name: 'modern-app-named-function-edit', fixture: 'modern-app', expectedOutcome: 'completed', edit: f => ({
     'src/utils/format.ts': replaceOnce(f['src/utils/format.ts'], '.trim()', '.trim().normalize()') }) },
+  { name: 'delete-charge-card', extendedOnly: true, expectedOutcome: 'completed', edit: f => ({
+    'src/billing.ts': replaceOnce(f['src/billing.ts'], `export function chargeCard(amount: number, cardToken: string): boolean {
+  if (!cardToken || amount <= 1) {
+    return false;
+  }
+  return true;
+}
+
+`, '') }) },
+  { name: 'rename-charge-card', extendedOnly: true, expectedOutcome: 'completed', edit: f => ({
+    'src/billing.ts': f['src/billing.ts'].replace('chargeCard', 'captureCard').replace('chargeCard', 'captureCard') }) },
+  // submitOrder reaches applyDiscount through calculateOrderTotal, which holds the direct CALLS edge.
+  { name: 'drop-apply-discount-call', extendedOnly: true, expectedOutcome: 'completed', edit: f => ({
+    'src/pricing.ts': replaceOnce(f['src/pricing.ts'], 'applyDiscount(subtotal, discountPercentage);', 'subtotal;') }) },
+  // One scenario per change class (P3-5, P3-7): cosmetic and test_only edits are skipped; contract changes flag dependents.
+  { name: 'class-cosmetic-reformat', extendedOnly: true, expectedOutcome: 'completed', edit: f => ({
+    'src/utils.ts': replaceOnce(f['src/utils.ts'], `  const rounded = roundToTwo(amount);
+  return \`$\${rounded.toFixed(2)}\`;`, `  // reformatted only
+  const rounded =
+      roundToTwo( amount );
+  return \`$\${ rounded.toFixed( 2 ) }\`;`) }) },
+  { name: 'class-log-only', extendedOnly: true, expectedOutcome: 'completed', edit: f => ({
+    'src/billing.ts': replaceOnce(f['src/billing.ts'], '  if (!cardToken || amount <= 1) {', `  console.log('charging', amount);
+  if (!cardToken || amount <= 1) {`) }) },
+  { name: 'class-signature', extendedOnly: true, expectedOutcome: 'completed', edit: f => ({
+    'src/billing.ts': replaceOnce(f['src/billing.ts'], 'chargeCard(amount: number, cardToken: string)',
+      `chargeCard(amount: number, cardToken: string, currency = 'USD')`) }) },
+  { name: 'class-export-surface', extendedOnly: true, expectedOutcome: 'completed', edit: f => ({
+    'src/inventory.ts': replaceOnce(f['src/inventory.ts'], 'function sanitizeSku', 'export function sanitizeSku') }) },
+  { name: 'class-test-only', extendedOnly: true, expectedOutcome: 'completed', edit: f => ({
+    'tests/orders.test.ts': replaceOnce(f['tests/orders.test.ts'], "'tok_mastercard'", "'tok_amex'") }) },
 ];
 
 for (const engine of ['legacy', 'extended'] as const) for (const scenario of scenarios) {
+  if (scenario.extendedOnly && engine === 'legacy') continue;
   const suffix = engine === 'extended' ? '.extended' : '';
   test(`golden: ${scenario.name}${suffix}`, () => {
     const repo = createRepo('graphentra-golden-');

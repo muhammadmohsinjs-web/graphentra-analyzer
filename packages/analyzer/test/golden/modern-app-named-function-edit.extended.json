@@ -1220,7 +1220,11 @@
           "    .trim()"
         ],
         "diff": "--- a/src/utils/format.ts\n+++ b/src/utils/format.ts\n@@ -16,7 +16,7 @@\n export default function slugify(s: string): string {\n   return s\n     .toLowerCase()\n-    .trim()\n+    .trim().normalize()\n     .replace(/[^a-z0-9]+/g, '-')\n     .replace(/^-+|-+$/g, '');\n }"
-      }
+      },
+      "changeKind": "modified",
+      "changeClasses": [
+        "body"
+      ]
     }
   ],
   "impacts": [
@@ -1272,7 +1276,7 @@
     "Classes, interfaces, type aliases, and enums are not entities.",
     "Relationships are CALLS, RENDERS (JSX elements), INSTANTIATES (new expressions), and REFERENCES (functions passed or stored as values).",
     "Dynamic calls and calls through interface-typed receivers are not analyzed.",
-    "Deleted entities have no current graph entity; renamed entities may lack removed-code evidence.",
+    "Renamed entities may lack removed-code evidence.",
     "Partially overlapping entity line ranges are skipped rather than sharing ambiguous evidence.",
     "Application surfaces are not yet discovered.",
     "Blast radius is limited to depth 6."

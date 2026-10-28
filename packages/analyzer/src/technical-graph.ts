@@ -150,6 +150,8 @@ export function extractTechnicalGraph(options: {
   host?: ts.CompilerHost;
   excludePaths?: string[];
   engine?: EngineProfile;
+  /** Called once per collected entity with its declaration node; nodes must not be retained past extraction. */
+  onEntityNode?: (entity: Entity, node: ts.Node, sourceFile: ts.SourceFile) => void;
 }): ExtractedGraph {
   const { projectRoot, headSha, targetPath = '.', excludePaths } = options;
   const files = options.files ?? collectTypeScriptFiles(projectRoot, projectRoot, { excludePaths, engine: options.engine }).sort();
@@ -243,6 +245,7 @@ export function extractTechnicalGraph(options: {
     // Extended: a failing file is rolled back and skipped; legacy keeps today's behavior (errors propagate).
     const registered: Entity[] = [];
     const registeredDiagnostics = diagnostics.length;
+    const declared: Array<[Entity, ts.Node]> = [];
     try {
       for (const candidate of collectEntities(sourceFile, { relativeFile, engine: options.engine ?? DEFAULT_ENGINE })) {
         const entity = candidate.entity;
@@ -250,6 +253,7 @@ export function extractTechnicalGraph(options: {
         entities.push(entity);
         entityById.set(entity.id, entity);
         registered.push(entity);
+        declared.push([entity, candidate.declarationNode]);
         if (extendedEngine) {
           parentById.set(entity.id, candidate.parent?.entity.id);
           declarationToEntity.set(candidate.declarationNode, entity);
@@ -276,6 +280,7 @@ export function extractTechnicalGraph(options: {
           if (defaultSymbol) symbolToEntity.set(defaultSymbol, entity);
         }
       }
+      for (const [entity, node] of declared) options.onEntityNode?.(entity, node, sourceFile);
     } catch (error) {
       if (!extendedEngine) throw error;
       const registeredIds = new Set(registered.map(entity => entity.id));

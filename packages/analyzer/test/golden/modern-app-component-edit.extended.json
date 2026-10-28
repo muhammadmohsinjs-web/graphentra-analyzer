@@ -1218,7 +1218,11 @@
         ],
         "removedCode": [],
         "diff": "--- a/src/components/OrderList.tsx\n+++ b/src/components/OrderList.tsx\n@@ -28,0 +29,2 @@\n+\n+// touched"
-      }
+      },
+      "changeKind": "modified",
+      "changeClasses": [
+        "body"
+      ]
     },
     {
       "entity": {
@@ -1241,7 +1245,11 @@
         ],
         "removedCode": [],
         "diff": "--- a/src/components/OrderList.tsx\n+++ b/src/components/OrderList.tsx\n@@ -28,0 +31,1 @@\n+const touched = () => 1;"
-      }
+      },
+      "changeKind": "added",
+      "changeClasses": [
+        "added"
+      ]
     }
   ],
   "impacts": [
@@ -1322,7 +1330,7 @@
     "Classes, interfaces, type aliases, and enums are not entities.",
     "Relationships are CALLS, RENDERS (JSX elements), INSTANTIATES (new expressions), and REFERENCES (functions passed or stored as values).",
     "Dynamic calls and calls through interface-typed receivers are not analyzed.",
-    "Deleted entities have no current graph entity; renamed entities may lack removed-code evidence.",
+    "Renamed entities may lack removed-code evidence.",
     "Partially overlapping entity line ranges are skipped rather than sharing ambiguous evidence.",
     "Application surfaces are not yet discovered.",
     "Blast radius is limited to depth 6."

@@ -3,6 +3,7 @@ const structuralValidator = new Ajv2020({ allErrors: true, strict: true }).compi
 import {
   ANALYZER_VERSION,
   EVIDENCE_ARTIFACT_KIND,
+  CHANGE_CLASSES,
   EVIDENCE_SCHEMA_VERSIONS,
   MAX_BLAST_DEPTH,
   type DeterministicEvidence,
@@ -19,6 +20,63 @@ export interface ValidationResult {
 
 function isObject(val: unknown): val is Record<string, unknown> {
   return typeof val === 'object' && val !== null && !Array.isArray(val);
+}
+
+const relationKey = (relation: Relation): string => `${relation.from}|${relation.type}|${relation.to}`;
+
+/** Returns true when keys are strictly ascending (sorted and unique). */
+function strictlyAscending(keys: string[]): boolean {
+  return keys.every((key, i) => i === 0 || compareStrings(keys[i - 1], key) < 0);
+}
+
+function validatePhase3Fields(evidence: DeterministicEvidence, isExtendedSchema: boolean, errors: string[]): void {
+  if (!isExtendedSchema) {
+    for (const field of ['baseEntities', 'skippedEntities'] as const) {
+      if (evidence[field] !== undefined) errors.push(`${field} is not allowed in schema 2.0.`);
+    }
+    evidence.changedEntities.forEach((changed, i) => {
+      for (const field of ['changeKind', 'baseEntity', 'changeClasses', 'edgeDeltas'] as const) {
+        if (changed[field] !== undefined) errors.push(`changedEntities[${i}].${field} is not allowed in schema 2.0.`);
+      }
+    });
+    evidence.impacts.forEach((impact, i) => {
+      if (impact.contractRisk !== undefined) errors.push(`impacts[${i}].contractRisk is not allowed in schema 2.0.`);
+      impact.blastRadius.paths.forEach((path, p) => {
+        if (path.contractRisk !== undefined) errors.push(`impacts[${i}].blastRadius.paths[${p}].contractRisk is not allowed in schema 2.0.`);
+      });
+    });
+    return;
+  }
+  const baseIds = new Set((evidence.baseEntities ?? []).map(item => item.id));
+  if (evidence.baseEntities !== undefined) {
+    if (!strictlyAscending(evidence.baseEntities.map(item => item.id))) errors.push('baseEntities must be sorted by id with unique ids.');
+  }
+  if (evidence.skippedEntities !== undefined) {
+    if (evidence.skippedEntities.some((item, i) => i > 0 && compareStrings(evidence.skippedEntities![i - 1].entityId, item.entityId) > 0)) {
+      errors.push('skippedEntities must be sorted by entityId.');
+    }
+  }
+  evidence.changedEntities.forEach((changed, i) => {
+    const label = `changedEntities[${i}]`;
+    if (changed.changeKind === 'deleted') {
+      if (!changed.baseEntity) errors.push(`${label}.baseEntity is required when changeKind is "deleted".`);
+      else if (!baseIds.has(changed.baseEntity.id)) errors.push(`${label}.baseEntity.id "${changed.baseEntity.id}" must appear in baseEntities.`);
+    }
+    if (changed.changeKind === 'renamed' && !changed.baseEntity) errors.push(`${label}.baseEntity is required when changeKind is "renamed".`);
+    if (changed.changeClasses !== undefined) {
+      if (changed.changeClasses.some(value => !(CHANGE_CLASSES as readonly string[]).includes(value))) {
+        errors.push(`${label}.changeClasses must only contain ${CHANGE_CLASSES.join(', ')}.`);
+      }
+      if (!strictlyAscending(changed.changeClasses)) errors.push(`${label}.changeClasses must be sorted ascending and unique.`);
+    }
+    if (changed.edgeDeltas !== undefined) {
+      for (const side of ['added', 'removed'] as const) {
+        if (!strictlyAscending(changed.edgeDeltas[side].map(relationKey))) {
+          errors.push(`${label}.edgeDeltas.${side} must be sorted by from|type|to and unique.`);
+        }
+      }
+    }
+  });
 }
 
 export function validateEvidenceEnvelope(data: unknown): ValidationResult {
@@ -221,6 +279,21 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
   }
 
   // Changed files, changed entities, impacts
+  // Deleted entities live only in the base snapshot, so they may be absent from technicalGraph.
+  const deletedIds = new Set<string>();
+  if (Array.isArray(data.changedEntities)) {
+    for (const item of data.changedEntities) {
+      if (isObject(item) && item.changeKind === 'deleted' && isObject(item.entity) && typeof item.entity.id === 'string') deletedIds.add(item.entity.id);
+    }
+  }
+  // Deleted-entity impacts walk the base graph: their paths may pass through entities listed in baseEntities,
+  // and the base relations are not in evidence, so relation continuity is not checked for them.
+  const baseCoordinates = new Map<string, unknown>();
+  if (Array.isArray(data.baseEntities)) {
+    for (const item of data.baseEntities) {
+      if (isObject(item) && typeof item.id === 'string') baseCoordinates.set(item.id, item);
+    }
+  }
   if (!Array.isArray(data.changedFiles)) {
     errors.push('changedFiles must be an array.');
   }
@@ -237,7 +310,7 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
         continue;
       }
       const changedEntity = impact.changedEntity as Entity | undefined;
-      if (!isObject(changedEntity) || typeof changedEntity.id !== 'string' || !entityMap.has(changedEntity.id)) {
+      if (!isObject(changedEntity) || typeof changedEntity.id !== 'string' || (!entityMap.has(changedEntity.id) && !deletedIds.has(changedEntity.id))) {
         errors.push(`impacts[${i}].changedEntity must exist in technicalGraph.entities.`);
       }
       if (isObject(impact.blastRadius) && Array.isArray(impact.blastRadius.paths)) {
@@ -259,8 +332,16 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
           if (depth > MAX_BLAST_DEPTH) {
             errors.push(`impacts[${i}].blastRadius.paths[${pIdx}] depth (${depth}) exceeds MAX_BLAST_DEPTH (${MAX_BLAST_DEPTH}).`);
           }
+          const baseWalk = typeof changedEntity?.id === 'string' && deletedIds.has(changedEntity.id);
+          if (baseWalk) {
+            for (const node of pathArr) {
+              if (!entityMap.has(node.id) && !baseCoordinates.has(node.id)) {
+                errors.push(`impacts[${i}].blastRadius.paths[${pIdx}] entity "${node.id}" must exist in technicalGraph.entities or baseEntities.`);
+              }
+            }
+          }
           // Path continuity check: each step is connected by relation in reverse (caller -> callee)
-          for (let step = 0; step < pathArr.length - 1; step++) {
+          for (let step = 0; step < pathArr.length - 1 && !baseWalk; step++) {
             const callee = pathArr[step];
             const caller = pathArr[step + 1];
             if (!relationPairSet.has(`${caller.id}->${callee.id}`)) {
@@ -272,7 +353,7 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
             if (!Array.isArray(stepTypes) || stepTypes.length !== pathArr.length - 1) {
               errors.push(`impacts[${i}].blastRadius.paths[${pIdx}] stepTypes length must equal depth.`);
             } else {
-              stepTypes.forEach((type, step) => {
+              if (!baseWalk) stepTypes.forEach((type, step) => {
                 if (!relationTripleSet.has(`${pathArr[step + 1].id}|${type}|${pathArr[step].id}`)) {
                   errors.push(`impacts[${i}].blastRadius.paths[${pIdx}] stepTypes[${step}] "${String(type)}" has no matching relation.`);
                 }
@@ -293,7 +374,15 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
         : Object.fromEntries(Object.keys(value).sort().map(key => [key, JSON.parse(canonical(value[key]))]))
       : value);
   }
-  function canonicalEntity(entity: Entity) {
+  function canonicalEntity(entity: Entity, baseWalk = false) {
+    if (baseWalk && !entityMap.has(entity.id)) {
+      const listed = baseCoordinates.get(entity.id) as Entity | undefined;
+      if (!listed || listed.file !== entity.file || listed.startLine !== entity.startLine || listed.endLine !== entity.endLine) {
+        errors.push('Embedded base entity differs from baseEntities coordinates.');
+      }
+      return;
+    }
+    if (deletedIds.has(entity.id) && !entityMap.has(entity.id)) return;
     if (!equal(entityMap.get(entity.id), entity)) errors.push('Embedded entity differs from canonical graph entity.');
   }
   function sameSet(actual: string[], expected: string[], label: string) {
@@ -312,20 +401,22 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
       evidence.options.sourcePolicy !== 'git-tracked')) errors.push('Commit source policy or checkout mismatch.');
   if (evidence.comparison.mode === 'working-tree' && (evidence.sourceState.untrackedSourcePolicy !== 'included' ||
       evidence.options.sourcePolicy !== 'git-tracked-and-nonignored-untracked')) errors.push('Working-tree source policy mismatch.');
-  sameSet(evidence.impacts.map(item => item.changedEntity.id), evidence.changedEntities.map(item => item.entity.id), 'Changed impacts');
+  const skippedIds = new Set((evidence.skippedEntities ?? []).map(item => item.entityId));
+  sameSet(evidence.impacts.map(item => item.changedEntity.id), evidence.changedEntities.map(item => item.entity.id).filter(id => !skippedIds.has(id)), 'Changed impacts');
   if (new Set(evidence.changedEntities.map(item => item.entity.id)).size !== evidence.changedEntities.length) errors.push('Duplicate changed entity.');
   for (const changed of evidence.changedEntities) {
     canonicalEntity(changed.entity);
     if (changed.change.file !== changed.entity.file || changed.change.changedLines.some(line => line < changed.entity.startLine || line > changed.entity.endLine)) errors.push('Changed lines or file outside entity.');
   }
   for (const impact of evidence.impacts) {
+    const baseWalk = deletedIds.has(impact.changedEntity.id);
     canonicalEntity(impact.changedEntity);
     const changed = evidence.changedEntities.find(item => item.entity.id === impact.changedEntity.id);
     if (!changed || !equal(changed.change, impact.change)) errors.push('Impact change does not match changed entity.');
     const keys = new Set<string>();
     for (const recorded of impact.blastRadius.paths) {
       const nodes = recorded.path;
-      for (const entity of [...nodes, recorded.target]) canonicalEntity(entity);
+      for (const entity of [...nodes, recorded.target]) canonicalEntity(entity, baseWalk);
       if (nodes[0].id !== impact.changedEntity.id || nodes.at(-1)!.id !== recorded.target.id ||
           new Set(nodes.map(entity => entity.id)).size !== nodes.length) errors.push('Invalid path start, target, or cycle.');
       const key = JSON.stringify(nodes.map(entity => entity.id));
@@ -335,16 +426,18 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
     const affected = impact.blastRadius.paths.map(item => item.target.id);
     sameSet(impact.blastRadius.entities.map(item => item.id), affected, 'Affected entities');
     sameSet(impact.directDependents.map(item => item.id), impact.blastRadius.paths.filter(item => item.depth === 1).map(item => item.target.id), 'Direct dependents');
-    sameSet(impact.terminalDependents.map(item => item.id), affected.filter(id => !graph.relations.some(relation => relation.to === id)), 'Terminal dependents');
-    for (const entity of [...impact.blastRadius.entities, ...impact.directDependents, ...impact.terminalDependents]) canonicalEntity(entity);
+    // Terminal dependents of a deleted entity are decided on the base graph, which evidence does not carry.
+    if (!baseWalk) sameSet(impact.terminalDependents.map(item => item.id), affected.filter(id => !graph.relations.some(relation => relation.to === id)), 'Terminal dependents');
+    for (const entity of [...impact.blastRadius.entities, ...impact.directDependents, ...impact.terminalDependents]) canonicalEntity(entity, baseWalk);
     if (impact.blastRadius.totalAffectedEntities !== new Set(affected).size) errors.push('Affected entity count mismatch.');
   }
+  validatePhase3Fields(evidence, isExtendedSchema, errors);
   for (const diagnostic of evidence.diagnostics) {
     if (diagnostic.entityId && !entityMap.has(diagnostic.entityId)) errors.push('Diagnostic entity is absent from graph.');
   }
   if (evidence.outcome !== 'completed' && (evidence.changedEntities.length || evidence.impacts.length)) errors.push('Empty outcome contains impacts.');
   if (evidence.outcome === 'no_source_files' && graph.analyzedFiles.length) errors.push('no_source_files contains source inventory.');
-  if (evidence.outcome === 'completed' && (!evidence.changedFiles.length || !evidence.impacts.length)) errors.push('Completed outcome lacks changes or impacts.');
+  if (evidence.outcome === 'completed' && (!evidence.changedFiles.length || (!evidence.impacts.length && !skippedIds.size))) errors.push('Completed outcome lacks changes or impacts.');
   if (evidence.outcome === 'no_supported_changes' && !evidence.changedFiles.length) errors.push('Unsupported outcome lacks changed files.');
 
   // Outcome consistency
