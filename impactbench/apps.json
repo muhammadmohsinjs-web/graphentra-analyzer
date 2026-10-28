@@ -1,0 +1,86 @@
+[
+  {
+    "name": "ofetch",
+    "repo": "https://github.com/unjs/ofetch",
+    "commit": "1dbc37fd1ceab832fc7c90cad81b1091c95ba563",
+    "install": [
+      "npx",
+      "--yes",
+      "pnpm@9",
+      "install",
+      "--frozen-lockfile"
+    ],
+    "test": [
+      "npx",
+      "vitest",
+      "run"
+    ]
+  },
+  {
+    "name": "json-server",
+    "repo": "https://github.com/typicode/json-server",
+    "commit": "89a34a44b7a6a5311dc84f3b8a1b8b45c0905aea",
+    "install": [
+      "npx",
+      "--yes",
+      "pnpm@9",
+      "install",
+      "--frozen-lockfile"
+    ],
+    "test": [
+      "npm",
+      "test"
+    ]
+  },
+  {
+    "name": "consola",
+    "repo": "https://github.com/unjs/consola",
+    "commit": "c47faac1738b7383971c6c20b5a34ffa15e7cc3b",
+    "install": [
+      "npx",
+      "--yes",
+      "pnpm@9",
+      "install",
+      "--frozen-lockfile"
+    ],
+    "test": [
+      "npx",
+      "vitest",
+      "run"
+    ]
+  },
+  {
+    "name": "ufo",
+    "repo": "https://github.com/unjs/ufo",
+    "commit": "f06c800d0c59f2a4a1b9ba65eb6cb61a84419be6",
+    "install": [
+      "npx",
+      "--yes",
+      "pnpm@9",
+      "install",
+      "--frozen-lockfile"
+    ],
+    "test": [
+      "npx",
+      "vitest",
+      "run"
+    ]
+  },
+  {
+    "name": "pathe",
+    "repo": "https://github.com/unjs/pathe",
+    "commit": "bc7477a01f0bd60ada017add8142c9f9d69ccdc5",
+    "install": [
+      "npx",
+      "--yes",
+      "pnpm@11.10.0",
+      "install",
+      "--frozen-lockfile"
+    ],
+    "test": [
+      "npx",
+      "vitest",
+      "run"
+    ]
+  }
+]

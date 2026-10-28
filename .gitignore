@@ -58,3 +58,7 @@ reports.db
 .claude/settings.json
 .claude/settings.local.json
 .claude/worktrees/
+
+# ImpactBench checkouts
+impactbench/work/
+.pnpm-store/
