@@ -65,38 +65,8 @@
   "e2eFlows": [],
   "relations": [
     {
-      "from": "src/app/orders/page.tsx#OrdersPage",
-      "to": "src/components/OrderList.tsx#OrderList",
-      "type": "RENDERS"
-    },
-    {
-      "from": "src/app/orders/page.tsx#OrdersPage",
-      "to": "src/components/Summary.tsx#Summary",
-      "type": "RENDERS"
-    },
-    {
-      "from": "src/components/OrderList.tsx#OrderList>renderRow",
-      "to": "src/components/OrderRow.tsx#OrderRow",
-      "type": "RENDERS"
-    },
-    {
-      "from": "src/components/OrderList.tsx#OrderList",
-      "to": "src/components/OrderList.tsx#OrderList>handleClear",
-      "type": "REFERENCES"
-    },
-    {
-      "from": "src/components/OrderList.tsx#OrderList",
-      "to": "src/components/OrderList.tsx#OrderList>renderRow",
-      "type": "REFERENCES"
-    },
-    {
       "from": "src/components/OrderList.tsx#OrderList",
       "to": "src/components/OrderRow.tsx#OrderRow",
-      "type": "RENDERS"
-    },
-    {
-      "from": "src/components/OrderList.tsx#OrderList",
-      "to": "src/components/Summary.tsx#Summary",
       "type": "RENDERS"
     },
     {
@@ -122,31 +92,6 @@
     {
       "from": "src/components/Summary.tsx#Summary",
       "to": "src/stubs/react.ts#useMemo",
-      "type": "REFERENCES"
-    },
-    {
-      "from": "src/legacy/esm.mjs#describeAll",
-      "to": "src/legacy/esm.mjs#describePrice",
-      "type": "REFERENCES"
-    },
-    {
-      "from": "src/server/app.ts#buildApp",
-      "to": "src/server/app.ts#logRequest",
-      "type": "REFERENCES"
-    },
-    {
-      "from": "src/server/app.ts#buildApp",
-      "to": "src/server/handlers.ts#createOrder",
-      "type": "REFERENCES"
-    },
-    {
-      "from": "src/server/app.ts#buildApp",
-      "to": "src/server/handlers.ts#health",
-      "type": "REFERENCES"
-    },
-    {
-      "from": "src/server/app.ts#buildApp",
-      "to": "src/server/handlers.ts#listOrders",
       "type": "REFERENCES"
     }
   ],

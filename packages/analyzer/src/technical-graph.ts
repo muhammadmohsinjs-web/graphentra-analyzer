@@ -7,9 +7,11 @@ import {
   ANALYZER_VERSION,
   DEFAULT_ENGINE,
   EXTENDED_ENTITY_KINDS,
+  EXTENDED_RELATION_TYPES,
   IGNORED_DIRECTORIES,
   JAVASCRIPT_EXTENSIONS,
   LEGACY_ENTITY_KINDS,
+  LEGACY_RELATION_TYPES,
   MAX_BLAST_DEPTH,
   TYPESCRIPT_EXTENSIONS,
   type DiagnosticItem,
@@ -168,7 +170,7 @@ export function extractTechnicalGraph(options: {
       capabilities: {
         language: 'typescript',
         entityKinds: [...((options.engine ?? DEFAULT_ENGINE) === 'extended' ? EXTENDED_ENTITY_KINDS : LEGACY_ENTITY_KINDS)],
-        relationTypes: ['CALLS'],
+        relationTypes: [...((options.engine ?? DEFAULT_ENGINE) === 'extended' ? EXTENDED_RELATION_TYPES : LEGACY_RELATION_TYPES)],
         maxBlastDepth: MAX_BLAST_DEPTH,
       },
       analyzedFiles: [],
@@ -297,7 +299,7 @@ export function extractTechnicalGraph(options: {
     }
   }
 
-  // Pass 2 - call relationships
+  // Pass 2 - call and instantiation relationships
   for (const sourceFile of program.getSourceFiles()) {
     if (sourceFile.isDeclarationFile) continue;
     if (!analyzedFileSet.has(path.resolve(sourceFile.fileName).replace(/\\/g, '/'))) continue;
@@ -310,12 +312,90 @@ export function extractTechnicalGraph(options: {
       else addRelation(relation);
     };
 
+    // Innermost enclosing entity; the source file node maps to the module entity.
+    function enclosingEntity(node: ts.Node): Entity | undefined {
+      let enclosing: ts.Node | undefined = node.parent;
+      let entity: Entity | undefined;
+      while (enclosing && !(entity = declarationToEntity.get(enclosing))) enclosing = enclosing.parent;
+      return entity;
+    }
+
+    function entityOfSymbol(symbol: ts.Symbol | undefined): Entity | undefined {
+      if (!symbol) return undefined;
+      const declaration = symbol.declarations?.length === 1 ? symbol.declarations[0] : undefined;
+      return symbolToEntity.get(symbol) ?? (declaration ? declarationToEntity.get(declaration) : undefined);
+    }
+
+    // The node whose symbol a function value comes from: `handle`, `this.handle`, `obj.handle`.
+    function valueSymbol(node: ts.Expression): ts.Symbol | undefined {
+      if (ts.isIdentifier(node)) return resolveSymbol(node);
+      if (ts.isPropertyAccessExpression(node)) return resolveSymbol(node.name);
+      return undefined;
+    }
+
+    // A getter read is an implicit call and a `useMemo` binding holds a computed value; neither is a function value.
+    function isFunctionValue(symbol: ts.Symbol | undefined): boolean {
+      const declaration = symbol?.declarations?.[0];
+      if (!declaration) return false;
+      if (ts.isGetAccessorDeclaration(declaration) || ts.isSetAccessorDeclaration(declaration)) return false;
+      if (ts.isVariableDeclaration(declaration) && declaration.initializer && ts.isCallExpression(declaration.initializer)) {
+        const callee = declaration.initializer.expression;
+        if (ts.isIdentifier(callee) && callee.text === 'useMemo') return false;
+      }
+      return true;
+    }
+
+    // True when the expression is stored or passed on as a value rather than called here.
+    function isValuePosition(node: ts.Expression): boolean {
+      let child: ts.Node = node;
+      let parent = node.parent;
+      while (ts.isParenthesizedExpression(parent) || ts.isAsExpression(parent) || ts.isNonNullExpression(parent) || ts.isSatisfiesExpression(parent)) {
+        child = parent;
+        parent = parent.parent;
+      }
+      if (ts.isJsxExpression(parent)) return true;
+      if (ts.isCallExpression(parent) || ts.isNewExpression(parent)) return parent.arguments?.includes(child as ts.Expression) ?? false;
+      if (ts.isPropertyAssignment(parent) || ts.isVariableDeclaration(parent) || ts.isPropertyDeclaration(parent)) return parent.initializer === child;
+      if (ts.isBinaryExpression(parent)) return parent.operatorToken.kind === ts.SyntaxKind.EqualsToken && parent.right === child;
+      return ts.isReturnStatement(parent);
+    }
+
     function visit(node: ts.Node): void {
-      if (ts.isCallExpression(node) && extendedEngine) {
-        // Innermost enclosing entity; the source file node maps to the module entity.
-        let enclosing: ts.Node | undefined = node.parent;
-        let caller: Entity | undefined;
-        while (enclosing && !(caller = declarationToEntity.get(enclosing))) enclosing = enclosing.parent;
+      if (extendedEngine) {
+        if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
+          // Lowercase tags are intrinsic elements (`div`), not symbols.
+          const tag = node.tagName;
+          if (!(ts.isIdentifier(tag) && /^[a-z]/.test(tag.text))) {
+            const caller = enclosingEntity(node);
+            const rendered = entityOfSymbol(ts.isPropertyAccessExpression(tag) ? resolveSymbol(tag.name) : resolveSymbol(tag));
+            if (caller && rendered && caller.id !== rendered.id) emit({ from: caller.id, to: rendered.id, type: 'RENDERS' });
+          }
+        } else if (ts.isShorthandPropertyAssignment(node)) {
+          const caller = enclosingEntity(node);
+          const valueSym = checker.getShorthandAssignmentValueSymbol(node);
+          const referenced = isFunctionValue(valueSym) ? entityOfSymbol(valueSym) : undefined;
+          if (caller && referenced && caller.id !== referenced.id) emit({ from: caller.id, to: referenced.id, type: 'REFERENCES' });
+        } else if ((ts.isIdentifier(node) || ts.isPropertyAccessExpression(node)) && isValuePosition(node)) {
+          const caller = enclosingEntity(node);
+          const valueSym = valueSymbol(node);
+          const referenced = isFunctionValue(valueSym) ? entityOfSymbol(valueSym) : undefined;
+          if (caller && referenced && caller.id !== referenced.id) emit({ from: caller.id, to: referenced.id, type: 'REFERENCES' });
+        }
+      }
+      if (ts.isNewExpression(node) && extendedEngine) {
+        // The resolved signature names the constructor that runs, including an inherited one
+        // (or the function, for a JavaScript constructor function).
+        // Overloads resolve to a bodiless declaration, so fall back to the implementation.
+        // A class with no constructor anywhere in its chain has no entity to target and gets no edge.
+        let declaration = checker.getResolvedSignature(node)?.declaration;
+        if (declaration && ts.isConstructorDeclaration(declaration) && !declaration.body) {
+          declaration = declaration.parent.members.find((member): member is ts.ConstructorDeclaration => ts.isConstructorDeclaration(member) && !!member.body);
+        }
+        const caller = enclosingEntity(node);
+        const constructed = declaration ? declarationToEntity.get(declaration) : undefined;
+        if (caller && constructed) emit({ from: caller.id, to: constructed.id, type: 'INSTANTIATES' });
+      } else if (ts.isCallExpression(node) && extendedEngine) {
+        const caller = enclosingEntity(node);
         const calledSymbol = resolveSymbol(node.expression);
         // Widened object-literal types hand back cloned property symbols, so fall back to the single declaration node.
         const calledDeclaration = calledSymbol?.declarations?.length === 1 ? calledSymbol.declarations[0] : undefined;
@@ -383,7 +463,7 @@ export function extractTechnicalGraph(options: {
     capabilities: {
       language: 'typescript',
       entityKinds: [...((options.engine ?? DEFAULT_ENGINE) === 'extended' ? EXTENDED_ENTITY_KINDS : LEGACY_ENTITY_KINDS)],
-      relationTypes: ['CALLS'],
+      relationTypes: [...((options.engine ?? DEFAULT_ENGINE) === 'extended' ? EXTENDED_RELATION_TYPES : LEGACY_RELATION_TYPES)],
       maxBlastDepth: MAX_BLAST_DEPTH,
     },
     analyzedFiles: files.map(normalizeProjectPath),

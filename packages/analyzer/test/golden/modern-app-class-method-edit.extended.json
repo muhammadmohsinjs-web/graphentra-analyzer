@@ -45,7 +45,10 @@
         "module"
       ],
       "relationTypes": [
-        "CALLS"
+        "CALLS",
+        "INSTANTIATES",
+        "REFERENCES",
+        "RENDERS"
       ],
       "maxBlastDepth": 6
     },
@@ -866,14 +869,54 @@
         "type": "CALLS"
       },
       {
+        "from": "src/components/OrderList.tsx#OrderList>renderRow",
+        "to": "src/components/OrderRow.tsx#OrderRow",
+        "type": "RENDERS"
+      },
+      {
+        "from": "src/components/OrderList.tsx#OrderList",
+        "to": "src/components/OrderList.tsx#OrderList>handleClear",
+        "type": "REFERENCES"
+      },
+      {
+        "from": "src/components/OrderList.tsx#OrderList",
+        "to": "src/components/OrderList.tsx#OrderList>renderRow",
+        "type": "REFERENCES"
+      },
+      {
+        "from": "src/components/OrderList.tsx#OrderList",
+        "to": "src/components/Summary.tsx#Summary",
+        "type": "RENDERS"
+      },
+      {
         "from": "src/app/orders/page.tsx#OrdersPage",
         "to": "src/app/orders/page.tsx#OrdersPage>loadOrders",
         "type": "CALLS"
       },
       {
+        "from": "src/app/orders/page.tsx#OrdersPage",
+        "to": "src/components/OrderList.tsx#OrderList",
+        "type": "RENDERS"
+      },
+      {
+        "from": "src/app/orders/page.tsx#OrdersPage",
+        "to": "src/components/Summary.tsx#Summary",
+        "type": "RENDERS"
+      },
+      {
+        "from": "src/legacy/cjs-module.js#<module>",
+        "to": "src/legacy/cjs-module.js#formatName",
+        "type": "REFERENCES"
+      },
+      {
         "from": "src/legacy/esm.mjs#describePrice",
         "to": "src/utils/format.ts#formatPrice",
         "type": "CALLS"
+      },
+      {
+        "from": "src/legacy/esm.mjs#describeAll",
+        "to": "src/legacy/esm.mjs#describePrice",
+        "type": "REFERENCES"
       },
       {
         "from": "src/legacy/use-legacy.js#greet",
@@ -884,6 +927,11 @@
         "from": "src/legacy/use-legacy.js#greet",
         "to": "src/legacy/esm.mjs#describePrice",
         "type": "CALLS"
+      },
+      {
+        "from": "src/legacy/use-legacy.js#<module>",
+        "to": "src/legacy/use-legacy.js#greet",
+        "type": "REFERENCES"
       },
       {
         "from": "src/utils/math.ts#sum",
@@ -899,6 +947,16 @@
         "from": "src/utils/math.ts#orderTotal",
         "to": "src/utils/math.ts#sum",
         "type": "CALLS"
+      },
+      {
+        "from": "src/services/logger.ts#Logger.create",
+        "to": "src/services/logger.ts#Logger.constructor",
+        "type": "INSTANTIATES"
+      },
+      {
+        "from": "src/services/order-service.ts#OrderService.create",
+        "to": "src/services/order-service.ts#OrderService.constructor",
+        "type": "INSTANTIATES"
       },
       {
         "from": "src/services/order-service.ts#OrderService.create",
@@ -924,6 +982,16 @@
         "from": "src/services/order-service.ts#OrderService.record",
         "to": "src/services/logger.ts#Logger.info",
         "type": "CALLS"
+      },
+      {
+        "from": "src/services/order-service.ts#createDefaultService",
+        "to": "src/services/order-service.ts#OrderService.constructor",
+        "type": "INSTANTIATES"
+      },
+      {
+        "from": "src/services/order-service.ts#createDefaultService",
+        "to": "src/services/logger.ts#Logger.constructor",
+        "type": "INSTANTIATES"
       },
       {
         "from": "src/services/inventory.ts#inventory.reserve",
@@ -967,13 +1035,33 @@
       },
       {
         "from": "src/server/app.ts#buildApp",
+        "to": "src/server/app.ts#logRequest",
+        "type": "REFERENCES"
+      },
+      {
+        "from": "src/server/app.ts#buildApp",
         "to": "src/server/router.ts#Router.get",
         "type": "CALLS"
       },
       {
         "from": "src/server/app.ts#buildApp",
+        "to": "src/server/handlers.ts#listOrders",
+        "type": "REFERENCES"
+      },
+      {
+        "from": "src/server/app.ts#buildApp",
         "to": "src/server/router.ts#Router.post",
         "type": "CALLS"
+      },
+      {
+        "from": "src/server/app.ts#buildApp",
+        "to": "src/server/handlers.ts#createOrder",
+        "type": "REFERENCES"
+      },
+      {
+        "from": "src/server/app.ts#buildApp",
+        "to": "src/server/handlers.ts#health",
+        "type": "REFERENCES"
       },
       {
         "from": "src/utils/ids.ts#makeId",
@@ -1181,7 +1269,7 @@
         }
       ],
       "blastRadius": {
-        "totalAffectedEntities": 3,
+        "totalAffectedEntities": 4,
         "entities": [
           {
             "id": "src/server/handlers.ts#createOrder",
@@ -1201,6 +1289,16 @@
             "startLine": 1,
             "endLine": 24,
             "language": "typescript"
+          },
+          {
+            "id": "src/server/app.ts#buildApp",
+            "kind": "function",
+            "name": "buildApp",
+            "file": "src/server/app.ts",
+            "startLine": 9,
+            "endLine": 16,
+            "language": "typescript",
+            "exported": true
           },
           {
             "id": "tests/handlers.test.ts#<module>",
@@ -1246,6 +1344,10 @@
                 "language": "typescript",
                 "exported": true
               }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
             ]
           },
           {
@@ -1279,6 +1381,60 @@
                 "endLine": 24,
                 "language": "typescript"
               }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ]
+          },
+          {
+            "target": {
+              "id": "src/server/app.ts#buildApp",
+              "kind": "function",
+              "name": "buildApp",
+              "file": "src/server/app.ts",
+              "startLine": 9,
+              "endLine": 16,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 2,
+            "path": [
+              {
+                "id": "src/services/order-service.ts#OrderService.total",
+                "kind": "method",
+                "name": "OrderService.total",
+                "file": "src/services/order-service.ts",
+                "startLine": 20,
+                "endLine": 23,
+                "language": "typescript",
+                "container": "OrderService"
+              },
+              {
+                "id": "src/server/handlers.ts#createOrder",
+                "kind": "function",
+                "name": "createOrder",
+                "file": "src/server/handlers.ts",
+                "startLine": 13,
+                "endLine": 22,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/server/app.ts#buildApp",
+                "kind": "function",
+                "name": "buildApp",
+                "file": "src/server/app.ts",
+                "startLine": 9,
+                "endLine": 16,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS",
+              "REFERENCES"
             ]
           },
           {
@@ -1322,9 +1478,15 @@
                 "endLine": 48,
                 "language": "typescript"
               }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS",
+              "CALLS"
             ]
           }
-        ]
+        ],
+        "truncated": false
       },
       "terminalDependents": [
         {
@@ -1359,7 +1521,7 @@
     "Only TypeScript and JavaScript are analyzed; JavaScript is not type-checked.",
     "Entities are named functions, variable-bound arrow functions and function expressions, class and object-literal methods, constructors, accessors, React components, and module-level code.",
     "Classes, interfaces, type aliases, and enums are not entities.",
-    "Only CALLS relationships are currently supported.",
+    "Relationships are CALLS, RENDERS (JSX elements), INSTANTIATES (new expressions), and REFERENCES (functions passed or stored as values).",
     "Dynamic calls and calls through interface-typed receivers are not analyzed.",
     "Deleted entities have no current graph entity; renamed entities may lack removed-code evidence.",
     "Partially overlapping entity line ranges are skipped rather than sharing ambiguous evidence.",

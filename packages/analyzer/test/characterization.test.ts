@@ -177,6 +177,8 @@ export function root(): number {
       },
       reverseAdjacency,
       entityById,
+      undefined,
+      'legacy',
     );
 
     assert.equal(impact.blastRadius.totalAffectedEntities, 3);

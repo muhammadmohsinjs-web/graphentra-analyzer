@@ -12,9 +12,10 @@ export interface CliOptions {
   generateContext?: boolean;
   refreshContext?: boolean;
   engine?: EngineProfile;
+  maxAffectedEntities?: number;
 }
 
-const valueOptions = new Set(['target', 'base', 'head', 'report', 'output', 'engine']);
+const valueOptions = new Set(['target', 'base', 'head', 'report', 'output', 'engine', 'max-affected-entities']);
 const flagOptions = new Set(['working-tree', 'help', 'version']);
 
 export function parseCliOptions(args: string[], configuration: { reporting?: boolean } = {}): CliOptions {
@@ -65,6 +66,9 @@ export function parseCliOptions(args: string[], configuration: { reporting?: boo
     if (name === 'engine' && !ENGINE_PROFILES.includes(value as EngineProfile)) {
       throw new GraphentraError(`Unknown engine "${value}". Expected one of: ${ENGINE_PROFILES.join(', ')}.`, 'INVALID_OPTIONS');
     }
+    if (name === 'max-affected-entities' && !/^[1-9]\d*$/.test(value)) {
+      throw new GraphentraError(`Option --max-affected-entities must be a positive integer, got "${value}".`, 'INVALID_OPTIONS');
+    }
 
     values.set(name, value);
   }
@@ -105,6 +109,8 @@ export function parseCliOptions(args: string[], configuration: { reporting?: boo
 
   const engine = values.get('engine');
   if (engine !== undefined) result.engine = engine as EngineProfile;
+  const maxAffected = values.get('max-affected-entities');
+  if (maxAffected !== undefined) result.maxAffectedEntities = Number(maxAffected);
 
   if (flags.has('generate-context')) result.generateContext = true;
   if (flags.has('refresh-context')) result.refreshContext = true;

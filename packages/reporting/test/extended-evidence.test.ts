@@ -84,7 +84,7 @@ test('extended (2.1) evidence: QA payload reports entity granularity and kinds, 
     const payload = buildLLMPayload(changed.evidence.impacts, context, { capabilities: changed.evidence.technicalGraph.capabilities });
     assert.equal(payload.analysisScope.entityGranularity, 'entity');
     assert.deepEqual((payload.analysisScope as { entityKinds?: string[] }).entityKinds, ['component', 'function', 'method', 'module']);
-    assert.deepEqual(payload.analysisScope.relationTypes, ['CALLS']);
+    assert.deepEqual(payload.analysisScope.relationTypes, ['CALLS', 'INSTANTIATES', 'REFERENCES', 'RENDERS']);
     assert.ok(payload.changes.length > 0);
     assert.ok(payload.changes.every(change => typeof change.changedEntity.kind === 'string'));
   } finally { repo.cleanup(); }

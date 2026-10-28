@@ -7,6 +7,7 @@ import {
   computeDeterministicEvidenceIdentity,
   validateEvidenceEnvelope,
   type DeterministicEvidence,
+  type RelationType,
 } from '../src/index';
 import { createRepo } from './helpers/git-fixture';
 
@@ -74,6 +75,29 @@ test('validator applies per-version rules', () => {
   const noLanguage = clone(extended);
   delete noLanguage.technicalGraph.entities[0].language;
   assert.equal(validateEvidenceEnvelope(noLanguage).valid, false);
+});
+
+test('relation types beyond CALLS are accepted only in schema 2.1', () => {
+  const withRenders = (evidence: DeterministicEvidence, relationTypes: RelationType[]): DeterministicEvidence => {
+    const copy = clone(evidence);
+    const { from, to } = copy.technicalGraph.relations[0];
+    copy.technicalGraph.relations.push({ from, to, type: 'RENDERS' });
+    copy.technicalGraph.capabilities.relationTypes = relationTypes;
+    return copy;
+  };
+  const extended = run('extended');
+  const legacy = run('legacy');
+  assert.deepEqual(extended.technicalGraph.capabilities.relationTypes, ['CALLS', 'INSTANTIATES', 'REFERENCES', 'RENDERS']);
+  assert.deepEqual(legacy.technicalGraph.capabilities.relationTypes, ['CALLS']);
+
+  assert.deepEqual(validateEvidenceEnvelope(withRenders(extended, ['CALLS', 'RENDERS'])).errors, []);
+  assert.equal(validateEvidenceEnvelope(withRenders(extended, ['CALLS'])).valid, false);
+  assert.equal(validateEvidenceEnvelope(withRenders(extended, ['RENDERS', 'CALLS'])).valid, false);
+
+  const legacyRenders = validateEvidenceEnvelope(withRenders(legacy, ['CALLS', 'RENDERS']));
+  assert.equal(legacyRenders.valid, false);
+  assert.ok(legacyRenders.errors.some(error => error.includes('must be "CALLS" in schema 2.0')));
+  assert.ok(legacyRenders.errors.some(error => error.includes('relationTypes must be ["CALLS"] in schema 2.0')));
 });
 
 test('2.0 evidence rejects toolchain', () => {

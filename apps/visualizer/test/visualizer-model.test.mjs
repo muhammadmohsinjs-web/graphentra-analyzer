@@ -84,7 +84,7 @@ test('invalid graph identities and dangling edges fail clearly', () => {
   const duplicate = fixture(); duplicate.graph.entities.push(duplicate.graph.entities[0]);
   assert.throws(() => prepareData(duplicate), /duplicate/);
   const dangling = fixture(); dangling.graph.relations[0].to = 'missing';
-  assert.throws(() => prepareData(dangling), /invalid CALLS/);
+  assert.throws(() => prepareData(dangling), /invalid relationship/);
 });
 
 test('empty graph and disconnected seeds are valid', () => {
@@ -113,4 +113,22 @@ test('file layout is stable independent of entity input order and has no overlap
 test('test roles follow the analyzer filename heuristics', () => {
   for (const file of ['tests/orders.ts', 'src/__tests__/order.ts', 'src/order.spec.tsx', 'src\\tests\\order.ts']) assert.ok(isTest(file));
   for (const file of ['src/order.ts', 'src/testable.ts']) assert.equal(isTest(file), false);
+});
+
+test('typed relations merge per entity pair and recorded step types must match them', () => {
+  const data = fixture();
+  data.graph.relations[0].type = 'RENDERS';
+  data.graph.relations.push({ from: 'left', to: 'seed', type: 'REFERENCES' });
+  const model = prepareData(data);
+  const left = model.relations.find(relation => relation.from === 'left' && relation.to === 'seed');
+  assert.deepEqual(left.types, ['RENDERS', 'REFERENCES']);
+  assert.equal(left.type, 'RENDERS');
+  assert.equal(model.relations.length, 5);
+
+  const typed = fixture();
+  typed.graph.relations[0].type = 'RENDERS';
+  typed.analysis.impacts[0].blastRadius.paths[0].stepTypes = ['RENDERS'];
+  assert.doesNotThrow(() => prepareData(typed));
+  typed.analysis.impacts[0].blastRadius.paths[0].stepTypes = ['CALLS'];
+  assert.equal(prepareData(typed).analysis, null);
 });

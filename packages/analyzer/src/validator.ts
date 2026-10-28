@@ -40,6 +40,9 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
   const entityKindsField = isObject(data.technicalGraph) && isObject(data.technicalGraph.capabilities)
     ? data.technicalGraph.capabilities.entityKinds : undefined;
   const declaredKinds: string[] = Array.isArray(entityKindsField) ? entityKindsField : [];
+  const relationTypesField = isObject(data.technicalGraph) && isObject(data.technicalGraph.capabilities)
+    ? data.technicalGraph.capabilities.relationTypes : undefined;
+  const declaredRelationTypes: string[] = Array.isArray(relationTypesField) ? relationTypesField : [];
   if (typeof data.analyzerVersion !== 'string' || !data.analyzerVersion) {
     errors.push('Expected non-empty string for analyzerVersion.');
   }
@@ -97,11 +100,17 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
     if (declaredKinds.some((kind, i) => i > 0 && compareStrings(declaredKinds[i - 1], kind) >= 0)) {
       errors.push('technicalGraph.capabilities.entityKinds must be sorted.');
     }
+    if (declaredRelationTypes.some((type, i) => i > 0 && compareStrings(declaredRelationTypes[i - 1], type) >= 0)) {
+      errors.push('technicalGraph.capabilities.relationTypes must be sorted.');
+    }
   } else {
     if (data.toolchain !== undefined) errors.push('toolchain is not allowed in schema 2.0.');
     if (isObject(data.options) && data.options.engine !== undefined) errors.push('options.engine is not allowed in schema 2.0.');
     if (declaredKinds.length !== 1 || declaredKinds[0] !== 'function') {
       errors.push('technicalGraph.capabilities.entityKinds must be ["function"] in schema 2.0.');
+    }
+    if (declaredRelationTypes.length !== 1 || declaredRelationTypes[0] !== 'CALLS') {
+      errors.push('technicalGraph.capabilities.relationTypes must be ["CALLS"] in schema 2.0.');
     }
   }
 
@@ -125,6 +134,7 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
   // Technical graph
   const entityMap = new Map<string, Entity>();
   const relationPairSet = new Set<string>();
+  const relationTripleSet = new Set<string>();
 
   if (!isObject(data.technicalGraph)) {
     errors.push('Expected technicalGraph to be an object.');
@@ -191,8 +201,12 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
           errors.push(`technicalGraph.relations[${i}] must be an object.`);
           continue;
         }
-        if (relation.type !== 'CALLS') {
-          errors.push(`technicalGraph.relations[${i}].type must be "CALLS".`);
+        if (isExtendedSchema) {
+          if (!declaredRelationTypes.includes(relation.type)) {
+            errors.push(`technicalGraph.relations[${i}].type "${relation.type}" is not listed in capabilities.relationTypes.`);
+          }
+        } else if (relation.type !== 'CALLS') {
+          errors.push(`technicalGraph.relations[${i}].type must be "CALLS" in schema 2.0.`);
         }
         if (!entityMap.has(relation.from)) {
           errors.push(`technicalGraph.relations[${i}].from endpoint "${relation.from}" not found in entities.`);
@@ -201,6 +215,7 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
           errors.push(`technicalGraph.relations[${i}].to endpoint "${relation.to}" not found in entities.`);
         }
         relationPairSet.add(`${relation.from}->${relation.to}`);
+        relationTripleSet.add(`${relation.from}|${relation.type}|${relation.to}`);
       }
     }
   }
@@ -250,6 +265,18 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
             const caller = pathArr[step + 1];
             if (!relationPairSet.has(`${caller.id}->${callee.id}`)) {
               errors.push(`Path discontinuity at step ${step}: "${caller.id}" does not call "${callee.id}".`);
+            }
+          }
+          if (pathInfo.stepTypes !== undefined) {
+            const stepTypes = pathInfo.stepTypes as unknown[];
+            if (!Array.isArray(stepTypes) || stepTypes.length !== pathArr.length - 1) {
+              errors.push(`impacts[${i}].blastRadius.paths[${pIdx}] stepTypes length must equal depth.`);
+            } else {
+              stepTypes.forEach((type, step) => {
+                if (!relationTripleSet.has(`${pathArr[step + 1].id}|${type}|${pathArr[step].id}`)) {
+                  errors.push(`impacts[${i}].blastRadius.paths[${pIdx}] stepTypes[${step}] "${String(type)}" has no matching relation.`);
+                }
+              });
             }
           }
         }

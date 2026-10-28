@@ -45,7 +45,10 @@
         "module"
       ],
       "relationTypes": [
-        "CALLS"
+        "CALLS",
+        "INSTANTIATES",
+        "REFERENCES",
+        "RENDERS"
       ],
       "maxBlastDepth": 6
     },
@@ -758,6 +761,10 @@
                 "language": "typescript",
                 "exported": true
               }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
             ]
           },
           {
@@ -793,6 +800,10 @@
                 "language": "typescript",
                 "exported": true
               }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
             ]
           },
           {
@@ -828,6 +839,10 @@
                 "language": "typescript",
                 "exported": true
               }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
             ]
           },
           {
@@ -873,6 +888,11 @@
                 "language": "typescript",
                 "exported": true
               }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS",
+              "CALLS"
             ]
           },
           {
@@ -918,6 +938,11 @@
                 "language": "typescript",
                 "exported": true
               }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS",
+              "CALLS"
             ]
           },
           {
@@ -973,6 +998,12 @@
                 "language": "typescript",
                 "exported": true
               }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS",
+              "CALLS",
+              "CALLS"
             ]
           },
           {
@@ -1028,6 +1059,12 @@
                 "language": "typescript",
                 "exported": true
               }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS",
+              "CALLS",
+              "CALLS"
             ]
           },
           {
@@ -1093,9 +1130,17 @@
                 "language": "typescript",
                 "exported": true
               }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS",
+              "CALLS",
+              "CALLS",
+              "CALLS"
             ]
           }
-        ]
+        ],
+        "truncated": false
       },
       "terminalDependents": [
         {
@@ -1162,7 +1207,7 @@
     "Only TypeScript and JavaScript are analyzed; JavaScript is not type-checked.",
     "Entities are named functions, variable-bound arrow functions and function expressions, class and object-literal methods, constructors, accessors, React components, and module-level code.",
     "Classes, interfaces, type aliases, and enums are not entities.",
-    "Only CALLS relationships are currently supported.",
+    "Relationships are CALLS, RENDERS (JSX elements), INSTANTIATES (new expressions), and REFERENCES (functions passed or stored as values).",
     "Dynamic calls and calls through interface-typed receivers are not analyzed.",
     "Deleted entities have no current graph entity; renamed entities may lack removed-code evidence.",
     "Partially overlapping entity line ranges are skipped rather than sharing ambiguous evidence.",

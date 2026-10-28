@@ -8,6 +8,10 @@
   --amber: #edbd72;
   --blue: #69bddd;
   --mint: #a5cbbd;
+  --edge-calls: #69bddd;
+  --edge-renders: #c39bea;
+  --edge-instantiates: #e59a6f;
+  --edge-references: #8fd48a;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 * {
@@ -426,6 +430,13 @@ input[type='search'] {
 .legend-impact {
   background: var(--blue);
 }
+.legend-edge {
+  width: 14px !important;
+  height: 2px !important;
+  border-radius: 0 !important;
+  vertical-align: middle;
+  background: var(--edge-color);
+}
 .legend-test {
   border: 1px solid #b4a1d9;
   border-radius: 0 !important;
@@ -454,8 +465,23 @@ input[type='search'] {
   stroke-width: 1.2;
   opacity: 0.28;
 }
+.edge-calls {
+  --edge-color: var(--edge-calls);
+}
+.edge-renders {
+  --edge-color: var(--edge-renders);
+}
+.edge-instantiates {
+  --edge-color: var(--edge-instantiates);
+}
+.edge-references {
+  --edge-color: var(--edge-references);
+}
+.edge.edge-references {
+  stroke-dasharray: 4 3;
+}
 .edge.reached {
-  stroke: var(--blue);
+  stroke: var(--edge-color, var(--blue));
   stroke-width: 2;
   opacity: 0.72;
 }
@@ -631,6 +657,10 @@ input[type='range'] {
   margin: 12px 0 18px;
   padding-left: 12px;
   border-left: 1px solid var(--blue);
+}
+.path-step {
+  font-size: 9px;
+  color: var(--edge-color, var(--muted));
 }
 .path-list button {
   max-width: 100%;

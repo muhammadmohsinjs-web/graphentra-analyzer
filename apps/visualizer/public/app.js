@@ -1,4 +1,4 @@
-import { prepareData, buildTraversal, layoutGraph, edgeKey, isTest, kindOf, kindClass, displayName } from '/model.mjs';
+import { prepareData, buildTraversal, layoutGraph, edgeKey, edgeClass, isTest, kindOf, kindClass, displayName, RELATION_TYPES, RELATION_VERBS, STEP_LABELS } from '/model.mjs';
 
 const $ = id => document.getElementById(id);
 const svgNS = 'http://www.w3.org/2000/svg';
@@ -27,6 +27,18 @@ async function main() {
     $('graph').setAttribute('aria-label', 'Interactive entity dependency graph. Select nodes for evidence; drag the background to pan.');
   }
   const layout = layoutGraph(model.entities);
+  const relationByKey = new Map(model.relations.map(relation => [edgeKey(relation.from, relation.to), relation]));
+  const presentTypes = RELATION_TYPES.filter(type => model.relations.some(relation => relation.type === type));
+  if (presentTypes.some(type => type !== 'CALLS')) {
+    const legend = document.querySelector('.legend');
+    for (const type of presentTypes) {
+      const item = document.createElement('span');
+      const swatch = document.createElement('i');
+      swatch.className = `legend-edge ${edgeClass(type)}`;
+      item.append(swatch, RELATION_VERBS[type]);
+      legend.append(item);
+    }
+  }
   const recorded = model.analysis?.impacts ?? [];
   let simulated = recorded.length === 0;
   let selectedSeeds = recorded.length ? [recorded[0].changedEntity.id] : [...model.entities.keys()].slice(0, 1);
@@ -54,7 +66,7 @@ async function main() {
   const warnings = [
     ...model.warnings,
     ...(model.analysis?.limitations ?? []).filter(value => typeof value === 'string'),
-    extended ? 'Functions, methods, React components and module-level code from TypeScript and JavaScript, with static CALLS edges, are shown. Dynamic calls and application surfaces are not modeled.'
+    extended ? 'Functions, methods, React components and module-level code from TypeScript and JavaScript, with static CALLS, RENDERS, INSTANTIATES and REFERENCES edges, are shown. Dynamic calls and application surfaces are not modeled.'
       : 'Only discovered named TypeScript functions and static CALLS edges are shown. Methods, arrow functions, dynamic calls and application surfaces are not modeled.',
     ...(extended ? model.limitations.filter(value => typeof value === 'string') : []),
     `Traversal stops at depth ${model.maxDepth}. The recorded artifacts do not identify a truncated frontier.`,
@@ -115,7 +127,7 @@ async function main() {
     world.append(label, count);
   }
   for (const relation of model.relations) {
-    // Render reverse CALLS direction: changed callee -> potentially affected caller.
+    // Render reverse relation direction: changed callee -> potentially affected caller.
     const from = layout.positions.get(relation.to);
     const to = layout.positions.get(relation.from);
     let d;
@@ -130,12 +142,14 @@ async function main() {
       const mid = (x1 + x2) / 2;
       d = `M ${x1} ${from.y + 17} C ${mid} ${from.y + 17}, ${mid} ${to.y + 17}, ${x2} ${to.y + 17}`;
     }
-    const line = svg('path', { d, class: 'edge' });
+    const typeClass = edgeClass(relation.type);
+    const line = svg('path', { d, class: `edge ${typeClass}` });
     const title = svg('title');
-    title.textContent = `${model.entities.get(relation.from).name} calls ${model.entities.get(relation.to).name}. Impact travels in reverse.`;
+    const verbs = relation.types.map(type => RELATION_VERBS[type]).join(' and ');
+    title.textContent = `${model.entities.get(relation.from).name} ${verbs} ${model.entities.get(relation.to).name}. Impact travels in reverse.`;
     line.append(title);
     const wave = svg('path', { d, class: 'wave', pathLength: 100 });
-    edgeElements.set(edgeKey(relation.to, relation.from), { line, wave });
+    edgeElements.set(edgeKey(relation.to, relation.from), { line, wave, typeClass });
     world.append(line, wave);
   }
   for (const [id, entity] of model.entities) {
@@ -268,10 +282,10 @@ async function main() {
       node.setAttribute('aria-pressed', String(selected === id));
       miniNodes.get(id).setAttribute('class', seed ? 'mini-seed' : active ? 'mini-reached' : '');
     }
-    for (const [key, { line }] of edgeElements) {
+    for (const [key, { line, typeClass }] of edgeElements) {
       const depth = traversal.edges.get(key);
       const active = depth !== undefined && depth <= layer;
-      line.setAttribute('class', `edge${active ? ' reached' : ''}${active && tracedEdges.has(key) ? ' traced' : ''}`);
+      line.setAttribute('class', `edge ${typeClass}${active ? ' reached' : ''}${active && tracedEdges.has(key) ? ' traced' : ''}`);
       if (active) line.setAttribute('marker-end', 'url(#impact-arrow)');
       else line.removeAttribute('marker-end');
     }
@@ -348,10 +362,13 @@ async function main() {
     if (seed) pathSection.append(text('p', simulated ? 'You selected this function as a hypothetical change. The wave is computed from the current graph, not saved change evidence.' : 'This function is a starting point in the saved change analysis.'));
     else if (!paths.length) pathSection.append(text('p', 'Not reached from the selected starting point within the analyzed depth. This is not proof that it cannot be affected.'));
     else {
-      pathSection.append(text('p', simulated ? 'Shortest caller path computed from the current graph.' : `${paths.length} recorded caller path${paths.length === 1 ? '' : 's'}. Arrows below show impact, not call direction.`));
+      pathSection.append(text('p', simulated ? 'Shortest caller path computed from the current graph.' : `${paths.length} recorded caller path${paths.length === 1 ? '' : 's'}. ${presentTypes.length > 1 ? 'Each step shows how the next entity depends on the one above it.' : 'Arrows below show impact, not call direction.'}`));
       for (const path of paths.slice(0, 20)) {
         const list = text('div', '', 'path-list');
-        for (const id of path) {
+        for (const [index, id] of path.entries()) {
+          // Step label from the relation between the previous entity and its dependent `id`.
+          const relation = index > 0 && relationByKey.get(edgeKey(id, path[index - 1]));
+          if (relation && presentTypes.length > 1) list.append(text('span', STEP_LABELS[relation.type], `path-step ${edgeClass(relation.type)}`));
           const button = text('button', model.entities.get(id).name);
           button.onclick = () => { inspect(id); nodeElements.get(id).focus(); };
           list.append(button);

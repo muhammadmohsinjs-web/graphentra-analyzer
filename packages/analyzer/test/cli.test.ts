@@ -114,3 +114,12 @@ test('comparison resolves explicit flags first and rejects incomplete environmen
     assert.throws(() => resolveCliComparison({ workingTree: false }, env));
   }
 });
+
+test('--max-affected-entities parses a positive integer and rejects anything else', () => {
+  assert.equal(parseCliOptions(['/workspace/app', '--max-affected-entities', '500']).maxAffectedEntities, 500);
+  assert.equal(parseCliOptions(['/workspace/app', '--max-affected-entities=1']).maxAffectedEntities, 1);
+  assert.equal(parseCliOptions(['/workspace/app']).maxAffectedEntities, undefined);
+  for (const bad of ['0', '-3', '2.5', 'abc', '1e3']) {
+    assert.throws(() => parseCliOptions(['/workspace/app', `--max-affected-entities=${bad}`]), /positive integer/);
+  }
+});

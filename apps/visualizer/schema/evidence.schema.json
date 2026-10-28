@@ -214,7 +214,12 @@
           "minLength": 1
         },
         "type": {
-          "const": "CALLS"
+          "enum": [
+            "CALLS",
+            "RENDERS",
+            "REFERENCES",
+            "INSTANTIATES"
+          ]
         },
         "from": {
           "type": "string",
@@ -401,6 +406,24 @@
           },
           "minItems": 2,
           "maxItems": 7
+        },
+        "pathCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000
+        },
+        "stepTypes": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "CALLS",
+              "RENDERS",
+              "REFERENCES",
+              "INSTANTIATES"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 6
         }
       },
       "required": [
@@ -443,6 +466,9 @@
               "items": {
                 "$ref": "#/$defs/path"
               }
+            },
+            "truncated": {
+              "type": "boolean"
             }
           },
           "required": [
@@ -522,9 +548,17 @@
               "uniqueItems": true
             },
             "relationTypes": {
-              "const": [
-                "CALLS"
-              ]
+              "type": "array",
+              "items": {
+                "enum": [
+                  "CALLS",
+                  "RENDERS",
+                  "REFERENCES",
+                  "INSTANTIATES"
+                ]
+              },
+              "minItems": 1,
+              "uniqueItems": true
             },
             "maxBlastDepth": {
               "const": 6
