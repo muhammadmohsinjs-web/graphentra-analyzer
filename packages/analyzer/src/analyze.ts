@@ -12,6 +12,7 @@ import {
   type EngineProfile,
   type DeterministicEvidence,
 } from './contracts';
+import { compareStrings } from './deterministic';
 import { GraphentraError } from './errors';
 import { parseGitDiff } from './change-evidence';
 import { computeAttribution } from './attribution';
@@ -19,6 +20,7 @@ import { buildImpact, findChangedEntities } from './impact';
 import { DEFAULT_LIMITATIONS, EXTENDED_LIMITATIONS } from './output';
 import { createBaselineSnapshot } from './baseline-host';
 import { captureSourceSnapshot } from './source-snapshot';
+import { classifyFileOrigin } from './file-origin';
 import { createRepositoryContext, type RepositoryContext } from './repository';
 import { extractTechnicalGraph, isAnalyzableFile, type ExtractedGraph } from './technical-graph';
 import { APPLICATION_MAP_SCHEMA_VERSION, extractApplicationMap, type ApplicationMap } from './application-map';
@@ -76,7 +78,23 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
   }
   const changedFiles = parseGitDiff(gitDiff, repo.gitPathToProjectPath)
     .filter(change => repo.includesPath(change.file));
-  const supportedChanges = changedFiles.filter(change => isAnalyzableFile(change.file, engine));
+  let supportedChanges = changedFiles.filter(change => isAnalyzableFile(change.file, engine));
+  if (engine === 'extended' && supportedChanges.length > 0) {
+    // Non-source files are reported but never traversed.
+    const attributes = repo.checkAttributes(supportedChanges.map(change => change.file));
+    const nonSource: Array<{ file: string; origin: string }> = [];
+    supportedChanges = supportedChanges.filter(change => {
+      const origin = classifyFileOrigin(change.file, {
+        attributes: attributes.get(change.file), content: snapshot.readFile(`${repo.projectRoot}/${change.file}`) });
+      if (origin !== 'source') nonSource.push({ file: change.file, origin });
+      return origin === 'source';
+    });
+    if (nonSource.length > 0) {
+      nonSource.sort((a, b) => compareStrings(a.file, b.file));
+      diagnostics.push({ code: 'GENERATED_FILES_CHANGED', severity: 'info',
+        message: `Changes in non-source files were reported but not traversed: ${nonSource.map(item => `${item.file} (${item.origin})`).join(', ')}` });
+    }
+  }
   // Base graph (P3-1): internal until the evidence schema carries it; D11 skips it when nothing analyzable changed.
   const baseGraph = engine === 'extended' && supportedChanges.length > 0
     ? extractBaseGraph(repo, engine, { headCompilerOptions: snapshot.compilerOptions })

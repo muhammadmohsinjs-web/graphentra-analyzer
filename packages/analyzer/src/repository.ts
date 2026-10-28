@@ -33,6 +33,7 @@ export interface RepositoryContext {
   executeGit(args: string[], cwd?: string): string;
   verifyHeadUnchanged(): void;
   calculateWorkingTreeContentIdentity(analyzedFiles: string[]): string;
+  checkAttributes(files: string[]): Map<string, { generated?: boolean; vendored?: boolean }>;
 }
 
 export function createRepositoryContext(
@@ -350,6 +351,31 @@ export function createRepositoryContext(
     return hash.digest('hex');
   }
 
+  /** linguist-generated / linguist-vendored from .gitattributes, keyed by project path. */
+  function checkAttributes(files: string[]): Map<string, { generated?: boolean; vendored?: boolean }> {
+    const result = new Map<string, { generated?: boolean; vendored?: boolean }>();
+    if (files.length === 0) return result;
+    const repoPaths = files.map(file => projectInsideRepository === '.' ? file : path.posix.join(projectInsideRepository, file));
+    const env = { ...process.env };
+    for (const key of Object.keys(env)) if (key.startsWith('GIT_')) delete env[key];
+    const output = execFileSync('git', ['check-attr', '-z', '--stdin', 'linguist-generated', 'linguist-vendored'], {
+      cwd: gitRepositoryRoot, env, input: repoPaths.join('\0'), encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe'], timeout: timeoutMs, maxBuffer: 20 * 1024 * 1024,
+    });
+    const fields = output.split('\0');
+    for (let index = 0; index + 2 < fields.length; index += 3) {
+      const [repoPath, attribute, value] = [fields[index], fields[index + 1], fields[index + 2]];
+      if (value === 'unspecified' || value === 'unset' || value === 'false') continue;
+      const file = files[repoPaths.indexOf(repoPath)];
+      if (file === undefined) continue;
+      const entry = result.get(file) ?? {};
+      if (attribute === 'linguist-generated') entry.generated = true;
+      else entry.vendored = true;
+      result.set(file, entry);
+    }
+    return result;
+  }
+
   return {
     projectRoot,
     excludePaths,
@@ -368,5 +394,6 @@ export function createRepositoryContext(
     executeGit,
     verifyHeadUnchanged,
     calculateWorkingTreeContentIdentity,
+    checkAttributes,
   };
 }
