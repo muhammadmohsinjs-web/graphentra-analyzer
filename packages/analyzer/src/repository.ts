@@ -19,6 +19,8 @@ export interface RepositoryContext {
   excludePaths: string[];
   includesPath(file: string): boolean;
   listFiles(untracked?: boolean): string[];
+  /** Project-relative files in the tree of `baseSha` (included paths only), sorted. */
+  listBaselineFiles(baseSha: string): string[];
   trackedState(): string;
   gitRepositoryRoot: string;
   projectInsideRepository: string;
@@ -148,6 +150,12 @@ export function createRepositoryContext(
   function listFiles(untracked = false): string[] {
     return executeGit(['ls-files', '-z', ...(untracked ? ['--others', '--exclude-standard'] : ['--cached']),
       ...targetFilter], gitRepositoryRoot).split('\0').filter(Boolean)
+      .map(gitPathToProjectPath).filter(includesPath).sort();
+  }
+  function listBaselineFiles(baseSha: string): string[] {
+    const scoped = projectInsideRepository === '.' ? [] : ['--', projectInsideRepository];
+    return executeGit(['ls-tree', '-r', '-z', '--name-only', baseSha, ...scoped], gitRepositoryRoot)
+      .split('\0').filter(file => file && (projectInsideRepository === '.' || file.startsWith(`${projectInsideRepository}/`)))
       .map(gitPathToProjectPath).filter(includesPath).sort();
   }
   function trackedState(): string {
@@ -347,6 +355,7 @@ export function createRepositoryContext(
     excludePaths,
     includesPath,
     listFiles,
+    listBaselineFiles,
     trackedState,
     gitRepositoryRoot,
     projectInsideRepository,

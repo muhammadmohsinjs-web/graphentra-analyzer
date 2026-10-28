@@ -9,6 +9,7 @@ import {
   type AnalyzeOptions,
   type AnalyzeResult,
   type DiagnosticItem,
+  type EngineProfile,
   type DeterministicEvidence,
 } from './contracts';
 import { GraphentraError } from './errors';
@@ -16,12 +17,14 @@ import { parseGitDiff } from './change-evidence';
 import { computeAttribution } from './attribution';
 import { buildImpact, findChangedEntities } from './impact';
 import { DEFAULT_LIMITATIONS, EXTENDED_LIMITATIONS } from './output';
+import { createBaselineSnapshot } from './baseline-host';
 import { captureSourceSnapshot } from './source-snapshot';
-import { createRepositoryContext } from './repository';
+import { createRepositoryContext, type RepositoryContext } from './repository';
 import { extractTechnicalGraph, isAnalyzableFile, type ExtractedGraph } from './technical-graph';
 import { APPLICATION_MAP_SCHEMA_VERSION, extractApplicationMap, type ApplicationMap } from './application-map';
 import { buildToolchainRecord, toolchainDiagnostics } from './toolchain';
 import { assertValidEvidenceEnvelope } from './validator';
+import type { CompilerOptions } from 'typescript';
 
 export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
   if (options.engine !== undefined && !ENGINE_PROFILES.includes(options.engine)) {
@@ -74,6 +77,11 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
   const changedFiles = parseGitDiff(gitDiff, repo.gitPathToProjectPath)
     .filter(change => repo.includesPath(change.file));
   const supportedChanges = changedFiles.filter(change => isAnalyzableFile(change.file, engine));
+  // Base graph (P3-1): internal until the evidence schema carries it; D11 skips it when nothing analyzable changed.
+  const baseGraph = engine === 'extended' && supportedChanges.length > 0
+    ? extractBaseGraph(repo, engine, { headCompilerOptions: snapshot.compilerOptions })
+    : undefined;
+  void baseGraph;
   if (changedFiles.some(change => !isAnalyzableFile(change.file, engine))) {
     diagnostics.push({ code: 'OUTSIDE_SUPPORTED_SCOPE', severity: 'warning',
       message: 'Changes outside TypeScript extraction scope were not analyzed for function impact.' });
@@ -131,6 +139,36 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
     : 'Changes did not match supported current function declarations.';
   return { outcome, technicalGraph: extracted.technicalGraph, evidence, applicationMap, changedFiles, changedEntities,
     impacts, gitDiff, diagnostics, summaryMessage, ...(attribution ? { attribution } : {}) };
+}
+
+type BaseNodeHook = NonNullable<Parameters<typeof extractTechnicalGraph>[0]['onEntityNode']>;
+
+/** Graph of the base revision, built from Git objects through a host that never touches the head snapshot's reads. */
+export function extractBaseGraph(
+  repo: RepositoryContext,
+  engine: EngineProfile,
+  options: { headCompilerOptions: CompilerOptions; onEntityNode?: BaseNodeHook },
+): { graph: ExtractedGraph; diagnostics: DiagnosticItem[] } {
+  const baseSha = repo.comparison.resolvedBaseSha;
+  const baseline = createBaselineSnapshot(repo, baseSha, engine, options.headCompilerOptions);
+  const graph = extractTechnicalGraph({
+    files: baseline.files,
+    compilerOptions: baseline.compilerOptions,
+    host: baseline.host,
+    projectRoot: repo.projectRoot,
+    headSha: baseSha,
+    targetPath: repo.projectInsideRepository,
+    excludePaths: repo.excludePaths,
+    engine,
+    onEntityNode: options.onEntityNode,
+  });
+  if (engine === 'extended') for (const entity of graph.entities) entity.language ??= 'typescript';
+  // Release the base Program: only plain data survives extraction.
+  graph.program = undefined;
+  graph.checker = undefined;
+  graph.symbolToEntity = undefined;
+  graph.toProjectPath = undefined;
+  return { graph, diagnostics: [...baseline.diagnostics, ...graph.diagnostics] };
 }
 
 function emptyApplicationMap(headSha: string, reason?: string): ApplicationMap {
