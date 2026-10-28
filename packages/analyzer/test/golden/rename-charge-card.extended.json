@@ -637,7 +637,12 @@
         "file": "src/billing.ts",
         "startLine": 3,
         "endLine": 8
-      }
+      },
+      "changeClasses": [
+        "body",
+        "export_surface",
+        "renamed"
+      ]
     },
     {
       "entity": {
@@ -663,7 +668,10 @@
         ],
         "diff": "--- a/src/billing.ts\n+++ b/src/billing.ts\n@@ -10,3 +10,3 @@\n export function processPayment(amount: number, cardToken: string): boolean {\n-  return chargeCard(amount, cardToken);\n+  return captureCard(amount, cardToken);\n }"
       },
-      "changeKind": "modified"
+      "changeKind": "modified",
+      "changeClasses": [
+        "body"
+      ]
     }
   ],
   "impacts": [
@@ -793,7 +801,8 @@
             "pathCount": 1,
             "stepTypes": [
               "CALLS"
-            ]
+            ],
+            "contractRisk": true
           },
           {
             "target": {
@@ -1063,7 +1072,8 @@
           "language": "typescript",
           "exported": true
         }
-      ]
+      ],
+      "contractRisk": true
     },
     {
       "changedEntity": {

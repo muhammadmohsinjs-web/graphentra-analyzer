@@ -589,7 +589,10 @@
             "type": "CALLS"
           }
         ]
-      }
+      },
+      "changeClasses": [
+        "body"
+      ]
     }
   ],
   "impacts": [

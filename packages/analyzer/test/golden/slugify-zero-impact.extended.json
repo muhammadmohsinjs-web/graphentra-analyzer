@@ -584,7 +584,10 @@
         ],
         "diff": "--- a/src/utils.ts\n+++ b/src/utils.ts\n@@ -10,7 +10,7 @@\n export function slugify(text: string): string {\n   return text\n     .toLowerCase()\n-    .trim()\n+    .trim().normalize()\n     .replace(/[^\\w\\s-]/g, '')\n     .replace(/[\\s_-]+/g, '-')\n     .replace(/^-+|-+$/g, '');"
       },
-      "changeKind": "modified"
+      "changeKind": "modified",
+      "changeClasses": [
+        "body"
+      ]
     }
   ],
   "impacts": [

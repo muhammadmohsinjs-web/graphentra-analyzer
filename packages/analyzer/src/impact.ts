@@ -246,6 +246,18 @@ export function buildImpact(
   };
 }
 
+/** Signature/export-surface change: the impact and its direct dependents carry contractRisk. */
+export function withContractRisk(impact: EntityImpact): EntityImpact {
+  return {
+    ...impact,
+    contractRisk: true,
+    blastRadius: {
+      ...impact.blastRadius,
+      paths: impact.blastRadius.paths.map(path => path.depth === 1 ? { ...path, contractRisk: true } : path),
+    },
+  };
+}
+
 export function findChangedEntities(options: {
   changedFiles: ChangedFile[];
   entities: Entity[];

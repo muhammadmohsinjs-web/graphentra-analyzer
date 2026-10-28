@@ -584,7 +584,10 @@
         ],
         "diff": "--- a/src/billing.ts\n+++ b/src/billing.ts\n@@ -3,5 +3,5 @@\n export function chargeCard(amount: number, cardToken: string): boolean {\n-  if (!cardToken || amount <= 1) {\n+  if (!cardToken || amount <= 5) {\n     return false;\n   }\n   return true;"
       },
-      "changeKind": "modified"
+      "changeKind": "modified",
+      "changeClasses": [
+        "body"
+      ]
     }
   ],
   "impacts": [

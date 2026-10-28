@@ -1221,7 +1221,10 @@
         ],
         "diff": "--- a/src/utils/format.ts\n+++ b/src/utils/format.ts\n@@ -16,7 +16,7 @@\n export default function slugify(s: string): string {\n   return s\n     .toLowerCase()\n-    .trim()\n+    .trim().normalize()\n     .replace(/[^a-z0-9]+/g, '-')\n     .replace(/^-+|-+$/g, '');\n }"
       },
-      "changeKind": "modified"
+      "changeKind": "modified",
+      "changeClasses": [
+        "body"
+      ]
     }
   ],
   "impacts": [

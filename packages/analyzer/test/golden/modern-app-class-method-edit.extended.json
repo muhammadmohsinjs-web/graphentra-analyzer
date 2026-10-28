@@ -1220,7 +1220,10 @@
         ],
         "diff": "--- a/src/services/order-service.ts\n+++ b/src/services/order-service.ts\n@@ -20,4 +20,4 @@\n   total(id: string): string {\n     const order = this.orders.get(id);\n-    return order ? formatPrice(orderTotal(order)) : formatPrice(0);\n+    return order ? formatPrice(orderTotal(order)) : formatPrice(1);\n   }"
       },
-      "changeKind": "modified"
+      "changeKind": "modified",
+      "changeClasses": [
+        "body"
+      ]
     }
   ],
   "impacts": [

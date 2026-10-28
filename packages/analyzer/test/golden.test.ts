@@ -34,7 +34,7 @@ function readFixture(fixture: string): Files {
 
 function replaceOnce(source: string, from: string, to: string): string {
   assert.ok(source.includes(from), `fixture no longer contains: ${from}`);
-  return source.replace(from, to);
+  return source.replace(from, () => to);
 }
 
 /** Replace volatile values (SHAs, version, timestamp, content hash) with stable placeholders. */
@@ -123,6 +123,23 @@ const scenarios: Scenario[] = [
   // submitOrder reaches applyDiscount through calculateOrderTotal, which holds the direct CALLS edge.
   { name: 'drop-apply-discount-call', extendedOnly: true, expectedOutcome: 'completed', edit: f => ({
     'src/pricing.ts': replaceOnce(f['src/pricing.ts'], 'applyDiscount(subtotal, discountPercentage);', 'subtotal;') }) },
+  // One scenario per change class (P3-5, P3-7): cosmetic and test_only edits are skipped; contract changes flag dependents.
+  { name: 'class-cosmetic-reformat', extendedOnly: true, expectedOutcome: 'completed', edit: f => ({
+    'src/utils.ts': replaceOnce(f['src/utils.ts'], `  const rounded = roundToTwo(amount);
+  return \`$\${rounded.toFixed(2)}\`;`, `  // reformatted only
+  const rounded =
+      roundToTwo( amount );
+  return \`$\${ rounded.toFixed( 2 ) }\`;`) }) },
+  { name: 'class-log-only', extendedOnly: true, expectedOutcome: 'completed', edit: f => ({
+    'src/billing.ts': replaceOnce(f['src/billing.ts'], '  if (!cardToken || amount <= 1) {', `  console.log('charging', amount);
+  if (!cardToken || amount <= 1) {`) }) },
+  { name: 'class-signature', extendedOnly: true, expectedOutcome: 'completed', edit: f => ({
+    'src/billing.ts': replaceOnce(f['src/billing.ts'], 'chargeCard(amount: number, cardToken: string)',
+      `chargeCard(amount: number, cardToken: string, currency = 'USD')`) }) },
+  { name: 'class-export-surface', extendedOnly: true, expectedOutcome: 'completed', edit: f => ({
+    'src/inventory.ts': replaceOnce(f['src/inventory.ts'], 'function sanitizeSku', 'export function sanitizeSku') }) },
+  { name: 'class-test-only', extendedOnly: true, expectedOutcome: 'completed', edit: f => ({
+    'tests/orders.test.ts': replaceOnce(f['tests/orders.test.ts'], "'tok_mastercard'", "'tok_amex'") }) },
 ];
 
 for (const engine of ['legacy', 'extended'] as const) for (const scenario of scenarios) {

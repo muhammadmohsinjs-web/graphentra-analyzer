@@ -12,6 +12,7 @@ import {
   type Entity,
   type EntityCoordinates,
   type EntityImpact,
+  type ChangedEntity,
   type EngineProfile,
   type DeterministicEvidence,
 } from './contracts';
@@ -22,8 +23,10 @@ import { computeAttribution } from './attribution';
 import { baseToHeadId } from './correspondence';
 import {
   applyCorrespondence, buildDeletedImpact, buildImpact, correspondChangedFiles, entityCoordinates, findChangedEntities,
+  withContractRisk,
 } from './impact';
 import { fingerprint, normalizeNode } from './ast-normalize';
+import { classifyChange, fingerprintsOf, type EntityFingerprints } from './change-taxonomy';
 import { DEFAULT_LIMITATIONS, EXTENDED_LIMITATIONS } from './output';
 import { createBaselineSnapshot } from './baseline-host';
 import { captureSourceSnapshot } from './source-snapshot';
@@ -55,6 +58,7 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
 
   const snapshot = captureSourceSnapshot(repo, engine);
   const headFingerprints = new Map<string, string>();
+  const headClassFingerprints = new Map<string, EntityFingerprints>();
   const extracted = extractTechnicalGraph({
     files: snapshot.files,
     compilerOptions: snapshot.compilerOptions,
@@ -64,7 +68,7 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
     targetPath,
     excludePaths: options.excludePaths,
     engine,
-    onEntityNode: engine === 'extended' ? fingerprintCollector(headFingerprints) : undefined,
+    onEntityNode: engine === 'extended' ? fingerprintCollector(headFingerprints, headClassFingerprints) : undefined,
   });
   // Extended engine: stamp language once, so graph, changed entities and impacts share the same objects.
   if (engine === 'extended') for (const entity of extracted.entities) entity.language ??= 'typescript';
@@ -106,8 +110,9 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
   }
   // D11: the base graph is only built when something analyzable changed.
   const baseFingerprints = new Map<string, string>();
+  const baseClassFingerprints = new Map<string, EntityFingerprints>();
   const baseGraph = engine === 'extended' && supportedChanges.length > 0 && extracted.files.length > 0
-    ? extractBaseGraph(repo, engine, { headCompilerOptions: snapshot.compilerOptions, onEntityNode: fingerprintCollector(baseFingerprints) }).graph
+    ? extractBaseGraph(repo, engine, { headCompilerOptions: snapshot.compilerOptions, onEntityNode: fingerprintCollector(baseFingerprints, baseClassFingerprints) }).graph
     : undefined;
   if (changedFiles.some(change => !isAnalyzableFile(change.file, engine))) {
     diagnostics.push({ code: 'OUTSIDE_SUPPORTED_SCOPE', severity: 'warning',
@@ -123,6 +128,7 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
   if (engine === 'extended') diagnostics.push(...extraDiagnostics);
   let changedEntities = headChangedEntities;
   let impacts: EntityImpact[];
+  const skippedEntities: NonNullable<DeterministicEvidence['skippedEntities']> = [];
   const baseOnly = new Map<string, EntityCoordinates>();
   if (baseGraph) {
     const correspondence = correspondChangedFiles({ changedFiles: supportedChanges, head: extracted, base: baseGraph,
@@ -134,9 +140,23 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
     changedEntities = applyCorrespondence({ changedEntities: headChangedEntities, changedFiles: supportedChanges,
       head: extracted, base: baseGraph, correspondence });
     const toHead = baseToHeadId(correspondence);
-    impacts = changedEntities.map(changed => changed.changeKind === 'deleted'
-      ? buildDeletedImpact(changed, baseGraph, extracted, toHead, maxAffected)
-      : buildImpact(changed, extracted.reverseAdjacency, extracted.entityById, undefined, engine, maxAffected));
+    changedEntities = changedEntities.map(changed => ({ ...changed, changeClasses: classifyChange({
+      changeKind: changed.changeKind!, file: changed.entity.file,
+      base: baseClassFingerprints.get(changed.baseEntity?.id ?? changed.entity.id),
+      head: headClassFingerprints.get(changed.entity.id) }) }));
+    impacts = [];
+    for (const changed of changedEntities) {
+      const skipReason = skipReasonOf(changed);
+      if (skipReason) {
+        skippedEntities.push({ entityId: changed.entity.id, reason: skipReason });
+        continue;
+      }
+      const impact = changed.changeKind === 'deleted'
+        ? buildDeletedImpact(changed, baseGraph, extracted, toHead, maxAffected)
+        : buildImpact(changed, extracted.reverseAdjacency, extracted.entityById, undefined, engine, maxAffected);
+      impacts.push(changed.changeClasses!.some(value => value === 'signature' || value === 'export_surface')
+        ? withContractRisk(impact) : impact);
+    }
     const noteBaseOnly = (entity: Entity) => {
       if (!extracted.entityById.has(entity.id)) baseOnly.set(entity.id, entityCoordinates(entity));
     };
@@ -157,6 +177,12 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
       diagnostics.push({ code: 'BLAST_RADIUS_TRUNCATED', severity: 'info', entityId: impact.changedEntity.id,
         message: `Blast radius for ${impact.changedEntity.id} was cut at ${maxAffected} affected entities; shallowest and lowest-ID entities are kept.` });
     }
+  }
+  skippedEntities.sort((a, b) => compareStrings(a.entityId, b.entityId));
+  const cosmeticIds = skippedEntities.filter(item => item.reason === 'cosmetic').map(item => item.entityId);
+  if (cosmeticIds.length > 0) {
+    diagnostics.push({ code: 'COSMETIC_CHANGES_SKIPPED', severity: 'info',
+      message: `Formatting- or comment-only changes were not traversed: ${cosmeticIds.join(', ')}` });
   }
   const outcome = extracted.files.length === 0 ? 'no_source_files'
     : changedFiles.length === 0 ? 'no_changes'
@@ -186,11 +212,13 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
     outcome, technicalGraph: extracted.technicalGraph, changedFiles, changedEntities, impacts,
     diagnostics, limitations: [...(extended ? EXTENDED_LIMITATIONS : DEFAULT_LIMITATIONS)],
     ...(baseEntities.length > 0 ? { baseEntities } : {}),
+    ...(skippedEntities.length > 0 ? { skippedEntities } : {}),
   };
   snapshot.verify();
   assertValidEvidenceEnvelope(evidence);
   const applicationMap = buildApplicationMap(extracted, repo.projectRoot, headSha);
-  const summaryMessage = outcome === 'completed' ? `Deterministic impact evidence built for ${impacts.length} changed functions.`
+  const summaryMessage = outcome === 'completed'
+    ? `Deterministic impact evidence built for ${impacts.length} changed functions.${skippedEntities.length > 0 ? ` ${skippedEntities.length} cosmetic or test-only changes were not traversed.` : ''}`
     : outcome === 'no_changes' ? 'No changes were found in the included target scope.'
     : outcome === 'no_source_files' ? 'No TypeScript files were found in the target repository.'
     : 'Changes did not match supported current function declarations.';
@@ -200,14 +228,29 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
 
 type BaseNodeHook = NonNullable<Parameters<typeof extractTechnicalGraph>[0]['onEntityNode']>;
 
-/** Fingerprints are computed while the AST is alive (D3); module entities pair by id only and are not fingerprinted. */
-function fingerprintCollector(into: Map<string, string>): BaseNodeHook {
+/** test_only wins over cosmetic so a skipped entity carries one reason; any other class keeps normal traversal. */
+function skipReasonOf(changed: ChangedEntity): 'cosmetic' | 'test_only' | undefined {
+  const classes = changed.changeClasses ?? [];
+  return classes.includes('test_only') ? 'test_only' : classes.includes('cosmetic') ? 'cosmetic' : undefined;
+}
+
+/**
+ * Fingerprints are computed while the AST is alive (D3); module entities pair by id only and are not fingerprinted for
+ * correspondence. For classification a module is compared as its whole file (`full` and `noLogs` only): it is cosmetic
+ * only when the entire normalized file is unchanged, otherwise 'body' (or 'log_only'), so no module-level change is hidden.
+ */
+function fingerprintCollector(into: Map<string, string>, classes: Map<string, EntityFingerprints>): BaseNodeHook {
   return (entity, node) => {
-    if (entity.kind === 'module') return;
     try {
+      if (entity.kind === 'module') {
+        classes.set(entity.id, { full: fingerprint(normalizeNode(node)), noLogs: fingerprint(normalizeNode(node, { dropLogCalls: true })),
+          signature: '', exportSurface: '' });
+        return;
+      }
       into.set(entity.id, fingerprint(normalizeNode(node, { renameParams: true })));
+      classes.set(entity.id, fingerprintsOf(node));
     } catch {
-      // An unfingerprintable entity never pairs by fingerprint, so it stays deleted plus added.
+      // An unfingerprintable entity never pairs by fingerprint, so it stays deleted plus added; unclassifiable ones read as 'body'.
     }
   };
 }

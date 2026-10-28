@@ -401,7 +401,8 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
       evidence.options.sourcePolicy !== 'git-tracked')) errors.push('Commit source policy or checkout mismatch.');
   if (evidence.comparison.mode === 'working-tree' && (evidence.sourceState.untrackedSourcePolicy !== 'included' ||
       evidence.options.sourcePolicy !== 'git-tracked-and-nonignored-untracked')) errors.push('Working-tree source policy mismatch.');
-  sameSet(evidence.impacts.map(item => item.changedEntity.id), evidence.changedEntities.map(item => item.entity.id), 'Changed impacts');
+  const skippedIds = new Set((evidence.skippedEntities ?? []).map(item => item.entityId));
+  sameSet(evidence.impacts.map(item => item.changedEntity.id), evidence.changedEntities.map(item => item.entity.id).filter(id => !skippedIds.has(id)), 'Changed impacts');
   if (new Set(evidence.changedEntities.map(item => item.entity.id)).size !== evidence.changedEntities.length) errors.push('Duplicate changed entity.');
   for (const changed of evidence.changedEntities) {
     canonicalEntity(changed.entity);
@@ -436,7 +437,7 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
   }
   if (evidence.outcome !== 'completed' && (evidence.changedEntities.length || evidence.impacts.length)) errors.push('Empty outcome contains impacts.');
   if (evidence.outcome === 'no_source_files' && graph.analyzedFiles.length) errors.push('no_source_files contains source inventory.');
-  if (evidence.outcome === 'completed' && (!evidence.changedFiles.length || !evidence.impacts.length)) errors.push('Completed outcome lacks changes or impacts.');
+  if (evidence.outcome === 'completed' && (!evidence.changedFiles.length || (!evidence.impacts.length && !skippedIds.size))) errors.push('Completed outcome lacks changes or impacts.');
   if (evidence.outcome === 'no_supported_changes' && !evidence.changedFiles.length) errors.push('Unsupported outcome lacks changed files.');
 
   // Outcome consistency
