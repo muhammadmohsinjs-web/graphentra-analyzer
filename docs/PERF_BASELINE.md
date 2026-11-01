@@ -82,3 +82,21 @@ npm run bench:perf                                   # 5 runs, sizes 1000,5000, 
 node tools/bench-perf.mjs --runs 5 --sizes 1000,2000,5000 --profile
 node tools/bench-perf.mjs --skip-impactbench --keep  # keep the generated repos in the OS temp dir
 ```
+
+## After batching (P4-4 follow-up)
+
+Base-revision reads now go through `RepositoryContext.prefetchBaseline`, called once by
+`createBaselineSnapshot`: `git cat-file --batch-check` for sizes (oversize blobs are never read),
+then `git cat-file --batch` for in-limit blobs (chunked at 2,000 paths / 256 MB). Results are
+cached per base SHA; missing, oversize and unusual paths still use the per-file `git show` path,
+so bytes and `BaselineSourceError`s are unchanged. Git spawns for base reads: O(files) -> 2 per chunk.
+
+Command: `node tools/bench-perf.mjs --runs 3 --sizes 2000,5000 --skip-impactbench`
+(same machine; the "before" run was on a loaded machine, so it is noisy).
+
+| target | before median s (this session) | before (profile run) | after median s | after p95 s |
+|---|---|---|---|---|
+| synthetic-2000 (82k LOC) | 63.5 | 33.7 | 7.4 | 9.0 |
+| synthetic-5000 (205k LOC) | 70.5 | 94.9 | 20.2 | 20.4 |
+
+Peak RSS is unchanged (about 0.85 GB and 1.5 GB). The 90 s p95 gate is met with wide margin at 200k LOC.

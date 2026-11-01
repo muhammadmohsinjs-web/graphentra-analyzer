@@ -29,6 +29,9 @@ export function createBaselineSnapshot(
   for (const name of allNames) {
     for (let dir = path.posix.dirname(name); dir !== '.' && !directories.has(dir); dir = path.posix.dirname(dir)) directories.add(dir);
   }
+  // One batched read for everything the compiler is about to ask for; other files fall back to per-file reads.
+  repo.prefetchBaseline(baseSha, allNames.filter(name => isAnalyzableFile(name, engine) ||
+    ['tsconfig.json', 'jsconfig.json', 'package.json'].includes(path.posix.basename(name))), limits.maxFileBytes);
   const cache = new Map<string, string | undefined>();
   const skippedByFile = new Map<string, SkippedInput>();
   const projectRelative = (file: string): string | undefined => {
