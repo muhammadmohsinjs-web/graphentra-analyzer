@@ -891,7 +891,8 @@
       {
         "from": "src/components/OrderList.tsx#OrderList",
         "to": "src/components/OrderList.tsx#OrderList>renderRow",
-        "type": "REFERENCES"
+        "type": "REFERENCES",
+        "confidence": "likely"
       },
       {
         "from": "src/components/OrderList.tsx#OrderList",
@@ -926,7 +927,8 @@
       {
         "from": "src/legacy/esm.mjs#describeAll",
         "to": "src/legacy/esm.mjs#describePrice",
-        "type": "REFERENCES"
+        "type": "REFERENCES",
+        "confidence": "likely"
       },
       {
         "from": "src/legacy/use-legacy.js#greet",
@@ -1046,7 +1048,8 @@
       {
         "from": "src/server/app.ts#buildApp",
         "to": "src/server/app.ts#logRequest",
-        "type": "REFERENCES"
+        "type": "REFERENCES",
+        "confidence": "likely"
       },
       {
         "from": "src/server/app.ts#buildApp",
@@ -1056,7 +1059,8 @@
       {
         "from": "src/server/app.ts#buildApp",
         "to": "src/server/handlers.ts#listOrders",
-        "type": "REFERENCES"
+        "type": "REFERENCES",
+        "confidence": "likely"
       },
       {
         "from": "src/server/app.ts#buildApp",
@@ -1066,12 +1070,14 @@
       {
         "from": "src/server/app.ts#buildApp",
         "to": "src/server/handlers.ts#createOrder",
-        "type": "REFERENCES"
+        "type": "REFERENCES",
+        "confidence": "likely"
       },
       {
         "from": "src/server/app.ts#buildApp",
         "to": "src/server/handlers.ts#health",
-        "type": "REFERENCES"
+        "type": "REFERENCES",
+        "confidence": "likely"
       },
       {
         "from": "src/utils/ids.ts#makeId",
@@ -1283,7 +1289,8 @@
         "paths": [],
         "truncated": false
       },
-      "terminalDependents": []
+      "terminalDependents": [],
+      "confidence": "proven"
     },
     {
       "changedEntity": {
@@ -1314,7 +1321,8 @@
         "paths": [],
         "truncated": false
       },
-      "terminalDependents": []
+      "terminalDependents": [],
+      "confidence": "proven"
     }
   ],
   "diagnostics": [
@@ -1334,5 +1342,28 @@
     "Partially overlapping entity line ranges are skipped rather than sharing ambiguous evidence.",
     "Application surfaces are not yet discovered.",
     "Blast radius is limited to depth 6."
-  ]
+  ],
+  "frontier": [],
+  "coverage": {
+    "byLanguage": [
+      {
+        "key": "typescript",
+        "changedLines": 3,
+        "attributedLines": 1,
+        "ratio": 0.3333,
+        "frontierCount": 0
+      }
+    ],
+    "byDirectory": [
+      {
+        "key": "src",
+        "changedLines": 3,
+        "attributedLines": 1,
+        "ratio": 0.3333,
+        "frontierCount": 0
+      }
+    ],
+    "skippedFiles": [],
+    "frontierTotal": 20
+  }
 }

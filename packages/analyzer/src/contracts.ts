@@ -158,7 +158,7 @@ export interface EntityImpact {
 }
 
 /** Schema 2.1: why a call site cannot be resolved statically. Sorted ascending; the validator requires compareStrings order. */
-export const FRONTIER_REASONS = ['any_typed_call', 'computed_member_call', 'di_token', 'dynamic_import', 'dynamic_require', 'eval', 'function_constructor', 'jsx_prop_component'] as const;
+export const FRONTIER_REASONS = ['any_typed_call', 'computed_member_call', 'di_token', 'dynamic_import', 'dynamic_require', 'eval', 'function_constructor', 'interface_dispatch', 'jsx_prop_component'] as const;
 export type FrontierReason = typeof FRONTIER_REASONS[number];
 
 /** Schema 2.1: an unresolved dependency site reported instead of an edge. */

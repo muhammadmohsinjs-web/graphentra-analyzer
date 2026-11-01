@@ -7,7 +7,7 @@ import { GraphentraError } from './errors';
 import type { RepositoryContext } from './repository';
 import { DEFAULT_ENGINE, type EngineProfile } from './contracts';
 import { isAnalyzableFile } from './technical-graph';
-import { DEFAULT_INPUT_LIMITS, inspectContent, type InputLimits, type SkippedInput, type SkipReason } from './input-limits';
+import { bracketNestingDepth, DEFAULT_INPUT_LIMITS, inspectContent, MAX_NESTING_DEPTH, type InputLimits, type SkippedInput, type SkipReason } from './input-limits';
 
 /** Captures compiler reads and verifies them again before returning evidence. */
 export function captureSourceSnapshot(
@@ -84,6 +84,16 @@ export function captureSourceSnapshot(
     }
     return reads.get(absolute)?.toString('utf8');
   }
+  /** Reads a repository file that is not compiler input (for example package.json) under the same limits; part of the identity. */
+  function readInput(file: string): string | undefined {
+    const absolute = path.resolve(file);
+    if (blocked.has(absolute)) return undefined;
+    if (inside(repo.gitRepositoryRoot, absolute)) {
+      const info = inspectPath(absolute);
+      if (info.reason) { skip(absolute, info.reason); return undefined; }
+    }
+    return readFile(absolute);
+  }
   function inventory() {
     return [...new Set([...repo.listFiles(), ...repo.listFiles(true)])]
       .filter(file => isAnalyzableFile(file, engine))
@@ -151,6 +161,11 @@ export function captureSourceSnapshot(
   host.getSourceFile = (file, languageVersion) => {
     const content = readFile(file);
     if (content === undefined) return undefined;
+    // D14: nesting is measured on tokens before parsing; the RangeError catch below is only a last-resort safety net.
+    if (bracketNestingDepth(content) > MAX_NESTING_DEPTH) {
+      skip(compilerPaths.get(path.resolve(file)) ?? path.resolve(file), 'parse_failed');
+      return undefined;
+    }
     try { return ts.createSourceFile(compilerPaths.get(file) ?? file, content, languageVersion, true); }
     catch (error) {
       // Pathologically nested source overflows the parser's stack: drop that file instead of crashing the run.
@@ -198,7 +213,7 @@ export function captureSourceSnapshot(
     }
   }
   return {
-    files, compilerOptions, host, readFile, gitDiff: initialDiff, identity, verify,
+    files, compilerOptions, host, readFile, readInput, gitDiff: initialDiff, identity, verify,
     get skipped(): SkippedInput[] { return skippedInputs(); },
   };
 }

@@ -881,7 +881,8 @@
       {
         "from": "src/components/OrderList.tsx#OrderList",
         "to": "src/components/OrderList.tsx#OrderList>renderRow",
-        "type": "REFERENCES"
+        "type": "REFERENCES",
+        "confidence": "likely"
       },
       {
         "from": "src/components/OrderList.tsx#OrderList",
@@ -916,7 +917,8 @@
       {
         "from": "src/legacy/esm.mjs#describeAll",
         "to": "src/legacy/esm.mjs#describePrice",
-        "type": "REFERENCES"
+        "type": "REFERENCES",
+        "confidence": "likely"
       },
       {
         "from": "src/legacy/use-legacy.js#greet",
@@ -1036,7 +1038,8 @@
       {
         "from": "src/server/app.ts#buildApp",
         "to": "src/server/app.ts#logRequest",
-        "type": "REFERENCES"
+        "type": "REFERENCES",
+        "confidence": "likely"
       },
       {
         "from": "src/server/app.ts#buildApp",
@@ -1046,7 +1049,8 @@
       {
         "from": "src/server/app.ts#buildApp",
         "to": "src/server/handlers.ts#listOrders",
-        "type": "REFERENCES"
+        "type": "REFERENCES",
+        "confidence": "likely"
       },
       {
         "from": "src/server/app.ts#buildApp",
@@ -1056,12 +1060,14 @@
       {
         "from": "src/server/app.ts#buildApp",
         "to": "src/server/handlers.ts#createOrder",
-        "type": "REFERENCES"
+        "type": "REFERENCES",
+        "confidence": "likely"
       },
       {
         "from": "src/server/app.ts#buildApp",
         "to": "src/server/handlers.ts#health",
-        "type": "REFERENCES"
+        "type": "REFERENCES",
+        "confidence": "likely"
       },
       {
         "from": "src/utils/ids.ts#makeId",
@@ -1352,7 +1358,8 @@
             "pathCount": 1,
             "stepTypes": [
               "CALLS"
-            ]
+            ],
+            "confidence": "proven"
           },
           {
             "target": {
@@ -1389,7 +1396,8 @@
             "pathCount": 1,
             "stepTypes": [
               "CALLS"
-            ]
+            ],
+            "confidence": "proven"
           },
           {
             "target": {
@@ -1439,7 +1447,8 @@
             "stepTypes": [
               "CALLS",
               "REFERENCES"
-            ]
+            ],
+            "confidence": "likely"
           },
           {
             "target": {
@@ -1487,7 +1496,8 @@
             "stepTypes": [
               "CALLS",
               "CALLS"
-            ]
+            ],
+            "confidence": "proven"
           }
         ],
         "truncated": false
@@ -1511,7 +1521,8 @@
           "endLine": 48,
           "language": "typescript"
         }
-      ]
+      ],
+      "confidence": "likely"
     }
   ],
   "diagnostics": [
@@ -1531,5 +1542,131 @@
     "Partially overlapping entity line ranges are skipped rather than sharing ambiguous evidence.",
     "Application surfaces are not yet discovered.",
     "Blast radius is limited to depth 6."
-  ]
+  ],
+  "frontier": [
+    {
+      "entityId": "src/server/handlers.ts#createOrder",
+      "file": "src/server/handlers.ts",
+      "line": 17,
+      "reason": "interface_dispatch"
+    },
+    {
+      "entityId": "src/server/handlers.ts#createOrder",
+      "file": "src/server/handlers.ts",
+      "line": 21,
+      "reason": "interface_dispatch"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 24,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 27,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 30,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 33,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 36,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 40,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 43,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 46,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/order-service.test.ts#<module>",
+      "file": "tests/order-service.test.ts",
+      "line": 9,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/order-service.test.ts#<module>",
+      "file": "tests/order-service.test.ts",
+      "line": 10,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/order-service.test.ts#<module>",
+      "file": "tests/order-service.test.ts",
+      "line": 13,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/order-service.test.ts#<module>",
+      "file": "tests/order-service.test.ts",
+      "line": 14,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/order-service.test.ts#<module>",
+      "file": "tests/order-service.test.ts",
+      "line": 17,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/order-service.test.ts#<module>",
+      "file": "tests/order-service.test.ts",
+      "line": 21,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/order-service.test.ts#<module>",
+      "file": "tests/order-service.test.ts",
+      "line": 22,
+      "reason": "any_typed_call"
+    }
+  ],
+  "coverage": {
+    "byLanguage": [
+      {
+        "key": "typescript",
+        "changedLines": 1,
+        "attributedLines": 1,
+        "ratio": 1,
+        "frontierCount": 0
+      }
+    ],
+    "byDirectory": [
+      {
+        "key": "src",
+        "changedLines": 1,
+        "attributedLines": 1,
+        "ratio": 1,
+        "frontierCount": 0
+      }
+    ],
+    "skippedFiles": [],
+    "frontierTotal": 20
+  }
 }

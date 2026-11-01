@@ -27,7 +27,8 @@ export function runCli(argv: string[] = process.argv.slice(2)): void {
   try {
     const target = path.resolve(options.target);
     const output = path.resolve(options.output ?? path.join(target, '.graphentra/evidence.json'));
-    const result = analyzeRepository({ target, comparison, engine: options.engine, maxAffectedEntities: options.maxAffectedEntities });
+    const result = analyzeRepository({ target, comparison, engine: options.engine,
+      maxAffectedEntities: options.maxAffectedEntities, maxDepth: options.maxDepth, hubThreshold: options.hubThreshold });
     const canonical = (file: string): string => {
       if (fs.existsSync(file)) return fs.realpathSync(file);
       const parent = path.dirname(file);

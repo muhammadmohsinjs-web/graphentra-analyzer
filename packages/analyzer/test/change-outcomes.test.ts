@@ -31,7 +31,11 @@ test('non-TypeScript changes are unsupported rather than no changes', () => {
     const result = analyzeRepository({ target: repo.dir, comparison: { mode: 'working-tree' } });
     assert.equal(result.outcome, 'no_supported_changes');
     assert.equal(result.changedFiles[0]?.file, 'README.md');
-    assert.ok(result.diagnostics.some(item => item.code === 'OUTSIDE_SUPPORTED_SCOPE'));
+    // D11: the extended engine reports a typed diagnostic per file instead of the generic scope warning.
+    assert.ok(!result.diagnostics.some(item => item.code === 'OUTSIDE_SUPPORTED_SCOPE'));
+    assert.ok(result.diagnostics.some(item => item.code === 'OTHER' && item.file === 'README.md' && item.severity === 'warning'));
+    const legacy = analyzeRepository({ target: repo.dir, comparison: { mode: 'working-tree' }, engine: 'legacy' });
+    assert.ok(legacy.diagnostics.some(item => item.code === 'OUTSIDE_SUPPORTED_SCOPE'));
   } finally { repo.cleanup(); }
 });
 

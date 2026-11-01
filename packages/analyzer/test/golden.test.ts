@@ -27,7 +27,7 @@ function readDir(root: string, rel: string, files: Files) {
 function readFixture(fixture: string): Files {
   const root = path.join(FIXTURES_ROOT, fixture);
   const files: Files = {};
-  for (const dir of ['src', 'tests']) readDir(root, dir, files);
+  for (const dir of ['src', 'tests']) if (fs.existsSync(path.join(root, dir))) readDir(root, dir, files);
   for (const name of ['package.json', 'tsconfig.json']) files[name] = fs.readFileSync(path.join(root, name), 'utf8');
   return files;
 }
@@ -138,6 +138,20 @@ const scenarios: Scenario[] = [
       `chargeCard(amount: number, cardToken: string, currency = 'USD')`) }) },
   { name: 'class-export-surface', extendedOnly: true, expectedOutcome: 'completed', edit: f => ({
     'src/inventory.ts': replaceOnce(f['src/inventory.ts'], 'function sanitizeSku', 'export function sanitizeSku') }) },
+  // Phase 4 (extended only): unresolved call sites, non-TypeScript changes and a hub.
+  { name: 'dynamic-patterns', fixture: 'dynamic-patterns', extendedOnly: true, expectedOutcome: 'completed', edit: f => ({
+    'src/core.ts': replaceOnce(f['src/core.ts'], 'value.trim()', 'value.trim().toLowerCase()') }) },
+  { name: 'mixed-changes', fixture: 'mixed-changes', extendedOnly: true, expectedOutcome: 'completed', edit: f => ({
+    'src/greeting.ts': replaceOnce(f['src/greeting.ts'], 'Hello, ', 'Hi, '),
+    'package.json': replaceOnce(replaceOnce(f['package.json'], '"left-pad": "1.2.0"', '"left-pad": "1.3.0"'),
+      '"zod": "3.22.0"', '"zod": "3.22.0",\n    "date-fns": "3.0.0"'),
+    'prisma/migrations/20240101000000_add_users/migration.sql': 'CREATE TABLE "User" (\n  "id" SERIAL PRIMARY KEY,\n  "email" TEXT NOT NULL\n);\n',
+    '.env.example': 'DATABASE_URL=postgres://localhost/app\nFEATURE_FLAG=on\n',
+    'scripts/report.py': 'def report():\n    return "ok"\n',
+    'assets/logo.png': '\u0089PNG\r\n\u001a\n\u0000\u0000\u0000\rIHDR\u0000\u0000\u0000\u0001',
+  }) },
+  { name: 'hub-utility-edit', fixture: 'hub', extendedOnly: true, expectedOutcome: 'completed', edit: f => ({
+    'src/format.ts': replaceOnce(f['src/format.ts'], 'toFixed(2)', 'toFixed(3)') }) },
   { name: 'class-test-only', extendedOnly: true, expectedOutcome: 'completed', edit: f => ({
     'tests/orders.test.ts': replaceOnce(f['tests/orders.test.ts'], "'tok_mastercard'", "'tok_amex'") }) },
 ];
@@ -158,7 +172,10 @@ for (const engine of ['legacy', 'extended'] as const) for (const scenario of sce
       const baseSha = repo.git(['rev-parse', 'HEAD']);
 
       const edits = scenario.edit?.(base) ?? {};
-      for (const [file, content] of Object.entries(edits)) fs.writeFileSync(path.join(repo.dir, file), content);
+      for (const [file, content] of Object.entries(edits)) {
+        fs.mkdirSync(path.dirname(path.join(repo.dir, file)), { recursive: true });
+        fs.writeFileSync(path.join(repo.dir, file), content);
+      }
 
       let headSha = baseSha;
       if (scenario.mode !== 'working-tree' && Object.keys(edits).length > 0) {

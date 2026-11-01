@@ -535,6 +535,12 @@ export function extractTechnicalGraph(options: {
           ? symbolToEntity.get(calledSymbol) ?? (calledDeclaration ? declarationToEntity.get(calledDeclaration) : undefined)
           : undefined;
         if (caller && called) emit(withConfidence({ from: caller.id, to: called.id, type: 'CALLS' }, symbolConfidence(calledSymbol)));
+        // D15: interface and abstract members declared in repository source have no entity, so the call gives no edge;
+        // report it as a frontier site. Members declared in .d.ts files (lib, dependencies) are outside the repository.
+        else if (caller && !called && (calledSymbol?.declarations ?? []).some(declaration =>
+          isInterfaceOrAbstractMember(declaration) && !declaration.getSourceFile().isDeclarationFile)) {
+          recordFrontier(ts.isPropertyAccessExpression(node.expression) ? node.expression.name : node, 'interface_dispatch');
+        }
       } else if (ts.isCallExpression(node)) {
         const calledSymbol = resolveSymbol(node.expression);
         const callerFunction = findEnclosingFunction(node);

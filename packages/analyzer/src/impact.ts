@@ -587,8 +587,10 @@ export function buildDeletedImpact(
   head: GraphView,
   toHead: Map<string, string>,
   maxAffectedEntities: number,
+  maxDepth?: number,
+  hubThreshold?: number,
 ): EntityImpact {
-  const impact = buildImpact(changed, base.reverseAdjacency, base.entityById, undefined, 'extended', maxAffectedEntities);
+  const impact = buildImpact(changed, base.reverseAdjacency, base.entityById, maxDepth, 'extended', maxAffectedEntities, hubThreshold);
   const current = (entity: Entity): Entity => head.entityById.get(toHead.get(entity.id) ?? entity.id) ?? entity;
   return {
     ...impact,

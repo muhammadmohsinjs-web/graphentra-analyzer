@@ -182,6 +182,7 @@
               "dynamic_require",
               "eval",
               "function_constructor",
+              "interface_dispatch",
               "jsx_prop_component"
             ]
           }

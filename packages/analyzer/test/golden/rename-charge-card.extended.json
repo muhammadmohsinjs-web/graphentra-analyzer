@@ -802,6 +802,7 @@
             "stepTypes": [
               "CALLS"
             ],
+            "confidence": "proven",
             "contractRisk": true
           },
           {
@@ -852,7 +853,8 @@
             "stepTypes": [
               "CALLS",
               "CALLS"
-            ]
+            ],
+            "confidence": "proven"
           },
           {
             "target": {
@@ -913,7 +915,8 @@
               "CALLS",
               "CALLS",
               "CALLS"
-            ]
+            ],
+            "confidence": "proven"
           },
           {
             "target": {
@@ -974,7 +977,8 @@
               "CALLS",
               "CALLS",
               "CALLS"
-            ]
+            ],
+            "confidence": "proven"
           },
           {
             "target": {
@@ -1046,7 +1050,8 @@
               "CALLS",
               "CALLS",
               "CALLS"
-            ]
+            ],
+            "confidence": "proven"
           }
         ],
         "truncated": false
@@ -1073,6 +1078,7 @@
           "exported": true
         }
       ],
+      "confidence": "proven",
       "contractRisk": true
     },
     {
@@ -1193,7 +1199,8 @@
             "pathCount": 1,
             "stepTypes": [
               "CALLS"
-            ]
+            ],
+            "confidence": "proven"
           },
           {
             "target": {
@@ -1243,7 +1250,8 @@
             "stepTypes": [
               "CALLS",
               "CALLS"
-            ]
+            ],
+            "confidence": "proven"
           },
           {
             "target": {
@@ -1293,7 +1301,8 @@
             "stepTypes": [
               "CALLS",
               "CALLS"
-            ]
+            ],
+            "confidence": "proven"
           },
           {
             "target": {
@@ -1354,7 +1363,8 @@
               "CALLS",
               "CALLS",
               "CALLS"
-            ]
+            ],
+            "confidence": "proven"
           }
         ],
         "truncated": false
@@ -1380,7 +1390,8 @@
           "language": "typescript",
           "exported": true
         }
-      ]
+      ],
+      "confidence": "proven"
     }
   ],
   "diagnostics": [
@@ -1408,5 +1419,28 @@
       "startLine": 3,
       "endLine": 8
     }
-  ]
+  ],
+  "frontier": [],
+  "coverage": {
+    "byLanguage": [
+      {
+        "key": "typescript",
+        "changedLines": 2,
+        "attributedLines": 2,
+        "ratio": 1,
+        "frontierCount": 0
+      }
+    ],
+    "byDirectory": [
+      {
+        "key": "src",
+        "changedLines": 2,
+        "attributedLines": 2,
+        "ratio": 1,
+        "frontierCount": 0
+      }
+    ],
+    "skippedFiles": [],
+    "frontierTotal": 0
+  }
 }

@@ -72,7 +72,7 @@ test('extended: *.min.js is ignored', () => {
   const ids = [...byId(result).keys()];
   assert.ok(ids.includes('src/a.js#a'));
   assert.ok(!ids.some(id => id.includes('min.js')));
-  assert.ok(result.evidence.diagnostics.some(d => d.code === 'OUTSIDE_SUPPORTED_SCOPE'));
+  assert.ok(result.evidence.diagnostics.some(d => d.code === 'OTHER' && d.file === 'src/vendor.min.js'));
 });
 
 test('extended: a jsconfig.json-only repo is analyzed', () => {

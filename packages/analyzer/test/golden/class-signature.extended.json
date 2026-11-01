@@ -714,6 +714,7 @@
             "stepTypes": [
               "CALLS"
             ],
+            "confidence": "proven",
             "contractRisk": true
           },
           {
@@ -764,7 +765,8 @@
             "stepTypes": [
               "CALLS",
               "CALLS"
-            ]
+            ],
+            "confidence": "proven"
           },
           {
             "target": {
@@ -825,7 +827,8 @@
               "CALLS",
               "CALLS",
               "CALLS"
-            ]
+            ],
+            "confidence": "proven"
           },
           {
             "target": {
@@ -886,7 +889,8 @@
               "CALLS",
               "CALLS",
               "CALLS"
-            ]
+            ],
+            "confidence": "proven"
           },
           {
             "target": {
@@ -958,7 +962,8 @@
               "CALLS",
               "CALLS",
               "CALLS"
-            ]
+            ],
+            "confidence": "proven"
           }
         ],
         "truncated": false
@@ -985,6 +990,7 @@
           "exported": true
         }
       ],
+      "confidence": "proven",
       "contractRisk": true
     }
   ],
@@ -1005,5 +1011,28 @@
     "Partially overlapping entity line ranges are skipped rather than sharing ambiguous evidence.",
     "Application surfaces are not yet discovered.",
     "Blast radius is limited to depth 6."
-  ]
+  ],
+  "frontier": [],
+  "coverage": {
+    "byLanguage": [
+      {
+        "key": "typescript",
+        "changedLines": 1,
+        "attributedLines": 1,
+        "ratio": 1,
+        "frontierCount": 0
+      }
+    ],
+    "byDirectory": [
+      {
+        "key": "src",
+        "changedLines": 1,
+        "attributedLines": 1,
+        "ratio": 1,
+        "frontierCount": 0
+      }
+    ],
+    "skippedFiles": [],
+    "frontierTotal": 0
+  }
 }

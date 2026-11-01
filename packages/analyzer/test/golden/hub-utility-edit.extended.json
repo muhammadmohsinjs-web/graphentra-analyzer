@@ -1,0 +1,2828 @@
+{
+  "artifactKind": "graphentra-evidence",
+  "schemaVersion": "2.1",
+  "analyzerVersion": "<VERSION>",
+  "target": {
+    "targetPath": "."
+  },
+  "comparison": {
+    "mode": "commit",
+    "requestedBase": "<BASE>",
+    "requestedHead": "<HEAD>",
+    "resolvedBaseSha": "<BASE>",
+    "resolvedHeadSha": "<HEAD>",
+    "comparedTo": "`<HEAD>`"
+  },
+  "sourceState": {
+    "checkoutSha": "<HEAD>",
+    "isTrackedDirty": false,
+    "untrackedSourcePolicy": "excluded",
+    "contentIdentity": "<CONTENT>"
+  },
+  "options": {
+    "excludePaths": [],
+    "sourcePolicy": "git-tracked",
+    "engine": "extended"
+  },
+  "toolchain": {
+    "typescript": "5.8.2",
+    "node": "<NODE>"
+  },
+  "outcome": "completed",
+  "technicalGraph": {
+    "schemaVersion": "1.0",
+    "repository": {
+      "targetPath": ".",
+      "headSha": "<HEAD>",
+      "analyzerVersion": "<VERSION>"
+    },
+    "capabilities": {
+      "language": "typescript",
+      "entityKinds": [
+        "component",
+        "function",
+        "method",
+        "module"
+      ],
+      "relationTypes": [
+        "CALLS",
+        "INSTANTIATES",
+        "REFERENCES",
+        "RENDERS"
+      ],
+      "maxBlastDepth": 6
+    },
+    "analyzedFiles": [
+      "src/callers.ts",
+      "src/format.ts",
+      "src/report.ts"
+    ],
+    "entities": [
+      {
+        "id": "src/format.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/format.ts",
+        "startLine": 1,
+        "endLine": 4,
+        "language": "typescript"
+      },
+      {
+        "id": "src/format.ts#formatValue",
+        "kind": "function",
+        "name": "formatValue",
+        "file": "src/format.ts",
+        "startLine": 1,
+        "endLine": 3,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/callers.ts",
+        "startLine": 1,
+        "endLine": 122,
+        "language": "typescript"
+      },
+      {
+        "id": "src/callers.ts#caller01",
+        "kind": "function",
+        "name": "caller01",
+        "file": "src/callers.ts",
+        "startLine": 3,
+        "endLine": 5,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller02",
+        "kind": "function",
+        "name": "caller02",
+        "file": "src/callers.ts",
+        "startLine": 7,
+        "endLine": 9,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller03",
+        "kind": "function",
+        "name": "caller03",
+        "file": "src/callers.ts",
+        "startLine": 11,
+        "endLine": 13,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller04",
+        "kind": "function",
+        "name": "caller04",
+        "file": "src/callers.ts",
+        "startLine": 15,
+        "endLine": 17,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller05",
+        "kind": "function",
+        "name": "caller05",
+        "file": "src/callers.ts",
+        "startLine": 19,
+        "endLine": 21,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller06",
+        "kind": "function",
+        "name": "caller06",
+        "file": "src/callers.ts",
+        "startLine": 23,
+        "endLine": 25,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller07",
+        "kind": "function",
+        "name": "caller07",
+        "file": "src/callers.ts",
+        "startLine": 27,
+        "endLine": 29,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller08",
+        "kind": "function",
+        "name": "caller08",
+        "file": "src/callers.ts",
+        "startLine": 31,
+        "endLine": 33,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller09",
+        "kind": "function",
+        "name": "caller09",
+        "file": "src/callers.ts",
+        "startLine": 35,
+        "endLine": 37,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller10",
+        "kind": "function",
+        "name": "caller10",
+        "file": "src/callers.ts",
+        "startLine": 39,
+        "endLine": 41,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller11",
+        "kind": "function",
+        "name": "caller11",
+        "file": "src/callers.ts",
+        "startLine": 43,
+        "endLine": 45,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller12",
+        "kind": "function",
+        "name": "caller12",
+        "file": "src/callers.ts",
+        "startLine": 47,
+        "endLine": 49,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller13",
+        "kind": "function",
+        "name": "caller13",
+        "file": "src/callers.ts",
+        "startLine": 51,
+        "endLine": 53,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller14",
+        "kind": "function",
+        "name": "caller14",
+        "file": "src/callers.ts",
+        "startLine": 55,
+        "endLine": 57,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller15",
+        "kind": "function",
+        "name": "caller15",
+        "file": "src/callers.ts",
+        "startLine": 59,
+        "endLine": 61,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller16",
+        "kind": "function",
+        "name": "caller16",
+        "file": "src/callers.ts",
+        "startLine": 63,
+        "endLine": 65,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller17",
+        "kind": "function",
+        "name": "caller17",
+        "file": "src/callers.ts",
+        "startLine": 67,
+        "endLine": 69,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller18",
+        "kind": "function",
+        "name": "caller18",
+        "file": "src/callers.ts",
+        "startLine": 71,
+        "endLine": 73,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller19",
+        "kind": "function",
+        "name": "caller19",
+        "file": "src/callers.ts",
+        "startLine": 75,
+        "endLine": 77,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller20",
+        "kind": "function",
+        "name": "caller20",
+        "file": "src/callers.ts",
+        "startLine": 79,
+        "endLine": 81,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller21",
+        "kind": "function",
+        "name": "caller21",
+        "file": "src/callers.ts",
+        "startLine": 83,
+        "endLine": 85,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller22",
+        "kind": "function",
+        "name": "caller22",
+        "file": "src/callers.ts",
+        "startLine": 87,
+        "endLine": 89,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller23",
+        "kind": "function",
+        "name": "caller23",
+        "file": "src/callers.ts",
+        "startLine": 91,
+        "endLine": 93,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller24",
+        "kind": "function",
+        "name": "caller24",
+        "file": "src/callers.ts",
+        "startLine": 95,
+        "endLine": 97,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller25",
+        "kind": "function",
+        "name": "caller25",
+        "file": "src/callers.ts",
+        "startLine": 99,
+        "endLine": 101,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller26",
+        "kind": "function",
+        "name": "caller26",
+        "file": "src/callers.ts",
+        "startLine": 103,
+        "endLine": 105,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller27",
+        "kind": "function",
+        "name": "caller27",
+        "file": "src/callers.ts",
+        "startLine": 107,
+        "endLine": 109,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller28",
+        "kind": "function",
+        "name": "caller28",
+        "file": "src/callers.ts",
+        "startLine": 111,
+        "endLine": 113,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller29",
+        "kind": "function",
+        "name": "caller29",
+        "file": "src/callers.ts",
+        "startLine": 115,
+        "endLine": 117,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/callers.ts#caller30",
+        "kind": "function",
+        "name": "caller30",
+        "file": "src/callers.ts",
+        "startLine": 119,
+        "endLine": 121,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/report.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/report.ts",
+        "startLine": 1,
+        "endLine": 6,
+        "language": "typescript"
+      },
+      {
+        "id": "src/report.ts#report",
+        "kind": "function",
+        "name": "report",
+        "file": "src/report.ts",
+        "startLine": 3,
+        "endLine": 5,
+        "language": "typescript",
+        "exported": true
+      }
+    ],
+    "relations": [
+      {
+        "from": "src/callers.ts#caller01",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller02",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller03",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller04",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller05",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller06",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller07",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller08",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller09",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller10",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller11",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller12",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller13",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller14",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller15",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller16",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller17",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller18",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller19",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller20",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller21",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller22",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller23",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller24",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller25",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller26",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller27",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller28",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller29",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/callers.ts#caller30",
+        "to": "src/format.ts#formatValue",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/report.ts#report",
+        "to": "src/callers.ts#caller01",
+        "type": "CALLS"
+      }
+    ]
+  },
+  "changedFiles": [
+    {
+      "file": "src/format.ts",
+      "oldFile": "src/format.ts",
+      "changedLines": [
+        2
+      ],
+      "addedCode": [
+        "  return value.toFixed(3);"
+      ],
+      "removedCode": [
+        "  return value.toFixed(2);"
+      ],
+      "diff": "diff --git a/src/format.ts b/src/format.ts\nindex 27c61f8..0a147e7 100644\n--- a/src/format.ts\n+++ b/src/format.ts\n@@ -1,3 +1,3 @@\n export function formatValue(value: number): string {\n-  return value.toFixed(2);\n+  return value.toFixed(3);\n }",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "export function formatValue(value: number): string {",
+              "oldLine": 1,
+              "newLine": 1
+            },
+            {
+              "kind": "-",
+              "code": "  return value.toFixed(2);",
+              "oldLine": 2,
+              "newLine": 2
+            },
+            {
+              "kind": "+",
+              "code": "  return value.toFixed(3);",
+              "oldLine": 3,
+              "newLine": 2
+            },
+            {
+              "kind": " ",
+              "code": "}",
+              "oldLine": 3,
+              "newLine": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "changedEntities": [
+    {
+      "entity": {
+        "id": "src/format.ts#formatValue",
+        "kind": "function",
+        "name": "formatValue",
+        "file": "src/format.ts",
+        "startLine": 1,
+        "endLine": 3,
+        "language": "typescript",
+        "exported": true
+      },
+      "change": {
+        "file": "src/format.ts",
+        "changedLines": [
+          2
+        ],
+        "addedCode": [
+          "  return value.toFixed(3);"
+        ],
+        "removedCode": [
+          "  return value.toFixed(2);"
+        ],
+        "diff": "--- a/src/format.ts\n+++ b/src/format.ts\n@@ -1,3 +1,3 @@\n export function formatValue(value: number): string {\n-  return value.toFixed(2);\n+  return value.toFixed(3);\n }"
+      },
+      "changeKind": "modified",
+      "changeClasses": [
+        "body"
+      ]
+    }
+  ],
+  "impacts": [
+    {
+      "changedEntity": {
+        "id": "src/format.ts#formatValue",
+        "kind": "function",
+        "name": "formatValue",
+        "file": "src/format.ts",
+        "startLine": 1,
+        "endLine": 3,
+        "language": "typescript",
+        "exported": true
+      },
+      "change": {
+        "file": "src/format.ts",
+        "changedLines": [
+          2
+        ],
+        "addedCode": [
+          "  return value.toFixed(3);"
+        ],
+        "removedCode": [
+          "  return value.toFixed(2);"
+        ],
+        "diff": "--- a/src/format.ts\n+++ b/src/format.ts\n@@ -1,3 +1,3 @@\n export function formatValue(value: number): string {\n-  return value.toFixed(2);\n+  return value.toFixed(3);\n }"
+      },
+      "directDependents": [
+        {
+          "id": "src/callers.ts#caller01",
+          "kind": "function",
+          "name": "caller01",
+          "file": "src/callers.ts",
+          "startLine": 3,
+          "endLine": 5,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller02",
+          "kind": "function",
+          "name": "caller02",
+          "file": "src/callers.ts",
+          "startLine": 7,
+          "endLine": 9,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller03",
+          "kind": "function",
+          "name": "caller03",
+          "file": "src/callers.ts",
+          "startLine": 11,
+          "endLine": 13,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller04",
+          "kind": "function",
+          "name": "caller04",
+          "file": "src/callers.ts",
+          "startLine": 15,
+          "endLine": 17,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller05",
+          "kind": "function",
+          "name": "caller05",
+          "file": "src/callers.ts",
+          "startLine": 19,
+          "endLine": 21,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller06",
+          "kind": "function",
+          "name": "caller06",
+          "file": "src/callers.ts",
+          "startLine": 23,
+          "endLine": 25,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller07",
+          "kind": "function",
+          "name": "caller07",
+          "file": "src/callers.ts",
+          "startLine": 27,
+          "endLine": 29,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller08",
+          "kind": "function",
+          "name": "caller08",
+          "file": "src/callers.ts",
+          "startLine": 31,
+          "endLine": 33,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller09",
+          "kind": "function",
+          "name": "caller09",
+          "file": "src/callers.ts",
+          "startLine": 35,
+          "endLine": 37,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller10",
+          "kind": "function",
+          "name": "caller10",
+          "file": "src/callers.ts",
+          "startLine": 39,
+          "endLine": 41,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller11",
+          "kind": "function",
+          "name": "caller11",
+          "file": "src/callers.ts",
+          "startLine": 43,
+          "endLine": 45,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller12",
+          "kind": "function",
+          "name": "caller12",
+          "file": "src/callers.ts",
+          "startLine": 47,
+          "endLine": 49,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller13",
+          "kind": "function",
+          "name": "caller13",
+          "file": "src/callers.ts",
+          "startLine": 51,
+          "endLine": 53,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller14",
+          "kind": "function",
+          "name": "caller14",
+          "file": "src/callers.ts",
+          "startLine": 55,
+          "endLine": 57,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller15",
+          "kind": "function",
+          "name": "caller15",
+          "file": "src/callers.ts",
+          "startLine": 59,
+          "endLine": 61,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller16",
+          "kind": "function",
+          "name": "caller16",
+          "file": "src/callers.ts",
+          "startLine": 63,
+          "endLine": 65,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller17",
+          "kind": "function",
+          "name": "caller17",
+          "file": "src/callers.ts",
+          "startLine": 67,
+          "endLine": 69,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller18",
+          "kind": "function",
+          "name": "caller18",
+          "file": "src/callers.ts",
+          "startLine": 71,
+          "endLine": 73,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller19",
+          "kind": "function",
+          "name": "caller19",
+          "file": "src/callers.ts",
+          "startLine": 75,
+          "endLine": 77,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller20",
+          "kind": "function",
+          "name": "caller20",
+          "file": "src/callers.ts",
+          "startLine": 79,
+          "endLine": 81,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller21",
+          "kind": "function",
+          "name": "caller21",
+          "file": "src/callers.ts",
+          "startLine": 83,
+          "endLine": 85,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller22",
+          "kind": "function",
+          "name": "caller22",
+          "file": "src/callers.ts",
+          "startLine": 87,
+          "endLine": 89,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller23",
+          "kind": "function",
+          "name": "caller23",
+          "file": "src/callers.ts",
+          "startLine": 91,
+          "endLine": 93,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller24",
+          "kind": "function",
+          "name": "caller24",
+          "file": "src/callers.ts",
+          "startLine": 95,
+          "endLine": 97,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller25",
+          "kind": "function",
+          "name": "caller25",
+          "file": "src/callers.ts",
+          "startLine": 99,
+          "endLine": 101,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller26",
+          "kind": "function",
+          "name": "caller26",
+          "file": "src/callers.ts",
+          "startLine": 103,
+          "endLine": 105,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller27",
+          "kind": "function",
+          "name": "caller27",
+          "file": "src/callers.ts",
+          "startLine": 107,
+          "endLine": 109,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller28",
+          "kind": "function",
+          "name": "caller28",
+          "file": "src/callers.ts",
+          "startLine": 111,
+          "endLine": 113,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller29",
+          "kind": "function",
+          "name": "caller29",
+          "file": "src/callers.ts",
+          "startLine": 115,
+          "endLine": 117,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller30",
+          "kind": "function",
+          "name": "caller30",
+          "file": "src/callers.ts",
+          "startLine": 119,
+          "endLine": 121,
+          "language": "typescript",
+          "exported": true
+        }
+      ],
+      "blastRadius": {
+        "totalAffectedEntities": 30,
+        "entities": [
+          {
+            "id": "src/callers.ts#caller01",
+            "kind": "function",
+            "name": "caller01",
+            "file": "src/callers.ts",
+            "startLine": 3,
+            "endLine": 5,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller02",
+            "kind": "function",
+            "name": "caller02",
+            "file": "src/callers.ts",
+            "startLine": 7,
+            "endLine": 9,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller03",
+            "kind": "function",
+            "name": "caller03",
+            "file": "src/callers.ts",
+            "startLine": 11,
+            "endLine": 13,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller04",
+            "kind": "function",
+            "name": "caller04",
+            "file": "src/callers.ts",
+            "startLine": 15,
+            "endLine": 17,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller05",
+            "kind": "function",
+            "name": "caller05",
+            "file": "src/callers.ts",
+            "startLine": 19,
+            "endLine": 21,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller06",
+            "kind": "function",
+            "name": "caller06",
+            "file": "src/callers.ts",
+            "startLine": 23,
+            "endLine": 25,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller07",
+            "kind": "function",
+            "name": "caller07",
+            "file": "src/callers.ts",
+            "startLine": 27,
+            "endLine": 29,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller08",
+            "kind": "function",
+            "name": "caller08",
+            "file": "src/callers.ts",
+            "startLine": 31,
+            "endLine": 33,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller09",
+            "kind": "function",
+            "name": "caller09",
+            "file": "src/callers.ts",
+            "startLine": 35,
+            "endLine": 37,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller10",
+            "kind": "function",
+            "name": "caller10",
+            "file": "src/callers.ts",
+            "startLine": 39,
+            "endLine": 41,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller11",
+            "kind": "function",
+            "name": "caller11",
+            "file": "src/callers.ts",
+            "startLine": 43,
+            "endLine": 45,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller12",
+            "kind": "function",
+            "name": "caller12",
+            "file": "src/callers.ts",
+            "startLine": 47,
+            "endLine": 49,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller13",
+            "kind": "function",
+            "name": "caller13",
+            "file": "src/callers.ts",
+            "startLine": 51,
+            "endLine": 53,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller14",
+            "kind": "function",
+            "name": "caller14",
+            "file": "src/callers.ts",
+            "startLine": 55,
+            "endLine": 57,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller15",
+            "kind": "function",
+            "name": "caller15",
+            "file": "src/callers.ts",
+            "startLine": 59,
+            "endLine": 61,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller16",
+            "kind": "function",
+            "name": "caller16",
+            "file": "src/callers.ts",
+            "startLine": 63,
+            "endLine": 65,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller17",
+            "kind": "function",
+            "name": "caller17",
+            "file": "src/callers.ts",
+            "startLine": 67,
+            "endLine": 69,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller18",
+            "kind": "function",
+            "name": "caller18",
+            "file": "src/callers.ts",
+            "startLine": 71,
+            "endLine": 73,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller19",
+            "kind": "function",
+            "name": "caller19",
+            "file": "src/callers.ts",
+            "startLine": 75,
+            "endLine": 77,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller20",
+            "kind": "function",
+            "name": "caller20",
+            "file": "src/callers.ts",
+            "startLine": 79,
+            "endLine": 81,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller21",
+            "kind": "function",
+            "name": "caller21",
+            "file": "src/callers.ts",
+            "startLine": 83,
+            "endLine": 85,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller22",
+            "kind": "function",
+            "name": "caller22",
+            "file": "src/callers.ts",
+            "startLine": 87,
+            "endLine": 89,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller23",
+            "kind": "function",
+            "name": "caller23",
+            "file": "src/callers.ts",
+            "startLine": 91,
+            "endLine": 93,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller24",
+            "kind": "function",
+            "name": "caller24",
+            "file": "src/callers.ts",
+            "startLine": 95,
+            "endLine": 97,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller25",
+            "kind": "function",
+            "name": "caller25",
+            "file": "src/callers.ts",
+            "startLine": 99,
+            "endLine": 101,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller26",
+            "kind": "function",
+            "name": "caller26",
+            "file": "src/callers.ts",
+            "startLine": 103,
+            "endLine": 105,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller27",
+            "kind": "function",
+            "name": "caller27",
+            "file": "src/callers.ts",
+            "startLine": 107,
+            "endLine": 109,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller28",
+            "kind": "function",
+            "name": "caller28",
+            "file": "src/callers.ts",
+            "startLine": 111,
+            "endLine": 113,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller29",
+            "kind": "function",
+            "name": "caller29",
+            "file": "src/callers.ts",
+            "startLine": 115,
+            "endLine": 117,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/callers.ts#caller30",
+            "kind": "function",
+            "name": "caller30",
+            "file": "src/callers.ts",
+            "startLine": 119,
+            "endLine": 121,
+            "language": "typescript",
+            "exported": true
+          }
+        ],
+        "paths": [
+          {
+            "target": {
+              "id": "src/callers.ts#caller01",
+              "kind": "function",
+              "name": "caller01",
+              "file": "src/callers.ts",
+              "startLine": 3,
+              "endLine": 5,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller01",
+                "kind": "function",
+                "name": "caller01",
+                "file": "src/callers.ts",
+                "startLine": 3,
+                "endLine": 5,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller02",
+              "kind": "function",
+              "name": "caller02",
+              "file": "src/callers.ts",
+              "startLine": 7,
+              "endLine": 9,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller02",
+                "kind": "function",
+                "name": "caller02",
+                "file": "src/callers.ts",
+                "startLine": 7,
+                "endLine": 9,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller03",
+              "kind": "function",
+              "name": "caller03",
+              "file": "src/callers.ts",
+              "startLine": 11,
+              "endLine": 13,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller03",
+                "kind": "function",
+                "name": "caller03",
+                "file": "src/callers.ts",
+                "startLine": 11,
+                "endLine": 13,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller04",
+              "kind": "function",
+              "name": "caller04",
+              "file": "src/callers.ts",
+              "startLine": 15,
+              "endLine": 17,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller04",
+                "kind": "function",
+                "name": "caller04",
+                "file": "src/callers.ts",
+                "startLine": 15,
+                "endLine": 17,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller05",
+              "kind": "function",
+              "name": "caller05",
+              "file": "src/callers.ts",
+              "startLine": 19,
+              "endLine": 21,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller05",
+                "kind": "function",
+                "name": "caller05",
+                "file": "src/callers.ts",
+                "startLine": 19,
+                "endLine": 21,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller06",
+              "kind": "function",
+              "name": "caller06",
+              "file": "src/callers.ts",
+              "startLine": 23,
+              "endLine": 25,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller06",
+                "kind": "function",
+                "name": "caller06",
+                "file": "src/callers.ts",
+                "startLine": 23,
+                "endLine": 25,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller07",
+              "kind": "function",
+              "name": "caller07",
+              "file": "src/callers.ts",
+              "startLine": 27,
+              "endLine": 29,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller07",
+                "kind": "function",
+                "name": "caller07",
+                "file": "src/callers.ts",
+                "startLine": 27,
+                "endLine": 29,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller08",
+              "kind": "function",
+              "name": "caller08",
+              "file": "src/callers.ts",
+              "startLine": 31,
+              "endLine": 33,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller08",
+                "kind": "function",
+                "name": "caller08",
+                "file": "src/callers.ts",
+                "startLine": 31,
+                "endLine": 33,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller09",
+              "kind": "function",
+              "name": "caller09",
+              "file": "src/callers.ts",
+              "startLine": 35,
+              "endLine": 37,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller09",
+                "kind": "function",
+                "name": "caller09",
+                "file": "src/callers.ts",
+                "startLine": 35,
+                "endLine": 37,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller10",
+              "kind": "function",
+              "name": "caller10",
+              "file": "src/callers.ts",
+              "startLine": 39,
+              "endLine": 41,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller10",
+                "kind": "function",
+                "name": "caller10",
+                "file": "src/callers.ts",
+                "startLine": 39,
+                "endLine": 41,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller11",
+              "kind": "function",
+              "name": "caller11",
+              "file": "src/callers.ts",
+              "startLine": 43,
+              "endLine": 45,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller11",
+                "kind": "function",
+                "name": "caller11",
+                "file": "src/callers.ts",
+                "startLine": 43,
+                "endLine": 45,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller12",
+              "kind": "function",
+              "name": "caller12",
+              "file": "src/callers.ts",
+              "startLine": 47,
+              "endLine": 49,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller12",
+                "kind": "function",
+                "name": "caller12",
+                "file": "src/callers.ts",
+                "startLine": 47,
+                "endLine": 49,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller13",
+              "kind": "function",
+              "name": "caller13",
+              "file": "src/callers.ts",
+              "startLine": 51,
+              "endLine": 53,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller13",
+                "kind": "function",
+                "name": "caller13",
+                "file": "src/callers.ts",
+                "startLine": 51,
+                "endLine": 53,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller14",
+              "kind": "function",
+              "name": "caller14",
+              "file": "src/callers.ts",
+              "startLine": 55,
+              "endLine": 57,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller14",
+                "kind": "function",
+                "name": "caller14",
+                "file": "src/callers.ts",
+                "startLine": 55,
+                "endLine": 57,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller15",
+              "kind": "function",
+              "name": "caller15",
+              "file": "src/callers.ts",
+              "startLine": 59,
+              "endLine": 61,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller15",
+                "kind": "function",
+                "name": "caller15",
+                "file": "src/callers.ts",
+                "startLine": 59,
+                "endLine": 61,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller16",
+              "kind": "function",
+              "name": "caller16",
+              "file": "src/callers.ts",
+              "startLine": 63,
+              "endLine": 65,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller16",
+                "kind": "function",
+                "name": "caller16",
+                "file": "src/callers.ts",
+                "startLine": 63,
+                "endLine": 65,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller17",
+              "kind": "function",
+              "name": "caller17",
+              "file": "src/callers.ts",
+              "startLine": 67,
+              "endLine": 69,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller17",
+                "kind": "function",
+                "name": "caller17",
+                "file": "src/callers.ts",
+                "startLine": 67,
+                "endLine": 69,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller18",
+              "kind": "function",
+              "name": "caller18",
+              "file": "src/callers.ts",
+              "startLine": 71,
+              "endLine": 73,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller18",
+                "kind": "function",
+                "name": "caller18",
+                "file": "src/callers.ts",
+                "startLine": 71,
+                "endLine": 73,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller19",
+              "kind": "function",
+              "name": "caller19",
+              "file": "src/callers.ts",
+              "startLine": 75,
+              "endLine": 77,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller19",
+                "kind": "function",
+                "name": "caller19",
+                "file": "src/callers.ts",
+                "startLine": 75,
+                "endLine": 77,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller20",
+              "kind": "function",
+              "name": "caller20",
+              "file": "src/callers.ts",
+              "startLine": 79,
+              "endLine": 81,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller20",
+                "kind": "function",
+                "name": "caller20",
+                "file": "src/callers.ts",
+                "startLine": 79,
+                "endLine": 81,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller21",
+              "kind": "function",
+              "name": "caller21",
+              "file": "src/callers.ts",
+              "startLine": 83,
+              "endLine": 85,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller21",
+                "kind": "function",
+                "name": "caller21",
+                "file": "src/callers.ts",
+                "startLine": 83,
+                "endLine": 85,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller22",
+              "kind": "function",
+              "name": "caller22",
+              "file": "src/callers.ts",
+              "startLine": 87,
+              "endLine": 89,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller22",
+                "kind": "function",
+                "name": "caller22",
+                "file": "src/callers.ts",
+                "startLine": 87,
+                "endLine": 89,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller23",
+              "kind": "function",
+              "name": "caller23",
+              "file": "src/callers.ts",
+              "startLine": 91,
+              "endLine": 93,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller23",
+                "kind": "function",
+                "name": "caller23",
+                "file": "src/callers.ts",
+                "startLine": 91,
+                "endLine": 93,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller24",
+              "kind": "function",
+              "name": "caller24",
+              "file": "src/callers.ts",
+              "startLine": 95,
+              "endLine": 97,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller24",
+                "kind": "function",
+                "name": "caller24",
+                "file": "src/callers.ts",
+                "startLine": 95,
+                "endLine": 97,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller25",
+              "kind": "function",
+              "name": "caller25",
+              "file": "src/callers.ts",
+              "startLine": 99,
+              "endLine": 101,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller25",
+                "kind": "function",
+                "name": "caller25",
+                "file": "src/callers.ts",
+                "startLine": 99,
+                "endLine": 101,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller26",
+              "kind": "function",
+              "name": "caller26",
+              "file": "src/callers.ts",
+              "startLine": 103,
+              "endLine": 105,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller26",
+                "kind": "function",
+                "name": "caller26",
+                "file": "src/callers.ts",
+                "startLine": 103,
+                "endLine": 105,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller27",
+              "kind": "function",
+              "name": "caller27",
+              "file": "src/callers.ts",
+              "startLine": 107,
+              "endLine": 109,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller27",
+                "kind": "function",
+                "name": "caller27",
+                "file": "src/callers.ts",
+                "startLine": 107,
+                "endLine": 109,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller28",
+              "kind": "function",
+              "name": "caller28",
+              "file": "src/callers.ts",
+              "startLine": 111,
+              "endLine": 113,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller28",
+                "kind": "function",
+                "name": "caller28",
+                "file": "src/callers.ts",
+                "startLine": 111,
+                "endLine": 113,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller29",
+              "kind": "function",
+              "name": "caller29",
+              "file": "src/callers.ts",
+              "startLine": 115,
+              "endLine": 117,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller29",
+                "kind": "function",
+                "name": "caller29",
+                "file": "src/callers.ts",
+                "startLine": 115,
+                "endLine": 117,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/callers.ts#caller30",
+              "kind": "function",
+              "name": "caller30",
+              "file": "src/callers.ts",
+              "startLine": 119,
+              "endLine": 121,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/format.ts#formatValue",
+                "kind": "function",
+                "name": "formatValue",
+                "file": "src/format.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/callers.ts#caller30",
+                "kind": "function",
+                "name": "caller30",
+                "file": "src/callers.ts",
+                "startLine": 119,
+                "endLine": 121,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          }
+        ],
+        "truncated": true,
+        "hubs": [
+          {
+            "entityId": "src/format.ts#formatValue",
+            "fanIn": 30,
+            "reach": 31
+          }
+        ]
+      },
+      "terminalDependents": [
+        {
+          "id": "src/callers.ts#caller02",
+          "kind": "function",
+          "name": "caller02",
+          "file": "src/callers.ts",
+          "startLine": 7,
+          "endLine": 9,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller03",
+          "kind": "function",
+          "name": "caller03",
+          "file": "src/callers.ts",
+          "startLine": 11,
+          "endLine": 13,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller04",
+          "kind": "function",
+          "name": "caller04",
+          "file": "src/callers.ts",
+          "startLine": 15,
+          "endLine": 17,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller05",
+          "kind": "function",
+          "name": "caller05",
+          "file": "src/callers.ts",
+          "startLine": 19,
+          "endLine": 21,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller06",
+          "kind": "function",
+          "name": "caller06",
+          "file": "src/callers.ts",
+          "startLine": 23,
+          "endLine": 25,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller07",
+          "kind": "function",
+          "name": "caller07",
+          "file": "src/callers.ts",
+          "startLine": 27,
+          "endLine": 29,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller08",
+          "kind": "function",
+          "name": "caller08",
+          "file": "src/callers.ts",
+          "startLine": 31,
+          "endLine": 33,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller09",
+          "kind": "function",
+          "name": "caller09",
+          "file": "src/callers.ts",
+          "startLine": 35,
+          "endLine": 37,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller10",
+          "kind": "function",
+          "name": "caller10",
+          "file": "src/callers.ts",
+          "startLine": 39,
+          "endLine": 41,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller11",
+          "kind": "function",
+          "name": "caller11",
+          "file": "src/callers.ts",
+          "startLine": 43,
+          "endLine": 45,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller12",
+          "kind": "function",
+          "name": "caller12",
+          "file": "src/callers.ts",
+          "startLine": 47,
+          "endLine": 49,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller13",
+          "kind": "function",
+          "name": "caller13",
+          "file": "src/callers.ts",
+          "startLine": 51,
+          "endLine": 53,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller14",
+          "kind": "function",
+          "name": "caller14",
+          "file": "src/callers.ts",
+          "startLine": 55,
+          "endLine": 57,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller15",
+          "kind": "function",
+          "name": "caller15",
+          "file": "src/callers.ts",
+          "startLine": 59,
+          "endLine": 61,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller16",
+          "kind": "function",
+          "name": "caller16",
+          "file": "src/callers.ts",
+          "startLine": 63,
+          "endLine": 65,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller17",
+          "kind": "function",
+          "name": "caller17",
+          "file": "src/callers.ts",
+          "startLine": 67,
+          "endLine": 69,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller18",
+          "kind": "function",
+          "name": "caller18",
+          "file": "src/callers.ts",
+          "startLine": 71,
+          "endLine": 73,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller19",
+          "kind": "function",
+          "name": "caller19",
+          "file": "src/callers.ts",
+          "startLine": 75,
+          "endLine": 77,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller20",
+          "kind": "function",
+          "name": "caller20",
+          "file": "src/callers.ts",
+          "startLine": 79,
+          "endLine": 81,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller21",
+          "kind": "function",
+          "name": "caller21",
+          "file": "src/callers.ts",
+          "startLine": 83,
+          "endLine": 85,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller22",
+          "kind": "function",
+          "name": "caller22",
+          "file": "src/callers.ts",
+          "startLine": 87,
+          "endLine": 89,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller23",
+          "kind": "function",
+          "name": "caller23",
+          "file": "src/callers.ts",
+          "startLine": 91,
+          "endLine": 93,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller24",
+          "kind": "function",
+          "name": "caller24",
+          "file": "src/callers.ts",
+          "startLine": 95,
+          "endLine": 97,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller25",
+          "kind": "function",
+          "name": "caller25",
+          "file": "src/callers.ts",
+          "startLine": 99,
+          "endLine": 101,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller26",
+          "kind": "function",
+          "name": "caller26",
+          "file": "src/callers.ts",
+          "startLine": 103,
+          "endLine": 105,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller27",
+          "kind": "function",
+          "name": "caller27",
+          "file": "src/callers.ts",
+          "startLine": 107,
+          "endLine": 109,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller28",
+          "kind": "function",
+          "name": "caller28",
+          "file": "src/callers.ts",
+          "startLine": 111,
+          "endLine": 113,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller29",
+          "kind": "function",
+          "name": "caller29",
+          "file": "src/callers.ts",
+          "startLine": 115,
+          "endLine": 117,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/callers.ts#caller30",
+          "kind": "function",
+          "name": "caller30",
+          "file": "src/callers.ts",
+          "startLine": 119,
+          "endLine": 121,
+          "language": "typescript",
+          "exported": true
+        }
+      ],
+      "confidence": "proven"
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "BLAST_RADIUS_TRUNCATED",
+      "severity": "info",
+      "entityId": "src/format.ts#formatValue",
+      "message": "Blast radius for src/format.ts#formatValue stopped expanding at 1 hub(s): src/format.ts#formatValue; dependents beyond a hub are counted in its reach but not listed."
+    },
+    {
+      "code": "ATTRIBUTED_LINE_RATIO",
+      "severity": "info",
+      "message": "2 of 2 changed lines attributed to code entities (ratio 1.0000); 0 module-level, 0 unattributed."
+    }
+  ],
+  "limitations": [
+    "Only TypeScript and JavaScript are analyzed; JavaScript is not type-checked.",
+    "Entities are named functions, variable-bound arrow functions and function expressions, class and object-literal methods, constructors, accessors, React components, and module-level code.",
+    "Classes, interfaces, type aliases, and enums are not entities.",
+    "Relationships are CALLS, RENDERS (JSX elements), INSTANTIATES (new expressions), and REFERENCES (functions passed or stored as values).",
+    "Dynamic calls and calls through interface-typed receivers are not analyzed.",
+    "Renamed entities may lack removed-code evidence.",
+    "Partially overlapping entity line ranges are skipped rather than sharing ambiguous evidence.",
+    "Application surfaces are not yet discovered.",
+    "Blast radius is limited to depth 6."
+  ],
+  "frontier": [],
+  "coverage": {
+    "byLanguage": [
+      {
+        "key": "typescript",
+        "changedLines": 1,
+        "attributedLines": 1,
+        "ratio": 1,
+        "frontierCount": 0
+      }
+    ],
+    "byDirectory": [
+      {
+        "key": "src",
+        "changedLines": 1,
+        "attributedLines": 1,
+        "ratio": 1,
+        "frontierCount": 0
+      }
+    ],
+    "skippedFiles": [],
+    "frontierTotal": 0
+  }
+}

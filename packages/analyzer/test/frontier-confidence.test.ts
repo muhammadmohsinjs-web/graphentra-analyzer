@@ -118,12 +118,28 @@ test('confidence: a direct call to a single declaration is proven (confidence ab
   assert.equal('confidence' in direct, false);
 });
 
-// An interface or abstract member has no entity of its own and the extractor does not fan out to implementations yet,
-// so a call through one yields no edge today. This documents the intended D4 outcome and starts passing once fan-out exists.
-test('confidence: a call through an interface method with two implementations is likely', { todo: 'no fan-out to implementations yet' }, () => {
-  const graph = extract({ 'src/c.ts': CONFIDENCE_SOURCE });
-  assert.equal(edge(graph, 'viaInterface', 'CALLS', 'A.run')?.confidence, 'likely');
-  assert.equal(edge(graph, 'viaInterface', 'CALLS', 'B.run')?.confidence, 'likely');
+// An interface or abstract member has no entity of its own and the extractor does not fan out to implementations (D15),
+// so a call through one yields no edge; it is a frontier site with reason interface_dispatch instead.
+test('frontier: a call through an interface or abstract member is interface_dispatch and gives no edge', () => {
+  const source = `interface Runner { run(): void; readonly hook: () => void }
+abstract class Base { abstract go(): void; }
+export function viaInterface(r: Runner): void { r.run(); }
+export function viaProperty(r: Runner): void { r.hook(); }
+export function viaAbstract(b: Base): void { b.go(); }
+export function viaLiteral(o: { fn(): void }): void { o.fn(); }
+export function plain(): void {}
+export function direct(): void { plain(); }
+export function builtin(text: string): string { return text.trim().toUpperCase(); }
+`;
+  const graph = extract({ 'src/i.ts': source });
+  assert.deepEqual(graph.frontier.map(({ entityId, line, reason }) => [entityId, line, reason]), [
+    ['src/i.ts#viaInterface', lineOf(source, 'export function viaInterface'), 'interface_dispatch'],
+    ['src/i.ts#viaProperty', lineOf(source, 'export function viaProperty'), 'interface_dispatch'],
+    ['src/i.ts#viaAbstract', lineOf(source, 'export function viaAbstract'), 'interface_dispatch'],
+    ['src/i.ts#viaLiteral', lineOf(source, 'export function viaLiteral'), 'interface_dispatch'],
+  ], 'built-in lib members (String.prototype.trim) are not interface_dispatch');
+  assert.deepEqual(graph.relations.filter(relation => relation.from !== 'src/i.ts#direct').map(relation => relation.from), []);
+  assert.equal(extract({ 'src/i.ts': source }, 'legacy').frontier.length, 0);
 });
 
 test('confidence: a symbol with several declarations is likely', () => {
