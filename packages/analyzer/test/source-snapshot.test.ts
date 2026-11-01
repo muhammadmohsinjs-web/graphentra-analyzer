@@ -61,15 +61,17 @@ test('captured bytes do not change after source mutation', () => {
   } finally { repo.cleanup(); }
 });
 
-test('external source symlinks are rejected', () => {
+test('external source symlinks are skipped, not analyzed', () => {
   const repo = createRepo();
   const external = createRepo();
   try {
     repo.commitFile('a.ts', 'export function a() {}');
     external.commitFile('external.ts', 'export function external() {}');
     fs.symlinkSync(path.join(external.dir, 'external.ts'), path.join(repo.dir, 'linked.ts'));
-    assert.throws(() => analyzeRepository({ target: repo.dir, comparison: { mode: 'working-tree' } }),
-      { code: 'UNSUPPORTED_EXTERNAL_INPUT' });
+    const result = analyzeRepository({ target: repo.dir, comparison: { mode: 'working-tree' } });
+    assert.deepEqual(result.technicalGraph.analyzedFiles, ['a.ts']);
+    const snapshot = captureSourceSnapshot(createRepositoryContext(repo.dir, { mode: 'working-tree' }));
+    assert.deepEqual(snapshot.skipped, [{ file: 'linked.ts', reason: 'symlink' }]);
   } finally { repo.cleanup(); external.cleanup(); }
 });
 

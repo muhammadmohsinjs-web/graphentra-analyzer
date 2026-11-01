@@ -30,6 +30,8 @@ export interface RepositoryContext {
   gitPathToProjectPath(gitFile: string): string;
   getGitDiff(): string;
   getBaselineSource(oldFile: string, baseSha: string): string;
+  /** Raw bytes of a base-revision blob, so size, binary and encoding checks see what Git stores. */
+  getBaselineBlob(oldFile: string, baseSha: string): Buffer;
   executeGit(args: string[], cwd?: string): string;
   verifyHeadUnchanged(): void;
   calculateWorkingTreeContentIdentity(analyzedFiles: string[]): string;
@@ -86,14 +88,14 @@ export function createRepositoryContext(
   }
 
   // 2. Verify git is available and resolve git root
-  function executeGit(args: string[], cwd: string = projectRoot): string {
+  function runGit(args: string[], cwd: string, encoding: 'utf8' | 'buffer'): string | Buffer {
     const env = { ...process.env };
     for (const key of Object.keys(env)) if (key.startsWith('GIT_')) delete env[key];
     try {
       return execFileSync('git', ['--literal-pathspecs', ...args], {
         cwd,
         env,
-        encoding: 'utf8',
+        encoding,
         stdio: ['ignore', 'pipe', 'pipe'],
         timeout: timeoutMs,
         maxBuffer: 20 * 1024 * 1024,
@@ -113,6 +115,10 @@ export function createRepositoryContext(
         stderr,
       );
     }
+  }
+
+  function executeGit(args: string[], cwd: string = projectRoot): string {
+    return runGit(args, cwd, 'utf8') as string;
   }
 
   let rawGitRoot: string;
@@ -327,6 +333,17 @@ export function createRepositoryContext(
     }
   }
 
+  function getBaselineBlob(oldFile: string, baseSha: string): Buffer {
+    const repoRelPath = projectInsideRepository !== '.' ? path.posix.join(projectInsideRepository, oldFile) : oldFile;
+    try {
+      return runGit(['show', `${baseSha}:${repoRelPath}`], gitRepositoryRoot, 'buffer') as Buffer;
+    } catch (error: any) {
+      throw new BaselineSourceError(
+        `Failed to read baseline source for "${oldFile}" at commit ${baseSha}: ${error?.message || String(error)}`,
+      );
+    }
+  }
+
   function verifyHeadUnchanged(): void {
     const currentSha = executeGit(['rev-parse', '--verify', '--end-of-options', 'HEAD^{commit}'], gitRepositoryRoot).trim();
     if (currentSha !== checkoutSha) {
@@ -391,6 +408,7 @@ export function createRepositoryContext(
     gitPathToProjectPath,
     getGitDiff,
     getBaselineSource,
+    getBaselineBlob,
     executeGit,
     verifyHeadUnchanged,
     calculateWorkingTreeContentIdentity,

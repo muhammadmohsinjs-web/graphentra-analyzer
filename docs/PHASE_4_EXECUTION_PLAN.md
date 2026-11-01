@@ -28,6 +28,9 @@ Workers follow these and do not reopen them. If a decision blocks a worker, it r
 | D11 | Non-TS change classes, first match wins, sorted by path: `DEPENDENCY_CHANGE` (`package.json`, lockfiles), `SCHEMA_CHANGE` (`*.prisma`, `*.sql`, `migrations/**`), `ENV_CONFIG_CHANGE` (`.env*`, `*.config.*`, `tsconfig*.json`, `*.yml`/`*.yaml`/`*.toml`/`*.ini` outside CI dirs), `CI_CONFIG_CHANGE` (`.github/**`, `.gitlab-ci.yml`, `.circleci/**`, `Dockerfile*`), `ASSET_ONLY` (images, fonts, media, `*.css`/`*.scss`), `OTHER`. One `warning` diagnostic per file with `file` set. `package.json` diffs list added/removed/changed dependency names and versions, sorted by name. These replace `OUTSIDE_SUPPORTED_SCOPE` in the extended engine. |
 | D12 | Coverage: `DeterministicEvidence.coverage?: { byLanguage: CoverageRow[]; byDirectory: CoverageRow[]; skippedFiles: Array<{ file, reason }>; frontierTotal: number }`. `CoverageRow = { key, changedLines, attributedLines, ratio, frontierCount }`. `ratio` uses the same rounding as `attribution.ratio`. Skip reasons: `unsupported_language`, `generated`, `too_large`, `binary`, `parse_failure`, `invalid_encoding`, `symlink`. Directory = first path segment (`.` for root files). Rows sorted by key. |
 | D13 | Every new array or map that reaches evidence is sorted (`deterministic.ts` `compareStrings`). |
+| D14 | (Added after H.) Parser stack overflow depends on call-stack depth, so it is not a deterministic limit. Before parsing, a token scan measures bracket nesting depth; depth > 500 → skip as `parse_failure`. The `RangeError` catch in `source-snapshot.ts` stays as a last-resort safety net only. Snapshot reason `parse_failed` maps to evidence `parse_failure`. |
+
+**Follow-ups from H for task G:** D14 pre-scan; map `parse_failed` → `parse_failure`; remove skipped files from `analyzedFiles`; apply limits to `getBaselineSource` reads in `analyze.ts:125`.
 
 ## 2. Code map (verified 2026-11-01 on `223021d`)
 
