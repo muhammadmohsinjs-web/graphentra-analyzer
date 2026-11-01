@@ -32,6 +32,8 @@ Workers follow these and do not reopen them. If a decision blocks a worker, it r
 
 **Follow-ups from H for task G:** D14 pre-scan; map `parse_failed` → `parse_failure`; remove skipped files from `analyzedFiles`; apply limits to `getBaselineSource` reads in `analyze.ts:125`.
 
+**P4-4 result (`docs/PERF_BASELINE.md`, M4 under heavy load):** 205k LOC → median 94.9 s, p95 101 s (gate not met). 75% of time is one `git show` spawn per base file (`repository.ts:321`). Parse + normalize is ~10 s. Decisions: P4-5 cache stays cut; P4-9 stays deferred; new task **F** batches base reads with a single `git cat-file --batch`. Bug to investigate (parent): a long linear import chain at 2k files crashes with `RangeError: Maximum call stack size exceeded`, surfaced only as `OPERATION_FAILED`.
+
 **Follow-ups from D for task G:** coverage rows count changed lines only (frontier outside changed files counts only in `frontierTotal`, by design). Pass every changed file to `buildCoverage`, including skipped and non-TS ones, so they show as 0% attributed rows as well as in `skippedFiles`.
 
 ## 2. Code map (verified 2026-11-01 on `223021d`)

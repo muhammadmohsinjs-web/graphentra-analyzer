@@ -10,6 +10,8 @@ export const MAX_BLAST_DEPTH = 6;
 /** Extended engine: cap on affected entities reported per changed entity (deterministic: shallowest, then lexicographic IDs). */
 export const MAX_AFFECTED_ENTITIES = 2000;
 /** Extended engine: pathCount saturates here so counting stays bounded on dense fan-in. */
+/** Extended engine: direct fan-in at or above which a node is summarized as a hub instead of expanded. */
+export const HUB_THRESHOLD = 25;
 export const MAX_SHORTEST_PATH_COUNT = 1_000_000;
 
 export const IGNORED_DIRECTORIES = new Set([
@@ -287,6 +289,10 @@ export interface AnalyzeOptions {
   engine?: EngineProfile;
   /** Extended engine: cap on affected entities per changed entity (default MAX_AFFECTED_ENTITIES). */
   maxAffectedEntities?: number;
+  /** Extended engine: blast-radius depth limit (default MAX_BLAST_DEPTH). */
+  maxDepth?: number;
+  /** Extended engine: direct fan-in at which a node is summarized as a hub (default HUB_THRESHOLD). */
+  hubThreshold?: number;
 }
 
 export interface AnalyzeResult {
