@@ -31,7 +31,7 @@ export interface RepositoryContext {
   getGitDiff(): string;
   getBaselineSource(oldFile: string, baseSha: string): string;
   /** Raw bytes of a base-revision blob, so size, binary and encoding checks see what Git stores. */
-  getBaselineBlob(oldFile: string, baseSha: string): Buffer;
+  getBaselineBlob(oldFile: string, baseSha: string): Uint8Array;
   /**
    * Reads many base-revision blobs in two `git cat-file --batch*` calls (per chunk) and caches them, so
    * later getBaselineBlob/getBaselineSource calls for these paths spawn nothing. Blobs over `maxFileBytes`,

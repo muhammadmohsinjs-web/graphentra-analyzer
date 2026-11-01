@@ -28,7 +28,7 @@ export interface SkippedInput {
 const BINARY_SNIFF_BYTES = 8 * 1024;
 
 /** A NUL byte in the first 8 KB means binary; otherwise the bytes must be strict UTF-8. */
-export function inspectContent(buffer: Buffer): 'ok' | 'binary' | 'invalid_encoding' {
+export function inspectContent(buffer: Uint8Array): 'ok' | 'binary' | 'invalid_encoding' {
   if (buffer.subarray(0, BINARY_SNIFF_BYTES).includes(0)) return 'binary';
   try { new TextDecoder('utf-8', { fatal: true }).decode(buffer); }
   catch { return 'invalid_encoding'; }

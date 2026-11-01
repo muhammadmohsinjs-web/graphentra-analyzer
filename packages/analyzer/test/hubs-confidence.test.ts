@@ -6,7 +6,7 @@ import { buildImpact } from '../src/impact';
 
 const entity = (id: string): Entity => ({ id, name: id, file: `${id}.ts`, startLine: 1, endLine: 2 } as Entity);
 const call = (from: string, to: string, confidence?: 'likely'): Relation =>
-  ({ from, to, type: 'calls', ...(confidence ? { confidence } : {}) } as Relation);
+  ({ from, to, type: 'CALLS', ...(confidence ? { confidence } : {}) } as Relation);
 
 function graph(relations: Relation[]) {
   const entityById = new Map<string, Entity>();
@@ -85,7 +85,7 @@ test('a path with one likely edge is likely; the impact takes the weakest path',
 });
 
 test('a parallel proven and likely pair counts as proven', () => {
-  const result = impact([call('b', 'a', 'likely'), { from: 'b', to: 'a', type: 'references' } as Relation], 'a');
+  const result = impact([call('b', 'a', 'likely'), { from: 'b', to: 'a', type: 'REFERENCES' } as Relation], 'a');
   assert.equal(result.blastRadius.paths[0].confidence, 'proven');
   assert.equal(result.confidence, 'proven');
 });

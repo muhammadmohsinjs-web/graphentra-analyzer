@@ -48,12 +48,12 @@ export function createBaselineSnapshot(
         const relative = projectRelative(absolute);
         if (relative !== undefined && baselineFiles.has(relative)) {
           // Submodule entries appear in the tree but have no blob.
-          let bytes: Buffer | undefined;
+          let bytes: Uint8Array | undefined;
           try { bytes = repo.getBaselineBlob(relative, baseSha); } catch { bytes = undefined; }
           // Same size, binary and encoding limits as the head snapshot; rejected files are absent to the compiler.
           const reason = bytes === undefined ? 'ok' : bytes.length > limits.maxFileBytes ? 'too_large' : inspectContent(bytes);
           if (reason !== 'ok') skippedByFile.set(relative, { file: relative, reason });
-          else content = bytes?.toString('utf8');
+          else content = bytes && Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength).toString('utf8');
         }
       }
       cache.set(absolute, content);

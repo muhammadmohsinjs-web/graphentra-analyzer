@@ -132,7 +132,7 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
   const readBase = (oldFile: string): string | undefined => {
     const blob = repo.getBaselineBlob(oldFile, repo.comparison.resolvedBaseSha);
     const reason = blob.length > DEFAULT_INPUT_LIMITS.maxFileBytes ? 'too_large' : inspectContent(blob);
-    if (reason === 'ok') return blob.toString('utf8');
+    if (reason === 'ok') return Buffer.from(blob.buffer, blob.byteOffset, blob.byteLength).toString('utf8');
     baseSkipped.set(oldFile, { file: oldFile, reason });
     return undefined;
   };
