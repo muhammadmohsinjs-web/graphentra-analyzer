@@ -2,6 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as ts from 'typescript';
 import { collectEntities } from './entity-collector';
+import { compareStrings } from './deterministic';
 import { GraphentraError } from './errors';
 import {
   ANALYZER_VERSION,
@@ -15,8 +16,11 @@ import {
   MAX_BLAST_DEPTH,
   TYPESCRIPT_EXTENSIONS,
   type DiagnosticItem,
+  type EdgeConfidence,
   type Entity,
   type EngineProfile,
+  type FrontierItem,
+  type FrontierReason,
   type Relation,
   type TechnicalGraph,
 } from './contracts';
@@ -123,6 +127,27 @@ function findEnclosingFunction(node: ts.Node): ts.FunctionDeclaration | undefine
   return undefined;
 }
 
+/** Maximum frontier items kept per entity (decision D6). */
+const FRONTIER_ITEM_CAP = 20;
+
+/** An interface member or an abstract member: the call resolves to a declaration, not to the code that runs. */
+function isInterfaceOrAbstractMember(declaration: ts.Declaration): boolean {
+  if (ts.isMethodSignature(declaration) || ts.isPropertySignature(declaration)) return true;
+  if (ts.isMethodDeclaration(declaration) || ts.isPropertyDeclaration(declaration) || ts.isAccessor(declaration)) {
+    return (ts.getCombinedModifierFlags(declaration) & ts.ModifierFlags.Abstract) !== 0;
+  }
+  return false;
+}
+
+/** Decision D4: 'likely' for an interface/abstract member or a symbol with several declarations; undefined (proven) otherwise. */
+function symbolConfidence(symbol: ts.Symbol | undefined): EdgeConfidence | undefined {
+  const declarations = symbol?.declarations ?? [];
+  return declarations.length > 1 || declarations.some(isInterfaceOrAbstractMember) ? 'likely' : undefined;
+}
+
+const withConfidence = (relation: Relation, confidence: EdgeConfidence | undefined): Relation =>
+  confidence === undefined ? relation : { ...relation, confidence };
+
 export interface ExtractedGraph {
   technicalGraph: TechnicalGraph;
   entities: Entity[];
@@ -134,6 +159,8 @@ export interface ExtractedGraph {
   entityById: Map<string, Entity>;
   reverseAdjacency: Map<string, Relation[]>;
   files: string[];
+  /** Extended engine only (empty for legacy): unresolved dependency sites, capped per entity and sorted by file, line, reason, entityId. */
+  frontier: FrontierItem[];
   /** Compiler state shared with derived deterministic extractors (application map). */
   program?: ts.Program;
   checker?: ts.TypeChecker;
@@ -188,6 +215,7 @@ export function extractTechnicalGraph(options: {
       entityById: new Map(),
       reverseAdjacency: new Map(),
       files: [],
+      frontier: [],
     };
   }
 
@@ -203,7 +231,8 @@ export function extractTechnicalGraph(options: {
   const extendedEngine = (options.engine ?? DEFAULT_ENGINE) === 'extended';
   const entityById = new Map<string, Entity>();
   const symbolToEntity = new Map<ts.Symbol, Entity>();
-  const relationKeys = new Set<string>();
+  const relationsByKey = new Map<string, Relation>();
+  const frontier: FrontierItem[] = [];
   const failedFiles = new Set<string>();
   const errorClassName = (error: unknown): string => error instanceof Error ? error.constructor.name : typeof error;
 
@@ -218,8 +247,13 @@ export function extractTechnicalGraph(options: {
 
   function addRelation(relation: Relation): void {
     const key = `${relation.from}|${relation.type}|${relation.to}`;
-    if (relationKeys.has(key)) return;
-    relationKeys.add(key);
+    const existing = relationsByKey.get(key);
+    if (existing) {
+      // The stronger evidence wins: an absent confidence means proven.
+      if (existing.confidence !== undefined && relation.confidence === undefined) delete existing.confidence;
+      return;
+    }
+    relationsByKey.set(key, relation);
     relations.push(relation);
   }
 
@@ -312,6 +346,9 @@ export function extractTechnicalGraph(options: {
 
     // Relations are buffered per file and added all or nothing under the extended engine.
     const fileRelations: Relation[] = [];
+    const fileFrontier: FrontierItem[] = [];
+    const relativeFile = normalizeProjectPath(sourceFile.fileName);
+    const isJavaScriptFile = JAVASCRIPT_EXTENSIONS.has(path.extname(sourceFile.fileName));
     const emit = (relation: Relation): void => {
       if (extendedEngine) fileRelations.push(relation);
       else addRelation(relation);
@@ -365,26 +402,112 @@ export function extractTechnicalGraph(options: {
       return ts.isReturnStatement(parent);
     }
 
+    // True when the expression is a direct argument of a call or `new` (callback position).
+    function isCallArgument(node: ts.Expression): boolean {
+      let child: ts.Node = node;
+      let parent = node.parent;
+      while (ts.isParenthesizedExpression(parent) || ts.isAsExpression(parent) || ts.isNonNullExpression(parent) || ts.isSatisfiesExpression(parent)) {
+        child = parent;
+        parent = parent.parent;
+      }
+      return (ts.isCallExpression(parent) || ts.isNewExpression(parent)) && (parent.arguments?.includes(child as ts.Expression) ?? false);
+    }
+
+    function recordFrontier(node: ts.Node, reason: FrontierReason): void {
+      const entity = enclosingEntity(node);
+      if (!entity) return;
+      fileFrontier.push({ entityId: entity.id, file: relativeFile, line: sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile)).line + 1, reason });
+    }
+
+    // A global such as `eval`, `Function` or `require`: not redeclared by repository code.
+    function isGlobalNamed(expression: ts.Expression, name: string): boolean {
+      if (!ts.isIdentifier(expression) || expression.text !== name) return false;
+      return !(resolveSymbol(expression)?.declarations ?? []).some(declaration => !declaration.getSourceFile().isDeclarationFile);
+    }
+
+    // The identifier a callee chain starts from: `a` in `a.b[c]().d`.
+    function baseIdentifier(expression: ts.Expression): ts.Identifier | undefined {
+      let current: ts.Expression = expression;
+      while (true) {
+        if (ts.isIdentifier(current)) return current;
+        if (ts.isPropertyAccessExpression(current) || ts.isElementAccessExpression(current) || ts.isCallExpression(current)
+          || ts.isParenthesizedExpression(current) || ts.isNonNullExpression(current) || ts.isAsExpression(current)
+          || ts.isTypeAssertionExpression(current) || ts.isSatisfiesExpression(current)) {
+          current = current.expression;
+          continue;
+        }
+        return undefined;
+      }
+    }
+
+    // In plain JavaScript an `any` callee is the norm; only an explicit `any`/`unknown` annotation or an unresolvable base counts.
+    function isUnknownCallee(callee: ts.Expression): boolean {
+      if (!(checker.getTypeAtLocation(callee).flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown))) return false;
+      if (!isJavaScriptFile) return true;
+      const base = baseIdentifier(callee);
+      if (!base) return false;
+      const declaration = resolveSymbol(base)?.declarations?.[0];
+      if (!declaration) return true;
+      const annotation = (declaration as { type?: ts.TypeNode }).type;
+      return annotation !== undefined && (annotation.kind === ts.SyntaxKind.AnyKeyword || annotation.kind === ts.SyntaxKind.UnknownKeyword);
+    }
+
+    // Records the places where resolution gives up (decision D6); the first matching pattern wins.
+    function detectFrontier(node: ts.Node): void {
+      if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
+        const base = baseIdentifier(node.tagName as ts.Expression);
+        const declaration = base ? resolveSymbol(base)?.declarations?.[0] : undefined;
+        if (declaration && (ts.isParameter(declaration) || ts.isBindingElement(declaration))) recordFrontier(node, 'jsx_prop_component');
+      } else if (ts.isNewExpression(node)) {
+        if (isGlobalNamed(node.expression, 'Function')) recordFrontier(node, 'function_constructor');
+      } else if (ts.isCallExpression(node)) {
+        let callee: ts.Expression = node.expression;
+        while (ts.isParenthesizedExpression(callee) || ts.isNonNullExpression(callee)) callee = callee.expression;
+        const argument = node.arguments[0];
+        const at = ts.isPropertyAccessExpression(callee) ? callee.name : node;
+        if (ts.isDecorator(node.parent) && argument && (ts.isIdentifier(callee) ? callee.text : ts.isPropertyAccessExpression(callee) ? callee.name.text : '') === 'Inject') {
+          recordFrontier(node, 'di_token');
+        } else if (callee.kind === ts.SyntaxKind.ImportKeyword) {
+          if (argument && !ts.isStringLiteralLike(argument)) recordFrontier(node, 'dynamic_import');
+        } else if (isGlobalNamed(callee, 'require')) {
+          if (argument && !ts.isStringLiteralLike(argument)) recordFrontier(node, 'dynamic_require');
+        } else if (isGlobalNamed(callee, 'eval')) {
+          recordFrontier(node, 'eval');
+        } else if (isGlobalNamed(callee, 'Function')) {
+          recordFrontier(node, 'function_constructor');
+        } else if (ts.isElementAccessExpression(callee) && !ts.isStringLiteralLike(callee.argumentExpression) && !ts.isNumericLiteral(callee.argumentExpression)) {
+          recordFrontier(at, 'computed_member_call');
+        } else if (callee.kind !== ts.SyntaxKind.SuperKeyword && isUnknownCallee(callee)) {
+          recordFrontier(at, 'any_typed_call');
+        }
+      }
+    }
+
     function visit(node: ts.Node): void {
       if (extendedEngine) {
+        detectFrontier(node);
         if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
           // Lowercase tags are intrinsic elements (`div`), not symbols.
           const tag = node.tagName;
           if (!(ts.isIdentifier(tag) && /^[a-z]/.test(tag.text))) {
             const caller = enclosingEntity(node);
             const rendered = entityOfSymbol(ts.isPropertyAccessExpression(tag) ? resolveSymbol(tag.name) : resolveSymbol(tag));
-            if (caller && rendered && caller.id !== rendered.id) emit({ from: caller.id, to: rendered.id, type: 'RENDERS' });
+            if (caller && rendered && caller.id !== rendered.id) {
+              emit(withConfidence({ from: caller.id, to: rendered.id, type: 'RENDERS' }, symbolConfidence(ts.isPropertyAccessExpression(tag) ? resolveSymbol(tag.name) : resolveSymbol(tag))));
+            }
           }
         } else if (ts.isShorthandPropertyAssignment(node)) {
           const caller = enclosingEntity(node);
           const valueSym = checker.getShorthandAssignmentValueSymbol(node);
           const referenced = isFunctionValue(valueSym) ? entityOfSymbol(valueSym) : undefined;
-          if (caller && referenced && caller.id !== referenced.id) emit({ from: caller.id, to: referenced.id, type: 'REFERENCES' });
+          if (caller && referenced && caller.id !== referenced.id) emit(withConfidence({ from: caller.id, to: referenced.id, type: 'REFERENCES' }, symbolConfidence(valueSym)));
         } else if ((ts.isIdentifier(node) || ts.isPropertyAccessExpression(node)) && isValuePosition(node)) {
           const caller = enclosingEntity(node);
           const valueSym = valueSymbol(node);
           const referenced = isFunctionValue(valueSym) ? entityOfSymbol(valueSym) : undefined;
-          if (caller && referenced && caller.id !== referenced.id) emit({ from: caller.id, to: referenced.id, type: 'REFERENCES' });
+          if (caller && referenced && caller.id !== referenced.id) {
+            emit(withConfidence({ from: caller.id, to: referenced.id, type: 'REFERENCES' }, isCallArgument(node) ? 'likely' : symbolConfidence(valueSym)));
+          }
         }
       }
       if (ts.isNewExpression(node) && extendedEngine) {
@@ -393,12 +516,16 @@ export function extractTechnicalGraph(options: {
         // Overloads resolve to a bodiless declaration, so fall back to the implementation.
         // A class with no constructor anywhere in its chain has no entity to target and gets no edge.
         let declaration = checker.getResolvedSignature(node)?.declaration;
+        // Constructor overloads are several declarations of one symbol; any other target follows the symbol rule.
+        const overloaded = declaration && ts.isConstructorDeclaration(declaration)
+          ? declaration.parent.members.filter(ts.isConstructorDeclaration).length > 1
+          : symbolConfidence(resolveSymbol(node.expression)) === 'likely';
         if (declaration && ts.isConstructorDeclaration(declaration) && !declaration.body) {
           declaration = declaration.parent.members.find((member): member is ts.ConstructorDeclaration => ts.isConstructorDeclaration(member) && !!member.body);
         }
         const caller = enclosingEntity(node);
         const constructed = declaration ? declarationToEntity.get(declaration) : undefined;
-        if (caller && constructed) emit({ from: caller.id, to: constructed.id, type: 'INSTANTIATES' });
+        if (caller && constructed) emit(withConfidence({ from: caller.id, to: constructed.id, type: 'INSTANTIATES' }, overloaded ? 'likely' : undefined));
       } else if (ts.isCallExpression(node) && extendedEngine) {
         const caller = enclosingEntity(node);
         const calledSymbol = resolveSymbol(node.expression);
@@ -407,7 +534,7 @@ export function extractTechnicalGraph(options: {
         const called = calledSymbol
           ? symbolToEntity.get(calledSymbol) ?? (calledDeclaration ? declarationToEntity.get(calledDeclaration) : undefined)
           : undefined;
-        if (caller && called) emit({ from: caller.id, to: called.id, type: 'CALLS' });
+        if (caller && called) emit(withConfidence({ from: caller.id, to: called.id, type: 'CALLS' }, symbolConfidence(calledSymbol)));
       } else if (ts.isCallExpression(node)) {
         const calledSymbol = resolveSymbol(node.expression);
         const callerFunction = findEnclosingFunction(node);
@@ -438,12 +565,40 @@ export function extractTechnicalGraph(options: {
     try {
       visit(sourceFile);
       for (const relation of fileRelations) addRelation(relation);
+      frontier.push(...fileFrontier);
     } catch (error) {
       diagnostics.push({
         code: 'FILE_ANALYSIS_FAILED',
         severity: 'warning',
         file: normalizeProjectPath(sourceFile.fileName),
         message: `Call extraction failed (${errorClassName(error)}); calls from this file were skipped.`,
+      });
+    }
+  }
+
+  // Frontier: sorted, de-duplicated and capped per entity (decision D6).
+  const keptFrontier: FrontierItem[] = [];
+  if (extendedEngine) {
+    const ordered = frontier.sort((a, b) => compareStrings(a.file, b.file) || a.line - b.line || compareStrings(a.reason, b.reason) || compareStrings(a.entityId, b.entityId));
+    const perEntity = new Map<string, number>();
+    const capped = new Set<string>();
+    for (const [index, item] of ordered.entries()) {
+      const previous = ordered[index - 1];
+      if (previous && previous.file === item.file && previous.line === item.line && previous.reason === item.reason && previous.entityId === item.entityId) continue;
+      const count = perEntity.get(item.entityId) ?? 0;
+      if (count >= FRONTIER_ITEM_CAP) {
+        capped.add(item.entityId);
+        continue;
+      }
+      perEntity.set(item.entityId, count + 1);
+      keptFrontier.push(item);
+    }
+    for (const entityId of [...capped].sort(compareStrings)) {
+      diagnostics.push({
+        code: 'FRONTIER_CAPPED',
+        severity: 'info',
+        entityId,
+        message: `More than ${FRONTIER_ITEM_CAP} unresolved dependency sites; only the first ${FRONTIER_ITEM_CAP} in sorted order are reported.`,
       });
     }
   }
@@ -485,6 +640,7 @@ export function extractTechnicalGraph(options: {
     entityById,
     reverseAdjacency,
     files,
+    frontier: keptFrontier,
     program,
     checker,
     symbolToEntity,

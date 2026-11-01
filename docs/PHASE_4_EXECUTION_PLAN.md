@@ -30,6 +30,8 @@ Workers follow these and do not reopen them. If a decision blocks a worker, it r
 | D13 | Every new array or map that reaches evidence is sorted (`deterministic.ts` `compareStrings`). |
 | D14 | (Added after H.) Parser stack overflow depends on call-stack depth, so it is not a deterministic limit. Before parsing, a token scan measures bracket nesting depth; depth > 500 → skip as `parse_failure`. The `RangeError` catch in `source-snapshot.ts` stays as a last-resort safety net only. Snapshot reason `parse_failed` maps to evidence `parse_failure`. |
 
+| D15 | (Added after E.) Interface and abstract members have no entity (P3-6 deferred), so a call through them gives no edge. No fan-out to implementations in Phase 4. Instead, such a call is a frontier item with the new reason `interface_dispatch` (add it to `FRONTIER_REASONS`, the schema and the validator). The D4 interface rule stays for when P3-6 lands. |
+
 **Follow-ups from H for task G:** D14 pre-scan; map `parse_failed` → `parse_failure`; remove skipped files from `analyzedFiles`; apply limits to `getBaselineSource` reads in `analyze.ts:125`.
 
 **P4-4 result (`docs/PERF_BASELINE.md`, M4 under heavy load):** 205k LOC → median 94.9 s, p95 101 s (gate not met). 75% of time is one `git show` spawn per base file (`repository.ts:321`). Parse + normalize is ~10 s. Decisions: P4-5 cache stays cut; P4-9 stays deferred; new task **F** batches base reads with a single `git cat-file --batch`. Bug to investigate (parent): a long linear import chain at 2k files crashes with `RangeError: Maximum call stack size exceeded`, surfaced only as `OPERATION_FAILED`.
