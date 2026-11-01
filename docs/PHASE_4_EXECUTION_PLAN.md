@@ -32,6 +32,8 @@ Workers follow these and do not reopen them. If a decision blocks a worker, it r
 
 **Follow-ups from H for task G:** D14 pre-scan; map `parse_failed` → `parse_failure`; remove skipped files from `analyzedFiles`; apply limits to `getBaselineSource` reads in `analyze.ts:125`.
 
+**Follow-ups from D for task G:** coverage rows count changed lines only (frontier outside changed files counts only in `frontierTotal`, by design). Pass every changed file to `buildCoverage`, including skipped and non-TS ones, so they show as 0% attributed rows as well as in `skippedFiles`.
+
 ## 2. Code map (verified 2026-11-01 on `223021d`)
 
 | Concern | Location |
