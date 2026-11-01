@@ -5,7 +5,7 @@ import { compareStrings } from './deterministic';
 import { DEFAULT_ENGINE, type DiagnosticItem, type EngineProfile } from './contracts';
 import type { RepositoryContext } from './repository';
 import { isAnalyzableFile } from './technical-graph';
-import { DEFAULT_INPUT_LIMITS, inspectContent, type InputLimits, type SkippedInput } from './input-limits';
+import { bracketNestingDepth, DEFAULT_INPUT_LIMITS, inspectContent, MAX_NESTING_DEPTH, type InputLimits, type SkippedInput } from './input-limits';
 
 /**
  * Compiler inputs for the base revision, served from Git objects. Unlike captureSourceSnapshot it records nothing:
@@ -121,14 +121,19 @@ export function createBaselineSnapshot(
   host.getSourceFile = (file, languageVersion) => {
     const content = readFile(file);
     if (content === undefined) return undefined;
-    try { return ts.createSourceFile(file, content, languageVersion, true); }
-    catch (error) {
-      // Pathologically nested source overflows the parser's stack: drop that file instead of crashing the run.
-      const relative = projectRelative(path.resolve(file));
-      if (!(error instanceof RangeError) || relative === undefined) throw error;
-      skippedByFile.set(relative, { file: relative, reason: 'parse_failed' });
+    const relative = projectRelative(path.resolve(file));
+    const dropUnparsable = () => {
+      skippedByFile.set(relative!, { file: relative!, reason: 'parse_failed' });
       cache.set(path.resolve(file), undefined);
       return undefined;
+    };
+    // D14: nesting is measured on tokens before parsing, as in the head snapshot.
+    if (relative !== undefined && bracketNestingDepth(content) > MAX_NESTING_DEPTH) return dropUnparsable();
+    try { return ts.createSourceFile(file, content, languageVersion, true); }
+    catch (error) {
+      // Last-resort safety net: pathologically nested source overflows the parser's stack.
+      if (!(error instanceof RangeError) || relative === undefined) throw error;
+      return dropUnparsable();
     }
   };
   return {

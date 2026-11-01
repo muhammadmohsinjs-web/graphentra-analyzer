@@ -127,6 +127,51 @@ function findEnclosingFunction(node: ts.Node): ts.FunctionDeclaration | undefine
   return undefined;
 }
 
+/**
+ * Root files in dependency post-order (D16). `ts.createProgram` loads imports depth-first and recursively,
+ * so an import chain ~1,500 files deep overflows the stack. TypeScript already lists program files in this
+ * post-order, so handing it the order up front keeps `getSourceFiles()` unchanged while every import is
+ * already loaded when it is reached.
+ */
+function leavesFirst(files: string[], compilerOptions: ts.CompilerOptions, host?: ts.CompilerHost): string[] {
+  const resolutionHost: ts.ModuleResolutionHost = host ?? ts.sys;
+  const cache = ts.createModuleResolutionCache(projectDirectory(files), name => name, compilerOptions);
+  const byPath = new Map(files.map(file => [path.resolve(file), file]));
+  const importsOf = (file: string): string[] => {
+    const content = resolutionHost.readFile(file);
+    if (content === undefined) return [];
+    return ts.preProcessFile(content, true, true).importedFiles
+      .map(({ fileName }) => ts.resolveModuleName(fileName, file, compilerOptions, resolutionHost, cache).resolvedModule?.resolvedFileName)
+      .map(resolved => resolved === undefined ? undefined : byPath.get(path.resolve(resolved)))
+      .filter((resolved): resolved is string => resolved !== undefined);
+  };
+  const order: string[] = [];
+  const seen = new Set<string>();
+  for (const root of files) {
+    if (seen.has(root)) continue;
+    seen.add(root);
+    const stack: Array<{ file: string; imports: string[]; next: number }> = [{ file: root, imports: importsOf(root), next: 0 }];
+    while (stack.length > 0) {
+      const top = stack[stack.length - 1];
+      if (top.next < top.imports.length) {
+        const imported = top.imports[top.next++];
+        if (!seen.has(imported)) {
+          seen.add(imported);
+          stack.push({ file: imported, imports: importsOf(imported), next: 0 });
+        }
+      } else {
+        order.push(top.file);
+        stack.pop();
+      }
+    }
+  }
+  return order;
+}
+
+function projectDirectory(files: string[]): string {
+  return files.length > 0 ? path.dirname(path.resolve(files[0])) : process.cwd();
+}
+
 /** Maximum frontier items kept per entity (decision D6). */
 const FRONTIER_ITEM_CAP = 20;
 
@@ -219,7 +264,8 @@ export function extractTechnicalGraph(options: {
     };
   }
 
-  const program = ts.createProgram(files, options.compilerOptions ?? getCompilerOptions(projectRoot, options.engine), options.host);
+  const compilerOptions = options.compilerOptions ?? getCompilerOptions(projectRoot, options.engine);
+  const program = ts.createProgram(leavesFirst(files, compilerOptions, options.host), compilerOptions, options.host);
   const checker = program.getTypeChecker();
   const analyzedFileSet = new Set(files.map(file => path.resolve(file).replace(/\\/g, '/')));
 

@@ -100,3 +100,8 @@ H owns `source-snapshot.ts`/`repository.ts` and returns the skip list from the s
 - [ ] Coverage table per language/directory in the summary
 - [ ] ImpactBench numbers not lower than the W0 baseline
 - [ ] `verify:all` green; tag `phase-4-complete`
+
+## 5. Known gaps carried forward
+
+- Binary-only changes (e.g. a `.png`) never reach `changedFiles`: `parseGitDiff` (`change-evidence.ts:35`) skips diffs without `---`/`+++` lines, so they are missing from coverage and from the non-TS diagnostics. Fix in Phase 5 by parsing `Binary files … differ` entries.
+- A wall-clock limit (D9) is not implemented; the CI job timeout covers it.
