@@ -13,6 +13,8 @@ import type { LLMClientOptions } from './llm-client';
 
 export const APPLICATION_CONTEXT_FILE = 'application-context.json';
 export const APPLICATION_CONTEXT_BACKUP_FILE = 'application-context.previous.json';
+/** Per-request results kept while onboarding or refresh runs; removed once the context is written. */
+export const CONTEXT_CHECKPOINT_DIR = 'context-batches';
 
 /**
  * Generates a v2 application context from repository evidence (see context-generator.ts).
@@ -80,10 +82,13 @@ export interface ContextLifecycleResult extends LoadedApplicationContext {
 export async function loadOrCreateApplicationContext(options: ContextLifecycleOptions): Promise<ContextLifecycleResult> {
   const { contextDirectory, technicalGraph, sourceFiles, llmOptions } = options;
   const contextPath = path.join(contextDirectory, APPLICATION_CONTEXT_FILE);
+  const checkpointDir = path.join(contextDirectory, CONTEXT_CHECKPOINT_DIR);
   const generatorInput = () => ({
     technicalGraph, sourceFiles: sourceFiles ?? [], options: llmOptions,
-    applicationMap: options.applicationMap, signals: options.signals, onProgress: options.onProgress,
+    applicationMap: options.applicationMap, signals: options.signals, onProgress: options.onProgress, checkpointDir,
   });
+  // Saved requests only matter until the context file is written.
+  const clearCheckpoints = () => fs.rmSync(checkpointDir, { recursive: true, force: true });
 
   if (fs.existsSync(contextPath)) {
     const loaded = loadApplicationContext(JSON.parse(fs.readFileSync(contextPath, 'utf8')), technicalGraph);
@@ -93,10 +98,12 @@ export async function loadOrCreateApplicationContext(options: ContextLifecycleOp
       // A v1 context cannot be refreshed incrementally; regenerate and keep the old file as a backup.
       const context = await generateApplicationContextV2(generatorInput());
       writeContextAtomically(contextDirectory, context, { replace: true });
+      clearCheckpoints();
       return { context, warnings: ['Schema 1.0 context was replaced by a regenerated 2.0 context; the previous file was backed up.'], action: 'generated' };
     }
     const { context, summary } = await refreshApplicationContext(loaded.context, generatorInput());
     writeContextAtomically(contextDirectory, context, { replace: true });
+    clearCheckpoints();
     return { context, warnings: loaded.warnings, action: 'refreshed', refreshSummary: summary };
   }
 
@@ -107,7 +114,9 @@ export async function loadOrCreateApplicationContext(options: ContextLifecycleOp
   }
 
   const context = await generateApplicationContextV2(generatorInput());
-  if (writeContextAtomically(contextDirectory, context, { replace: false }) === 'exists') {
+  const written = writeContextAtomically(contextDirectory, context, { replace: false });
+  clearCheckpoints();
+  if (written === 'exists') {
     // Another process onboarded concurrently; its file wins.
     return { ...loadApplicationContext(JSON.parse(fs.readFileSync(contextPath, 'utf8')), technicalGraph), action: 'loaded' };
   }

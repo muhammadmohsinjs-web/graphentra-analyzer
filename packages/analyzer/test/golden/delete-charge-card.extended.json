@@ -672,7 +672,8 @@
         "paths": [],
         "truncated": false
       },
-      "terminalDependents": []
+      "terminalDependents": [],
+      "confidence": "proven"
     },
     {
       "changedEntity": {
@@ -810,7 +811,8 @@
             "pathCount": 1,
             "stepTypes": [
               "CALLS"
-            ]
+            ],
+            "confidence": "proven"
           },
           {
             "target": {
@@ -860,7 +862,8 @@
             "stepTypes": [
               "CALLS",
               "CALLS"
-            ]
+            ],
+            "confidence": "proven"
           },
           {
             "target": {
@@ -921,7 +924,8 @@
               "CALLS",
               "CALLS",
               "CALLS"
-            ]
+            ],
+            "confidence": "proven"
           },
           {
             "target": {
@@ -982,7 +986,8 @@
               "CALLS",
               "CALLS",
               "CALLS"
-            ]
+            ],
+            "confidence": "proven"
           },
           {
             "target": {
@@ -1054,7 +1059,8 @@
               "CALLS",
               "CALLS",
               "CALLS"
-            ]
+            ],
+            "confidence": "proven"
           }
         ],
         "truncated": false
@@ -1080,7 +1086,8 @@
           "language": "typescript",
           "exported": true
         }
-      ]
+      ],
+      "confidence": "proven"
     }
   ],
   "diagnostics": [
@@ -1108,5 +1115,35 @@
       "startLine": 3,
       "endLine": 8
     }
-  ]
+  ],
+  "frontier": [
+    {
+      "entityId": "src/billing.ts#processPayment",
+      "file": "src/billing.ts",
+      "line": 4,
+      "reason": "any_typed_call"
+    }
+  ],
+  "coverage": {
+    "byLanguage": [
+      {
+        "key": "typescript",
+        "changedLines": 1,
+        "attributedLines": 1,
+        "ratio": 1,
+        "frontierCount": 1
+      }
+    ],
+    "byDirectory": [
+      {
+        "key": "src",
+        "changedLines": 1,
+        "attributedLines": 1,
+        "ratio": 1,
+        "frontierCount": 1
+      }
+    ],
+    "skippedFiles": [],
+    "frontierTotal": 1
+  }
 }

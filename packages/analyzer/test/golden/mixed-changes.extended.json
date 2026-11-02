@@ -1,0 +1,713 @@
+{
+  "artifactKind": "graphentra-evidence",
+  "schemaVersion": "2.1",
+  "analyzerVersion": "<VERSION>",
+  "target": {
+    "targetPath": "."
+  },
+  "comparison": {
+    "mode": "commit",
+    "requestedBase": "<BASE>",
+    "requestedHead": "<HEAD>",
+    "resolvedBaseSha": "<BASE>",
+    "resolvedHeadSha": "<HEAD>",
+    "comparedTo": "`<HEAD>`"
+  },
+  "sourceState": {
+    "checkoutSha": "<HEAD>",
+    "isTrackedDirty": false,
+    "untrackedSourcePolicy": "excluded",
+    "contentIdentity": "<CONTENT>"
+  },
+  "options": {
+    "excludePaths": [],
+    "sourcePolicy": "git-tracked",
+    "engine": "extended"
+  },
+  "toolchain": {
+    "typescript": "5.8.2",
+    "node": "<NODE>"
+  },
+  "outcome": "completed",
+  "technicalGraph": {
+    "schemaVersion": "1.0",
+    "repository": {
+      "targetPath": ".",
+      "headSha": "<HEAD>",
+      "analyzerVersion": "<VERSION>"
+    },
+    "capabilities": {
+      "language": "typescript",
+      "entityKinds": [
+        "component",
+        "function",
+        "method",
+        "module"
+      ],
+      "relationTypes": [
+        "CALLS",
+        "INSTANTIATES",
+        "REFERENCES",
+        "RENDERS"
+      ],
+      "maxBlastDepth": 6
+    },
+    "analyzedFiles": [
+      "src/greeting.ts",
+      "src/index.ts"
+    ],
+    "entities": [
+      {
+        "id": "src/greeting.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/greeting.ts",
+        "startLine": 1,
+        "endLine": 8,
+        "language": "typescript"
+      },
+      {
+        "id": "src/greeting.ts#greet",
+        "kind": "function",
+        "name": "greet",
+        "file": "src/greeting.ts",
+        "startLine": 1,
+        "endLine": 3,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/greeting.ts#greetAll",
+        "kind": "function",
+        "name": "greetAll",
+        "file": "src/greeting.ts",
+        "startLine": 5,
+        "endLine": 7,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/index.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/index.ts",
+        "startLine": 1,
+        "endLine": 6,
+        "language": "typescript"
+      },
+      {
+        "id": "src/index.ts#main",
+        "kind": "function",
+        "name": "main",
+        "file": "src/index.ts",
+        "startLine": 3,
+        "endLine": 5,
+        "language": "typescript",
+        "exported": true
+      }
+    ],
+    "relations": [
+      {
+        "from": "src/greeting.ts#greetAll",
+        "to": "src/greeting.ts#greet",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/index.ts#main",
+        "to": "src/greeting.ts#greetAll",
+        "type": "CALLS"
+      }
+    ]
+  },
+  "changedFiles": [
+    {
+      "file": ".env.example",
+      "changedLines": [
+        1,
+        2
+      ],
+      "addedCode": [
+        "DATABASE_URL=postgres://localhost/app",
+        "FEATURE_FLAG=on"
+      ],
+      "removedCode": [],
+      "diff": "diff --git a/.env.example b/.env.example\nnew file mode 100644\nindex 0000000..8069486\n--- /dev/null\n+++ b/.env.example\n@@ -0,0 +1,2 @@\n+DATABASE_URL=postgres://localhost/app\n+FEATURE_FLAG=on",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": "+",
+              "code": "DATABASE_URL=postgres://localhost/app",
+              "oldLine": 1,
+              "newLine": 1
+            },
+            {
+              "kind": "+",
+              "code": "FEATURE_FLAG=on",
+              "oldLine": 1,
+              "newLine": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "package.json",
+      "oldFile": "package.json",
+      "changedLines": [
+        7,
+        8,
+        9
+      ],
+      "addedCode": [
+        "    \"left-pad\": \"1.3.0\",",
+        "    \"zod\": \"3.22.0\",",
+        "    \"date-fns\": \"3.0.0\""
+      ],
+      "removedCode": [
+        "    \"left-pad\": \"1.2.0\",",
+        "    \"zod\": \"3.22.0\""
+      ],
+      "diff": "diff --git a/package.json b/package.json\nindex e5a923a..85aca3f 100644\n--- a/package.json\n+++ b/package.json\n@@ -4,8 +4,9 @@\n   \"private\": true,\n   \"description\": \"Fixture: a TypeScript edit shipped together with dependency, schema, config and asset changes\",\n   \"dependencies\": {\n-    \"left-pad\": \"1.2.0\",\n-    \"zod\": \"3.22.0\"\n+    \"left-pad\": \"1.3.0\",\n+    \"zod\": \"3.22.0\",\n+    \"date-fns\": \"3.0.0\"\n   },\n   \"devDependencies\": {\n     \"typescript\": \"5.4.0\"",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "  \"private\": true,",
+              "oldLine": 4,
+              "newLine": 4
+            },
+            {
+              "kind": " ",
+              "code": "  \"description\": \"Fixture: a TypeScript edit shipped together with dependency, schema, config and asset changes\",",
+              "oldLine": 5,
+              "newLine": 5
+            },
+            {
+              "kind": " ",
+              "code": "  \"dependencies\": {",
+              "oldLine": 6,
+              "newLine": 6
+            },
+            {
+              "kind": "-",
+              "code": "    \"left-pad\": \"1.2.0\",",
+              "oldLine": 7,
+              "newLine": 7
+            },
+            {
+              "kind": "-",
+              "code": "    \"zod\": \"3.22.0\"",
+              "oldLine": 8,
+              "newLine": 7
+            },
+            {
+              "kind": "+",
+              "code": "    \"left-pad\": \"1.3.0\",",
+              "oldLine": 9,
+              "newLine": 7
+            },
+            {
+              "kind": "+",
+              "code": "    \"zod\": \"3.22.0\",",
+              "oldLine": 9,
+              "newLine": 8
+            },
+            {
+              "kind": "+",
+              "code": "    \"date-fns\": \"3.0.0\"",
+              "oldLine": 9,
+              "newLine": 9
+            },
+            {
+              "kind": " ",
+              "code": "  },",
+              "oldLine": 9,
+              "newLine": 10
+            },
+            {
+              "kind": " ",
+              "code": "  \"devDependencies\": {",
+              "oldLine": 10,
+              "newLine": 11
+            },
+            {
+              "kind": " ",
+              "code": "    \"typescript\": \"5.4.0\"",
+              "oldLine": 11,
+              "newLine": 12
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "prisma/migrations/20240101000000_add_users/migration.sql",
+      "changedLines": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "addedCode": [
+        "CREATE TABLE \"User\" (",
+        "  \"id\" SERIAL PRIMARY KEY,",
+        "  \"email\" TEXT NOT NULL",
+        ");"
+      ],
+      "removedCode": [],
+      "diff": "diff --git a/prisma/migrations/20240101000000_add_users/migration.sql b/prisma/migrations/20240101000000_add_users/migration.sql\nnew file mode 100644\nindex 0000000..aacf7ee\n--- /dev/null\n+++ b/prisma/migrations/20240101000000_add_users/migration.sql\n@@ -0,0 +1,4 @@\n+CREATE TABLE \"User\" (\n+  \"id\" SERIAL PRIMARY KEY,\n+  \"email\" TEXT NOT NULL\n+);",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": "+",
+              "code": "CREATE TABLE \"User\" (",
+              "oldLine": 1,
+              "newLine": 1
+            },
+            {
+              "kind": "+",
+              "code": "  \"id\" SERIAL PRIMARY KEY,",
+              "oldLine": 1,
+              "newLine": 2
+            },
+            {
+              "kind": "+",
+              "code": "  \"email\" TEXT NOT NULL",
+              "oldLine": 1,
+              "newLine": 3
+            },
+            {
+              "kind": "+",
+              "code": ");",
+              "oldLine": 1,
+              "newLine": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "scripts/report.py",
+      "changedLines": [
+        1,
+        2
+      ],
+      "addedCode": [
+        "def report():",
+        "    return \"ok\""
+      ],
+      "removedCode": [],
+      "diff": "diff --git a/scripts/report.py b/scripts/report.py\nnew file mode 100644\nindex 0000000..9a3e75e\n--- /dev/null\n+++ b/scripts/report.py\n@@ -0,0 +1,2 @@\n+def report():\n+    return \"ok\"",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": "+",
+              "code": "def report():",
+              "oldLine": 1,
+              "newLine": 1
+            },
+            {
+              "kind": "+",
+              "code": "    return \"ok\"",
+              "oldLine": 1,
+              "newLine": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/greeting.ts",
+      "oldFile": "src/greeting.ts",
+      "changedLines": [
+        2
+      ],
+      "addedCode": [
+        "  return `Hi, ${name.trim()}!`;"
+      ],
+      "removedCode": [
+        "  return `Hello, ${name.trim()}!`;"
+      ],
+      "diff": "diff --git a/src/greeting.ts b/src/greeting.ts\nindex b1c31bb..e63f97a 100644\n--- a/src/greeting.ts\n+++ b/src/greeting.ts\n@@ -1,5 +1,5 @@\n export function greet(name: string): string {\n-  return `Hello, ${name.trim()}!`;\n+  return `Hi, ${name.trim()}!`;\n }\n \n export function greetAll(names: string[]): string[] {",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "export function greet(name: string): string {",
+              "oldLine": 1,
+              "newLine": 1
+            },
+            {
+              "kind": "-",
+              "code": "  return `Hello, ${name.trim()}!`;",
+              "oldLine": 2,
+              "newLine": 2
+            },
+            {
+              "kind": "+",
+              "code": "  return `Hi, ${name.trim()}!`;",
+              "oldLine": 3,
+              "newLine": 2
+            },
+            {
+              "kind": " ",
+              "code": "}",
+              "oldLine": 3,
+              "newLine": 3
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 4,
+              "newLine": 4
+            },
+            {
+              "kind": " ",
+              "code": "export function greetAll(names: string[]): string[] {",
+              "oldLine": 5,
+              "newLine": 5
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "changedEntities": [
+    {
+      "entity": {
+        "id": "src/greeting.ts#greet",
+        "kind": "function",
+        "name": "greet",
+        "file": "src/greeting.ts",
+        "startLine": 1,
+        "endLine": 3,
+        "language": "typescript",
+        "exported": true
+      },
+      "change": {
+        "file": "src/greeting.ts",
+        "changedLines": [
+          2
+        ],
+        "addedCode": [
+          "  return `Hi, ${name.trim()}!`;"
+        ],
+        "removedCode": [
+          "  return `Hello, ${name.trim()}!`;"
+        ],
+        "diff": "--- a/src/greeting.ts\n+++ b/src/greeting.ts\n@@ -1,3 +1,3 @@\n export function greet(name: string): string {\n-  return `Hello, ${name.trim()}!`;\n+  return `Hi, ${name.trim()}!`;\n }"
+      },
+      "changeKind": "modified",
+      "changeClasses": [
+        "body"
+      ]
+    }
+  ],
+  "impacts": [
+    {
+      "changedEntity": {
+        "id": "src/greeting.ts#greet",
+        "kind": "function",
+        "name": "greet",
+        "file": "src/greeting.ts",
+        "startLine": 1,
+        "endLine": 3,
+        "language": "typescript",
+        "exported": true
+      },
+      "change": {
+        "file": "src/greeting.ts",
+        "changedLines": [
+          2
+        ],
+        "addedCode": [
+          "  return `Hi, ${name.trim()}!`;"
+        ],
+        "removedCode": [
+          "  return `Hello, ${name.trim()}!`;"
+        ],
+        "diff": "--- a/src/greeting.ts\n+++ b/src/greeting.ts\n@@ -1,3 +1,3 @@\n export function greet(name: string): string {\n-  return `Hello, ${name.trim()}!`;\n+  return `Hi, ${name.trim()}!`;\n }"
+      },
+      "directDependents": [
+        {
+          "id": "src/greeting.ts#greetAll",
+          "kind": "function",
+          "name": "greetAll",
+          "file": "src/greeting.ts",
+          "startLine": 5,
+          "endLine": 7,
+          "language": "typescript",
+          "exported": true
+        }
+      ],
+      "blastRadius": {
+        "totalAffectedEntities": 2,
+        "entities": [
+          {
+            "id": "src/greeting.ts#greetAll",
+            "kind": "function",
+            "name": "greetAll",
+            "file": "src/greeting.ts",
+            "startLine": 5,
+            "endLine": 7,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/index.ts#main",
+            "kind": "function",
+            "name": "main",
+            "file": "src/index.ts",
+            "startLine": 3,
+            "endLine": 5,
+            "language": "typescript",
+            "exported": true
+          }
+        ],
+        "paths": [
+          {
+            "target": {
+              "id": "src/greeting.ts#greetAll",
+              "kind": "function",
+              "name": "greetAll",
+              "file": "src/greeting.ts",
+              "startLine": 5,
+              "endLine": 7,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/greeting.ts#greet",
+                "kind": "function",
+                "name": "greet",
+                "file": "src/greeting.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/greeting.ts#greetAll",
+                "kind": "function",
+                "name": "greetAll",
+                "file": "src/greeting.ts",
+                "startLine": 5,
+                "endLine": 7,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/index.ts#main",
+              "kind": "function",
+              "name": "main",
+              "file": "src/index.ts",
+              "startLine": 3,
+              "endLine": 5,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 2,
+            "path": [
+              {
+                "id": "src/greeting.ts#greet",
+                "kind": "function",
+                "name": "greet",
+                "file": "src/greeting.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/greeting.ts#greetAll",
+                "kind": "function",
+                "name": "greetAll",
+                "file": "src/greeting.ts",
+                "startLine": 5,
+                "endLine": 7,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/index.ts#main",
+                "kind": "function",
+                "name": "main",
+                "file": "src/index.ts",
+                "startLine": 3,
+                "endLine": 5,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS",
+              "CALLS"
+            ],
+            "confidence": "proven"
+          }
+        ],
+        "truncated": false
+      },
+      "terminalDependents": [
+        {
+          "id": "src/index.ts#main",
+          "kind": "function",
+          "name": "main",
+          "file": "src/index.ts",
+          "startLine": 3,
+          "endLine": 5,
+          "language": "typescript",
+          "exported": true
+        }
+      ],
+      "confidence": "proven"
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "ENV_CONFIG_CHANGE",
+      "severity": "warning",
+      "message": "environment or tool configuration changed (added)",
+      "file": ".env.example"
+    },
+    {
+      "code": "DEPENDENCY_CHANGE",
+      "severity": "warning",
+      "message": "added date-fns@3.0.0; changed left-pad 1.2.0 → 1.3.0",
+      "file": "package.json"
+    },
+    {
+      "code": "SCHEMA_CHANGE",
+      "severity": "warning",
+      "message": "database schema or migration changed (added)",
+      "file": "prisma/migrations/20240101000000_add_users/migration.sql"
+    },
+    {
+      "code": "OTHER",
+      "severity": "warning",
+      "message": "non-TypeScript file changed (added)",
+      "file": "scripts/report.py"
+    },
+    {
+      "code": "ATTRIBUTED_LINE_RATIO",
+      "severity": "info",
+      "message": "2 of 2 changed lines attributed to code entities (ratio 1.0000); 0 module-level, 0 unattributed."
+    }
+  ],
+  "limitations": [
+    "Only TypeScript and JavaScript are analyzed; JavaScript is not type-checked.",
+    "Entities are named functions, variable-bound arrow functions and function expressions, class and object-literal methods, constructors, accessors, React components, and module-level code.",
+    "Classes, interfaces, type aliases, and enums are not entities.",
+    "Relationships are CALLS, RENDERS (JSX elements), INSTANTIATES (new expressions), and REFERENCES (functions passed or stored as values).",
+    "Dynamic calls and calls through interface-typed receivers are not analyzed.",
+    "Renamed entities may lack removed-code evidence.",
+    "Partially overlapping entity line ranges are skipped rather than sharing ambiguous evidence.",
+    "Application surfaces are not yet discovered.",
+    "Blast radius is limited to depth 6."
+  ],
+  "frontier": [],
+  "coverage": {
+    "byLanguage": [
+      {
+        "key": "json",
+        "changedLines": 3,
+        "attributedLines": 0,
+        "ratio": 0,
+        "frontierCount": 0
+      },
+      {
+        "key": "other",
+        "changedLines": 2,
+        "attributedLines": 0,
+        "ratio": 0,
+        "frontierCount": 0
+      },
+      {
+        "key": "python",
+        "changedLines": 2,
+        "attributedLines": 0,
+        "ratio": 0,
+        "frontierCount": 0
+      },
+      {
+        "key": "sql",
+        "changedLines": 4,
+        "attributedLines": 0,
+        "ratio": 0,
+        "frontierCount": 0
+      },
+      {
+        "key": "typescript",
+        "changedLines": 1,
+        "attributedLines": 1,
+        "ratio": 1,
+        "frontierCount": 0
+      }
+    ],
+    "byDirectory": [
+      {
+        "key": ".",
+        "changedLines": 5,
+        "attributedLines": 0,
+        "ratio": 0,
+        "frontierCount": 0
+      },
+      {
+        "key": "prisma",
+        "changedLines": 4,
+        "attributedLines": 0,
+        "ratio": 0,
+        "frontierCount": 0
+      },
+      {
+        "key": "scripts",
+        "changedLines": 2,
+        "attributedLines": 0,
+        "ratio": 0,
+        "frontierCount": 0
+      },
+      {
+        "key": "src",
+        "changedLines": 1,
+        "attributedLines": 1,
+        "ratio": 1,
+        "frontierCount": 0
+      }
+    ],
+    "skippedFiles": [
+      {
+        "file": ".env.example",
+        "reason": "unsupported_language"
+      },
+      {
+        "file": "package.json",
+        "reason": "unsupported_language"
+      },
+      {
+        "file": "prisma/migrations/20240101000000_add_users/migration.sql",
+        "reason": "unsupported_language"
+      },
+      {
+        "file": "scripts/report.py",
+        "reason": "unsupported_language"
+      }
+    ],
+    "frontierTotal": 0
+  }
+}

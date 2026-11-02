@@ -503,5 +503,12 @@
     "Partially overlapping entity line ranges are skipped rather than sharing ambiguous evidence.",
     "Application surfaces are not yet discovered.",
     "Blast radius is limited to depth 6."
-  ]
+  ],
+  "frontier": [],
+  "coverage": {
+    "byLanguage": [],
+    "byDirectory": [],
+    "skippedFiles": [],
+    "frontierTotal": 0
+  }
 }

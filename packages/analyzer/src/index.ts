@@ -13,4 +13,7 @@ export * from './deterministic';
 export * from './application-map';
 export * from './business-signals';
 export * from './toolchain';
+export { buildCoverage, renderCoverageMarkdown, mapSnapshotSkipReason, languageOf, directoryOf, type CoverageInput } from './coverage';
+export { classifyNonTsFile, nonTsChangeDiagnostics, type NonTsChangeClass } from './non-ts-changes';
+export { DEFAULT_INPUT_LIMITS, MAX_NESTING_DEPTH, inspectContent, bracketNestingDepth, type InputLimits, type SkippedInput } from './input-limits';
 export { isTestPath, routeMatcher } from './application-map-ast';

@@ -9,6 +9,7 @@ import {
   MAX_AFFECTED_ENTITIES,
   MAX_BLAST_DEPTH,
   MAX_SHORTEST_PATH_COUNT,
+  HUB_THRESHOLD,
   STEP_TYPE_PRECEDENCE,
   type EngineProfile,
   type ChangedEntity,
@@ -20,6 +21,7 @@ import {
   type Entity,
   type EntityImpact,
   type ImpactPath,
+  type PathConfidence,
   type Relation,
   type RelationType,
 } from './contracts';
@@ -111,13 +113,47 @@ function getStepType(calleeId: string, callerId: string, reverseAdjacency: Map<s
   return STEP_TYPE_PRECEDENCE.find(type => types.has(type))!;
 }
 
+/** Strongest confidence among the relations joining a pair; an absent confidence means proven (D5). */
+function getStepConfidence(calleeId: string, callerId: string, reverseAdjacency: Map<string, Relation[]>): PathConfidence {
+  const joining = (reverseAdjacency.get(calleeId) ?? []).filter(relation => relation.from === callerId);
+  return joining.some(relation => relation.confidence !== 'likely') ? 'proven' : 'likely';
+}
+
 const byId = (left: Entity, right: Entity): number => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0);
+
+/** Distinct nodes reverse-reachable from `hubId` within `maxDepth`, excluding the hub; stops counting at `cap`. */
+function countReach(
+  hubId: string,
+  reverseAdjacency: Map<string, Relation[]>,
+  entityById: Map<string, Entity>,
+  maxDepth: number,
+  cap: number,
+): number {
+  const seen = new Set<string>([hubId]);
+  let frontier = [hubId];
+  let count = 0;
+  for (let depth = 0; depth < maxDepth && frontier.length > 0 && count < cap; depth++) {
+    const next: string[] = [];
+    for (const id of frontier) {
+      for (const caller of getCallers(id, reverseAdjacency, entityById)) {
+        if (seen.has(caller.id)) continue;
+        seen.add(caller.id);
+        next.push(caller.id);
+        if (++count >= cap) return count;
+      }
+    }
+    frontier = next;
+  }
+  return count;
+}
 
 /**
  * Extended engine: one shortest path per affected entity instead of every simple path.
  * Levels are expanded in ID order and each entity's parent is its smallest-ID predecessor
  * at the previous depth, so output does not depend on relation order. Output is capped at
  * `maxAffected` entities, keeping the shallowest and then lowest-ID ones.
+ * A hub (direct fan-in >= `hubThreshold`) is summarized: it and its direct dependents are
+ * affected, but traversal does not continue through it (D8).
  */
 export function getBlastRadiusShortestPaths(
   entityId: string,
@@ -125,31 +161,52 @@ export function getBlastRadiusShortestPaths(
   entityById: Map<string, Entity>,
   maxDepth: number = MAX_BLAST_DEPTH,
   maxAffected: number = MAX_AFFECTED_ENTITIES,
-): { paths: ImpactPath[]; truncated: boolean } {
+  hubThreshold: number = HUB_THRESHOLD,
+): { paths: ImpactPath[]; truncated: boolean; hubs: Array<{ entityId: string; fanIn: number; reach: number }> } {
   const start = entityById.get(entityId);
   if (!start) {
-    return { paths: [], truncated: false };
+    return { paths: [], truncated: false, hubs: [] };
   }
+
+  const fanIn = (id: string): number => (reverseAdjacency.get(id) ?? []).length;
+  const isHub = (id: string): boolean => fanIn(id) >= hubThreshold;
 
   const depthById = new Map<string, number>([[start.id, 0]]);
   const levels: Entity[][] = [[start]];
+  // Nodes whose callers are not followed: dependents reached only through a hub.
+  const frozen = new Set<string>();
+  const hubs = new Map<string, { entityId: string; fanIn: number; reach: number }>();
   for (let depth = 0; depth < maxDepth; depth++) {
-    const next = new Map<string, Entity>();
+    const next = new Map<string, { entity: Entity; viaOpen: boolean }>();
     for (const node of levels[depth]) {
+      if (frozen.has(node.id)) continue;
+      const hub = isHub(node.id);
+      if (hub && !hubs.has(node.id)) {
+        hubs.set(node.id, {
+          entityId: node.id,
+          fanIn: fanIn(node.id),
+          reach: countReach(node.id, reverseAdjacency, entityById, maxDepth - depth, maxAffected),
+        });
+      }
       for (const caller of getCallers(node.id, reverseAdjacency, entityById)) {
-        if (!depthById.has(caller.id)) next.set(caller.id, caller);
+        if (depthById.has(caller.id)) continue;
+        const known = next.get(caller.id);
+        next.set(caller.id, { entity: caller, viaOpen: (known?.viaOpen ?? false) || !hub });
       }
     }
     if (next.size === 0) break;
-    const level = [...next.values()].sort(byId);
-    for (const entity of level) depthById.set(entity.id, depth + 1);
+    const level = [...next.values()].map(item => item.entity).sort(byId);
+    for (const entity of level) {
+      depthById.set(entity.id, depth + 1);
+      if (!next.get(entity.id)!.viaOpen) frozen.add(entity.id);
+    }
     levels.push(level);
   }
 
   // Keep the shallowest entities first; the cut level is already in ID order.
   const kept: Entity[][] = [];
   let remaining = maxAffected;
-  let truncated = false;
+  let truncated = hubs.size > 0;
   for (const level of levels.slice(1)) {
     if (level.length <= remaining) {
       kept.push(level);
@@ -166,6 +223,7 @@ export function getBlastRadiusShortestPaths(
   const predecessors = new Map<string, Entity[]>();
   for (const level of levels) {
     for (const node of level) {
+      if (frozen.has(node.id)) continue;
       for (const caller of getCallers(node.id, reverseAdjacency, entityById)) {
         if (depthById.get(caller.id) !== depthById.get(node.id)! + 1) continue;
         const list = predecessors.get(caller.id) ?? [];
@@ -190,16 +248,19 @@ export function getBlastRadiusShortestPaths(
       chain.push(current);
     }
     chain.reverse();
+    const steps = chain.slice(1);
     return {
       target,
       depth: chain.length - 1,
       path: chain,
       pathCount: pathCount.get(target.id)!,
-      stepTypes: chain.slice(1).map((caller, i) => getStepType(chain[i].id, caller.id, reverseAdjacency)),
+      stepTypes: steps.map((caller, i) => getStepType(chain[i].id, caller.id, reverseAdjacency)),
+      confidence: steps.some((caller, i) => getStepConfidence(chain[i].id, caller.id, reverseAdjacency) === 'likely')
+        ? 'likely' as const : 'proven' as const,
     };
   });
 
-  return { paths, truncated };
+  return { paths, truncated, hubs: [...hubs.values()].sort((a, b) => compareStrings(a.entityId, b.entityId)) };
 }
 
 export function buildImpact(
@@ -209,11 +270,12 @@ export function buildImpact(
   maxDepth: number = MAX_BLAST_DEPTH,
   engine: EngineProfile = DEFAULT_ENGINE,
   maxAffectedEntities: number = MAX_AFFECTED_ENTITIES,
+  hubThreshold: number = HUB_THRESHOLD,
 ): EntityImpact {
   const extended = engine === 'extended';
   const search = extended
-    ? getBlastRadiusShortestPaths(changedEntity.entity.id, reverseAdjacency, entityById, maxDepth, maxAffectedEntities)
-    : { paths: getBlastRadiusPaths(changedEntity.entity.id, reverseAdjacency, entityById, maxDepth), truncated: false };
+    ? getBlastRadiusShortestPaths(changedEntity.entity.id, reverseAdjacency, entityById, maxDepth, maxAffectedEntities, hubThreshold)
+    : { paths: getBlastRadiusPaths(changedEntity.entity.id, reverseAdjacency, entityById, maxDepth), truncated: false, hubs: [] };
   const paths = search.paths;
 
   const affected = new Map<string, Entity>();
@@ -241,8 +303,10 @@ export function buildImpact(
       entities: affectedEntities,
       paths,
       ...(extended ? { truncated: search.truncated } : {}),
+      ...(extended && search.hubs.length ? { hubs: search.hubs } : {}),
     },
     terminalDependents,
+    ...(extended ? { confidence: paths.some(path => path.confidence === 'likely') ? 'likely' as const : 'proven' as const } : {}),
   };
 }
 
@@ -523,8 +587,10 @@ export function buildDeletedImpact(
   head: GraphView,
   toHead: Map<string, string>,
   maxAffectedEntities: number,
+  maxDepth?: number,
+  hubThreshold?: number,
 ): EntityImpact {
-  const impact = buildImpact(changed, base.reverseAdjacency, base.entityById, undefined, 'extended', maxAffectedEntities);
+  const impact = buildImpact(changed, base.reverseAdjacency, base.entityById, maxDepth, 'extended', maxAffectedEntities, hubThreshold);
   const current = (entity: Entity): Entity => head.entityById.get(toHead.get(entity.id) ?? entity.id) ?? entity;
   return {
     ...impact,

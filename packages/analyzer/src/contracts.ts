@@ -10,6 +10,8 @@ export const MAX_BLAST_DEPTH = 6;
 /** Extended engine: cap on affected entities reported per changed entity (deterministic: shallowest, then lexicographic IDs). */
 export const MAX_AFFECTED_ENTITIES = 2000;
 /** Extended engine: pathCount saturates here so counting stays bounded on dense fan-in. */
+/** Extended engine: direct fan-in at or above which a node is summarized as a hub instead of expanded. */
+export const HUB_THRESHOLD = 25;
 export const MAX_SHORTEST_PATH_COUNT = 1_000_000;
 
 export const IGNORED_DIRECTORIES = new Set([
@@ -53,10 +55,18 @@ export interface Entity {
   exportName?: string;
 }
 
+/** Schema 2.1: sorted ascending. An absent edge confidence means 'proven'. */
+export const CONFIDENCE_LEVELS = ['likely', 'proven'] as const;
+export type EdgeConfidence = typeof CONFIDENCE_LEVELS[number];
+/** Schema 2.1: a path is as confident as its weakest edge. */
+export type PathConfidence = EdgeConfidence;
+
 export interface Relation {
   from: string;
   to: string;
   type: RelationType;
+  /** Schema 2.1: absent means 'proven'. */
+  confidence?: EdgeConfidence;
 }
 
 export interface EntityChange {
@@ -123,6 +133,8 @@ export interface ImpactPath {
   stepTypes?: RelationType[];
   /** Schema 2.1: set on depth-1 paths when the changed entity's contract changed. */
   contractRisk?: boolean;
+  /** Schema 2.1: weakest edge confidence along the path. */
+  confidence?: PathConfidence;
 }
 
 export interface EntityImpact {
@@ -135,10 +147,39 @@ export interface EntityImpact {
     paths: ImpactPath[];
     /** Extended engine: true when affected entities were cut at maxAffectedEntities. */
     truncated?: boolean;
+    /** Schema 2.1: hub nodes the traversal did not expand past, sorted by entityId. */
+    hubs?: Array<{ entityId: string; fanIn: number; reach: number }>;
   };
   terminalDependents: Entity[];
   /** Schema 2.1: true when the changed entity's contract changed. */
   contractRisk?: boolean;
+  /** Schema 2.1: weakest confidence over its paths; 'proven' when there are no paths. */
+  confidence?: PathConfidence;
+}
+
+/** Schema 2.1: why a call site cannot be resolved statically. Sorted ascending; the validator requires compareStrings order. */
+export const FRONTIER_REASONS = ['any_typed_call', 'computed_member_call', 'di_token', 'dynamic_import', 'dynamic_require', 'eval', 'function_constructor', 'interface_dispatch', 'jsx_prop_component'] as const;
+export type FrontierReason = typeof FRONTIER_REASONS[number];
+
+/** Schema 2.1: an unresolved dependency site reported instead of an edge. */
+export interface FrontierItem {
+  entityId: string;
+  file: string;
+  line: number;
+  reason: FrontierReason;
+}
+
+/** Schema 2.1: sorted ascending. */
+export const SKIP_REASONS = ['binary', 'generated', 'invalid_encoding', 'parse_failure', 'symlink', 'too_large', 'unsupported_language'] as const;
+export type SkipReason = typeof SKIP_REASONS[number];
+
+/** Schema 2.1: one coverage row per language or top-level directory. */
+export interface CoverageRow {
+  key: string;
+  changedLines: number;
+  attributedLines: number;
+  ratio: number;
+  frontierCount: number;
 }
 
 export interface DiagnosticItem {
@@ -225,6 +266,15 @@ export interface DeterministicEvidence {
   baseEntities?: EntityCoordinates[];
   /** Schema 2.1: changed entities skipped from impact analysis, sorted by entityId. */
   skippedEntities?: Array<{ entityId: string; reason: 'cosmetic' | 'test_only' }>;
+  /** Schema 2.1: unresolved dependency sites on changed or affected entities, sorted by file, line, reason, entityId. */
+  frontier?: FrontierItem[];
+  /** Schema 2.1: analysis coverage; rows sorted by key, skippedFiles sorted by file. */
+  coverage?: {
+    byLanguage: CoverageRow[];
+    byDirectory: CoverageRow[];
+    skippedFiles: Array<{ file: string; reason: SkipReason }>;
+    frontierTotal: number;
+  };
 }
 
 export type EngineProfile = 'legacy' | 'extended';
@@ -239,6 +289,10 @@ export interface AnalyzeOptions {
   engine?: EngineProfile;
   /** Extended engine: cap on affected entities per changed entity (default MAX_AFFECTED_ENTITIES). */
   maxAffectedEntities?: number;
+  /** Extended engine: blast-radius depth limit (default MAX_BLAST_DEPTH). */
+  maxDepth?: number;
+  /** Extended engine: direct fan-in at which a node is summarized as a hub (default HUB_THRESHOLD). */
+  hubThreshold?: number;
 }
 
 export interface AnalyzeResult {

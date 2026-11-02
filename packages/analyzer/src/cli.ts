@@ -13,7 +13,7 @@ export function runCli(argv: string[] = process.argv.slice(2)): void {
   try {
     options = parseCliOptions(argv);
     if (options.help) {
-      console.log(`Graphentra Analyzer v${ANALYZER_VERSION}\nUsage: graphentra-analyze --target <dir> [--base <ref> --head <ref> | --working-tree] [--output <file>] [--engine extended|legacy (default: extended)] [--max-affected-entities <n> (extended; default: 2000)]\n--output names one evidence file (default: <target>/.graphentra/evidence.json).\n--help, -h   Show help\n--version, -v   Show version\nQA Markdown: npm run report -- --report <file>`);
+      console.log(`Graphentra Analyzer v${ANALYZER_VERSION}\nUsage: graphentra-analyze --target <dir> [--base <ref> --head <ref> | --working-tree] [--output <file>] [--engine extended|legacy (default: extended)] [--max-affected-entities <n> (alias --max-affected; extended; default: 2000)] [--max-depth <n> (default: 6)] [--hub-threshold <n> (extended; default: 25)]\n--output names one evidence file (default: <target>/.graphentra/evidence.json).\n--help, -h   Show help\n--version, -v   Show version\nQA Markdown: npm run report -- --report <file>`);
       return;
     }
     if (options.version) { console.log(ANALYZER_VERSION); return; }
@@ -27,7 +27,8 @@ export function runCli(argv: string[] = process.argv.slice(2)): void {
   try {
     const target = path.resolve(options.target);
     const output = path.resolve(options.output ?? path.join(target, '.graphentra/evidence.json'));
-    const result = analyzeRepository({ target, comparison, engine: options.engine, maxAffectedEntities: options.maxAffectedEntities });
+    const result = analyzeRepository({ target, comparison, engine: options.engine,
+      maxAffectedEntities: options.maxAffectedEntities, maxDepth: options.maxDepth, hubThreshold: options.hubThreshold });
     const canonical = (file: string): string => {
       if (fs.existsSync(file)) return fs.realpathSync(file);
       const parent = path.dirname(file);
@@ -44,8 +45,12 @@ export function runCli(argv: string[] = process.argv.slice(2)): void {
     for (const diagnostic of result.diagnostics) console.log(`[${diagnostic.severity}] ${diagnostic.code}: ${diagnostic.message}`);
     for (const limitation of result.evidence.limitations) console.log(`Limitation: ${limitation}`);
   } catch (error) {
-    const code = error instanceof GraphentraError ? error.code : 'OPERATION_FAILED';
-    console.error(`Graphentra analysis failed [${code}]: ${error instanceof GraphentraError ? error.message : 'Could not analyze or publish evidence.'}`);
+    const stackLimit = error instanceof RangeError && /call stack/i.test(error.message);
+    const code = error instanceof GraphentraError ? error.code : stackLimit ? 'STACK_LIMIT_EXCEEDED' : 'OPERATION_FAILED';
+    const message = error instanceof GraphentraError ? error.message
+      : stackLimit ? 'The JavaScript stack was exhausted (very deep source structure). Retry with NODE_OPTIONS=--stack-size=8000.'
+        : 'Could not analyze or publish evidence.';
+    console.error(`Graphentra analysis failed [${code}]: ${message}`);
     process.exitCode = ['INVALID_OPTIONS', 'INVALID_REVISION', 'INVALID_TARGET'].includes(code) ? 2 : 1;
   }
 }

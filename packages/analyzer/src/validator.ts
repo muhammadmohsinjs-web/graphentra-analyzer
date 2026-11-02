@@ -4,6 +4,9 @@ import {
   ANALYZER_VERSION,
   EVIDENCE_ARTIFACT_KIND,
   CHANGE_CLASSES,
+  CONFIDENCE_LEVELS,
+  FRONTIER_REASONS,
+  SKIP_REASONS,
   EVIDENCE_SCHEMA_VERSIONS,
   MAX_BLAST_DEPTH,
   type DeterministicEvidence,
@@ -77,6 +80,79 @@ function validatePhase3Fields(evidence: DeterministicEvidence, isExtendedSchema:
       }
     }
   });
+}
+
+function validatePhase4Fields(evidence: DeterministicEvidence, isExtendedSchema: boolean, errors: string[]): void {
+  if (!isExtendedSchema) {
+    for (const field of ['frontier', 'coverage'] as const) {
+      if (evidence[field] !== undefined) errors.push(`${field} is not allowed in schema 2.0.`);
+    }
+    evidence.technicalGraph.relations.forEach((relation, i) => {
+      if (relation.confidence !== undefined) errors.push(`technicalGraph.relations[${i}].confidence is not allowed in schema 2.0.`);
+    });
+    evidence.changedEntities.forEach((changed, i) => {
+      for (const side of ['added', 'removed'] as const) {
+        changed.edgeDeltas?.[side].forEach((relation, r) => {
+          if (relation.confidence !== undefined) errors.push(`changedEntities[${i}].edgeDeltas.${side}[${r}].confidence is not allowed in schema 2.0.`);
+        });
+      }
+    });
+    evidence.impacts.forEach((impact, i) => {
+      if (impact.confidence !== undefined) errors.push(`impacts[${i}].confidence is not allowed in schema 2.0.`);
+      if (impact.blastRadius.hubs !== undefined) errors.push(`impacts[${i}].blastRadius.hubs is not allowed in schema 2.0.`);
+      impact.blastRadius.paths.forEach((path, p) => {
+        if (path.confidence !== undefined) errors.push(`impacts[${i}].blastRadius.paths[${p}].confidence is not allowed in schema 2.0.`);
+      });
+    });
+    return;
+  }
+  const levels = CONFIDENCE_LEVELS as readonly string[];
+  const checkConfidence = (value: string | undefined, label: string) => {
+    if (value !== undefined && !levels.includes(value)) errors.push(`${label}.confidence must be one of ${CONFIDENCE_LEVELS.join(', ')}.`);
+  };
+  evidence.technicalGraph.relations.forEach((relation, i) => checkConfidence(relation.confidence, `technicalGraph.relations[${i}]`));
+  evidence.changedEntities.forEach((changed, i) => {
+    for (const side of ['added', 'removed'] as const) {
+      changed.edgeDeltas?.[side].forEach((relation, r) => checkConfidence(relation.confidence, `changedEntities[${i}].edgeDeltas.${side}[${r}]`));
+    }
+  });
+  evidence.impacts.forEach((impact, i) => {
+    checkConfidence(impact.confidence, `impacts[${i}]`);
+    impact.blastRadius.paths.forEach((path, p) => checkConfidence(path.confidence, `impacts[${i}].blastRadius.paths[${p}]`));
+    const hubs = impact.blastRadius.hubs;
+    if (hubs !== undefined && !strictlyAscending(hubs.map(hub => hub.entityId))) {
+      errors.push(`impacts[${i}].blastRadius.hubs must be sorted by entityId with unique ids.`);
+    }
+  });
+  if (evidence.frontier !== undefined) {
+    evidence.frontier.forEach((item, i) => {
+      if (!(FRONTIER_REASONS as readonly string[]).includes(item.reason)) errors.push(`frontier[${i}].reason must be one of ${FRONTIER_REASONS.join(', ')}.`);
+    });
+    const outOfOrder = evidence.frontier.some((item, i) => {
+      if (i === 0) return false;
+      const prev = evidence.frontier![i - 1];
+      return (compareStrings(prev.file, item.file) || prev.line - item.line || compareStrings(prev.reason, item.reason) || compareStrings(prev.entityId, item.entityId)) > 0;
+    });
+    if (outOfOrder) errors.push('frontier must be sorted by file, line, reason, entityId.');
+  }
+  const coverage = evidence.coverage;
+  if (coverage !== undefined) {
+    for (const field of ['byLanguage', 'byDirectory'] as const) {
+      const rows = coverage[field];
+      if (!strictlyAscending(rows.map(row => row.key))) errors.push(`coverage.${field} must be sorted by key with unique keys.`);
+      rows.forEach((row, i) => {
+        if (row.ratio < 0 || row.ratio > 1) errors.push(`coverage.${field}[${i}].ratio must be within [0, 1].`);
+        for (const count of ['changedLines', 'attributedLines', 'frontierCount'] as const) {
+          if (!Number.isInteger(row[count]) || row[count] < 0) errors.push(`coverage.${field}[${i}].${count} must be a non-negative integer.`);
+        }
+      });
+    }
+    coverage.skippedFiles.forEach((item, i) => {
+      if (!(SKIP_REASONS as readonly string[]).includes(item.reason)) errors.push(`coverage.skippedFiles[${i}].reason must be one of ${SKIP_REASONS.join(', ')}.`);
+    });
+    if (!strictlyAscending(coverage.skippedFiles.map(item => item.file))) errors.push('coverage.skippedFiles must be sorted by file with unique files.');
+    if (!Number.isInteger(coverage.frontierTotal) || coverage.frontierTotal < 0) errors.push('coverage.frontierTotal must be a non-negative integer.');
+  }
 }
 
 export function validateEvidenceEnvelope(data: unknown): ValidationResult {
@@ -432,6 +508,7 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
     if (impact.blastRadius.totalAffectedEntities !== new Set(affected).size) errors.push('Affected entity count mismatch.');
   }
   validatePhase3Fields(evidence, isExtendedSchema, errors);
+  validatePhase4Fields(evidence, isExtendedSchema, errors);
   for (const diagnostic of evidence.diagnostics) {
     if (diagnostic.entityId && !entityMap.has(diagnostic.entityId)) errors.push('Diagnostic entity is absent from graph.');
   }

@@ -608,5 +608,28 @@
       "entityId": "src/utils.ts#<module>",
       "reason": "cosmetic"
     }
-  ]
+  ],
+  "frontier": [],
+  "coverage": {
+    "byLanguage": [
+      {
+        "key": "typescript",
+        "changedLines": 1,
+        "attributedLines": 0,
+        "ratio": 0,
+        "frontierCount": 0
+      }
+    ],
+    "byDirectory": [
+      {
+        "key": "src",
+        "changedLines": 1,
+        "attributedLines": 0,
+        "ratio": 0,
+        "frontierCount": 0
+      }
+    ],
+    "skippedFiles": [],
+    "frontierTotal": 0
+  }
 }

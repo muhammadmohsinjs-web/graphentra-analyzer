@@ -1,9 +1,11 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as ts from 'typescript';
+import { compareStrings } from './deterministic';
 import { DEFAULT_ENGINE, type DiagnosticItem, type EngineProfile } from './contracts';
 import type { RepositoryContext } from './repository';
 import { isAnalyzableFile } from './technical-graph';
+import { bracketNestingDepth, DEFAULT_INPUT_LIMITS, inspectContent, MAX_NESTING_DEPTH, type InputLimits, type SkippedInput } from './input-limits';
 
 /**
  * Compiler inputs for the base revision, served from Git objects. Unlike captureSourceSnapshot it records nothing:
@@ -14,6 +16,7 @@ export function createBaselineSnapshot(
   baseSha: string,
   engine: EngineProfile = DEFAULT_ENGINE,
   headCompilerOptions: ts.CompilerOptions = {},
+  limits: InputLimits = DEFAULT_INPUT_LIMITS,
 ) {
   const standardLibraryRoot = path.dirname(ts.getDefaultLibFilePath({}));
   const inside = (root: string, file: string) => {
@@ -26,7 +29,11 @@ export function createBaselineSnapshot(
   for (const name of allNames) {
     for (let dir = path.posix.dirname(name); dir !== '.' && !directories.has(dir); dir = path.posix.dirname(dir)) directories.add(dir);
   }
+  // One batched read for everything the compiler is about to ask for; other files fall back to per-file reads.
+  repo.prefetchBaseline(baseSha, allNames.filter(name => isAnalyzableFile(name, engine) ||
+    ['tsconfig.json', 'jsconfig.json', 'package.json'].includes(path.posix.basename(name))), limits.maxFileBytes);
   const cache = new Map<string, string | undefined>();
+  const skippedByFile = new Map<string, SkippedInput>();
   const projectRelative = (file: string): string | undefined => {
     const absolute = path.resolve(file);
     return inside(repo.projectRoot, absolute) ? path.relative(repo.projectRoot, absolute).split(path.sep).join('/') : undefined;
@@ -41,7 +48,12 @@ export function createBaselineSnapshot(
         const relative = projectRelative(absolute);
         if (relative !== undefined && baselineFiles.has(relative)) {
           // Submodule entries appear in the tree but have no blob.
-          try { content = repo.getBaselineSource(relative, baseSha); } catch { content = undefined; }
+          let bytes: Uint8Array | undefined;
+          try { bytes = repo.getBaselineBlob(relative, baseSha); } catch { bytes = undefined; }
+          // Same size, binary and encoding limits as the head snapshot; rejected files are absent to the compiler.
+          const reason = bytes === undefined ? 'ok' : bytes.length > limits.maxFileBytes ? 'too_large' : inspectContent(bytes);
+          if (reason !== 'ok') skippedByFile.set(relative, { file: relative, reason });
+          else content = bytes && Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength).toString('utf8');
         }
       }
       cache.set(absolute, content);
@@ -82,7 +94,23 @@ export function createBaselineSnapshot(
       message: `No usable tsconfig.json/jsconfig.json at base revision ${baseSha}; head compiler options were used.` });
   }
 
-  const files = allNames.filter(file => isAnalyzableFile(file, engine)).map(file => path.join(repo.projectRoot, file));
+  // Deterministic admission: sorted paths, the first files that fit within the count and byte limits are kept.
+  const admitted: string[] = [];
+  let totalBytes = 0;
+  for (const name of allNames.filter(file => isAnalyzableFile(file, engine))) {
+    const absolute = path.join(repo.projectRoot, name);
+    const content = readFile(absolute);
+    if (content === undefined) continue;
+    const size = Buffer.byteLength(content);
+    if (admitted.length >= limits.maxFiles || totalBytes + size > limits.maxTotalBytes) {
+      cache.set(path.resolve(absolute), undefined);
+      skippedByFile.set(name, { file: name, reason: 'input_limit' });
+      continue;
+    }
+    admitted.push(name);
+    totalBytes += size;
+  }
+  const files = admitted.map(file => path.join(repo.projectRoot, file));
   const host = ts.createCompilerHost(compilerOptions);
   host.readFile = readFile;
   host.fileExists = fileExists;
@@ -92,7 +120,24 @@ export function createBaselineSnapshot(
   host.getCurrentDirectory = () => repo.projectRoot;
   host.getSourceFile = (file, languageVersion) => {
     const content = readFile(file);
-    return content === undefined ? undefined : ts.createSourceFile(file, content, languageVersion, true);
+    if (content === undefined) return undefined;
+    const relative = projectRelative(path.resolve(file));
+    const dropUnparsable = () => {
+      skippedByFile.set(relative!, { file: relative!, reason: 'parse_failed' });
+      cache.set(path.resolve(file), undefined);
+      return undefined;
+    };
+    // D14: nesting is measured on tokens before parsing, as in the head snapshot.
+    if (relative !== undefined && bracketNestingDepth(content) > MAX_NESTING_DEPTH) return dropUnparsable();
+    try { return ts.createSourceFile(file, content, languageVersion, true); }
+    catch (error) {
+      // Last-resort safety net: pathologically nested source overflows the parser's stack.
+      if (!(error instanceof RangeError) || relative === undefined) throw error;
+      return dropUnparsable();
+    }
   };
-  return { files, compilerOptions, host, diagnostics };
+  return {
+    files, compilerOptions, host, diagnostics,
+    get skipped(): SkippedInput[] { return [...skippedByFile.values()].sort((a, b) => compareStrings(a.file, b.file)); },
+  };
 }

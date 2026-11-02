@@ -1,0 +1,13 @@
+{
+  "name": "graphentra-mixed-changes",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Fixture: a TypeScript edit shipped together with dependency, schema, config and asset changes",
+  "dependencies": {
+    "left-pad": "1.2.0",
+    "zod": "3.22.0"
+  },
+  "devDependencies": {
+    "typescript": "5.4.0"
+  }
+}

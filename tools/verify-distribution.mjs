@@ -198,6 +198,9 @@ try {
   fs.mkdirSync(standaloneSourceDir, { recursive: true });
   fs.cpSync(path.join(rootDir, 'fixtures/test-project'), path.join(standaloneRootDir, 'fixtures/test-project'), { recursive: true });
   fs.cpSync(path.join(rootDir, 'fixtures/modern-app'), path.join(standaloneRootDir, 'fixtures/modern-app'), { recursive: true });
+  for (const fixture of ['dynamic-patterns', 'mixed-changes', 'hub']) {
+    fs.cpSync(path.join(rootDir, 'fixtures', fixture), path.join(standaloneRootDir, 'fixtures', fixture), { recursive: true });
+  }
   const analyzerSrcDir = path.join(rootDir, 'packages/analyzer');
 
   // Copy analyzer source files

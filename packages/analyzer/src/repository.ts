@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -30,6 +30,14 @@ export interface RepositoryContext {
   gitPathToProjectPath(gitFile: string): string;
   getGitDiff(): string;
   getBaselineSource(oldFile: string, baseSha: string): string;
+  /** Raw bytes of a base-revision blob, so size, binary and encoding checks see what Git stores. */
+  getBaselineBlob(oldFile: string, baseSha: string): Uint8Array;
+  /**
+   * Reads many base-revision blobs in two `git cat-file --batch*` calls (per chunk) and caches them, so
+   * later getBaselineBlob/getBaselineSource calls for these paths spawn nothing. Blobs over `maxFileBytes`,
+   * missing paths and unusual names are left to the per-file path, which keeps the exact errors.
+   */
+  prefetchBaseline(baseSha: string, files: string[], maxFileBytes?: number): void;
   executeGit(args: string[], cwd?: string): string;
   verifyHeadUnchanged(): void;
   calculateWorkingTreeContentIdentity(analyzedFiles: string[]): string;
@@ -86,14 +94,14 @@ export function createRepositoryContext(
   }
 
   // 2. Verify git is available and resolve git root
-  function executeGit(args: string[], cwd: string = projectRoot): string {
+  function runGit(args: string[], cwd: string, encoding: 'utf8' | 'buffer'): string | Buffer {
     const env = { ...process.env };
     for (const key of Object.keys(env)) if (key.startsWith('GIT_')) delete env[key];
     try {
       return execFileSync('git', ['--literal-pathspecs', ...args], {
         cwd,
         env,
-        encoding: 'utf8',
+        encoding,
         stdio: ['ignore', 'pipe', 'pipe'],
         timeout: timeoutMs,
         maxBuffer: 20 * 1024 * 1024,
@@ -113,6 +121,10 @@ export function createRepositoryContext(
         stderr,
       );
     }
+  }
+
+  function executeGit(args: string[], cwd: string = projectRoot): string {
+    return runGit(args, cwd, 'utf8') as string;
   }
 
   let rawGitRoot: string;
@@ -312,14 +324,83 @@ export function createRepositoryContext(
     );
   }
 
+  const baselineCache = new Map<string, Map<string, Buffer>>();
+  const toRepoPath = (file: string) => projectInsideRepository !== '.' ? path.posix.join(projectInsideRepository, file) : file;
+  const cachedBlob = (repoRelPath: string, baseSha: string): Buffer | undefined => baselineCache.get(baseSha)?.get(repoRelPath);
+
+  function runCatFile(mode: '--batch' | '--batch-check', specs: string[], maxBuffer: number): Buffer | undefined {
+    const env = { ...process.env };
+    for (const key of Object.keys(env)) if (key.startsWith('GIT_')) delete env[key];
+    const result = spawnSync('git', ['--literal-pathspecs', 'cat-file', mode], {
+      cwd: gitRepositoryRoot, env, input: `${specs.join('\n')}\n`, stdio: ['pipe', 'pipe', 'pipe'], timeout: timeoutMs, maxBuffer,
+    });
+    // Any failure leaves the cache untouched; callers then read file by file with the original errors.
+    return result.error || result.status !== 0 ? undefined : result.stdout;
+  }
+
+  const PREFETCH_CHUNK_PATHS = 2000;
+  const PREFETCH_CHUNK_BYTES = 256 * 1024 * 1024;
+  function prefetchBaseline(baseSha: string, files: string[], maxFileBytes = Infinity): void {
+    const bucket = baselineCache.get(baseSha) ?? new Map<string, Buffer>();
+    baselineCache.set(baseSha, bucket);
+    // A newline would split the request line, so such names stay on the per-file path.
+    const paths = [...new Set(files.map(toRepoPath))].filter(file => !file.includes('\n') && !bucket.has(file));
+    for (let from = 0; from < paths.length; from += PREFETCH_CHUNK_PATHS) {
+      const chunk = paths.slice(from, from + PREFETCH_CHUNK_PATHS);
+      // Pass 1: sizes only, so oversize blobs are never read into memory.
+      const checked = runCatFile('--batch-check', chunk.map(file => `${baseSha}:${file}`), 64 * 1024 * 1024);
+      if (!checked) continue;
+      const lines = checked.toString('utf8').split('\n');
+      const wanted: Array<{ file: string; size: number }> = [];
+      chunk.forEach((file, index) => {
+        const match = /^[0-9a-f]+ blob (\d+)$/.exec(lines[index] ?? '');
+        if (match && Number(match[1]) <= maxFileBytes) wanted.push({ file, size: Number(match[1]) });
+      });
+      // Pass 2: contents of the in-limit blobs, split further so one call never holds too many bytes.
+      for (let start = 0; start < wanted.length;) {
+        let end = start;
+        let bytes = 0;
+        while (end < wanted.length && (end === start || bytes + wanted[end].size <= PREFETCH_CHUNK_BYTES)) bytes += wanted[end++].size;
+        const group = wanted.slice(start, end);
+        start = end;
+        const output = runCatFile('--batch', group.map(entry => `${baseSha}:${entry.file}`),
+          bytes + group.length * 256 + 1024 * 1024);
+        if (!output) continue;
+        let offset = 0;
+        for (const entry of group) {
+          const newline = output.indexOf(0x0a, offset);
+          if (newline === -1) break;
+          const header = /^[0-9a-f]+ blob (\d+)$/.exec(output.toString('latin1', offset, newline));
+          if (!header) { offset = newline + 1; continue; }
+          const size = Number(header[1]);
+          if (size !== entry.size || newline + 1 + size > output.length) break;
+          bucket.set(entry.file, Buffer.from(output.subarray(newline + 1, newline + 1 + size)));
+          offset = newline + 1 + size + 1;
+        }
+      }
+    }
+  }
+
   function getBaselineSource(oldFile: string, baseSha: string): string {
-    const repoRelPath =
-      projectInsideRepository !== '.'
-        ? path.posix.join(projectInsideRepository, oldFile)
-        : oldFile;
+    const repoRelPath = toRepoPath(oldFile);
+    const cached = cachedBlob(repoRelPath, baseSha);
+    if (cached) return cached.toString('utf8');
 
     try {
       return executeGit(['show', `${baseSha}:${repoRelPath}`], gitRepositoryRoot);
+    } catch (error: any) {
+      throw new BaselineSourceError(
+        `Failed to read baseline source for "${oldFile}" at commit ${baseSha}: ${error?.message || String(error)}`,
+      );
+    }
+  }
+
+  function getBaselineBlob(oldFile: string, baseSha: string): Buffer {
+    const repoRelPath = toRepoPath(oldFile);
+    const cached = cachedBlob(repoRelPath, baseSha);
+    if (cached) return cached;
+    try {
+      return runGit(['show', `${baseSha}:${repoRelPath}`], gitRepositoryRoot, 'buffer') as Buffer;
     } catch (error: any) {
       throw new BaselineSourceError(
         `Failed to read baseline source for "${oldFile}" at commit ${baseSha}: ${error?.message || String(error)}`,
@@ -391,6 +472,8 @@ export function createRepositoryContext(
     gitPathToProjectPath,
     getGitDiff,
     getBaselineSource,
+    getBaselineBlob,
+    prefetchBaseline,
     executeGit,
     verifyHeadUnchanged,
     calculateWorkingTreeContentIdentity,

@@ -1,0 +1,6 @@
+{
+  "name": "graphentra-dynamic-patterns",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Fixture: call sites the analyzer cannot resolve statically (frontier)"
+}

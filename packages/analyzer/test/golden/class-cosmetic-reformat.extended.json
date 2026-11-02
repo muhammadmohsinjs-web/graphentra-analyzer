@@ -657,5 +657,28 @@
       "entityId": "src/utils.ts#formatCurrency",
       "reason": "cosmetic"
     }
-  ]
+  ],
+  "frontier": [],
+  "coverage": {
+    "byLanguage": [
+      {
+        "key": "typescript",
+        "changedLines": 4,
+        "attributedLines": 4,
+        "ratio": 1,
+        "frontierCount": 0
+      }
+    ],
+    "byDirectory": [
+      {
+        "key": "src",
+        "changedLines": 4,
+        "attributedLines": 4,
+        "ratio": 1,
+        "frontierCount": 0
+      }
+    ],
+    "skippedFiles": [],
+    "frontierTotal": 0
+  }
 }

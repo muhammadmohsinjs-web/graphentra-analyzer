@@ -1,0 +1,892 @@
+{
+  "artifactKind": "graphentra-evidence",
+  "schemaVersion": "2.1",
+  "analyzerVersion": "<VERSION>",
+  "target": {
+    "targetPath": "."
+  },
+  "comparison": {
+    "mode": "commit",
+    "requestedBase": "<BASE>",
+    "requestedHead": "<HEAD>",
+    "resolvedBaseSha": "<BASE>",
+    "resolvedHeadSha": "<HEAD>",
+    "comparedTo": "`<HEAD>`"
+  },
+  "sourceState": {
+    "checkoutSha": "<HEAD>",
+    "isTrackedDirty": false,
+    "untrackedSourcePolicy": "excluded",
+    "contentIdentity": "<CONTENT>"
+  },
+  "options": {
+    "excludePaths": [],
+    "sourcePolicy": "git-tracked",
+    "engine": "extended"
+  },
+  "toolchain": {
+    "typescript": "5.8.2",
+    "node": "<NODE>"
+  },
+  "outcome": "completed",
+  "technicalGraph": {
+    "schemaVersion": "1.0",
+    "repository": {
+      "targetPath": ".",
+      "headSha": "<HEAD>",
+      "analyzerVersion": "<VERSION>"
+    },
+    "capabilities": {
+      "language": "typescript",
+      "entityKinds": [
+        "component",
+        "function",
+        "method",
+        "module"
+      ],
+      "relationTypes": [
+        "CALLS",
+        "INSTANTIATES",
+        "REFERENCES",
+        "RENDERS"
+      ],
+      "maxBlastDepth": 6
+    },
+    "analyzedFiles": [
+      "src/core.ts",
+      "src/dynamic.ts",
+      "src/types.ts"
+    ],
+    "entities": [
+      {
+        "id": "src/core.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/core.ts",
+        "startLine": 1,
+        "endLine": 4,
+        "language": "typescript"
+      },
+      {
+        "id": "src/core.ts#helper",
+        "kind": "function",
+        "name": "helper",
+        "file": "src/core.ts",
+        "startLine": 1,
+        "endLine": 3,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/types.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/types.ts",
+        "startLine": 1,
+        "endLine": 4,
+        "language": "typescript"
+      },
+      {
+        "id": "src/dynamic.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "src/dynamic.ts",
+        "startLine": 1,
+        "endLine": 38,
+        "language": "typescript"
+      },
+      {
+        "id": "src/dynamic.ts#runEval",
+        "kind": "function",
+        "name": "runEval",
+        "file": "src/dynamic.ts",
+        "startLine": 6,
+        "endLine": 9,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/dynamic.ts#loadPlugin",
+        "kind": "function",
+        "name": "loadPlugin",
+        "file": "src/dynamic.ts",
+        "startLine": 11,
+        "endLine": 14,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/dynamic.ts#loadLazy",
+        "kind": "function",
+        "name": "loadLazy",
+        "file": "src/dynamic.ts",
+        "startLine": 16,
+        "endLine": 19,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/dynamic.ts#dispatch",
+        "kind": "function",
+        "name": "dispatch",
+        "file": "src/dynamic.ts",
+        "startLine": 21,
+        "endLine": 24,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/dynamic.ts#callAny",
+        "kind": "function",
+        "name": "callAny",
+        "file": "src/dynamic.ts",
+        "startLine": 26,
+        "endLine": 29,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/dynamic.ts#runViaInterface",
+        "kind": "function",
+        "name": "runViaInterface",
+        "file": "src/dynamic.ts",
+        "startLine": 31,
+        "endLine": 33,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "src/dynamic.ts#resolvable",
+        "kind": "function",
+        "name": "resolvable",
+        "file": "src/dynamic.ts",
+        "startLine": 35,
+        "endLine": 37,
+        "language": "typescript",
+        "exported": true
+      }
+    ],
+    "relations": [
+      {
+        "from": "src/dynamic.ts#runEval",
+        "to": "src/core.ts#helper",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/dynamic.ts#loadPlugin",
+        "to": "src/core.ts#helper",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/dynamic.ts#loadLazy",
+        "to": "src/core.ts#helper",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/dynamic.ts#dispatch",
+        "to": "src/core.ts#helper",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/dynamic.ts#callAny",
+        "to": "src/core.ts#helper",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/dynamic.ts#runViaInterface",
+        "to": "src/core.ts#helper",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/dynamic.ts#resolvable",
+        "to": "src/core.ts#helper",
+        "type": "CALLS"
+      }
+    ]
+  },
+  "changedFiles": [
+    {
+      "file": "src/core.ts",
+      "oldFile": "src/core.ts",
+      "changedLines": [
+        2
+      ],
+      "addedCode": [
+        "  return value.trim().toLowerCase();"
+      ],
+      "removedCode": [
+        "  return value.trim();"
+      ],
+      "diff": "diff --git a/src/core.ts b/src/core.ts\nindex 003f127..95807b6 100644\n--- a/src/core.ts\n+++ b/src/core.ts\n@@ -1,3 +1,3 @@\n export function helper(value: string): string {\n-  return value.trim();\n+  return value.trim().toLowerCase();\n }",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "export function helper(value: string): string {",
+              "oldLine": 1,
+              "newLine": 1
+            },
+            {
+              "kind": "-",
+              "code": "  return value.trim();",
+              "oldLine": 2,
+              "newLine": 2
+            },
+            {
+              "kind": "+",
+              "code": "  return value.trim().toLowerCase();",
+              "oldLine": 3,
+              "newLine": 2
+            },
+            {
+              "kind": " ",
+              "code": "}",
+              "oldLine": 3,
+              "newLine": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "changedEntities": [
+    {
+      "entity": {
+        "id": "src/core.ts#helper",
+        "kind": "function",
+        "name": "helper",
+        "file": "src/core.ts",
+        "startLine": 1,
+        "endLine": 3,
+        "language": "typescript",
+        "exported": true
+      },
+      "change": {
+        "file": "src/core.ts",
+        "changedLines": [
+          2
+        ],
+        "addedCode": [
+          "  return value.trim().toLowerCase();"
+        ],
+        "removedCode": [
+          "  return value.trim();"
+        ],
+        "diff": "--- a/src/core.ts\n+++ b/src/core.ts\n@@ -1,3 +1,3 @@\n export function helper(value: string): string {\n-  return value.trim();\n+  return value.trim().toLowerCase();\n }"
+      },
+      "changeKind": "modified",
+      "changeClasses": [
+        "body"
+      ]
+    }
+  ],
+  "impacts": [
+    {
+      "changedEntity": {
+        "id": "src/core.ts#helper",
+        "kind": "function",
+        "name": "helper",
+        "file": "src/core.ts",
+        "startLine": 1,
+        "endLine": 3,
+        "language": "typescript",
+        "exported": true
+      },
+      "change": {
+        "file": "src/core.ts",
+        "changedLines": [
+          2
+        ],
+        "addedCode": [
+          "  return value.trim().toLowerCase();"
+        ],
+        "removedCode": [
+          "  return value.trim();"
+        ],
+        "diff": "--- a/src/core.ts\n+++ b/src/core.ts\n@@ -1,3 +1,3 @@\n export function helper(value: string): string {\n-  return value.trim();\n+  return value.trim().toLowerCase();\n }"
+      },
+      "directDependents": [
+        {
+          "id": "src/dynamic.ts#callAny",
+          "kind": "function",
+          "name": "callAny",
+          "file": "src/dynamic.ts",
+          "startLine": 26,
+          "endLine": 29,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/dynamic.ts#dispatch",
+          "kind": "function",
+          "name": "dispatch",
+          "file": "src/dynamic.ts",
+          "startLine": 21,
+          "endLine": 24,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/dynamic.ts#loadLazy",
+          "kind": "function",
+          "name": "loadLazy",
+          "file": "src/dynamic.ts",
+          "startLine": 16,
+          "endLine": 19,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/dynamic.ts#loadPlugin",
+          "kind": "function",
+          "name": "loadPlugin",
+          "file": "src/dynamic.ts",
+          "startLine": 11,
+          "endLine": 14,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/dynamic.ts#resolvable",
+          "kind": "function",
+          "name": "resolvable",
+          "file": "src/dynamic.ts",
+          "startLine": 35,
+          "endLine": 37,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/dynamic.ts#runEval",
+          "kind": "function",
+          "name": "runEval",
+          "file": "src/dynamic.ts",
+          "startLine": 6,
+          "endLine": 9,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/dynamic.ts#runViaInterface",
+          "kind": "function",
+          "name": "runViaInterface",
+          "file": "src/dynamic.ts",
+          "startLine": 31,
+          "endLine": 33,
+          "language": "typescript",
+          "exported": true
+        }
+      ],
+      "blastRadius": {
+        "totalAffectedEntities": 7,
+        "entities": [
+          {
+            "id": "src/dynamic.ts#callAny",
+            "kind": "function",
+            "name": "callAny",
+            "file": "src/dynamic.ts",
+            "startLine": 26,
+            "endLine": 29,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/dynamic.ts#dispatch",
+            "kind": "function",
+            "name": "dispatch",
+            "file": "src/dynamic.ts",
+            "startLine": 21,
+            "endLine": 24,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/dynamic.ts#loadLazy",
+            "kind": "function",
+            "name": "loadLazy",
+            "file": "src/dynamic.ts",
+            "startLine": 16,
+            "endLine": 19,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/dynamic.ts#loadPlugin",
+            "kind": "function",
+            "name": "loadPlugin",
+            "file": "src/dynamic.ts",
+            "startLine": 11,
+            "endLine": 14,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/dynamic.ts#resolvable",
+            "kind": "function",
+            "name": "resolvable",
+            "file": "src/dynamic.ts",
+            "startLine": 35,
+            "endLine": 37,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/dynamic.ts#runEval",
+            "kind": "function",
+            "name": "runEval",
+            "file": "src/dynamic.ts",
+            "startLine": 6,
+            "endLine": 9,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "src/dynamic.ts#runViaInterface",
+            "kind": "function",
+            "name": "runViaInterface",
+            "file": "src/dynamic.ts",
+            "startLine": 31,
+            "endLine": 33,
+            "language": "typescript",
+            "exported": true
+          }
+        ],
+        "paths": [
+          {
+            "target": {
+              "id": "src/dynamic.ts#callAny",
+              "kind": "function",
+              "name": "callAny",
+              "file": "src/dynamic.ts",
+              "startLine": 26,
+              "endLine": 29,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/core.ts#helper",
+                "kind": "function",
+                "name": "helper",
+                "file": "src/core.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/dynamic.ts#callAny",
+                "kind": "function",
+                "name": "callAny",
+                "file": "src/dynamic.ts",
+                "startLine": 26,
+                "endLine": 29,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/dynamic.ts#dispatch",
+              "kind": "function",
+              "name": "dispatch",
+              "file": "src/dynamic.ts",
+              "startLine": 21,
+              "endLine": 24,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/core.ts#helper",
+                "kind": "function",
+                "name": "helper",
+                "file": "src/core.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/dynamic.ts#dispatch",
+                "kind": "function",
+                "name": "dispatch",
+                "file": "src/dynamic.ts",
+                "startLine": 21,
+                "endLine": 24,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/dynamic.ts#loadLazy",
+              "kind": "function",
+              "name": "loadLazy",
+              "file": "src/dynamic.ts",
+              "startLine": 16,
+              "endLine": 19,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/core.ts#helper",
+                "kind": "function",
+                "name": "helper",
+                "file": "src/core.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/dynamic.ts#loadLazy",
+                "kind": "function",
+                "name": "loadLazy",
+                "file": "src/dynamic.ts",
+                "startLine": 16,
+                "endLine": 19,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/dynamic.ts#loadPlugin",
+              "kind": "function",
+              "name": "loadPlugin",
+              "file": "src/dynamic.ts",
+              "startLine": 11,
+              "endLine": 14,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/core.ts#helper",
+                "kind": "function",
+                "name": "helper",
+                "file": "src/core.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/dynamic.ts#loadPlugin",
+                "kind": "function",
+                "name": "loadPlugin",
+                "file": "src/dynamic.ts",
+                "startLine": 11,
+                "endLine": 14,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/dynamic.ts#resolvable",
+              "kind": "function",
+              "name": "resolvable",
+              "file": "src/dynamic.ts",
+              "startLine": 35,
+              "endLine": 37,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/core.ts#helper",
+                "kind": "function",
+                "name": "helper",
+                "file": "src/core.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/dynamic.ts#resolvable",
+                "kind": "function",
+                "name": "resolvable",
+                "file": "src/dynamic.ts",
+                "startLine": 35,
+                "endLine": 37,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/dynamic.ts#runEval",
+              "kind": "function",
+              "name": "runEval",
+              "file": "src/dynamic.ts",
+              "startLine": 6,
+              "endLine": 9,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/core.ts#helper",
+                "kind": "function",
+                "name": "helper",
+                "file": "src/core.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/dynamic.ts#runEval",
+                "kind": "function",
+                "name": "runEval",
+                "file": "src/dynamic.ts",
+                "startLine": 6,
+                "endLine": 9,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/dynamic.ts#runViaInterface",
+              "kind": "function",
+              "name": "runViaInterface",
+              "file": "src/dynamic.ts",
+              "startLine": 31,
+              "endLine": 33,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/core.ts#helper",
+                "kind": "function",
+                "name": "helper",
+                "file": "src/core.ts",
+                "startLine": 1,
+                "endLine": 3,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/dynamic.ts#runViaInterface",
+                "kind": "function",
+                "name": "runViaInterface",
+                "file": "src/dynamic.ts",
+                "startLine": 31,
+                "endLine": 33,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          }
+        ],
+        "truncated": false
+      },
+      "terminalDependents": [
+        {
+          "id": "src/dynamic.ts#callAny",
+          "kind": "function",
+          "name": "callAny",
+          "file": "src/dynamic.ts",
+          "startLine": 26,
+          "endLine": 29,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/dynamic.ts#dispatch",
+          "kind": "function",
+          "name": "dispatch",
+          "file": "src/dynamic.ts",
+          "startLine": 21,
+          "endLine": 24,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/dynamic.ts#loadLazy",
+          "kind": "function",
+          "name": "loadLazy",
+          "file": "src/dynamic.ts",
+          "startLine": 16,
+          "endLine": 19,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/dynamic.ts#loadPlugin",
+          "kind": "function",
+          "name": "loadPlugin",
+          "file": "src/dynamic.ts",
+          "startLine": 11,
+          "endLine": 14,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/dynamic.ts#resolvable",
+          "kind": "function",
+          "name": "resolvable",
+          "file": "src/dynamic.ts",
+          "startLine": 35,
+          "endLine": 37,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/dynamic.ts#runEval",
+          "kind": "function",
+          "name": "runEval",
+          "file": "src/dynamic.ts",
+          "startLine": 6,
+          "endLine": 9,
+          "language": "typescript",
+          "exported": true
+        },
+        {
+          "id": "src/dynamic.ts#runViaInterface",
+          "kind": "function",
+          "name": "runViaInterface",
+          "file": "src/dynamic.ts",
+          "startLine": 31,
+          "endLine": 33,
+          "language": "typescript",
+          "exported": true
+        }
+      ],
+      "confidence": "proven"
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "ATTRIBUTED_LINE_RATIO",
+      "severity": "info",
+      "message": "2 of 2 changed lines attributed to code entities (ratio 1.0000); 0 module-level, 0 unattributed."
+    }
+  ],
+  "limitations": [
+    "Only TypeScript and JavaScript are analyzed; JavaScript is not type-checked.",
+    "Entities are named functions, variable-bound arrow functions and function expressions, class and object-literal methods, constructors, accessors, React components, and module-level code.",
+    "Classes, interfaces, type aliases, and enums are not entities.",
+    "Relationships are CALLS, RENDERS (JSX elements), INSTANTIATES (new expressions), and REFERENCES (functions passed or stored as values).",
+    "Dynamic calls and calls through interface-typed receivers are not analyzed.",
+    "Renamed entities may lack removed-code evidence.",
+    "Partially overlapping entity line ranges are skipped rather than sharing ambiguous evidence.",
+    "Application surfaces are not yet discovered.",
+    "Blast radius is limited to depth 6."
+  ],
+  "frontier": [
+    {
+      "entityId": "src/dynamic.ts#runEval",
+      "file": "src/dynamic.ts",
+      "line": 8,
+      "reason": "eval"
+    },
+    {
+      "entityId": "src/dynamic.ts#loadPlugin",
+      "file": "src/dynamic.ts",
+      "line": 13,
+      "reason": "dynamic_require"
+    },
+    {
+      "entityId": "src/dynamic.ts#loadLazy",
+      "file": "src/dynamic.ts",
+      "line": 18,
+      "reason": "dynamic_import"
+    },
+    {
+      "entityId": "src/dynamic.ts#dispatch",
+      "file": "src/dynamic.ts",
+      "line": 23,
+      "reason": "computed_member_call"
+    },
+    {
+      "entityId": "src/dynamic.ts#callAny",
+      "file": "src/dynamic.ts",
+      "line": 28,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "src/dynamic.ts#runViaInterface",
+      "file": "src/dynamic.ts",
+      "line": 32,
+      "reason": "interface_dispatch"
+    }
+  ],
+  "coverage": {
+    "byLanguage": [
+      {
+        "key": "typescript",
+        "changedLines": 1,
+        "attributedLines": 1,
+        "ratio": 1,
+        "frontierCount": 0
+      }
+    ],
+    "byDirectory": [
+      {
+        "key": "src",
+        "changedLines": 1,
+        "attributedLines": 1,
+        "ratio": 1,
+        "frontierCount": 0
+      }
+    ],
+    "skippedFiles": [],
+    "frontierTotal": 6
+  }
+}

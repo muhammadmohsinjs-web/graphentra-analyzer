@@ -13,9 +13,11 @@ export interface CliOptions {
   refreshContext?: boolean;
   engine?: EngineProfile;
   maxAffectedEntities?: number;
+  maxDepth?: number;
+  hubThreshold?: number;
 }
 
-const valueOptions = new Set(['target', 'base', 'head', 'report', 'output', 'engine', 'max-affected-entities']);
+const valueOptions = new Set(['target', 'base', 'head', 'report', 'output', 'engine', 'max-affected-entities', 'max-affected', 'max-depth', 'hub-threshold']);
 const flagOptions = new Set(['working-tree', 'help', 'version']);
 
 export function parseCliOptions(args: string[], configuration: { reporting?: boolean } = {}): CliOptions {
@@ -37,7 +39,8 @@ export function parseCliOptions(args: string[], configuration: { reporting?: boo
     }
 
     const separator = argument.indexOf('=');
-    const name = argument.slice(2, separator === -1 ? undefined : separator);
+    const rawName = argument.slice(2, separator === -1 ? undefined : separator);
+    const name = rawName === 'max-affected' ? 'max-affected-entities' : rawName;
 
     if (name === 'report' && !configuration.reporting) throw new Error('--report is a QA reporting option. Use npm run report.');
     if (flagOptions.has(name) || (configuration.reporting && (name === 'generate-context' || name === 'refresh-context'))) {
@@ -65,6 +68,9 @@ export function parseCliOptions(args: string[], configuration: { reporting?: boo
 
     if (name === 'engine' && !ENGINE_PROFILES.includes(value as EngineProfile)) {
       throw new GraphentraError(`Unknown engine "${value}". Expected one of: ${ENGINE_PROFILES.join(', ')}.`, 'INVALID_OPTIONS');
+    }
+    if ((name === 'max-depth' || name === 'hub-threshold') && !/^[1-9]\d*$/.test(value)) {
+      throw new GraphentraError(`Option --${name} must be a positive integer, got "${value}".`, 'INVALID_OPTIONS');
     }
     if (name === 'max-affected-entities' && !/^[1-9]\d*$/.test(value)) {
       throw new GraphentraError(`Option --max-affected-entities must be a positive integer, got "${value}".`, 'INVALID_OPTIONS');
@@ -111,6 +117,10 @@ export function parseCliOptions(args: string[], configuration: { reporting?: boo
   if (engine !== undefined) result.engine = engine as EngineProfile;
   const maxAffected = values.get('max-affected-entities');
   if (maxAffected !== undefined) result.maxAffectedEntities = Number(maxAffected);
+  const maxDepth = values.get('max-depth');
+  if (maxDepth !== undefined) result.maxDepth = Number(maxDepth);
+  const hubThreshold = values.get('hub-threshold');
+  if (hubThreshold !== undefined) result.hubThreshold = Number(hubThreshold);
 
   if (flags.has('generate-context')) result.generateContext = true;
   if (flags.has('refresh-context')) result.refreshContext = true;

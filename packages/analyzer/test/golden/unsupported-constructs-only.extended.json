@@ -638,7 +638,8 @@
         "paths": [],
         "truncated": false
       },
-      "terminalDependents": []
+      "terminalDependents": [],
+      "confidence": "proven"
     },
     {
       "changedEntity": {
@@ -669,7 +670,8 @@
         "paths": [],
         "truncated": false
       },
-      "terminalDependents": []
+      "terminalDependents": [],
+      "confidence": "proven"
     }
   ],
   "diagnostics": [
@@ -689,5 +691,28 @@
     "Partially overlapping entity line ranges are skipped rather than sharing ambiguous evidence.",
     "Application surfaces are not yet discovered.",
     "Blast radius is limited to depth 6."
-  ]
+  ],
+  "frontier": [],
+  "coverage": {
+    "byLanguage": [
+      {
+        "key": "typescript",
+        "changedLines": 2,
+        "attributedLines": 2,
+        "ratio": 1,
+        "frontierCount": 0
+      }
+    ],
+    "byDirectory": [
+      {
+        "key": "src",
+        "changedLines": 2,
+        "attributedLines": 2,
+        "ratio": 1,
+        "frontierCount": 0
+      }
+    ],
+    "skippedFiles": [],
+    "frontierTotal": 0
+  }
 }

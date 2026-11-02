@@ -155,6 +155,164 @@
         ],
         "additionalProperties": false
       }
+    },
+    "frontier": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "entityId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "file": {
+            "type": "string",
+            "minLength": 1
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "reason": {
+            "enum": [
+              "any_typed_call",
+              "computed_member_call",
+              "di_token",
+              "dynamic_import",
+              "dynamic_require",
+              "eval",
+              "function_constructor",
+              "interface_dispatch",
+              "jsx_prop_component"
+            ]
+          }
+        },
+        "required": [
+          "entityId",
+          "file",
+          "line",
+          "reason"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "properties": {
+        "byLanguage": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "minLength": 1
+              },
+              "changedLines": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "attributedLines": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "ratio": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "frontierCount": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "key",
+              "changedLines",
+              "attributedLines",
+              "ratio",
+              "frontierCount"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "byDirectory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "minLength": 1
+              },
+              "changedLines": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "attributedLines": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "ratio": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "frontierCount": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "key",
+              "changedLines",
+              "attributedLines",
+              "ratio",
+              "frontierCount"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "skippedFiles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "file": {
+                "type": "string",
+                "minLength": 1
+              },
+              "reason": {
+                "enum": [
+                  "binary",
+                  "generated",
+                  "invalid_encoding",
+                  "parse_failure",
+                  "symlink",
+                  "too_large",
+                  "unsupported_language"
+                ]
+              }
+            },
+            "required": [
+              "file",
+              "reason"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "frontierTotal": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "byLanguage",
+        "byDirectory",
+        "skippedFiles",
+        "frontierTotal"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [
@@ -253,6 +411,12 @@
         "from": {
           "type": "string",
           "minLength": 1
+        },
+        "confidence": {
+          "enum": [
+            "likely",
+            "proven"
+          ]
         }
       },
       "required": [
@@ -506,6 +670,12 @@
         },
         "contractRisk": {
           "type": "boolean"
+        },
+        "confidence": {
+          "enum": [
+            "likely",
+            "proven"
+          ]
         }
       },
       "required": [
@@ -551,6 +721,32 @@
             },
             "truncated": {
               "type": "boolean"
+            },
+            "hubs": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "entityId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "fanIn": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "reach": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "entityId",
+                  "fanIn",
+                  "reach"
+                ],
+                "additionalProperties": false
+              }
             }
           },
           "required": [
@@ -568,6 +764,12 @@
         },
         "contractRisk": {
           "type": "boolean"
+        },
+        "confidence": {
+          "enum": [
+            "likely",
+            "proven"
+          ]
         }
       },
       "required": [

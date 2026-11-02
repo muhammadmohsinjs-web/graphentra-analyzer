@@ -1,3 +1,5 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import {
   ANALYZER_VERSION,
   DEFAULT_ENGINE,
@@ -15,6 +17,7 @@ import {
   type ChangedEntity,
   type EngineProfile,
   type DeterministicEvidence,
+  type SkipReason as EvidenceSkipReason,
 } from './contracts';
 import { compareStrings } from './deterministic';
 import { GraphentraError } from './errors';
@@ -29,6 +32,9 @@ import { fingerprint, normalizeNode } from './ast-normalize';
 import { classifyChange, fingerprintsOf, type EntityFingerprints } from './change-taxonomy';
 import { DEFAULT_LIMITATIONS, EXTENDED_LIMITATIONS } from './output';
 import { createBaselineSnapshot } from './baseline-host';
+import { buildCoverage, mapSnapshotSkipReason } from './coverage';
+import { DEFAULT_INPUT_LIMITS, inspectContent, type SkippedInput } from './input-limits';
+import { nonTsChangeDiagnostics } from './non-ts-changes';
 import { captureSourceSnapshot } from './source-snapshot';
 import { classifyFileOrigin } from './file-origin';
 import { createRepositoryContext, type RepositoryContext } from './repository';
@@ -45,6 +51,11 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
   const maxAffected = options.maxAffectedEntities ?? MAX_AFFECTED_ENTITIES;
   if (!Number.isSafeInteger(maxAffected) || maxAffected < 1) {
     throw new GraphentraError(`maxAffectedEntities must be a positive integer, got ${String(options.maxAffectedEntities)}.`, 'INVALID_OPTIONS');
+  }
+  for (const [name, value] of [['maxDepth', options.maxDepth], ['hubThreshold', options.hubThreshold]] as const) {
+    if (value !== undefined && (!Number.isSafeInteger(value) || value < 1)) {
+      throw new GraphentraError(`${name} must be a positive integer, got ${String(value)}.`, 'INVALID_OPTIONS');
+    }
   }
   const engine = options.engine ?? DEFAULT_ENGINE;
   const repo =createRepositoryContext(options.target, options.comparison, {
@@ -92,10 +103,11 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
   const changedFiles = parseGitDiff(gitDiff, repo.gitPathToProjectPath)
     .filter(change => repo.includesPath(change.file));
   let supportedChanges = changedFiles.filter(change => isAnalyzableFile(change.file, engine));
+  let nonSource: Array<{ file: string; origin: string }> = [];
   if (engine === 'extended' && supportedChanges.length > 0) {
     // Non-source files are reported but never traversed.
     const attributes = repo.checkAttributes(supportedChanges.map(change => change.file));
-    const nonSource: Array<{ file: string; origin: string }> = [];
+    nonSource = [];
     supportedChanges = supportedChanges.filter(change => {
       const origin = classifyFileOrigin(change.file, {
         attributes: attributes.get(change.file), content: snapshot.readFile(`${repo.projectRoot}/${change.file}`) });
@@ -111,18 +123,42 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
   // D11: the base graph is only built when something analyzable changed.
   const baseFingerprints = new Map<string, string>();
   const baseClassFingerprints = new Map<string, EntityFingerprints>();
-  const baseGraph = engine === 'extended' && supportedChanges.length > 0 && extracted.files.length > 0
-    ? extractBaseGraph(repo, engine, { headCompilerOptions: snapshot.compilerOptions, onEntityNode: fingerprintCollector(baseFingerprints, baseClassFingerprints) }).graph
+  const baseExtraction = engine === 'extended' && supportedChanges.length > 0 && extracted.files.length > 0
+    ? extractBaseGraph(repo, engine, { headCompilerOptions: snapshot.compilerOptions, onEntityNode: fingerprintCollector(baseFingerprints, baseClassFingerprints) })
     : undefined;
-  if (changedFiles.some(change => !isAnalyzableFile(change.file, engine))) {
-    diagnostics.push({ code: 'OUTSIDE_SUPPORTED_SCOPE', severity: 'warning',
-      message: 'Changes outside TypeScript extraction scope were not analyzed for function impact.' });
+  const baseGraph = baseExtraction?.graph;
+  // Base reads of changed files obey the same input limits as head reads (D9); a rejected base reads as absent.
+  const baseSkipped = new Map<string, SkippedInput>();
+  const readBase = (oldFile: string): string | undefined => {
+    const blob = repo.getBaselineBlob(oldFile, repo.comparison.resolvedBaseSha);
+    const reason = blob.length > DEFAULT_INPUT_LIMITS.maxFileBytes ? 'too_large' : inspectContent(blob);
+    if (reason === 'ok') return Buffer.from(blob.buffer, blob.byteOffset, blob.byteLength).toString('utf8');
+    baseSkipped.set(oldFile, { file: oldFile, reason });
+    return undefined;
+  };
+  const unsupportedChanges = changedFiles.filter(change => !isAnalyzableFile(change.file, engine));
+  if (unsupportedChanges.length > 0) {
+    if (engine === 'extended') {
+      // D11: typed diagnostics per non-TypeScript change replace the generic scope warning.
+      diagnostics.push(...nonTsChangeDiagnostics(unsupportedChanges.map(change => ({ file: change.file,
+        status: !change.oldFile ? 'added' as const : change.oldFile !== change.file ? 'renamed' as const
+          : fs.existsSync(path.join(repo.projectRoot, change.file)) ? 'modified' as const : 'deleted' as const })), {
+        base: file => {
+          try { return readBase(unsupportedChanges.find(change => change.file === file)?.oldFile ?? file); }
+          catch { return undefined; }
+        },
+        head: file => snapshot.readInput(path.join(repo.projectRoot, file)),
+      }));
+    } else {
+      diagnostics.push({ code: 'OUTSIDE_SUPPORTED_SCOPE', severity: 'warning',
+        message: 'Changes outside TypeScript extraction scope were not analyzed for function impact.' });
+    }
   }
   const { changedEntities: headChangedEntities, diagnostics: entityWarnings, extraDiagnostics } = findChangedEntities({
     changedFiles: supportedChanges,
     entities: extracted.entities,
     parentById: extracted.parentById,
-    getBaselineSource: oldFile => repo.getBaselineSource(oldFile, repo.comparison.resolvedBaseSha),
+    getBaselineSource: oldFile => engine === 'extended' ? readBase(oldFile) : repo.getBaselineSource(oldFile, repo.comparison.resolvedBaseSha),
   }, engine);
   for (const message of entityWarnings) diagnostics.push({ code: 'AMBIGUOUS_FUNCTION_RANGE', severity: 'warning', message });
   if (engine === 'extended') diagnostics.push(...extraDiagnostics);
@@ -152,8 +188,8 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
         continue;
       }
       const impact = changed.changeKind === 'deleted'
-        ? buildDeletedImpact(changed, baseGraph, extracted, toHead, maxAffected)
-        : buildImpact(changed, extracted.reverseAdjacency, extracted.entityById, undefined, engine, maxAffected);
+        ? buildDeletedImpact(changed, baseGraph, extracted, toHead, maxAffected, options.maxDepth, options.hubThreshold)
+        : buildImpact(changed, extracted.reverseAdjacency, extracted.entityById, options.maxDepth, engine, maxAffected, options.hubThreshold);
       impacts.push(changed.changeClasses!.some(value => value === 'signature' || value === 'export_surface')
         ? withContractRisk(impact) : impact);
     }
@@ -169,13 +205,16 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
     }
   } else {
     impacts = changedEntities.map(changed => buildImpact(changed, extracted.reverseAdjacency, extracted.entityById,
-      undefined, engine, maxAffected));
+      options.maxDepth, engine, maxAffected, options.hubThreshold));
   }
   const baseEntities = [...baseOnly.values()].sort((a, b) => compareStrings(a.id, b.id));
   for (const impact of impacts) {
     if (impact.blastRadius.truncated) {
+      const hubs = impact.blastRadius.hubs ?? [];
       diagnostics.push({ code: 'BLAST_RADIUS_TRUNCATED', severity: 'info', entityId: impact.changedEntity.id,
-        message: `Blast radius for ${impact.changedEntity.id} was cut at ${maxAffected} affected entities; shallowest and lowest-ID entities are kept.` });
+        message: hubs.length > 0
+          ? `Blast radius for ${impact.changedEntity.id} stopped expanding at ${hubs.length} hub(s): ${hubs.map(hub => hub.entityId).join(', ')}; dependents beyond a hub are counted in its reach but not listed.`
+          : `Blast radius for ${impact.changedEntity.id} was cut at ${maxAffected} affected entities; shallowest and lowest-ID entities are kept.` });
     }
   }
   skippedEntities.sort((a, b) => compareStrings(a.entityId, b.entityId));
@@ -183,6 +222,27 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
   if (cosmeticIds.length > 0) {
     diagnostics.push({ code: 'COSMETIC_CHANGES_SKIPPED', severity: 'info',
       message: `Formatting- or comment-only changes were not traversed: ${cosmeticIds.join(', ')}` });
+  }
+  // Every read has happened by now, so the skip list is final (the compiler can skip more inputs after capture).
+  const SKIP_CODES: Record<SkippedInput['reason'], string> = {
+    too_large: 'FILE_TOO_LARGE', binary: 'BINARY_FILE', invalid_encoding: 'INVALID_ENCODING',
+    symlink: 'SYMLINK_SKIPPED', input_limit: 'INPUT_LIMIT_EXCEEDED', parse_failed: 'PARSE_FAILED',
+  };
+  const skippedInputs: SkippedInput[] = [];
+  if (engine === 'extended') {
+    const seen = new Set<string>();
+    for (const item of [...snapshot.skipped, ...(baseExtraction?.skipped ?? []), ...baseSkipped.values()]) {
+      if (seen.has(item.file)) continue;
+      seen.add(item.file);
+      skippedInputs.push(item);
+    }
+    skippedInputs.sort((a, b) => compareStrings(a.file, b.file));
+    for (const item of skippedInputs) {
+      diagnostics.push({ code: SKIP_CODES[item.reason], severity: 'warning', file: item.file,
+        message: `${item.file} was not analyzed (${item.reason.replace(/_/g, ' ')}).` });
+    }
+    const skippedHead = new Set(snapshot.skipped.map(item => item.file));
+    extracted.technicalGraph.analyzedFiles = extracted.technicalGraph.analyzedFiles.filter(file => !skippedHead.has(file));
   }
   const outcome = extracted.files.length === 0 ? 'no_source_files'
     : changedFiles.length === 0 ? 'no_changes'
@@ -199,6 +259,34 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
     diagnostics.push({ code: 'ATTRIBUTED_LINE_RATIO', severity: 'info',
       message: `${code} of ${total} changed lines attributed to code entities (ratio ${ratio.toFixed(4)}); ${module} module-level, ${unattributed} unattributed.` });
   }
+  // D7: the report lists frontier sites only for changed entities and entities in a blast radius.
+  const relevantIds = new Set<string>(changedEntities.map(changed => changed.entity.id));
+  for (const impact of impacts) {
+    relevantIds.add(impact.changedEntity.id);
+    for (const entity of impact.directDependents) relevantIds.add(entity.id);
+    for (const impactPath of impact.blastRadius.paths) for (const entity of impactPath.path) relevantIds.add(entity.id);
+  }
+  const frontier = extended ? extracted.frontier.filter(item => relevantIds.has(item.entityId)) : undefined;
+  let coverage: DeterministicEvidence['coverage'];
+  if (extended) {
+    const attributedLines = new Map<string, Set<number>>();
+    for (const { entity, change } of changedEntities) {
+      if (entity.kind === 'module') continue;
+      const lines = attributedLines.get(change.file) ?? new Set<number>();
+      for (const line of change.changedLines) lines.add(line);
+      attributedLines.set(change.file, lines);
+    }
+    // Frontier sites outside changed files count only in frontierTotal (D12).
+    const changedPaths = new Set(changedFiles.map(change => change.file));
+    const skipped = new Map<string, EvidenceSkipReason>();
+    for (const item of skippedInputs) skipped.set(item.file, mapSnapshotSkipReason(item.reason));
+    for (const item of nonSource) if (!skipped.has(item.file)) skipped.set(item.file, 'generated');
+    for (const change of unsupportedChanges) if (!skipped.has(change.file)) skipped.set(change.file, 'unsupported_language');
+    coverage = buildCoverage({
+      changedFiles, attributedLines, frontier: frontier!.filter(item => changedPaths.has(item.file)), frontierTotal: extracted.frontier.length,
+      skipped: [...skipped].map(([file, reason]) => ({ file, reason })),
+    });
+  }
   const evidence: DeterministicEvidence = {
     artifactKind: EVIDENCE_ARTIFACT_KIND,
     schemaVersion: extended ? EXTENDED_EVIDENCE_SCHEMA_VERSION : EVIDENCE_SCHEMA_VERSION,
@@ -213,6 +301,8 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
     diagnostics, limitations: [...(extended ? EXTENDED_LIMITATIONS : DEFAULT_LIMITATIONS)],
     ...(baseEntities.length > 0 ? { baseEntities } : {}),
     ...(skippedEntities.length > 0 ? { skippedEntities } : {}),
+    ...(frontier ? { frontier } : {}),
+    ...(coverage ? { coverage } : {}),
   };
   snapshot.verify();
   assertValidEvidenceEnvelope(evidence);
@@ -260,7 +350,7 @@ export function extractBaseGraph(
   repo: RepositoryContext,
   engine: EngineProfile,
   options: { headCompilerOptions: CompilerOptions; onEntityNode?: BaseNodeHook },
-): { graph: ExtractedGraph; diagnostics: DiagnosticItem[] } {
+): { graph: ExtractedGraph; diagnostics: DiagnosticItem[]; skipped: SkippedInput[] } {
   const baseSha = repo.comparison.resolvedBaseSha;
   const baseline = createBaselineSnapshot(repo, baseSha, engine, options.headCompilerOptions);
   const graph = extractTechnicalGraph({
@@ -280,7 +370,7 @@ export function extractBaseGraph(
   graph.checker = undefined;
   graph.symbolToEntity = undefined;
   graph.toProjectPath = undefined;
-  return { graph, diagnostics: [...baseline.diagnostics, ...graph.diagnostics] };
+  return { graph, diagnostics: [...baseline.diagnostics, ...graph.diagnostics], skipped: baseline.skipped };
 }
 
 function emptyApplicationMap(headSha: string, reason?: string): ApplicationMap {

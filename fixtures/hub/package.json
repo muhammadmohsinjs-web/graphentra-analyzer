@@ -1,0 +1,6 @@
+{
+  "name": "graphentra-hub",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Fixture: a utility with 30 direct callers (a hub at the default threshold of 25)"
+}
