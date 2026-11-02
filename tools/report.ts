@@ -26,7 +26,10 @@ async function withLLMLoader<T>(label: string, model: string, operation: (progre
     const symbol = loaderFrames[frame % loaderFrames.length];
     const tint = color ? loaderColors[frame % loaderColors.length] : '';
     const reset = color ? resetColor : '';
-    process.stderr.write(`\r${clearLine}${tint}${symbol}${reset} LLM triggered · ${label}${detail ? ` · ${detail}` : ''} · ${model}…`);
+    // A line wider than the terminal wraps, and \r only rewrites the last row, so each frame would leave a new line behind.
+    const text = ` LLM triggered · ${label}${detail ? ` · ${detail}` : ''} · ${model}…`;
+    const width = Math.max(10, (process.stderr.columns || 80) - 2);
+    process.stderr.write(`\r${clearLine}${tint}${symbol}${reset}${text.length > width ? `${text.slice(0, width - 1)}…` : text}`);
     frame += 1;
   };
   const progress = (next: string) => {

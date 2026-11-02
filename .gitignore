@@ -6,6 +6,7 @@
 **/.graphentra/evidence.json
 **/.graphentra/application-map.json
 **/.graphentra/application-context.previous.json
+**/.graphentra/context-batches/
 
 *.tgz
 

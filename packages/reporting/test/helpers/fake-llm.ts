@@ -10,6 +10,8 @@ export interface FakeLlmOptions {
   /** First QA answer cites an unknown surface ID (tests the referential correction). */
   inventSurfaceOnce?: boolean;
   qaReport?: (payload: any) => unknown;
+  /** Return truncated JSON for the first request with this schema name (tests the parse retry). */
+  malformedOnce?: string;
 }
 
 function lastUserJson(body: any): any {
@@ -22,6 +24,7 @@ export function createFakeLlm(options: FakeLlmOptions = {}) {
   const calls: FakeCall[] = [];
   let moduleAttempts = 0;
   let inventedSurface = false;
+  let malformedSent = false;
   const respond = (body: any) => {
     const schema = body.response_format?.json_schema?.name;
     const user = lastUserJson(body);
@@ -100,9 +103,14 @@ export function createFakeLlm(options: FakeLlmOptions = {}) {
     chat: {
       completions: {
         create: (body: any) => {
+          let content = JSON.stringify(respond(body));
+          if (options.malformedOnce && options.malformedOnce === body.response_format?.json_schema?.name && !malformedSent) {
+            malformedSent = true;
+            content = content.slice(0, Math.floor(content.length / 2));
+          }
           const completion = {
             id: `fake-${calls.length + 1}`, model: body.model,
-            choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(respond(body)) } }],
+            choices: [{ finish_reason: 'stop', message: { content } }],
             usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
           };
           const promise: any = Promise.resolve(completion);

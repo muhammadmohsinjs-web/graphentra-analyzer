@@ -344,7 +344,14 @@ export async function generateStructured<T>(input: GenerateStructuredInput<T>): 
     if (!content) throw new Error(`The LLM returned no content for ${input.task}.`);
     let value: T;
     try { value = input.parse(JSON.parse(content)); }
-    catch (error) { throw new Error(`The LLM returned invalid structured output for ${input.task}.`, { cause: error }); }
+    catch (error) {
+      // Truncated or malformed JSON is usually a one-off; ask again with the original messages.
+      if (attempt < 2) {
+        logLLMTrace('structured.parse_retry', { traceId, task: input.task, attempt, finishReason: completion.choices[0]?.finish_reason });
+        continue;
+      }
+      throw new Error(`The LLM returned invalid structured output for ${input.task}.`, { cause: error });
+    }
     lastErrors = input.validate?.(value) ?? [];
     if (!lastErrors.length || attempt === 2) {
       logLLMTrace('structured.completed', { traceId, task: input.task, model: completion.model ?? model, attempt,

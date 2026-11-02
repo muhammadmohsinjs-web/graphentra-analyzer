@@ -84,6 +84,43 @@ test('staged onboarding describes every production function, features, and every
   } finally { repo.cleanup(); }
 });
 
+test('onboarding retries once when the model returns truncated JSON', async t => {
+  quiet(t);
+  const repo = createWebAppRepository();
+  try {
+    const fake = createFakeLlm({ malformedOnce: 'graphentra_context_synthesis' });
+    const context = await generateApplicationContextV2(onboardingInput(repo.dir, fake.client).input);
+    assert.equal(fake.calls.filter(call => call.schema === 'graphentra_context_synthesis').length, 2);
+    assert.equal(context.features[0]!.criticality, 'critical');
+  } finally { repo.cleanup(); }
+});
+
+test('an interrupted onboarding resumes from saved requests, and the lifecycle removes them once written', async t => {
+  quiet(t);
+  const repo = createWebAppRepository();
+  try {
+    const checkpointDir = path.join(repo.dir, '.graphentra', 'context-batches');
+    const first = createFakeLlm();
+    const { input } = onboardingInput(repo.dir, first.client);
+    const original = await generateApplicationContextV2({ ...input, checkpointDir });
+    assert.ok(first.calls.length > 0);
+    assert.equal(fs.readdirSync(checkpointDir).length, first.calls.length);
+
+    const second = createFakeLlm();
+    const resumed = await generateApplicationContextV2({ ...input, options: { client: second.client as any, model: 'offline' }, checkpointDir });
+    assert.equal(second.calls.length, 0, 'every request is served from the saved results');
+    assert.deepEqual(resumed.entityAnnotations, original.entityAnnotations);
+    assert.deepEqual(resumed.surfaces, original.surfaces);
+
+    const lifecycle = await loadOrCreateApplicationContext({
+      contextDirectory: path.dirname(checkpointDir), technicalGraph: input.technicalGraph, sourceFiles: input.sourceFiles,
+      generateContext: true, llmOptions: input.options, applicationMap: input.applicationMap, signals: input.signals,
+    });
+    assert.equal(lifecycle.action, 'generated');
+    assert.equal(fs.existsSync(checkpointDir), false);
+  } finally { repo.cleanup(); }
+});
+
 test('context pack maps a backend change to its API, the pages that call it, navigation, rules, and old behaviour', async t => {
   quiet(t);
   const repo = createWebAppRepository();

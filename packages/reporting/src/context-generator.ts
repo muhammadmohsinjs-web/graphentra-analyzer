@@ -1,3 +1,6 @@
+import { createHash } from 'node:crypto';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { z } from 'zod';
 import {
   isTestPath, type ApplicationMap, type BusinessSignals, type Entity, type Surface, type TechnicalGraph,
@@ -7,7 +10,9 @@ import {
   type ApplicationContextV2, type Basis,
 } from './context-contract';
 import { isExtendedGraph } from './extended-graph';
-import { DEFAULT_OPENROUTER_MODEL, generateStructured, type LLMClientOptions } from './llm-client';
+import {
+  DEFAULT_OPENROUTER_MODEL, generateStructured, type GenerateStructuredInput, type LLMClientOptions,
+} from './llm-client';
 
 export interface GenerateContextInput {
   technicalGraph: TechnicalGraph;
@@ -18,11 +23,15 @@ export interface GenerateContextInput {
   onProgress?: (message: string) => void;
   /** Approximate characters of source per module request (default 45k). */
   batchChars?: number;
-  /** Parallel module requests (default 3). */
+  /** Parallel requests (default 8). */
   concurrency?: number;
   /** Surfaces described per request (default 30). */
   surfaceBatchSize?: number;
+  /** Directory for per-request results, so an interrupted onboarding resumes instead of starting over. */
+  checkpointDir?: string;
 }
+
+const DEFAULT_CONCURRENCY = 8;
 
 export interface RefreshSummary {
   reannotatedEntities: number;
@@ -186,6 +195,26 @@ const surfaceSchema = z.object({
 // Helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * Runs a structured request once per distinct input: the result is stored under a hash of the prompt
+ * version, model, task, and request text, and reused when the same request comes up again.
+ */
+async function checkpointed<T>(input: GenerateContextInput, request: GenerateStructuredInput<T>): Promise<T> {
+  const dir = input.checkpointDir;
+  if (!dir) return (await generateStructured(request)).value;
+  const key = createHash('sha256')
+    .update([CONTEXT_PROMPT_VERSION, input.options?.model ?? DEFAULT_OPENROUTER_MODEL, request.task, request.system, request.user].join('\0'))
+    .digest('hex').slice(0, 32);
+  const file = path.join(dir, `${request.task}-${key}.json`);
+  try { return request.parse(JSON.parse(fs.readFileSync(file, 'utf8'))); } catch { /* missing or unreadable: run the request */ }
+  const { value } = await generateStructured(request);
+  fs.mkdirSync(dir, { recursive: true });
+  const temporary = `${file}.${process.pid}.tmp`;
+  fs.writeFileSync(temporary, JSON.stringify(value));
+  fs.renameSync(temporary, file);
+  return value;
+}
+
 async function mapLimit<T, R>(items: T[], limit: number, worker: (item: T, index: number) => Promise<R>): Promise<R[]> {
   const results: R[] = new Array(items.length);
   let next = 0;
@@ -276,9 +305,9 @@ function moduleInput(input: GenerateContextInput, batch: ModuleBatch): string {
 async function describeModules(input: GenerateContextInput, targets: Entity[]): Promise<ModuleResult[]> {
   const batches = buildBatches(input, targets);
   let done = 0;
-  return mapLimit(batches, input.concurrency ?? 3, async batch => {
+  return mapLimit(batches, input.concurrency ?? DEFAULT_CONCURRENCY, async batch => {
     const ids = new Set(batch.entities.map(entity => entity.id));
-    const { value } = await generateStructured({
+    const value = await checkpointed(input, {
       task: 'context.module', system: MODULE_SYSTEM, user: moduleInput(input, batch),
       schemaName: 'graphentra_context_module', jsonSchema: moduleJsonSchema, parse: v => moduleSchema.parse(v),
       options: input.options, acceptRemainingErrors: true,
@@ -341,7 +370,7 @@ async function synthesize(input: GenerateContextInput, modules: ModuleResult[]):
     envVarNames: signals?.envVars,
     translationsSample: (signals?.translations ?? []).flatMap(file => file.entries).slice(0, 120),
   };
-  const { value } = await generateStructured({
+  const value = await checkpointed(input, {
     task: 'context.synthesis', system: SYNTHESIS_SYSTEM, user: json(payload),
     schemaName: 'graphentra_context_synthesis', jsonSchema: synthesisJsonSchema, parse: v => synthesisSchema.parse(v),
     options: input.options, acceptRemainingErrors: true,
@@ -392,9 +421,9 @@ async function describeSurfaces(input: GenerateContextInput, surfaces: Surface[]
   for (let index = 0; index < surfaces.length; index += size) batches.push(surfaces.slice(index, index + size));
   const featureIds = new Set(synthesis.features.map(feature => feature.id));
   let done = 0;
-  const results = await mapLimit(batches, input.concurrency ?? 3, async batch => {
+  const results = await mapLimit(batches, input.concurrency ?? DEFAULT_CONCURRENCY, async batch => {
     const ids = new Set(batch.map(surface => surface.id));
-    const { value } = await generateStructured({
+    const value = await checkpointed(input, {
       task: 'context.surfaces', system: SURFACE_SYSTEM,
       user: json({
         application: synthesis.application, userRoles: synthesis.userRoles,
