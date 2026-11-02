@@ -69,6 +69,8 @@ Using application context:
 - changedBehaviour and rules marked "version-before-this-change" describe behaviour BEFORE this change. Compare
   them with the diff: state the old and new behaviour, and if a documented or tested rule now conflicts with the
   new code, raise it as the uncertainty and add a check for it.
+- fileRole and dependentFileRoles describe a whole file, not one function. Use them to name the business area
+  a change belongs to, but take the exact changed behaviour from the diff.
 - Use glossary business terms instead of code identifiers. Use visibleText labels verbatim in quotes.
 - If an affected API endpoint has usedByPages, test through those pages and also at the API level.
 - If no affectedAreas exist, describe the area in business terms from context and say navigation was not found.

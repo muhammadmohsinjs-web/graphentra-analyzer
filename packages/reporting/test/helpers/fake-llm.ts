@@ -12,6 +12,10 @@ export interface FakeLlmOptions {
   qaReport?: (payload: any) => unknown;
   /** Return truncated JSON for the first request with this schema name (tests the parse retry). */
   malformedOnce?: string;
+  /** The first request with this schema name never answers until it is cancelled (tests the duplicate request). */
+  hangOnce?: string;
+  /** Replaces the module list the synthesis answer assigns to its feature. */
+  synthesisModules?: (modules: string[]) => string[];
 }
 
 function lastUserJson(body: any): any {
@@ -25,6 +29,8 @@ export function createFakeLlm(options: FakeLlmOptions = {}) {
   let moduleAttempts = 0;
   let inventedSurface = false;
   let malformedSent = false;
+  let hangSent = false;
+  let aborted = 0;
   const respond = (body: any) => {
     const schema = body.response_format?.json_schema?.name;
     const user = lastUserJson(body);
@@ -51,13 +57,29 @@ export function createFakeLlm(options: FakeLlmOptions = {}) {
           questions: [],
         };
       }
+      case 'graphentra_context_files': {
+        moduleAttempts += 1;
+        const charge = (user.entities as Array<{ id: string; name: string }>).filter(entity => entity.name === 'chargeCard').map(entity => entity.id);
+        return {
+          moduleSummaries: (user.files as Array<{ path: string }>).map(file => ({
+            file: file.path,
+            summary: file.path.endsWith('orderService.ts') ? 'Places orders and charges the customer card at checkout.' : `Business role of ${file.path}.`,
+          })),
+          entityAnnotations: [],
+          rules: charge.length
+            ? [{ statement: 'Payments below the minimum order amount of 1.00 are declined; exactly 1.00 is accepted.', entityIds: charge, kind: 'observed', basis: 'code' }]
+            : [],
+          glossary: [{ term: 'saved card', identifiers: ['cardToken'], meaning: 'The customer card used to pay.' }],
+          questions: [],
+        };
+      }
       case 'graphentra_context_synthesis':
         return {
           application: { name: 'Shopfront', summary: 'Customer storefront with cart and card checkout.', purpose: 'Sell products online.', platform: 'fullstack' },
           userRoles: [{ id: 'customer', name: 'Customer', description: 'A signed-in shopper.' }],
           features: [{
             id: 'checkout', name: 'Checkout and payment', description: 'Cart review, card payment, and order placement.',
-            criticality: 'critical', criticalityReason: 'Takes customer money.', modules: user.modules,
+            criticality: 'critical', criticalityReason: 'Takes customer money.', modules: options.synthesisModules?.(user.modules) ?? user.modules,
             surfaceIds: (user.applicationMap?.surfaces ?? []).map((surface: any) => surface.id), basis: 'code',
           }],
           glossary: [{ term: 'minimum order amount', identifiers: ['MIN_ORDER_AMOUNT'], meaning: 'Smallest payable order total.', basis: 'code' }],
@@ -102,7 +124,12 @@ export function createFakeLlm(options: FakeLlmOptions = {}) {
   const client: any = {
     chat: {
       completions: {
-        create: (body: any) => {
+        create: (body: any, requestOptions?: { signal?: AbortSignal }) => {
+          if (options.hangOnce && options.hangOnce === body.response_format?.json_schema?.name && !hangSent) {
+            hangSent = true;
+            calls.push({ schema: options.hangOnce, body, user: lastUserJson(body) });
+            return new Promise((_, reject) => requestOptions?.signal?.addEventListener('abort', () => { aborted += 1; reject(new Error('aborted')); }));
+          }
           let content = JSON.stringify(respond(body));
           if (options.malformedOnce && options.malformedOnce === body.response_format?.json_schema?.name && !malformedSent) {
             malformedSent = true;
@@ -120,5 +147,5 @@ export function createFakeLlm(options: FakeLlmOptions = {}) {
       },
     },
   };
-  return { client, calls, get moduleAttempts() { return moduleAttempts; } };
+  return { client, calls, get moduleAttempts() { return moduleAttempts; }, get aborted() { return aborted; } };
 }

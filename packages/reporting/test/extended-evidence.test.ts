@@ -20,6 +20,7 @@ function setup(dir: string, engine: 'legacy' | 'extended', client: unknown) {
       signals: collectBusinessSignals({ projectRoot: dir, files: listProjectFiles({ target: dir, comparison }), technicalGraph: result.technicalGraph }),
       sourceFiles: result.technicalGraph.analyzedFiles.map(file => ({ path: file, content: fs.readFileSync(path.join(dir, file), 'utf8') })),
       options: { client: client as any, model: 'offline' },
+      granularity: 'functions' as const,
     },
   };
 }

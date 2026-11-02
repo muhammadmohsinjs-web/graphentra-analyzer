@@ -65,14 +65,15 @@ test('onboarding generates a v2 context once, reports where to test, and refresh
     await runReport(args, { environment: {}, loadEnvironment: false, llmOptions: { client: fake.client, model: 'offline' } });
     assert.equal(contextCalls(), afterOnboarding);
 
-    // Refresh re-describes only the function changed since onboarding.
+    // The default context is file-level: refresh re-summarizes only the file changed since onboarding.
+    assert.ok(context.fileSummaries.length > 0);
     repo.edit('src/shared/pricing.ts', 'toFixed(2)', 'toFixed(3)');
     const beforeRefresh = fake.calls.length;
     await runReport([...args, '--refresh-context'], { environment: {}, loadEnvironment: false, llmOptions: { client: fake.client, model: 'offline' } });
     assert.equal(process.exitCode, undefined);
-    const refreshed = fake.calls.slice(beforeRefresh).filter(call => call.schema === 'graphentra_context_module')
-      .flatMap(call => call.user.entitiesToDescribe.map((entity: { id: string }) => entity.id));
-    assert.deepEqual(refreshed, ['src/shared/pricing.ts#formatPrice']);
+    const refreshed = fake.calls.slice(beforeRefresh).filter(call => call.schema === 'graphentra_context_files')
+      .flatMap(call => call.user.files.map((file: { path: string }) => file.path));
+    assert.deepEqual(refreshed, ['src/shared/pricing.ts']);
     assert.ok(fs.existsSync(path.join(graphentra, 'application-context.previous.json')));
   } finally { process.exitCode = previousExit; repo.cleanup(); }
 });
@@ -97,10 +98,11 @@ test('extended engine: writes valid 2.1 evidence, generates a context without mo
     assert.ok(evidence.technicalGraph.entities.some((entity: { kind: string }) => entity.kind === 'module'));
     const context = JSON.parse(fs.readFileSync(path.join(graphentra, 'application-context.json'), 'utf8'));
     assert.equal(context.schemaVersion, '2.0');
-    assert.ok(context.entityAnnotations.length > 0);
-    assert.ok(context.entityAnnotations.every((annotation: { entityId: string }) => !annotation.entityId.endsWith('#<module>')));
-    const described = fake.calls.filter(call => call.schema === 'graphentra_context_module').flatMap(call => call.user.entitiesToDescribe);
-    assert.ok(described.every((entity: { kind: string }) => entity.kind !== 'module'));
+    assert.ok(context.fileSummaries.length > 0);
+    // Synthetic module entities are never sent, not even as rule-linking targets.
+    const listed = fake.calls.filter(call => call.schema === 'graphentra_context_files').flatMap(call => call.user.entities);
+    assert.ok(listed.length > 0);
+    assert.ok(listed.every((entity: { id: string }) => !entity.id.endsWith('#<module>')));
     const analysis = JSON.parse(fs.readFileSync(path.join(graphentra, 'analysis.json'), 'utf8'));
     assert.ok(analysis.qaReport);
   } finally { process.exitCode = previousExit; repo.cleanup(); }

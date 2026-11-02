@@ -236,21 +236,35 @@ const structuralFailures: [string, unknown][] = [
   ],
 ];
 
+test('does not retry an empty response', async t => {
+  const { requests, logs } = mockCompletions(t, [null]);
+  await assert.rejects(generateImpactReport(input), /empty impact report/);
+  assert.equal(requests.length, 1);
+  assert.deepEqual(logs.map(log => log.event), ['request.started', 'request.failed']);
+  assert.equal(logs[1].attempt, 1);
+});
+
 for (const [name, content, error] of [
   ['malformed JSON', '{"summary":', /not valid JSON/],
-  ['empty response', null, /empty impact report/],
   ...structuralFailures.map(
     ([name, report]) => [name, JSON.stringify(report), { name: 'ZodError' }] as const,
   ),
 ] as const) {
-  test(`does not retry ${name}`, async t => {
-    const { requests, logs } = mockCompletions(t, [content]);
+  test(`asks once more after ${name}, then fails`, async t => {
+    const { requests, logs } = mockCompletions(t, [content, content]);
     await assert.rejects(generateImpactReport(input), error);
-    assert.equal(requests.length, 1);
-    assert.deepEqual(logs.map(log => log.event), ['request.started', 'request.failed']);
-    assert.equal(logs[1].attempt, 1);
+    assert.equal(requests.length, 2);
+    assert.deepEqual(requests[1], requests[0], 'the retry resends the original request');
+    assert.deepEqual(logs.map(log => log.event), ['request.started', 'request.parse_retry', 'request.failed']);
+    assert.equal(logs[2].attempt, 2);
   });
 }
+
+test('a malformed first answer is replaced by a valid second one', async t => {
+  const { requests } = mockCompletions(t, ['{"summary":', JSON.stringify(validReport)]);
+  await generateImpactReport(input);
+  assert.equal(requests.length, 2);
+});
 
 test('does not retry malformed JSON returned on the correction attempt', async t => {
   const { requests, logs } = mockCompletions(t, [
