@@ -40,7 +40,11 @@ export interface ContextPack {
     changedBehaviour: (Pick<EntityAnnotationV2, 'businessMeaning' | 'userVisibleEffect' | 'basis' | 'confidence'> & { describes: AnnotationVersion }) | null;
     features: Array<{ id: string; name: string; criticality: string; criticalityReason: string }>;
     affectedAreas: AffectedArea[];
+    /** Business role of the changed function's file (file-level contexts). */
+    fileRole?: string;
     dependentMeanings: Array<{ entityId: string; businessMeaning: string; userVisibleEffect: string }>;
+    /** File-level contexts: the role of each file holding dependents that have no annotation of their own. */
+    dependentFileRoles: Array<{ file: string; role: string; entityIds: string[] }>;
     rules: Array<{ statement: string; kind: string; basis: string; describes: AnnotationVersion }>;
     openQuestions: string[];
   }>;
@@ -93,7 +97,13 @@ export function buildContextPack(context: ApplicationContextV2, impacts: EntityI
   const featureById = new Map(context.features.map(feature => [feature.id, feature]));
   const describedSurface = new Map(context.surfaces.map(surface => [surface.surfaceId, surface]));
   const surfaceById = new Map((map?.surfaces ?? []).map(surface => [surface.id, surface]));
-  const meaningOf = (id: string) => annotationById.get(id)?.businessMeaning;
+  const fileRoleOf = new Map((context.fileSummaries ?? []).map(item => [item.file, item.summary]));
+  const entityFile = new Map(impacts.flatMap(impact => [impact.changedEntity, ...impact.blastRadius.entities])
+    .map(entity => [entity.id, entity.file]));
+  const fileOf = (id: string) => entityFile.get(id) ?? id.split('#')[0]!;
+  // Functions without their own annotation fall back to their file's role.
+  const meaningOf = (id: string) => annotationById.get(id)?.businessMeaning
+    ?? (fileRoleOf.has(fileOf(id)) ? `Part of ${fileOf(id)}: ${fileRoleOf.get(fileOf(id))}` : undefined);
   const criticalityRank = { critical: 0, high: 1, normal: 2, low: 3 } as Record<string, number>;
 
   const relevantIds = new Set(impacts.flatMap(impact => [impact.changedEntity.id, ...impact.blastRadius.entities.map(entity => entity.id)]));
@@ -140,13 +150,22 @@ export function buildContextPack(context: ApplicationContextV2, impacts: EntityI
       ...scopeIds.flatMap(entityId => annotationById.get(entityId)?.featureIds ?? []),
       ...context.features.filter(feature => areas.some(area => feature.surfaceIds.includes(area.surfaceId))).map(feature => feature.id),
     ]);
+    const changedFile = impact.changedEntity.file;
     const rules = context.rules.filter(rule => rule.entityIds.some(entityId => entityId === id) ||
-      (rule.entityIds.some(entityId => dependents.includes(entityId))));
+      (rule.entityIds.some(entityId => dependents.includes(entityId))) || (rule.files ?? []).includes(changedFile));
     rules.sort((a, b) => Number(!a.entityIds.includes(id)) - Number(!b.entityIds.includes(id)));
     if (rules.length > MAX_RULES) omitted.push(`${rules.length - MAX_RULES} related rules`);
     const dependentMeanings = dependents.map(entityId => annotationById.get(entityId)).filter((item): item is EntityAnnotationV2 => Boolean(item))
       .map(item => ({ entityId: item.entityId, businessMeaning: item.businessMeaning, userVisibleEffect: item.userVisibleEffect }));
     if (dependentMeanings.length > MAX_DEPENDENT_MEANINGS) omitted.push(`${dependentMeanings.length - MAX_DEPENDENT_MEANINGS} dependent descriptions`);
+    const unannotatedByFile = new Map<string, string[]>();
+    for (const entityId of dependents) {
+      const file = fileOf(entityId);
+      if (annotationById.has(entityId) || !fileRoleOf.has(file)) continue;
+      unannotatedByFile.set(file, [...(unannotatedByFile.get(file) ?? []), entityId]);
+    }
+    const dependentFileRoles = [...unannotatedByFile].map(([file, entityIds]) => ({ file, role: fileRoleOf.get(file)!, entityIds }));
+    if (dependentFileRoles.length > MAX_DEPENDENT_MEANINGS) omitted.push(`${dependentFileRoles.length - MAX_DEPENDENT_MEANINGS} dependent file roles`);
     return {
       changedEntityId: id,
       changedBehaviour: annotation ? {
@@ -155,8 +174,10 @@ export function buildContextPack(context: ApplicationContextV2, impacts: EntityI
       } : null,
       features: [...featureIds].map(featureId => featureById.get(featureId)).filter(Boolean)
         .map(feature => ({ id: feature!.id, name: feature!.name, criticality: feature!.criticality, criticalityReason: feature!.criticalityReason })),
+      ...(fileRoleOf.has(changedFile) ? { fileRole: fileRoleOf.get(changedFile)! } : {}),
       affectedAreas: areas.slice(0, MAX_AREAS_PER_CHANGE),
       dependentMeanings: dependentMeanings.slice(0, MAX_DEPENDENT_MEANINGS),
+      dependentFileRoles: dependentFileRoles.slice(0, MAX_DEPENDENT_MEANINGS),
       rules: rules.slice(0, MAX_RULES).map(rule => ({
         statement: rule.statement, kind: rule.kind, basis: rule.basis,
         // A rule written from code before this change describes the old behaviour of the changed function.
@@ -187,7 +208,7 @@ export function buildContextPack(context: ApplicationContextV2, impacts: EntityI
     changes,
     glossary,
     entityAnnotations: context.entityAnnotations.filter(annotation => relevantIds.has(annotation.entityId)),
-    unmappedEntityIds: [...relevantIds].filter(id => !annotationById.has(id)),
+    unmappedEntityIds: [...relevantIds].filter(id => !annotationById.has(id) && !fileRoleOf.has(fileOf(id))),
     allowedSurfaceIds: [...new Set(changes.flatMap(change => change.affectedAreas.flatMap(area => [area.surfaceId, ...area.usedByPages.map(page => page.surfaceId)])))].sort(),
     contextStatus: {
       schemaVersion: '2.0', ...(context.meta.migratedFrom ? { migratedFrom: context.meta.migratedFrom } : {}),
@@ -199,7 +220,10 @@ export function buildContextPack(context: ApplicationContextV2, impacts: EntityI
   // Enforce the size budget by dropping the least important detail first.
   const shrinkSteps: Array<[string, () => void]> = [
     ['end-to-end flow steps', () => pack.changes.forEach(change => change.affectedAreas.forEach(area => { area.e2eFlows = area.e2eFlows.slice(0, 1).map(flow => ({ ...flow, steps: flow.steps.slice(0, 5) })); }))],
-    ['dependent descriptions', () => pack.changes.forEach(change => { change.dependentMeanings = change.dependentMeanings.slice(0, 4); })],
+    ['dependent descriptions', () => pack.changes.forEach(change => {
+      change.dependentMeanings = change.dependentMeanings.slice(0, 4);
+      change.dependentFileRoles = change.dependentFileRoles.slice(0, 4);
+    })],
     ['compatibility annotations', () => { pack.entityAnnotations = pack.entityAnnotations.filter(annotation => changedIds.has(annotation.entityId)); }],
     ['visible text', () => pack.changes.forEach(change => change.affectedAreas.forEach(area => { area.visibleText = area.visibleText.slice(0, 3); }))],
     ['lower-priority affected areas', () => pack.changes.forEach(change => { change.affectedAreas = change.affectedAreas.slice(0, 3); })],

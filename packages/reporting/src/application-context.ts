@@ -7,7 +7,7 @@ import {
   loadApplicationContext, type AnyApplicationContext, type ApplicationContextV2, type LoadedApplicationContext,
 } from './context-contract';
 import {
-  generateApplicationContextV2, refreshApplicationContext, type RefreshSummary,
+  generateApplicationContextV2, refreshApplicationContext, type ContextGranularity, type RefreshSummary,
 } from './context-generator';
 import type { LLMClientOptions } from './llm-client';
 
@@ -68,6 +68,8 @@ export interface ContextLifecycleOptions {
   generateContext?: boolean;
   /** Incrementally update an existing context (new/changed functions and surfaces only). */
   refreshContext?: boolean;
+  /** For a new context: summarize files (default) or describe every function. A refresh keeps the existing mode. */
+  granularity?: ContextGranularity;
   llmOptions?: LLMClientOptions;
   applicationMap?: ApplicationMap;
   signals?: BusinessSignals;
@@ -86,6 +88,7 @@ export async function loadOrCreateApplicationContext(options: ContextLifecycleOp
   const generatorInput = () => ({
     technicalGraph, sourceFiles: sourceFiles ?? [], options: llmOptions,
     applicationMap: options.applicationMap, signals: options.signals, onProgress: options.onProgress, checkpointDir,
+    granularity: options.granularity,
   });
   // Saved requests only matter until the context file is written.
   const clearCheckpoints = () => fs.rmSync(checkpointDir, { recursive: true, force: true });

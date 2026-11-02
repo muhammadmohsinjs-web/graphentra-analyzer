@@ -24,6 +24,7 @@ function onboardingInput(dir: string, client: unknown) {
       signals: collectBusinessSignals({ projectRoot: dir, files: listProjectFiles({ target: dir, comparison }), technicalGraph: result.technicalGraph }),
       sourceFiles: result.technicalGraph.analyzedFiles.map(file => ({ path: file, content: fs.readFileSync(path.join(dir, file), 'utf8') })),
       options: { client: client as any, model: 'offline' },
+      granularity: 'functions' as const,
     },
   };
 }
@@ -183,7 +184,7 @@ test('refresh re-describes only changed functions, keeps reviewed knowledge, and
     const fake = createFakeLlm();
     const first = onboardingInput(repo.dir, fake.client);
     const generated = await loadOrCreateApplicationContext({
-      contextDirectory, technicalGraph: first.input.technicalGraph, sourceFiles: first.input.sourceFiles, generateContext: true,
+      contextDirectory, technicalGraph: first.input.technicalGraph, sourceFiles: first.input.sourceFiles, generateContext: true, granularity: 'functions',
       applicationMap: first.input.applicationMap, signals: first.input.signals, llmOptions: first.input.options,
     });
     assert.equal(generated.action, 'generated');
@@ -217,6 +218,154 @@ test('refresh re-describes only changed functions, keeps reviewed knowledge, and
   } finally { repo.cleanup(); fs.rmSync(contextDirectory, { recursive: true, force: true }); }
 });
 
+test('file-level onboarding summarizes every file and describes no function on its own', async t => {
+  quiet(t);
+  const repo = createWebAppRepository();
+  try {
+    const fake = createFakeLlm();
+    const progress: string[] = [];
+    const { result, input } = onboardingInput(repo.dir, fake.client);
+    const context = await generateApplicationContextV2({ ...input, granularity: 'files', onProgress: message => progress.push(message) });
+    const production = result.technicalGraph.entities.filter(entity => !entity.file.startsWith('e2e/'));
+    const files = [...new Set(production.map(entity => entity.file))].sort();
+    assert.deepEqual(context.fileSummaries!.map(item => item.file).sort(), files);
+    assert.ok(context.fileSummaries!.every(item => item.fingerprint && item.summary));
+    assert.equal(context.meta.coverage.files, files.length);
+    assert.equal(context.meta.coverage.summarizedFiles, files.length);
+    assert.deepEqual(context.entityAnnotations, []);
+
+    const requests = fake.calls.filter(call => call.schema === 'graphentra_context_files');
+    assert.equal(fake.calls.filter(call => call.schema === 'graphentra_context_module').length, 0);
+    assert.ok(requests.every(call => call.user.entitiesToDescribe === undefined && call.user.entities.length > 0),
+      'functions are listed only so rules can link to them');
+    const rule = context.rules.find(item => /minimum order amount/.test(item.statement))!;
+    assert.deepEqual(rule.files, ['src/server/orderService.ts']);
+    assert.ok(rule.featureIds.includes('checkout'), 'rules linked to unannotated functions still get features');
+    assert.ok(progress.some(message => /^summarizing \d+ files$/.test(message)));
+  } finally { repo.cleanup(); }
+});
+
+test('file-level onboarding sends at most one request per parallel slot, with low reasoning', async t => {
+  quiet(t);
+  const repo = createWebAppRepository();
+  try {
+    const fake = createFakeLlm();
+    const { input } = onboardingInput(repo.dir, fake.client);
+    await generateApplicationContextV2({ ...input, granularity: 'files', concurrency: 2 });
+    const requests = fake.calls.filter(call => call.schema === 'graphentra_context_files');
+    assert.ok(requests.length >= 1 && requests.length <= 2);
+    assert.ok(requests.every(call => call.body.reasoning?.effort === 'low'));
+    assert.ok(fake.calls.filter(call => call.schema !== 'graphentra_context_files').every(call => call.body.reasoning === undefined));
+  } finally { repo.cleanup(); }
+});
+
+test('a file request that is stuck is sent once more, and the first answer wins', async t => {
+  quiet(t);
+  const repo = createWebAppRepository();
+  try {
+    const fake = createFakeLlm({ hangOnce: 'graphentra_context_files' });
+    const progress: string[] = [];
+    const { result, input } = onboardingInput(repo.dir, fake.client);
+    const context = await generateApplicationContextV2({
+      ...input, granularity: 'files', batchChars: 400, concurrency: 8, hedgeAfterMs: 5, onProgress: message => progress.push(message),
+    });
+    const files = new Set(result.technicalGraph.entities.filter(entity => !entity.file.startsWith('e2e/')).map(entity => entity.file));
+    assert.equal(context.fileSummaries!.length, files.size);
+    const requests = fake.calls.filter(call => call.schema === 'graphentra_context_files');
+    const batches = new Set(requests.map(call => JSON.stringify(call.user.files.map((file: { path: string }) => file.path))));
+    assert.ok(batches.size >= 4, 'enough requests finish to measure a median');
+    assert.equal(requests.length, batches.size + 1, 'exactly one duplicate');
+    assert.equal(fake.aborted, 1, 'the stuck request is cancelled once the duplicate answers');
+    assert.ok(progress.includes('re-sent one slow file request'));
+  } finally { repo.cleanup(); }
+});
+
+test('synthesis accepts a folder that contains listed modules without a correction request', async t => {
+  quiet(t);
+  const repo = createWebAppRepository();
+  try {
+    const fake = createFakeLlm({ synthesisModules: () => ['src/'] });
+    const { input } = onboardingInput(repo.dir, fake.client);
+    const context = await generateApplicationContextV2({ ...input, granularity: 'files' });
+    assert.equal(fake.calls.filter(call => call.schema === 'graphentra_context_synthesis').length, 1);
+    const listed = fake.calls.find(call => call.schema === 'graphentra_context_synthesis')!.user.modules as string[];
+    assert.deepEqual(context.features[0]!.files, listed.filter(module => module.startsWith('src/')));
+  } finally { repo.cleanup(); }
+});
+
+test('synthesis leaves a few modules unassigned instead of asking again, but corrects when many are missing', async t => {
+  quiet(t);
+  for (const [keep, expected] of [[-1, 1], [1, 2]] as const) {
+    const repo = createWebAppRepository();
+    try {
+      const fake = createFakeLlm({ synthesisModules: modules => modules.slice(0, keep) });
+      const { input } = onboardingInput(repo.dir, fake.client);
+      await generateApplicationContextV2({ ...input, granularity: 'files' });
+      assert.equal(fake.calls.filter(call => call.schema === 'graphentra_context_synthesis').length, expected);
+    } finally { repo.cleanup(); }
+  }
+});
+
+test('QA report asks again once when the model returns truncated JSON', async t => {
+  quiet(t);
+  const repo = createWebAppRepository();
+  try {
+    const fake = createFakeLlm({ malformedOnce: 'qa_change_impact_report' });
+    const context = await generateApplicationContextV2(onboardingInput(repo.dir, fake.client).input);
+    applyPaymentThresholdChange(repo.edit);
+    const changed = analyzeRepository({ target: repo.dir, comparison: { mode: 'working-tree' }, engine: 'legacy' });
+    const report = await generateQAReport(changed.evidence, context, { client: fake.client, model: 'offline' }, { applicationMap: changed.applicationMap });
+    assert.equal(fake.calls.filter(call => call.schema === 'qa_change_impact_report').length, 2);
+    assert.ok(report.qaReport.testAreas!.length > 0);
+  } finally { repo.cleanup(); }
+});
+
+test('context pack explains functions without annotations through their file summary', async t => {
+  quiet(t);
+  const repo = createWebAppRepository();
+  try {
+    const fake = createFakeLlm();
+    const context = await generateApplicationContextV2({ ...onboardingInput(repo.dir, fake.client).input, granularity: 'files' });
+    applyPaymentThresholdChange(repo.edit);
+    const changed = analyzeRepository({ target: repo.dir, comparison: { mode: 'working-tree' }, engine: 'legacy' });
+    const pack = buildContextPack(context, changed.impacts, { applicationMap: changed.applicationMap, relations: changed.technicalGraph.relations });
+    const change = pack.changes.find(item => item.changedEntityId === 'src/server/orderService.ts#chargeCard')!;
+    assert.equal(change.fileRole, 'Places orders and charges the customer card at checkout.');
+    assert.ok(change.rules.some(rule => /minimum order amount/.test(rule.statement)));
+    assert.equal(change.features[0]!.criticality, 'critical');
+    assert.deepEqual(pack.unmappedEntityIds, [], 'every relevant function is covered by an annotation or its file');
+    const unannotated = change.dependentFileRoles.flatMap(item => item.entityIds);
+    assert.ok(unannotated.every(id => !context.entityAnnotations.some(annotation => annotation.entityId === id)));
+  } finally { repo.cleanup(); }
+});
+
+test('file-level refresh re-summarizes only changed files and is a no-op when nothing changed', async t => {
+  quiet(t);
+  const repo = createWebAppRepository();
+  try {
+    const fake = createFakeLlm();
+    const { input } = onboardingInput(repo.dir, fake.client);
+    const context = await generateApplicationContextV2({ ...input, granularity: 'files' });
+
+    let before = fake.calls.length;
+    const unchanged = await refreshApplicationContext(context, input);
+    assert.equal(fake.calls.length, before);
+    assert.equal(unchanged.summary.resummarizedFiles, 0);
+
+    repo.edit('src/shared/pricing.ts', 'toFixed(2)', 'toFixed(3)');
+    const next = onboardingInput(repo.dir, fake.client).input;
+    before = fake.calls.length;
+    const { context: refreshed, summary } = await refreshApplicationContext(context, next);
+    const sent = fake.calls.slice(before).filter(call => call.schema === 'graphentra_context_files')
+      .flatMap(call => call.user.files.map((file: any) => file.path));
+    assert.deepEqual(sent, ['src/shared/pricing.ts']);
+    assert.equal(summary.resummarizedFiles, 1);
+    assert.equal(refreshed.fileSummaries!.length, context.fileSummaries!.length);
+    const pricing = refreshed.fileSummaries!.find(item => item.file === 'src/shared/pricing.ts')!;
+    assert.notEqual(pricing.fingerprint, context.fileSummaries!.find(item => item.file === 'src/shared/pricing.ts')!.fingerprint);
+  } finally { repo.cleanup(); }
+});
+
 test('direct refresh API is a no-op when nothing changed', async t => {
   quiet(t);
   const repo = createWebAppRepository();
@@ -227,6 +376,6 @@ test('direct refresh API is a no-op when nothing changed', async t => {
     const before = fake.calls.length;
     const { summary } = await refreshApplicationContext(context, input);
     assert.equal(fake.calls.length, before);
-    assert.deepEqual(summary, { reannotatedEntities: 0, removedAnnotations: 0, addedSurfaces: 0, removedSurfaces: 0, preservedReviewed: 0 });
+    assert.deepEqual(summary, { reannotatedEntities: 0, resummarizedFiles: 0, removedAnnotations: 0, addedSurfaces: 0, removedSurfaces: 0, preservedReviewed: 0 });
   } finally { repo.cleanup(); }
 });

@@ -321,6 +321,10 @@ export interface GenerateStructuredInput<T> {
   options?: LLMClientOptions;
   /** Accept the corrected answer even if errors remain (callers then repair or drop invalid items). */
   acceptRemainingErrors?: boolean;
+  /** Reasoning effort requested from the provider (OpenRouter `reasoning.effort`); omitted uses the model default. */
+  reasoningEffort?: 'low' | 'medium' | 'high';
+  /** Cancels the request, e.g. when a duplicate of it has already answered. */
+  signal?: AbortSignal;
 }
 
 /** Strict-JSON-schema completion with transport retries, one semantic correction, and tracing. */
@@ -339,7 +343,9 @@ export async function generateStructured<T>(input: GenerateStructuredInput<T>): 
     const completion = await withTransportRetries(() => client.chat.completions.create({
       model, messages: [...messages],
       response_format: { type: 'json_schema', json_schema: { name: input.schemaName, strict: true, schema: input.jsonSchema } },
-    }, { headers: { 'X-Client-Request-Id': traceId } }));
+      // OpenRouter extension, not in the OpenAI request type.
+      ...(input.reasoningEffort ? { reasoning: { effort: input.reasoningEffort } } as Record<string, unknown> : {}),
+    }, { headers: { 'X-Client-Request-Id': traceId }, signal: input.signal }));
     const content = completion.choices[0]?.message.content;
     if (!content) throw new Error(`The LLM returned no content for ${input.task}.`);
     let value: T;
@@ -488,17 +494,22 @@ export async function generateImpactReport({
         throw new Error('The LLM returned an empty impact report.');
       }
 
-      let report: unknown;
+      let validatedReport: ImpactReport;
 
       try {
-        report = JSON.parse(content);
+        validatedReport = impactReportSchema.parse(impactReportResponseSchema.parse(JSON.parse(content)));
       } catch (error) {
+        // Truncated or malformed JSON is usually a one-off; ask again with the same messages.
+        if (attempt < 2) {
+          logLLMTrace('request.parse_retry', { traceId, completionId: completion.id, attempt, finishReason: completion.choices[0]?.finish_reason });
+          continue;
+        }
+        if (!(error instanceof SyntaxError)) throw error;
         throw new Error('The LLM returned an impact report that was not valid JSON.', {
           cause: error,
         });
       }
 
-      const validatedReport = impactReportSchema.parse(impactReportResponseSchema.parse(report));
       const errors = validateImpactReportSemantics(validatedReport, { allowedSurfaceIds });
 
       if (errors.length > 0) {

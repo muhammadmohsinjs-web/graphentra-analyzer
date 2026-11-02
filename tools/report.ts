@@ -82,7 +82,7 @@ export async function runReport(argv: string[] = process.argv.slice(2), dependen
     return;
   }
   if (options.help) {
-    console.log('Graphentra Local QA Reporting\nUsage: npm run report -- --target <dir> [--base <ref> --head <ref> | --working-tree] [--output <evidence-file>] [--report <QA-Markdown-file>] [--generate-context | --refresh-context]\n--generate-context onboards the repository once: it sends eligible source, documentation excerpts, and derived signals to the configured provider in bounded batches and writes .graphentra/application-context.json.\n--refresh-context re-describes only new or changed functions and new surfaces in an existing context (the previous file is kept as application-context.previous.json).');
+    console.log('Graphentra Local QA Reporting\nUsage: npm run report -- --target <dir> [--base <ref> --head <ref> | --working-tree] [--output <evidence-file>] [--report <QA-Markdown-file>] [--generate-context | --refresh-context] [--context-granularity files|functions]\n--generate-context onboards the repository once: it sends eligible source, documentation excerpts, and derived signals to the configured provider in bounded batches and writes .graphentra/application-context.json.\n--refresh-context re-describes only new or changed functions and new surfaces in an existing context (the previous file is kept as application-context.previous.json).\n--context-granularity files (default) summarizes each file; functions describes every function (much slower).');
     return;
   }
   if (options.version) { console.log(ANALYZER_VERSION); return; }
@@ -149,15 +149,16 @@ export async function runReport(argv: string[] = process.argv.slice(2), dependen
     const contextRequest = (progress?: (detail: string) => void) => loadOrCreateApplicationContext({
       contextDirectory: directory, technicalGraph: result.technicalGraph, sourceFiles, signals,
       applicationMap: result.applicationMap, generateContext: options.generateContext, refreshContext: options.refreshContext,
-      llmOptions, onProgress: progress,
+      granularity: options.contextGranularity, llmOptions, onProgress: progress,
     });
     const lifecycle = wantsContextWork
       ? await withLLMLoader(options.refreshContext ? 'refresh application context' : 'application context', model, contextRequest)
       : await contextRequest();
     if (lifecycle.action !== 'loaded') {
       const { coverage } = lifecycle.context.meta;
-      console.log(`Application context ${lifecycle.action}: ${coverage.annotatedEntities}/${coverage.eligibleEntities} functions described, ${coverage.describedSurfaces}/${coverage.surfaces} surfaces described, ${lifecycle.context.features.length} features, ${lifecycle.context.rules.length} rules.`);
-      if (lifecycle.refreshSummary) console.log(`Refresh: ${lifecycle.refreshSummary.reannotatedEntities} functions re-described, ${lifecycle.refreshSummary.addedSurfaces} surfaces added, ${lifecycle.refreshSummary.removedSurfaces} removed, ${lifecycle.refreshSummary.preservedReviewed} reviewed annotations preserved.`);
+      const files = coverage.files !== undefined ? `${coverage.summarizedFiles ?? 0}/${coverage.files} files summarized, ` : '';
+      console.log(`Application context ${lifecycle.action}: ${files}${coverage.annotatedEntities}/${coverage.eligibleEntities} functions described, ${coverage.describedSurfaces}/${coverage.surfaces} surfaces described, ${lifecycle.context.features.length} features, ${lifecycle.context.rules.length} rules.`);
+      if (lifecycle.refreshSummary) console.log(`Refresh: ${lifecycle.refreshSummary.resummarizedFiles} files re-summarized, ${lifecycle.refreshSummary.reannotatedEntities} functions re-described, ${lifecycle.refreshSummary.addedSurfaces} surfaces added, ${lifecycle.refreshSummary.removedSurfaces} removed, ${lifecycle.refreshSummary.preservedReviewed} reviewed annotations preserved.`);
     }
     for (const warning of lifecycle.warnings) console.warn(`Context note: ${warning}`);
     if (result.outcome !== 'completed') {

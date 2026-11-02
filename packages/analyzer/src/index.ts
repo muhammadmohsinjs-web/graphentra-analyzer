@@ -12,6 +12,7 @@ export * from './validator';
 export * from './deterministic';
 export * from './application-map';
 export * from './business-signals';
+export { outlineSource, DEFAULT_OUTLINE_CHARS } from './source-outline';
 export * from './toolchain';
 export { buildCoverage, renderCoverageMarkdown, mapSnapshotSkipReason, languageOf, directoryOf, type CoverageInput } from './coverage';
 export { classifyNonTsFile, nonTsChangeDiagnostics, type NonTsChangeClass } from './non-ts-changes';

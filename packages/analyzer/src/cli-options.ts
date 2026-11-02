@@ -11,13 +11,15 @@ export interface CliOptions {
   version?: boolean;
   generateContext?: boolean;
   refreshContext?: boolean;
+  /** Reporting only: "files" (default) summarizes files; "functions" describes every function. */
+  contextGranularity?: 'files' | 'functions';
   engine?: EngineProfile;
   maxAffectedEntities?: number;
   maxDepth?: number;
   hubThreshold?: number;
 }
 
-const valueOptions = new Set(['target', 'base', 'head', 'report', 'output', 'engine', 'max-affected-entities', 'max-affected', 'max-depth', 'hub-threshold']);
+const valueOptions = new Set(['target', 'base', 'head', 'report', 'output', 'engine', 'max-affected-entities', 'max-affected', 'max-depth', 'hub-threshold', 'context-granularity']);
 const flagOptions = new Set(['working-tree', 'help', 'version']);
 
 export function parseCliOptions(args: string[], configuration: { reporting?: boolean } = {}): CliOptions {
@@ -42,7 +44,9 @@ export function parseCliOptions(args: string[], configuration: { reporting?: boo
     const rawName = argument.slice(2, separator === -1 ? undefined : separator);
     const name = rawName === 'max-affected' ? 'max-affected-entities' : rawName;
 
-    if (name === 'report' && !configuration.reporting) throw new Error('--report is a QA reporting option. Use npm run report.');
+    if ((name === 'report' || name === 'context-granularity') && !configuration.reporting) {
+      throw new Error(`--${name} is a QA reporting option. Use npm run report.`);
+    }
     if (flagOptions.has(name) || (configuration.reporting && (name === 'generate-context' || name === 'refresh-context'))) {
       if (separator !== -1) {
         throw new Error(`Option --${name} does not take a value.`);
@@ -71,6 +75,9 @@ export function parseCliOptions(args: string[], configuration: { reporting?: boo
     }
     if ((name === 'max-depth' || name === 'hub-threshold') && !/^[1-9]\d*$/.test(value)) {
       throw new GraphentraError(`Option --${name} must be a positive integer, got "${value}".`, 'INVALID_OPTIONS');
+    }
+    if (name === 'context-granularity' && value !== 'files' && value !== 'functions') {
+      throw new GraphentraError(`Option --context-granularity must be "files" or "functions", got "${value}".`, 'INVALID_OPTIONS');
     }
     if (name === 'max-affected-entities' && !/^[1-9]\d*$/.test(value)) {
       throw new GraphentraError(`Option --max-affected-entities must be a positive integer, got "${value}".`, 'INVALID_OPTIONS');
@@ -124,6 +131,8 @@ export function parseCliOptions(args: string[], configuration: { reporting?: boo
 
   if (flags.has('generate-context')) result.generateContext = true;
   if (flags.has('refresh-context')) result.refreshContext = true;
+  const granularity = values.get('context-granularity');
+  if (granularity !== undefined) result.contextGranularity = granularity as CliOptions['contextGranularity'];
   return result;
 }
 

@@ -8,7 +8,7 @@ import { applicationContextSchema, type ApplicationContext } from './contracts';
  * Every item is anchored to deterministic IDs (graph entities, application-map surfaces, files)
  * and carries a `basis` so the model can weigh reviewed/documented knowledge above inference.
  */
-export const CONTEXT_PROMPT_VERSION = 'context-v2.1';
+export const CONTEXT_PROMPT_VERSION = 'context-v2.2';
 
 export const basisSchema = z.enum(['reviewed', 'documentation', 'tests', 'ui-text', 'code', 'inferred']);
 export type Basis = z.infer<typeof basisSchema>;
@@ -27,6 +27,9 @@ export const applicationContextV2Schema = z.object({
       annotatedEntities: z.number().int().nonnegative(),
       surfaces: z.number().int().nonnegative(),
       describedSurfaces: z.number().int().nonnegative(),
+      /** File-level contexts only: files that hold eligible functions, and how many have a summary. */
+      files: z.number().int().nonnegative().optional(),
+      summarizedFiles: z.number().int().nonnegative().optional(),
     }).strict(),
     unassignedFiles: z.array(z.string()),
     migratedFrom: z.literal('1.0').optional(),
@@ -59,6 +62,16 @@ export const applicationContextV2Schema = z.object({
     setup: z.array(z.string()),
     basis: basisSchema,
   }).strict()),
+  /**
+   * Present in file-level contexts: the business role of each file. Functions without their own annotation
+   * are explained through their file's summary.
+   */
+  fileSummaries: z.array(z.object({
+    file: z.string(),
+    summary: z.string(),
+    fingerprint: z.string().optional(),
+    basis: basisSchema,
+  }).strict()).optional(),
   glossary: z.array(z.object({
     term: z.string(),
     identifiers: z.array(z.string()),
@@ -79,6 +92,8 @@ export const applicationContextV2Schema = z.object({
     statement: z.string(),
     kind: z.enum(['observed', 'documented', 'tested']),
     entityIds: z.array(z.string()),
+    /** Files the rule applies to (file-level contexts). */
+    files: z.array(z.string()).optional(),
     featureIds: z.array(z.string()),
     basis: basisSchema,
   }).strict()),
