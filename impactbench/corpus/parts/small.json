@@ -1,0 +1,849 @@
+[
+  {
+    "id": null,
+    "repo": "consola",
+    "repoUrl": "https://github.com/unjs/consola",
+    "introducer": {
+      "sha": "cf93d42ab7ac4469846f438e04d1bc2951fba357",
+      "subject": "feat: `consola.prompt` util (#170)",
+      "date": "2023-03-31T16:49:23+02:00"
+    },
+    "fix": {
+      "sha": "9f7a22a3905e7041140d04e48a2cd9b34ddfb0d6",
+      "subject": "fix: use `initial` in `select` and `multiselect` prompts (#232)",
+      "date": "2023-12-01T11:45:00+01:00",
+      "issue": "#232"
+    },
+    "changeClass": "same-signature-behavior",
+    "symptom": "The initial option on select and multiselect prompts was accepted by the types but ignored, so the preselected value was never applied.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/prompt.ts#prompt",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "consola.prompt select initial value",
+        "consola.prompt multiselect initial values"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix passes opts.initial as initialValue/initialValues to the select and multiselect calls in prompt(), which the introducer omitted.",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep",
+    "rejectReason": null
+  },
+  {
+    "id": null,
+    "repo": "consola",
+    "repoUrl": "https://github.com/unjs/consola",
+    "introducer": {
+      "sha": "17df6397349c2433a0e0dfc16ffff72042ba2dc9",
+      "subject": "feat: `/basic`, `/core` and `/browser` subpath exports (#178)",
+      "date": "2023-04-18T14:33:47+02:00"
+    },
+    "fix": {
+      "sha": "e46733b3e66920cac7fd1d07ccd469da12ac662e",
+      "subject": "fix(types): add backward compatible declarations",
+      "date": "2023-07-06T01:11:49+02:00",
+      "issue": null
+    },
+    "changeClass": null,
+    "symptom": null,
+    "affected": null,
+    "fixAddedTest": false,
+    "evidence": null,
+    "confidence": null,
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "reject",
+    "rejectReason": "Fix only repoints type-declaration re-exports to renamed dist files; packaging/typing-only, no runtime behavior."
+  },
+  {
+    "id": null,
+    "repo": "consola",
+    "repoUrl": "https://github.com/unjs/consola",
+    "introducer": {
+      "sha": "ef6e5e5a098adc80bc2b0badfbfb10d3ea723e43",
+      "subject": "feat: expose `createConsola` and named exports",
+      "date": "2023-03-28T18:39:36+02:00"
+    },
+    "fix": {
+      "sha": "6833945b435bf702fbd3696b4167554d56550c70",
+      "subject": "fix: pass level from `CONSOLA_LEVEL` to the `defaults` (resolves #129)",
+      "date": "2023-04-10T22:54:17+02:00",
+      "issue": "#129"
+    },
+    "changeClass": "plain-logic",
+    "symptom": "Log level taken from the CONSOLA_LEVEL environment variable was not passed to the instance defaults.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/index.ts#_createConsola",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "CONSOLA_LEVEL environment variable handling"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix adds defaults: { level } to the consola creation and changes the CONSOLA_LEVEL parse fallback in the introducer-written function; no test added and exact user-visible effect is inferred from the subject.",
+    "confidence": "low",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep",
+    "rejectReason": null
+  },
+  {
+    "id": null,
+    "repo": "consola",
+    "repoUrl": "https://github.com/unjs/consola",
+    "introducer": {
+      "sha": "3a8f6627d30c161a1b40542d5416e09c2b52751f",
+      "subject": "feat: expose constructor and reporters",
+      "date": "2019-04-12T09:57:31+04:30"
+    },
+    "fix": {
+      "sha": "fafbec2b1bc75912eea5d0618a27b982738d6cda",
+      "subject": "fix: new LogLevel enum is not exported properly #95 (#96)",
+      "date": "2020-05-07T16:41:02+02:00",
+      "issue": "#95"
+    },
+    "changeClass": null,
+    "symptom": null,
+    "affected": null,
+    "fixAddedTest": false,
+    "evidence": null,
+    "confidence": null,
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "reject",
+    "rejectReason": "LogLevel enum did not exist at the introducer; the fix exports an enum added later, so the introducer did not cause the omission."
+  },
+  {
+    "id": null,
+    "repo": "consola",
+    "repoUrl": "https://github.com/unjs/consola",
+    "introducer": {
+      "sha": "197a6b398e7475e20e114ac488f9645bb4d8088e",
+      "subject": "feat: count spam log",
+      "date": "2019-06-18T18:51:33+04:30"
+    },
+    "fix": {
+      "sha": "940474d3b64a4969acdec04290734e700920c19f",
+      "subject": "fix: throttle expiration (#81)",
+      "date": "2019-12-27T13:11:29+01:00",
+      "issue": "#81"
+    },
+    "changeClass": "plain-logic",
+    "symptom": "A burst of identical throttled logs never printed its final \"(repeated N times)\" line unless a different log followed.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/consola.js#Consola._logFn",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/consola.js#Consola.constructor",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Throttled duplicate log counting"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix adds a throttle timeout that resolves the pending repeat count; test \"can see spams without ending log\" expects logs[1].args to be [SPAM, (repeated 9 times)].",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep",
+    "rejectReason": null
+  },
+  {
+    "id": null,
+    "repo": "consola",
+    "repoUrl": "https://github.com/unjs/consola",
+    "introducer": {
+      "sha": "47af1df9df9e99d557fd3e685a0734ef399f19e9",
+      "subject": "feat: improve packaging for browser support",
+      "date": "2018-10-09T17:14:40+03:30"
+    },
+    "fix": {
+      "sha": "7b0f838fbc95859d699aabd6225669e051c89cb1",
+      "subject": "fix: bundle std-env and entrypoint",
+      "date": "2019-02-23T22:58:50+03:30",
+      "issue": null
+    },
+    "changeClass": null,
+    "symptom": null,
+    "affected": null,
+    "fixAddedTest": false,
+    "evidence": null,
+    "confidence": null,
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "reject",
+    "rejectReason": "Build/packaging-only fix (bundle std-env, move entrypoint); no observable runtime logic regression shown."
+  },
+  {
+    "id": null,
+    "repo": "consola",
+    "repoUrl": "https://github.com/unjs/consola",
+    "introducer": {
+      "sha": "851fb9158a6f3a225eab9389c062a3b369cb2671",
+      "subject": "back to the minimal fancy",
+      "date": "2018-11-01T02:02:02+03:30"
+    },
+    "fix": {
+      "sha": "b66fde0f28fa6fa0d6eeadeee75127e44c84c9e9",
+      "subject": "fix(fancy): remove extra icons",
+      "date": "2018-11-03T01:56:56+03:30",
+      "issue": null
+    },
+    "changeClass": null,
+    "symptom": null,
+    "affected": null,
+    "fixAddedTest": false,
+    "evidence": null,
+    "confidence": null,
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "reject",
+    "rejectReason": "Cosmetic icon removal (and badge tweak) after a deliberate \"minimal fancy\" redesign; not a behavior regression."
+  },
+  {
+    "id": null,
+    "repo": "consola",
+    "repoUrl": "https://github.com/unjs/consola",
+    "introducer": {
+      "sha": "661752c3a9330226384c1cb5b3acc81488f0a657",
+      "subject": "refactors and DX improvement",
+      "date": "2018-10-31T13:58:11+03:30"
+    },
+    "fix": {
+      "sha": "3afa9aa7c862e4f4f4cccf839920eb41d61d1222",
+      "subject": "fix(error): always strip first line from stack",
+      "date": "2018-11-02T23:56:57+03:30",
+      "issue": null
+    },
+    "changeClass": null,
+    "symptom": null,
+    "affected": null,
+    "fixAddedTest": false,
+    "evidence": null,
+    "confidence": null,
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "reject",
+    "rejectReason": "Introducer only moved parseStack from utils/index.js into utils/error.js; the first-line logic already existed before it."
+  },
+  {
+    "id": null,
+    "repo": "consola",
+    "repoUrl": "https://github.com/unjs/consola",
+    "introducer": {
+      "sha": "2d4af390c0861734c41bedb91c66cd06d67120c1",
+      "subject": "feat: rework _createLogFn with better argument handling",
+      "date": "2018-10-05T12:46:12+03:30"
+    },
+    "fix": {
+      "sha": "f07e05637ffe89504b2897d2933fdd0ecc2996bc",
+      "subject": "fix: don't return this when calling log functions",
+      "date": "2018-10-10T13:43:47+03:30",
+      "issue": null
+    },
+    "changeClass": null,
+    "symptom": null,
+    "affected": null,
+    "fixAddedTest": false,
+    "evidence": null,
+    "confidence": null,
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "reject",
+    "rejectReason": "Return-this behavior pre-existed the introducer (old log fn also returned this); fix is a design change, not a regression."
+  },
+  {
+    "id": null,
+    "repo": "json-server",
+    "repoUrl": "https://github.com/typicode/json-server",
+    "introducer": {
+      "sha": "ada86ac596867e32f6d609a7fc2191bbf0b47fb5",
+      "subject": "feat: add _where filtering, use new op separator, drop _start, _end, _limit (#1696)",
+      "date": "2026-02-14T13:34:05+01:00"
+    },
+    "fix": {
+      "sha": "503b96970edeb36c3f533acaa478176378b8e7cb",
+      "subject": "fix: return 400 for invalid JSON request bodies",
+      "date": "2026-03-07T02:48:51+01:00",
+      "issue": null
+    },
+    "changeClass": null,
+    "symptom": null,
+    "affected": null,
+    "fixAddedTest": true,
+    "evidence": null,
+    "confidence": null,
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "reject",
+    "rejectReason": "Silent ignore of non-object bodies already existed in the pre-introducer route handlers; introducer only refactored them into withBody helpers."
+  },
+  {
+    "id": null,
+    "repo": "json-server",
+    "repoUrl": "https://github.com/typicode/json-server",
+    "introducer": {
+      "sha": "33fcd7159c9d358776cfe69676a1bbb1056e1e2d",
+      "subject": "Switch back to async",
+      "date": "2018-11-14T12:03:05+01:00"
+    },
+    "fix": {
+      "sha": "15459cf109f1e4f7194b0dfea99b9e03ac06c7f2",
+      "subject": "Fix db.getState is not a function",
+      "date": "2018-12-26T21:25:03+01:00",
+      "issue": null
+    },
+    "changeClass": "return-shape",
+    "symptom": "Creating a router from a database file path failed with \"db.getState is not a function\".",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/server/router/index.js#<module>",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Starting json-server router with a db file path"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix swaps lowdb FileAsync adapter back to FileSync in the router factory, reverting exactly the introducer change; no test added and symptom taken from subject.",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep",
+    "rejectReason": null
+  },
+  {
+    "id": null,
+    "repo": "json-server",
+    "repoUrl": "https://github.com/typicode/json-server",
+    "introducer": {
+      "sha": "95f334f095acc4167c6ece044307a29b93ca5ccc",
+      "subject": "Add singular resources",
+      "date": "2015-07-22T07:25:50+02:00"
+    },
+    "fix": {
+      "sha": "2d278fbcb872d5c6a97439ba8334ba6da350d39b",
+      "subject": "Fix PUT should replace resource",
+      "date": "2015-10-03T16:03:29+02:00",
+      "issue": null
+    },
+    "changeClass": null,
+    "symptom": null,
+    "affected": null,
+    "fixAddedTest": true,
+    "evidence": null,
+    "confidence": null,
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "reject",
+    "rejectReason": "Plural PUT used updateById (merge) before the introducer, which only moved it; same merge semantics in singular.js is a design gap shared with older code, not a clean regression."
+  },
+  {
+    "id": null,
+    "repo": "json-server",
+    "repoUrl": "https://github.com/typicode/json-server",
+    "introducer": {
+      "sha": "e8fe1ad89a7188a53631b632003f7814deddcc1c",
+      "subject": "Add embed, thanks to @delfi",
+      "date": "2015-05-25T14:48:22+02:00"
+    },
+    "fix": {
+      "sha": "920c32751a4a355003b78779e6b28fb789e5eecd",
+      "subject": "fix empty key/value when _embed is undefined/empty",
+      "date": "2015-05-26T14:45:35-04:00",
+      "issue": null
+    },
+    "changeClass": "plain-logic",
+    "symptom": "GET /:resource/:id without _embed returned the resource with an extra empty \"undefined\" key.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/router.js#show",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Single resource GET with _embed query"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix wraps the embed loop in a check for non-empty _embed; before it, an undefined _embed became [undefined] and set resource[undefined].",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep",
+    "rejectReason": null
+  },
+  {
+    "id": null,
+    "repo": "json-server",
+    "repoUrl": "https://github.com/typicode/json-server",
+    "introducer": {
+      "sha": "7da6045201f644c2715f425a0e7c4295eedf95d9",
+      "subject": "Separate routes and server creation",
+      "date": "2015-02-06T01:11:02+01:00"
+    },
+    "fix": {
+      "sha": "6718a8deac0393f3180b3de45cd38f437a69f5ee",
+      "subject": "Fix logger",
+      "date": "2015-03-20T06:54:23+01:00",
+      "issue": null
+    },
+    "changeClass": null,
+    "symptom": null,
+    "affected": null,
+    "fixAddedTest": false,
+    "evidence": null,
+    "confidence": null,
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "reject",
+    "rejectReason": "Introducer moved the logger condition from index.js; fix mixes a new favicon-skip feature with removing the condition and states no symptom, so causation is unverifiable."
+  },
+  {
+    "id": null,
+    "repo": "json-server",
+    "repoUrl": "https://github.com/typicode/json-server",
+    "introducer": {
+      "sha": "25b2e436489c1557f6595811ba95207857d2853a",
+      "subject": "Use restify",
+      "date": "2014-03-18T20:25:13+01:00"
+    },
+    "fix": {
+      "sha": "053484d072a1995556fb017f21ff23d5313d338d",
+      "subject": "Fix #25",
+      "date": "2014-09-17T21:00:46+02:00",
+      "issue": "#25"
+    },
+    "changeClass": null,
+    "symptom": null,
+    "affected": null,
+    "fixAddedTest": true,
+    "evidence": null,
+    "confidence": null,
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "reject",
+    "rejectReason": "toNative already existed in utils/utils.js before the introducer; it was only moved."
+  },
+  {
+    "id": null,
+    "repo": "json-server",
+    "repoUrl": "https://github.com/typicode/json-server",
+    "introducer": {
+      "sha": "ca775b754492921d22e1e2f4ee011d6c186c0cbe",
+      "subject": "Update",
+      "date": "2014-03-21T17:18:54+01:00"
+    },
+    "fix": {
+      "sha": "98add5aff5da6865791b8f807f6e8da10fa72361",
+      "subject": "Fix tests",
+      "date": "2014-04-02T06:54:02+02:00",
+      "issue": null
+    },
+    "changeClass": null,
+    "symptom": null,
+    "affected": null,
+    "fixAddedTest": true,
+    "evidence": null,
+    "confidence": null,
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "reject",
+    "rejectReason": "Fix only renames the low dependency to lowdb in source and tests (dependency/test fix), no behavior regression."
+  },
+  {
+    "id": null,
+    "repo": "ofetch",
+    "repoUrl": "https://github.com/unjs/ofetch",
+    "introducer": {
+      "sha": "1029b9e2c982991d21d77ea33036d7c20a4536bb",
+      "subject": "feat: return blob if `content-type` isn't text, svg, xml or json (#39)",
+      "date": "2021-12-17T10:04:06+01:00"
+    },
+    "fix": {
+      "sha": "adaa03b56bf17df2a9a69eb471e84460e0d1ad12",
+      "subject": "fix: generalise `application/json` content types (#75)",
+      "date": "2022-04-29T20:46:11+02:00",
+      "issue": "#75"
+    },
+    "changeClass": "plain-logic",
+    "symptom": "Responses with JSON-style content types such as application/vnd.api+json were returned as blobs instead of parsed JSON.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/utils.ts#detectResponseType",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/fetch.ts#createFetch>$fetchRaw",
+          "outsideIntroducerDiff": false,
+          "role": "caller"
+        }
+      ],
+      "areas": [
+        "Response body parsing by content-type"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix replaces the exact jsonTypes set (application/json, application/ld+json) with a regex accepting any +json suffix in detectResponseType.",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep",
+    "rejectReason": null
+  },
+  {
+    "id": null,
+    "repo": "ofetch",
+    "repoUrl": "https://github.com/unjs/ofetch",
+    "introducer": {
+      "sha": "d7fb8f688c2b3f574430b40f7139ee144850be23",
+      "subject": "feat: `$fetch.create` support",
+      "date": "2021-12-22T00:20:38+01:00"
+    },
+    "fix": {
+      "sha": "8ea2d2b5f9dcda333de5824862a7377085fd8bb4",
+      "subject": "fix: avoid calling `fetch` with `globalOptions` context",
+      "date": "2021-12-22T19:32:22+01:00",
+      "issue": null
+    },
+    "changeClass": "same-signature-behavior",
+    "symptom": "The fetch function supplied to createFetch was invoked as a method of globalOptions, so it ran with the wrong receiver.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/fetch.ts#createFetch",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/fetch.ts#createFetch>$fetchRaw",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Making requests through createFetch / $fetch"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix destructures fetch and Headers from globalOptions and calls them directly instead of globalOptions.fetch(...), the form the introducer wrote; the failure mode is inferred from the subject.",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep",
+    "rejectReason": null
+  },
+  {
+    "id": null,
+    "repo": "pathe",
+    "repoUrl": "https://github.com/unjs/pathe",
+    "introducer": {
+      "sha": "d8d0cb51dbca7295248c36f93510738057f2828d",
+      "subject": "feat!: improved implementation with tests (#3)",
+      "date": "2021-09-27T14:14:29+02:00"
+    },
+    "fix": {
+      "sha": "34a55cf41c9da75d63bff9abc3d5b0b50068b6ac",
+      "subject": "fix: improve windows path handling and improve coverage (#36)",
+      "date": "2022-08-10T12:24:41+02:00",
+      "issue": "#36"
+    },
+    "changeClass": null,
+    "symptom": null,
+    "affected": null,
+    "fixAddedTest": true,
+    "evidence": null,
+    "confidence": null,
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "reject",
+    "rejectReason": "Broad hardening commit touching many windows-path edge cases at once (isAbsolute, normalize, dirname, join, resolve); no single traceable regression, truth would be noisy."
+  },
+  {
+    "id": null,
+    "repo": "pathe",
+    "repoUrl": "https://github.com/unjs/pathe",
+    "introducer": {
+      "sha": "6136b3ca9c1c26ec2a0002b24f08f8dcf28a78af",
+      "subject": "feat!: implement rest of `path` minimally  (#10)",
+      "date": "2022-05-05T18:18:34+02:00"
+    },
+    "fix": {
+      "sha": "dfe46d79035dd7302bb55b84cc445db07e8dde7f",
+      "subject": "fix(extname): handle edge cases wirth leading dot",
+      "date": "2022-06-30T00:49:26+02:00",
+      "issue": null
+    },
+    "changeClass": "plain-logic",
+    "symptom": "extname returned wrong results for dotfiles and edge names such as \".foo\", \"..\", \".\", \"./\" and \"..foo\".",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/path.ts#extname",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/path.ts#parse",
+          "outsideIntroducerDiff": false,
+          "role": "caller"
+        }
+      ],
+      "areas": [
+        "path.extname for dotfiles and edge cases"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix replaces the split-on-dot extname with a regex; test adds cases .foo -> \"\", ..foo -> \".foo\", \".\" -> \"\".",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep",
+    "rejectReason": null
+  },
+  {
+    "id": null,
+    "repo": "ufo",
+    "repoUrl": "https://github.com/unjs/ufo",
+    "introducer": {
+      "sha": "1667eca8199a42fbec3403375d716ced38a5b6c5",
+      "subject": "feat: `withBase` and `withoutBase` utils",
+      "date": "2021-02-10T12:16:47+01:00"
+    },
+    "fix": {
+      "sha": "fc72dd0b7e503c07e4788ebb7af6fb790c714035",
+      "subject": "fix(withoutBase): preserve leading slash",
+      "date": "2022-07-07T17:35:50+02:00",
+      "issue": null
+    },
+    "changeClass": "plain-logic",
+    "symptom": "withoutBase dropped the leading slash when the remainder started with a query, e.g. /api?test with base /api gave ?test.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/utils.ts#withoutBase",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Stripping a base path from a URL"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix prefixes \"/\" when the trimmed result lacks one; test adds { base: \"/api\", input: \"/api?test\", out: \"/?test\" }.",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep",
+    "rejectReason": null
+  },
+  {
+    "id": null,
+    "repo": "ufo",
+    "repoUrl": "https://github.com/unjs/ufo",
+    "introducer": {
+      "sha": "38631cfb90995acde56e0cbef0e341710dcc9e65",
+      "subject": "feat!: reduce dependency on $URL for less encode/decoding",
+      "date": "2020-12-16T13:29:51+01:00"
+    },
+    "fix": {
+      "sha": "f2f188f08c02d969dff07d9f0d5d44408393dbbb",
+      "subject": "fix(parseURL): respect 0 number as query value (#44)",
+      "date": "2022-03-15T11:42:58+01:00",
+      "issue": "#44"
+    },
+    "changeClass": "plain-logic",
+    "symptom": "A numeric 0 query value was serialized as a key without a value instead of key=0.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/query.ts#encodeQueryItem",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/utils.ts#withQuery",
+          "outsideIntroducerDiff": false,
+          "role": "caller"
+        }
+      ],
+      "areas": [
+        "URL query building with 0 values"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix changes !val to !val && val !== 0 in encodeQueryItem; test adds withQuery case { foo: 0 } -> /?test&foo=0.",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep",
+    "rejectReason": null
+  },
+  {
+    "id": null,
+    "repo": "ufo",
+    "repoUrl": "https://github.com/unjs/ufo",
+    "introducer": {
+      "sha": "3809d28e0fcb653ae91ed9c9707ad670ded68c6e",
+      "subject": "feat!: rewrite with URL ponyfill (#4)",
+      "date": "2020-12-16T00:13:16+01:00"
+    },
+    "fix": {
+      "sha": "7a663e21d1d0e7eec21be5c4b57eae9ad81cf590",
+      "subject": "fix: handle uppercase encoding (#32)",
+      "date": "2021-08-17T19:19:44+02:00",
+      "issue": "#32"
+    },
+    "changeClass": "plain-logic",
+    "symptom": "URLs with lowercase percent-encodings (e.g. %2f, %3f) were not normalized to uppercase.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/encoding.ts#<module>",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/encoding.ts#encodePath",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/utils.ts#normalizeURL",
+          "outsideIntroducerDiff": false,
+          "role": "caller"
+        }
+      ],
+      "areas": [
+        "URL normalization of percent-encoded characters"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix makes the decode regexes case-insensitive; test adds normalizeURL case with %2f%3f%26 -> %2F%3F%26 (fix also adds & encoding in encodePath).",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep",
+    "rejectReason": null
+  }
+]

@@ -1,0 +1,1507 @@
+[
+  {
+    "id": "consola-01",
+    "repo": "consola",
+    "repoUrl": "https://github.com/unjs/consola",
+    "introducer": {
+      "sha": "197a6b398e7475e20e114ac488f9645bb4d8088e",
+      "subject": "feat: count spam log",
+      "date": "2019-06-18T18:51:33+04:30"
+    },
+    "fix": {
+      "sha": "940474d3b64a4969acdec04290734e700920c19f",
+      "subject": "fix: throttle expiration (#81)",
+      "date": "2019-12-27T13:11:29+01:00",
+      "issue": "#81"
+    },
+    "changeClass": "plain-logic",
+    "symptom": "A burst of identical throttled logs never printed its final \"(repeated N times)\" line unless a different log followed.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/consola.js#Consola._logFn",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/consola.js#Consola.constructor",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Throttled duplicate log counting"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix adds a throttle timeout that resolves the pending repeat count; test \"can see spams without ending log\" expects logs[1].args to be [SPAM, (repeated 9 times)].",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "consola-02",
+    "repo": "consola",
+    "repoUrl": "https://github.com/unjs/consola",
+    "introducer": {
+      "sha": "ef6e5e5a098adc80bc2b0badfbfb10d3ea723e43",
+      "subject": "feat: expose `createConsola` and named exports",
+      "date": "2023-03-28T18:39:36+02:00"
+    },
+    "fix": {
+      "sha": "6833945b435bf702fbd3696b4167554d56550c70",
+      "subject": "fix: pass level from `CONSOLA_LEVEL` to the `defaults` (resolves #129)",
+      "date": "2023-04-10T22:54:17+02:00",
+      "issue": "#129"
+    },
+    "changeClass": "plain-logic",
+    "symptom": "Log level taken from the CONSOLA_LEVEL environment variable was not passed to the instance defaults.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/index.ts#_createConsola",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "CONSOLA_LEVEL environment variable handling"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix adds defaults: { level } to the consola creation and changes the CONSOLA_LEVEL parse fallback in the introducer-written function; no test added and exact user-visible effect is inferred from the subject.",
+    "confidence": "low",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "consola-03",
+    "repo": "consola",
+    "repoUrl": "https://github.com/unjs/consola",
+    "introducer": {
+      "sha": "cf93d42ab7ac4469846f438e04d1bc2951fba357",
+      "subject": "feat: `consola.prompt` util (#170)",
+      "date": "2023-03-31T16:49:23+02:00"
+    },
+    "fix": {
+      "sha": "9f7a22a3905e7041140d04e48a2cd9b34ddfb0d6",
+      "subject": "fix: use `initial` in `select` and `multiselect` prompts (#232)",
+      "date": "2023-12-01T11:45:00+01:00",
+      "issue": "#232"
+    },
+    "changeClass": "same-signature-behavior",
+    "symptom": "The initial option on select and multiselect prompts was accepted by the types but ignored, so the preselected value was never applied.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/prompt.ts#prompt",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "consola.prompt select initial value",
+        "consola.prompt multiselect initial values"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix passes opts.initial as initialValue/initialValues to the select and multiselect calls in prompt(), which the introducer omitted.",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "excalidraw-01",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "862231da4f514a130d2b791f1ccbf4701f1af5c5",
+      "subject": "Make all operations on elements array immutable (#283)",
+      "date": "2020-01-09T16:22:04+01:00"
+    },
+    "fix": {
+      "sha": "58ad6d741d5cc771a6f02c97b9f394c063411946",
+      "subject": "fix selecting elem inside already selected element (#349)",
+      "date": "2020-01-12T11:43:31-08:00",
+      "issue": "#349"
+    },
+    "changeClass": "plain-logic",
+    "symptom": "Clicking an element that sits inside an already selected element did not select it (the existing selection was kept).",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/index.tsx#App.render",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Selecting an element inside a selected element"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix removes the selected-element hit test the introducer added so the selection is cleared unless shift is held.",
+    "confidence": "low",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "excalidraw-02",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "2340dddaad685bd1d196952b1113d1b9381e40da",
+      "subject": "Sync panel props to editing element (#470)",
+      "date": "2020-01-20T15:16:22-08:00"
+    },
+    "fix": {
+      "sha": "3f1075cbcd6ac677d3596e0b0a596dc359fabfb0",
+      "subject": "fix: slider value resets to the default value when opacity is 0 (#516)",
+      "date": "2020-01-22T20:51:56+01:00",
+      "issue": "#516"
+    },
+    "changeClass": "plain-logic",
+    "symptom": "The opacity slider jumped back to the default (100) when the selected element had opacity 0.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/actions/actionProperties.tsx#getFormValue",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/actions/actionProperties.tsx#actionChangeOpacity.PanelComponent",
+          "outsideIntroducerDiff": false,
+          "role": "caller"
+        }
+      ],
+      "areas": [
+        "Opacity slider at 0"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix changes || to ?? in getFormValue and the opacity panel so a falsy 0 value is preserved.",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "excalidraw-03",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "1866074c078d0eddd001de1f1a04a6f19adf69e0",
+      "subject": "Add Zen mode for distraction free drawing (#1450)",
+      "date": "2020-04-25T15:13:02+02:00"
+    },
+    "fix": {
+      "sha": "582d26e858c4166756afcd33856ec36f5999ee98",
+      "subject": "fix tool icon button on mobile (#1489)",
+      "date": "2020-04-26T11:45:35+02:00",
+      "issue": "#1489"
+    },
+    "changeClass": "plain-logic",
+    "symptom": "Tool buttons with a visible prop were hidden when they should show and shown when they should hide (mobile/zen mode).",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/components/ToolButton.tsx#ToolButton",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/actions/actionDeleteSelected.tsx#actionDeleteSelected.PanelComponent",
+          "outsideIntroducerDiff": true,
+          "role": "consumer",
+          "collectorGap": true
+        },
+        {
+          "id": "src/actions/actionDuplicateSelection.tsx#actionDuplicateSelection.PanelComponent",
+          "outsideIntroducerDiff": true,
+          "role": "consumer",
+          "collectorGap": true
+        },
+        {
+          "id": "src/actions/actionFinalize.tsx#actionFinalize.PanelComponent",
+          "outsideIntroducerDiff": true,
+          "role": "consumer",
+          "collectorGap": true
+        }
+      ],
+      "areas": [
+        "Mobile toolbar button visibility",
+        "Zen mode"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix inverts the class condition so visible true or null maps to ToolIcon_type_button--show; the introducer had it mapped to --hide.",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "excalidraw-04",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "b2d442abce7f677aeeb4e605c71316d415e3553d",
+      "subject": "Support CSV graphs and improve the look and feel (#2495)",
+      "date": "2020-12-11T12:13:23+01:00"
+    },
+    "fix": {
+      "sha": "ce52c183820f1e2c760fe2e0bec2386cfabb7cc0",
+      "subject": "fix: Add width/height for the lines in charts (#2586)",
+      "date": "2020-12-14T16:29:39+01:00",
+      "issue": "#2586"
+    },
+    "changeClass": "plain-logic",
+    "symptom": "Pasted charts could not be resized correctly because their axis/guide lines had no width/height.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/charts.ts#renderSpreadsheet",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Resizing pasted charts"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix adds width: chartWidth / height: chartHeight to the chart axis and dotted line elements.",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "excalidraw-05",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "dd993adc5c2f8fa764ed40fdb5be02b33f37ba5f",
+      "subject": "Add stats for nerds (#2453)",
+      "date": "2020-12-07T18:35:16+02:00"
+    },
+    "fix": {
+      "sha": "b081a09962f46f1f97153fe9f73eacba33e13a20",
+      "subject": "fix: positions stats for linear elements (#3331)",
+      "date": "2021-03-26T22:56:27+02:00",
+      "issue": "#3331"
+    },
+    "changeClass": "plain-logic",
+    "symptom": "Stats for nerds showed wrong x/y/width/height for a single selected linear element (line/arrow) because raw element x/y/width/height was used instead of the bounding box.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/components/Stats.tsx#Stats",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Stats for nerds position of lines and arrows"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix replaces the single-element branch (selectedElements[0].x/y/width/height) with selectedBoundingBox values.",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "excalidraw-06",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "dd8e465304033681bf610f98d27cde833c39eba5",
+      "subject": "feat: Support updating text properties by clicking on container (#4499)",
+      "date": "2021-12-29T16:49:52+05:30"
+    },
+    "fix": {
+      "sha": "b71e70299152b61091a15dc7005315d3a2701524",
+      "subject": "fix: undo should work when selecting bounded textr (#4537)",
+      "date": "2022-01-04T18:02:16+05:30",
+      "issue": "#4537"
+    },
+    "changeClass": "same-signature-behavior",
+    "symptom": "Undo did not work correctly after selecting text bound to a container, since the text was re-wrapped on selection.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/element/textElement.ts#redrawTextBoundingBox",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/actions/actionProperties.tsx#actionChangeFontSize.perform",
+          "outsideIntroducerDiff": false,
+          "role": "caller",
+          "collectorGap": true
+        },
+        {
+          "id": "src/actions/actionProperties.tsx#actionChangeFontFamily.perform",
+          "outsideIntroducerDiff": false,
+          "role": "caller",
+          "collectorGap": true
+        },
+        {
+          "id": "src/actions/actionProperties.tsx#actionChangeTextAlign.perform",
+          "outsideIntroducerDiff": false,
+          "role": "caller",
+          "collectorGap": true
+        },
+        {
+          "id": "src/actions/actionStyles.ts#actionPasteStyles.perform",
+          "outsideIntroducerDiff": false,
+          "role": "caller",
+          "collectorGap": true
+        }
+      ],
+      "areas": [
+        "Undo with bound text",
+        "Changing text properties via container"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix removes the introducer conditional wrapText call keyed on appState.editingElement and wraps whenever a container exists.",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "excalidraw-07",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "1331cffe93ffec7e94670b3d95e3e3c1bd228c57",
+      "subject": "feat: Eraser toggle to switch back to the previous tool (#4981)",
+      "date": "2022-03-28T21:33:32+02:00"
+    },
+    "fix": {
+      "sha": "734bb4d2ed3e7b1fac2f05cd5bca455d386bf4b9",
+      "subject": "fix: decouple actionFinalize and actionErase (#4984)",
+      "date": "2022-03-29T21:37:09+02:00",
+      "issue": "#4984"
+    },
+    "changeClass": "same-signature-behavior",
+    "symptom": "Pressing Escape with the eraser tool active did not reliably return to the previous tool, and restoring saved appState did not normalize activeTool.lastActiveToolBeforeEraser.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/actions/actionFinalize.tsx#actionFinalize.perform",
+          "outsideIntroducerDiff": false,
+          "role": "fault",
+          "collectorGap": true
+        },
+        {
+          "id": "src/actions/actionCanvas.tsx#actionErase.perform",
+          "outsideIntroducerDiff": false,
+          "role": "fault",
+          "collectorGap": true
+        },
+        {
+          "id": "src/data/restore.ts#restoreAppState",
+          "outsideIntroducerDiff": true,
+          "role": "consumer"
+        }
+      ],
+      "areas": [
+        "Eraser tool toggle with Escape",
+        "Restoring active tool from saved data"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix removes Escape from actionErase and the isEraserActive guard from actionFinalize so finalize reverts to lastActiveToolBeforeEraser, and restoreAppState sets the field; restore.test.ts only changed toBe to toEqual.",
+    "confidence": "low",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "excalidraw-08",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "49172ac2d309790d5ab5d55bdbd9ebf549ee5b01",
+      "subject": "feat: support custom colors 🎉 (#4843)",
+      "date": "2022-02-28T19:04:26+05:30"
+    },
+    "fix": {
+      "sha": "3d56ceb79482484ef616d82b6b18532e938cb565",
+      "subject": "fix: Handle `ColorPicker` parentSelector being undefined (#5152)",
+      "date": "2022-05-07T18:16:14Z",
+      "issue": "#5152"
+    },
+    "changeClass": "plain-logic",
+    "symptom": "Keyboard navigation/shortcuts in the color picker could throw when the gallery parent element was missing.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/components/ColorPicker.tsx#Picker",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Color picker keyboard navigation"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix replaces non-null assertions on gallery.current.querySelector(...) with optional chaining and guards on parentElement.",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "excalidraw-09",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "b6bb74d08d7650ed87b9a631436001df74b5869f",
+      "subject": "feat: throttle scene rendering to animation framerate (#5422)",
+      "date": "2022-07-07T11:47:37+02:00"
+    },
+    "fix": {
+      "sha": "5bc40402a64d93b444445c31c865a1e74f87db69",
+      "subject": "fix: disable render throttling by default & during resize (#5451)",
+      "date": "2022-07-16T11:36:55+02:00",
+      "issue": "#5451"
+    },
+    "changeClass": "timing-limit-constant",
+    "symptom": "Canvas rendering was throttled to animation frames, causing the canvas to lag behind or flicker while resizing the window.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/components/App.tsx#App.componentDidUpdate",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/components/App.tsx#App.componentDidMount",
+          "outsideIntroducerDiff": true,
+          "role": "caller"
+        },
+        {
+          "id": "src/renderer/renderScene.ts#renderSceneThrottled",
+          "outsideIntroducerDiff": false,
+          "role": "fault",
+          "collectorGap": true
+        },
+        {
+          "id": "src/renderer/renderScene.ts#renderScene",
+          "outsideIntroducerDiff": true,
+          "role": "fault"
+        },
+        {
+          "id": "src/excalidraw-app/index.tsx#<module>",
+          "outsideIntroducerDiff": true,
+          "role": "consumer"
+        }
+      ],
+      "areas": [
+        "Canvas rendering during window resize",
+        "Render throttling"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix makes throttling opt-in (window.EXCALIDRAW_THROTTLE_RENDER) and disables it for the render after a ResizeObserver event; existing tests were only adapted.",
+    "confidence": "low",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "excalidraw-10",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "cad6097d604d891e94e397af6bec0d2f3d2eed9b",
+      "subject": "feat: factor out url library init & switch to `updateLibrary` API (#5115)",
+      "date": "2022-05-11T15:08:54+02:00"
+    },
+    "fix": {
+      "sha": "fdc462ec013d59536bf40e95cdec89c1ccda340d",
+      "subject": "fix: wait for window focus until prompting for library install (#5751)",
+      "date": "2022-10-10T16:08:13+02:00",
+      "issue": "#5751"
+    },
+    "changeClass": "plain-logic",
+    "symptom": "Opening a shared-library URL in a background tab showed the \"add library\" confirmation prompt before the user focused the tab.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/data/library.ts#useHandleLibrary>importLibraryFromURL",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/excalidraw-app/index.tsx#ExcalidrawWrapper",
+          "outsideIntroducerDiff": false,
+          "role": "caller"
+        }
+      ],
+      "areas": [
+        "Adding a library from a URL"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix makes importLibraryFromURL wait for the window focus event when prompting and the document is hidden, and moves URL-hash cleanup into finally.",
+    "confidence": "low",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "excalidraw-11",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "baf9651d343b1ce10a94c54ca1ee799058e9d6cb",
+      "subject": "feat: changed text copy/paste behaviour (#5786)",
+      "date": "2022-11-26T23:44:26+01:00"
+    },
+    "fix": {
+      "sha": "bdb14723b32db6fd5c621d66e27b96e3fc991f54",
+      "subject": "fix: chart pasting not working due to removing tab characters (#5987)",
+      "date": "2022-12-16T18:18:27+01:00",
+      "issue": "#5987"
+    },
+    "changeClass": "same-signature-behavior",
+    "symptom": "Pasting spreadsheet data (tab-separated) no longer produced a chart.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/clipboard.ts#getSystemClipboard",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/clipboard.ts#parseClipboard",
+          "outsideIntroducerDiff": false,
+          "role": "caller"
+        },
+        {
+          "id": "src/charts.ts#tryParseSpreadsheet",
+          "outsideIntroducerDiff": true,
+          "role": "consumer"
+        }
+      ],
+      "areas": [
+        "Chart paste from spreadsheet"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix removes normalizeText from getSystemClipboard, which the introducer added and which stripped tab characters the spreadsheet parser needs.",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "excalidraw-12",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "1db078a3dceb76c53d27932049563ed28a7c4b62",
+      "subject": "feat: close MainMenu and Library dropdown on item select (#6152)",
+      "date": "2023-01-23T16:54:35+01:00"
+    },
+    "fix": {
+      "sha": "15655acb5ab6902d096035f0bad4178fe0893c83",
+      "subject": "fix: use jotai scope for editor-specific atoms (#6308)",
+      "date": "2023-03-03T11:58:36Z",
+      "issue": "#6308"
+    },
+    "changeClass": "plain-logic",
+    "symptom": "The Clear canvas confirm dialog and Library menu open state used the global jotai store instead of the editor scope, so the confirm dialog did not work reliably (e.g. Ctrl+Delete shortcut).",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/components/ActiveConfirmDialog.tsx#ActiveConfirmDialog",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/components/LibraryMenuHeaderContent.tsx#LibraryMenuHeader",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/components/main-menu/DefaultItems.tsx#ClearCanvas",
+          "outsideIntroducerDiff": false,
+          "role": "caller"
+        }
+      ],
+      "areas": [
+        "Clear canvas confirmation",
+        "Library menu dropdown"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix passes jotaiScope to useAtom for activeConfirmDialogAtom and isLibraryMenuOpenAtom; new shortcuts.test.tsx asserts the Clear canvas shortcut shows the confirm dialog and clears.",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "excalidraw-13",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "9659254fd66138d65f60281323fc2fd7deae2e0a",
+      "subject": "feat: improve text measurements in bound containers (#6187)",
+      "date": "2023-02-23T16:33:10+05:30"
+    },
+    "fix": {
+      "sha": "dd4c333925c48009cc1677d9688462141df0aceb",
+      "subject": "fix: add an offset of 0.5px for text editor in containers (#6328)",
+      "date": "2023-03-09T13:07:36+05:30",
+      "issue": "#6328"
+    },
+    "changeClass": "plain-logic",
+    "symptom": "The in-container text editor on Chrome-like browsers was 0.5px narrower than the rendered text, which could cause wrapping or position mismatch between editing and display.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/element/textWysiwyg.tsx#textWysiwyg",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Editing text inside shapes"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix removes the isFirefox||isSafari condition so textElementWidth += 0.5 applies to all browsers; only the linearElementEditor snapshot changed.",
+    "confidence": "low",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "excalidraw-14",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "d1f37cc64f3dd09e6cc0f1b5bca73e6b1957d39b",
+      "subject": "feat: tweak a few icons & add line editor button to side panel (#7990)",
+      "date": "2024-05-07T13:18:39+02:00"
+    },
+    "fix": {
+      "sha": "7d8b7fc14dd8b76c391c95d1e92f0c4236c55576",
+      "subject": "fix: compatible safari layers button svg (#8020)",
+      "date": "2024-05-15T15:22:05+02:00",
+      "issue": "#8020"
+    },
+    "changeClass": "same-signature-behavior",
+    "symptom": "The send backward and send to back layer icons rendered incorrectly (not rotated) in Safari.",
+    "affected": {
+      "entities": [
+        {
+          "id": "packages/excalidraw/components/icons.tsx#SendBackwardIcon",
+          "outsideIntroducerDiff": false,
+          "role": "fault",
+          "collectorGap": true
+        },
+        {
+          "id": "packages/excalidraw/components/icons.tsx#SendToBackIcon",
+          "outsideIntroducerDiff": false,
+          "role": "fault",
+          "collectorGap": true
+        },
+        {
+          "id": "packages/excalidraw/actions/actionZindex.tsx#actionSendBackward.PanelComponent",
+          "outsideIntroducerDiff": true,
+          "role": "consumer",
+          "collectorGap": true
+        },
+        {
+          "id": "packages/excalidraw/actions/actionZindex.tsx#actionSendToBack.PanelComponent",
+          "outsideIntroducerDiff": true,
+          "role": "consumer",
+          "collectorGap": true
+        }
+      ],
+      "areas": [
+        "Layer order buttons icons in Safari"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix replaces the SVG transform=\"rotate(180)\" attribute with style transform rotate(180deg); only the contextmenu snapshot changed.",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "excalidraw-15",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "b63689c23095d7a5fcea35a8d1e892f3ddacc1d0",
+      "subject": "feat: make HTML attribute sanitization stricter (#8977)",
+      "date": "2025-01-05T21:45:04+01:00"
+    },
+    "fix": {
+      "sha": "a3e1619635cec683eea806e18c870fd6d963b986",
+      "subject": "fix: hyperlinks html entities (#9063)",
+      "date": "2025-01-29T19:02:54+01:00",
+      "issue": "#9063"
+    },
+    "changeClass": "same-signature-behavior",
+    "symptom": "Hyperlinks and embed links containing &, <, > or quotes were stored with HTML entities (e.g. \"test&amp;\"), corrupting URLs.",
+    "affected": {
+      "entities": [
+        {
+          "id": "packages/excalidraw/data/url.ts#normalizeLink",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "packages/excalidraw/utils.ts#sanitizeHTMLAttribute",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "packages/excalidraw/element/embeddable.ts#getEmbedLink",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "packages/excalidraw/components/hyperlink/Hyperlink.tsx#Hyperlink",
+          "outsideIntroducerDiff": true,
+          "role": "caller"
+        },
+        {
+          "id": "packages/excalidraw/data/restore.ts#restoreElementWithProperties",
+          "outsideIntroducerDiff": true,
+          "role": "consumer"
+        },
+        {
+          "id": "packages/excalidraw/components/App.tsx#App.pasteFromClipboard",
+          "outsideIntroducerDiff": true,
+          "role": "caller",
+          "collectorGap": true
+        },
+        {
+          "id": "packages/excalidraw/components/App.tsx#App.handleAppOnDrop",
+          "outsideIntroducerDiff": true,
+          "role": "caller"
+        },
+        {
+          "id": "packages/excalidraw/element/elementLink.ts#defaultGetElementLinkFromSelection",
+          "outsideIntroducerDiff": true,
+          "role": "caller"
+        }
+      ],
+      "areas": [
+        "Element hyperlinks",
+        "Embeddable link URLs",
+        "Loading saved links"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix replaces sanitizeHTMLAttribute with escapeDoubleQuotes; url.test.tsx now expects normalizeLink(\"test&\") to be \"test&\" instead of \"test&amp;\".",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "excalidraw-16",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "58f7d33d80198a2a80c6d3eb38b3432e062dfbea",
+      "subject": "perf: make eraser great again (#9352)",
+      "date": "2025-04-15T16:58:45+02:00"
+    },
+    "fix": {
+      "sha": "0cf36d6b30fc84085aa903460a04d0d568518f30",
+      "subject": "fix: erasing locked elements (#9400)",
+      "date": "2025-04-16T10:28:56+02:00",
+      "issue": "#9400"
+    },
+    "changeClass": "same-signature-behavior",
+    "symptom": "The eraser tool erased locked elements.",
+    "affected": {
+      "entities": [
+        {
+          "id": "packages/excalidraw/eraser/index.ts#EraserTrail.updateElementsToBeErased",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "packages/excalidraw/eraser/index.ts#eraserTest",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "packages/excalidraw/components/App.tsx#App.handleEraser",
+          "outsideIntroducerDiff": false,
+          "role": "caller"
+        }
+      ],
+      "areas": [
+        "Erasing locked elements"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix filters visibleElements to !el.locked before eraser hit testing; the pre-introducer handleEraser in App.tsx skipped locked elements and the rewritten EraserTrail dropped that check.",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "excalidraw-17",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "d33e42e3a1a955fa95c61310128dfe4ca2e5fdae",
+      "subject": "feat: add crowfoot to arrowheads (#8942)",
+      "date": "2025-01-05T21:50:24+01:00"
+    },
+    "fix": {
+      "sha": "27522110df0207506b25a84fe8b421eb65593d59",
+      "subject": "fix: fix keybindings for arrowheads (#9557)",
+      "date": "2025-05-22T09:47:41+02:00",
+      "issue": "#9557"
+    },
+    "changeClass": "same-signature-behavior",
+    "symptom": "Keyboard shortcuts for the crowfoot-one and crowfoot-many arrowheads were swapped relative to their labels.",
+    "affected": {
+      "entities": [
+        {
+          "id": "packages/excalidraw/actions/actionProperties.tsx#getArrowheadOptions",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "packages/excalidraw/actions/actionProperties.tsx#actionChangeArrowhead.PanelComponent",
+          "outsideIntroducerDiff": false,
+          "role": "caller",
+          "collectorGap": true
+        }
+      ],
+      "areas": [
+        "Arrowhead keyboard shortcuts"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix swaps keyBinding c and x between crowfoot_one and crowfoot_many.",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "excalidraw-18",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "5bcd8280c97c97b95f4fd268dbd4ff3d7905f87b",
+      "subject": "feat: add comments/presi eplus promos for discoveribility (#10294)",
+      "date": "2025-11-06T21:35:14+01:00"
+    },
+    "fix": {
+      "sha": "7f66e1fe897873713ba04410534be2d97b9139af",
+      "subject": "fix: banner url (#10315)",
+      "date": "2025-11-11T11:29:44+01:00",
+      "issue": "#10315"
+    },
+    "changeClass": "plain-logic",
+    "symptom": "The Excalidraw+ promo banner linked to the wrong destination (landing page and app URLs were swapped for signed-in vs guest users).",
+    "affected": {
+      "entities": [
+        {
+          "id": "excalidraw-app/components/ExcalidrawPlusPromoBanner.tsx#ExcalidrawPlusPromoBanner",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Excalidraw+ promo banner link"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix swaps the VITE_APP_PLUS_LP/VITE_APP_PLUS_APP choice: signed-in goes to the app URL, guest to LP with utm params.",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "excalidraw-19",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "b552c6071417d731874c43e38d41dc6f76409fc9",
+      "subject": "feat: Focus indicator (#10613)",
+      "date": "2026-01-31T15:08:28+01:00"
+    },
+    "fix": {
+      "sha": "ffcb67b21f3693821b0202bf54707bcee21a8ba7",
+      "subject": "fix: Inside-inside bound arrow endpoint drag trigger focus point editor (#10771)",
+      "date": "2026-02-16T22:25:28+01:00",
+      "issue": "#10771"
+    },
+    "changeClass": "plain-logic",
+    "symptom": "Dragging the endpoint of an arrow bound inside a shape triggered the focus point editor instead of dragging the endpoint.",
+    "affected": {
+      "entities": [
+        {
+          "id": "packages/element/src/arrows/focus.ts#isFocusPointVisible",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "packages/element/src/arrows/focus.ts#handleFocusPointPointerDown",
+          "outsideIntroducerDiff": false,
+          "role": "caller"
+        },
+        {
+          "id": "packages/element/src/arrows/focus.ts#handleFocusPointHover",
+          "outsideIntroducerDiff": false,
+          "role": "caller"
+        },
+        {
+          "id": "packages/excalidraw/renderer/interactiveScene.ts#renderFocusPointIndicator",
+          "outsideIntroducerDiff": false,
+          "role": "caller"
+        }
+      ],
+      "areas": [
+        "Dragging bound arrow endpoints",
+        "Arrow focus point indicator"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix adds a startOrEnd param and makes isFocusPointVisible false when the focus point is within the arrow endpoint hit distance, so endpoint dragging takes precedence.",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "excalidraw-20",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "d9e8a33aa4b48d920ecb9d3fde15cf0e8b72fd5c",
+      "subject": "feat(editor): implement overlap box selection (#11053)",
+      "date": "2026-04-01T18:41:11+02:00"
+    },
+    "fix": {
+      "sha": "43fa4b56028478f53dbb65045df1f9f7737c4321",
+      "subject": "fix: frame selection and membership (#11250)",
+      "date": "2026-04-28T18:23:10+02:00",
+      "issue": "#11250"
+    },
+    "changeClass": "same-signature-behavior",
+    "symptom": "A rectangle that fully contained a frame was not treated as overlapping it, so dragging it over the frame did not add it as a child and box selection with frame clipping misbehaved.",
+    "affected": {
+      "entities": [
+        {
+          "id": "packages/element/src/frame.ts#isElementContainingFrame",
+          "outsideIntroducerDiff": true,
+          "role": "fault"
+        },
+        {
+          "id": "packages/element/src/selection.ts#getElementsWithinSelection",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "packages/element/src/frame.ts#elementOverlapsWithFrame",
+          "outsideIntroducerDiff": true,
+          "role": "caller"
+        }
+      ],
+      "areas": [
+        "Frame membership when dragging elements",
+        "Box selection of framed elements"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix reimplements isElementContainingFrame with boundsContainBounds instead of getElementsWithinSelection; frame.test.tsx adds \"should add a dragged element fully containing the frame\".",
+    "confidence": "low",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "excalidraw-21",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "5ca083436d44a51a0705d43ea22d323839d5fe8e",
+      "subject": "feat(packages/excalidraw): add `props.activeTool` and related (#11665)",
+      "date": "2026-07-15T11:46:08+02:00"
+    },
+    "fix": {
+      "sha": "1da120e914e87ae2f308ff6eb41c365401e8f583",
+      "subject": "fix(editor): include custom tools in pointer capture (#11826)",
+      "date": "2026-08-04T19:39:21+02:00",
+      "issue": "#11826"
+    },
+    "changeClass": "plain-logic",
+    "symptom": "In view mode with a host-implemented custom tool active, pointer events were not dispatched to the custom tool and drag panned the canvas instead.",
+    "affected": {
+      "entities": [
+        {
+          "id": "packages/excalidraw/components/App.tsx#App.isActiveToolPointerCapturing",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "packages/excalidraw/components/App.tsx#App.handleCanvasPointerDown",
+          "outsideIntroducerDiff": false,
+          "role": "caller"
+        },
+        {
+          "id": "packages/excalidraw/components/App.tsx#App.handleCanvasPanUsingWheelOrSpaceDrag",
+          "outsideIntroducerDiff": false,
+          "role": "caller"
+        }
+      ],
+      "areas": [
+        "Custom tools in view mode",
+        "View-mode drag to pan"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix makes isActiveToolPointerCapturing return true for activeTool \"custom\"; viewMode.test.tsx asserts onPointerDown/onPointerUp fire with the custom tool and scroll stays unchanged.",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "json-server-01",
+    "repo": "json-server",
+    "repoUrl": "https://github.com/typicode/json-server",
+    "introducer": {
+      "sha": "e8fe1ad89a7188a53631b632003f7814deddcc1c",
+      "subject": "Add embed, thanks to @delfi",
+      "date": "2015-05-25T14:48:22+02:00"
+    },
+    "fix": {
+      "sha": "920c32751a4a355003b78779e6b28fb789e5eecd",
+      "subject": "fix empty key/value when _embed is undefined/empty",
+      "date": "2015-05-26T14:45:35-04:00",
+      "issue": null
+    },
+    "changeClass": "plain-logic",
+    "symptom": "GET /:resource/:id without _embed returned the resource with an extra empty \"undefined\" key.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/router.js#show",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Single resource GET with _embed query"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix wraps the embed loop in a check for non-empty _embed; before it, an undefined _embed became [undefined] and set resource[undefined].",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "json-server-02",
+    "repo": "json-server",
+    "repoUrl": "https://github.com/typicode/json-server",
+    "introducer": {
+      "sha": "33fcd7159c9d358776cfe69676a1bbb1056e1e2d",
+      "subject": "Switch back to async",
+      "date": "2018-11-14T12:03:05+01:00"
+    },
+    "fix": {
+      "sha": "15459cf109f1e4f7194b0dfea99b9e03ac06c7f2",
+      "subject": "Fix db.getState is not a function",
+      "date": "2018-12-26T21:25:03+01:00",
+      "issue": null
+    },
+    "changeClass": "return-shape",
+    "symptom": "Creating a router from a database file path failed with \"db.getState is not a function\".",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/server/router/index.js#<module>",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Starting json-server router with a db file path"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix swaps lowdb FileAsync adapter back to FileSync in the router factory, reverting exactly the introducer change; no test added and symptom taken from subject.",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "ofetch-01",
+    "repo": "ofetch",
+    "repoUrl": "https://github.com/unjs/ofetch",
+    "introducer": {
+      "sha": "d7fb8f688c2b3f574430b40f7139ee144850be23",
+      "subject": "feat: `$fetch.create` support",
+      "date": "2021-12-22T00:20:38+01:00"
+    },
+    "fix": {
+      "sha": "8ea2d2b5f9dcda333de5824862a7377085fd8bb4",
+      "subject": "fix: avoid calling `fetch` with `globalOptions` context",
+      "date": "2021-12-22T19:32:22+01:00",
+      "issue": null
+    },
+    "changeClass": "same-signature-behavior",
+    "symptom": "The fetch function supplied to createFetch was invoked as a method of globalOptions, so it ran with the wrong receiver.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/fetch.ts#createFetch",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/fetch.ts#createFetch>$fetchRaw",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Making requests through createFetch / $fetch"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix destructures fetch and Headers from globalOptions and calls them directly instead of globalOptions.fetch(...), the form the introducer wrote; the failure mode is inferred from the subject.",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "ofetch-02",
+    "repo": "ofetch",
+    "repoUrl": "https://github.com/unjs/ofetch",
+    "introducer": {
+      "sha": "1029b9e2c982991d21d77ea33036d7c20a4536bb",
+      "subject": "feat: return blob if `content-type` isn't text, svg, xml or json (#39)",
+      "date": "2021-12-17T10:04:06+01:00"
+    },
+    "fix": {
+      "sha": "adaa03b56bf17df2a9a69eb471e84460e0d1ad12",
+      "subject": "fix: generalise `application/json` content types (#75)",
+      "date": "2022-04-29T20:46:11+02:00",
+      "issue": "#75"
+    },
+    "changeClass": "plain-logic",
+    "symptom": "Responses with JSON-style content types such as application/vnd.api+json were returned as blobs instead of parsed JSON.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/utils.ts#detectResponseType",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/fetch.ts#createFetch>$fetchRaw",
+          "outsideIntroducerDiff": false,
+          "role": "caller"
+        }
+      ],
+      "areas": [
+        "Response body parsing by content-type"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix replaces the exact jsonTypes set (application/json, application/ld+json) with a regex accepting any +json suffix in detectResponseType.",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "pathe-01",
+    "repo": "pathe",
+    "repoUrl": "https://github.com/unjs/pathe",
+    "introducer": {
+      "sha": "6136b3ca9c1c26ec2a0002b24f08f8dcf28a78af",
+      "subject": "feat!: implement rest of `path` minimally  (#10)",
+      "date": "2022-05-05T18:18:34+02:00"
+    },
+    "fix": {
+      "sha": "dfe46d79035dd7302bb55b84cc445db07e8dde7f",
+      "subject": "fix(extname): handle edge cases wirth leading dot",
+      "date": "2022-06-30T00:49:26+02:00",
+      "issue": null
+    },
+    "changeClass": "plain-logic",
+    "symptom": "extname returned wrong results for dotfiles and edge names such as \".foo\", \"..\", \".\", \"./\" and \"..foo\".",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/path.ts#extname",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/path.ts#parse",
+          "outsideIntroducerDiff": false,
+          "role": "caller"
+        }
+      ],
+      "areas": [
+        "path.extname for dotfiles and edge cases"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix replaces the split-on-dot extname with a regex; test adds cases .foo -> \"\", ..foo -> \".foo\", \".\" -> \"\".",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "ufo-01",
+    "repo": "ufo",
+    "repoUrl": "https://github.com/unjs/ufo",
+    "introducer": {
+      "sha": "3809d28e0fcb653ae91ed9c9707ad670ded68c6e",
+      "subject": "feat!: rewrite with URL ponyfill (#4)",
+      "date": "2020-12-16T00:13:16+01:00"
+    },
+    "fix": {
+      "sha": "7a663e21d1d0e7eec21be5c4b57eae9ad81cf590",
+      "subject": "fix: handle uppercase encoding (#32)",
+      "date": "2021-08-17T19:19:44+02:00",
+      "issue": "#32"
+    },
+    "changeClass": "plain-logic",
+    "symptom": "URLs with lowercase percent-encodings (e.g. %2f, %3f) were not normalized to uppercase.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/encoding.ts#<module>",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/encoding.ts#encodePath",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/utils.ts#normalizeURL",
+          "outsideIntroducerDiff": false,
+          "role": "caller"
+        }
+      ],
+      "areas": [
+        "URL normalization of percent-encoded characters"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix makes the decode regexes case-insensitive; test adds normalizeURL case with %2f%3f%26 -> %2F%3F%26 (fix also adds & encoding in encodePath).",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "ufo-02",
+    "repo": "ufo",
+    "repoUrl": "https://github.com/unjs/ufo",
+    "introducer": {
+      "sha": "38631cfb90995acde56e0cbef0e341710dcc9e65",
+      "subject": "feat!: reduce dependency on $URL for less encode/decoding",
+      "date": "2020-12-16T13:29:51+01:00"
+    },
+    "fix": {
+      "sha": "f2f188f08c02d969dff07d9f0d5d44408393dbbb",
+      "subject": "fix(parseURL): respect 0 number as query value (#44)",
+      "date": "2022-03-15T11:42:58+01:00",
+      "issue": "#44"
+    },
+    "changeClass": "plain-logic",
+    "symptom": "A numeric 0 query value was serialized as a key without a value instead of key=0.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/query.ts#encodeQueryItem",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/utils.ts#withQuery",
+          "outsideIntroducerDiff": false,
+          "role": "caller"
+        }
+      ],
+      "areas": [
+        "URL query building with 0 values"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix changes !val to !val && val !== 0 in encodeQueryItem; test adds withQuery case { foo: 0 } -> /?test&foo=0.",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "id": "ufo-03",
+    "repo": "ufo",
+    "repoUrl": "https://github.com/unjs/ufo",
+    "introducer": {
+      "sha": "1667eca8199a42fbec3403375d716ced38a5b6c5",
+      "subject": "feat: `withBase` and `withoutBase` utils",
+      "date": "2021-02-10T12:16:47+01:00"
+    },
+    "fix": {
+      "sha": "fc72dd0b7e503c07e4788ebb7af6fb790c714035",
+      "subject": "fix(withoutBase): preserve leading slash",
+      "date": "2022-07-07T17:35:50+02:00",
+      "issue": null
+    },
+    "changeClass": "plain-logic",
+    "symptom": "withoutBase dropped the leading slash when the remainder started with a query, e.g. /api?test with base /api gave ?test.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/utils.ts#withoutBase",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Stripping a base path from a URL"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix prefixes \"/\" when the trimmed result lacks one; test adds { base: \"/api\", input: \"/api?test\", out: \"/?test\" }.",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  }
+]

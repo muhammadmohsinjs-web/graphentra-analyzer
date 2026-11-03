@@ -63,3 +63,6 @@ reports.db
 # ImpactBench checkouts
 impactbench/work/
 .pnpm-store/
+
+# large open-source repos cloned by tools/fetch-large-repos.mjs
+fixtures/large-repos/*/
