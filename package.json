@@ -33,7 +33,8 @@
     "verify:all": "npm run build && npm run typecheck && npm test && npm run verify:boundaries && npm run verify:schema && npm run verify:distribution",
     "fetch:large-repos": "node tools/fetch-large-repos.mjs",
     "bench:fetch": "node tools/impactbench.mjs fetch",
-    "bench:baseline": "node tools/impactbench.mjs baseline"
+    "bench:baseline": "node tools/impactbench.mjs baseline",
+    "bench:corpus": "node tools/impactbench-corpus.mjs"
   },
   "repository": {
     "type": "git",

@@ -1,0 +1,242 @@
+[
+  {
+    "repo": "excalidraw",
+    "introducer": "2b4540225d66ec4f71d622f5405f2b7b0ef3735c",
+    "fix": "65aa577e39a1ae6315322eae010b69961b99b418",
+    "fixSubject": "fix(editor): fix AnimationController scheduling race conds (#11678)",
+    "verdict": "reject",
+    "reason": "Animation race-condition hardening (self-cancel/replace/throw inside callbacks) for edge cases of the original AnimationController design; no user-observable regression shown."
+  },
+  {
+    "repo": "excalidraw",
+    "introducer": "52eaf645919361c05d5ff75bd32d0e0e3a54e7e1",
+    "fix": "069982606dd7178c13e6c2293ede756c6767d3bc",
+    "fixSubject": "fix(editor): update `element.frameId` on frame change (#11490)",
+    "verdict": "reject",
+    "reason": "The \"element.frameId !== frame.id\" skip removed by the fix was added later by d2557474e (#11257); introducer 52eaf64591 only had a both-selected check, so SZZ blames the wrong commit."
+  },
+  {
+    "repo": "excalidraw",
+    "introducer": "b4903a7eab2330ce127509977472f6c50f52327b",
+    "fix": "b2b2815954f6561f0980bef8997750dabec16e87",
+    "fixSubject": "fix(editor): prevent duplicate lasso toolbar item (#11286)",
+    "verdict": "reject",
+    "reason": "Duplicate selection item appeared only after the hand tool became SHAPES[0] (eb959128a); at the introducer SHAPES[0] was selection so slice(1) was correct."
+  },
+  {
+    "repo": "excalidraw",
+    "introducer": "f19ce30dfeeae268d579ed7b03483b78cfab3adb",
+    "fix": "1ea5b26f250f011d92265becc7ad91efa8eb027f",
+    "fixSubject": "fix: missing `act()` in flowchart tests (#8354)",
+    "verdict": "reject",
+    "reason": "Test-only change (missing act() in flowchart tests, setupTests colorize); introducer is a dependency bump and no product behavior was wrong."
+  },
+  {
+    "repo": "excalidraw",
+    "introducer": "0f06fa3851c87f6e2206bcf0a184fabe379f2671",
+    "fix": "979312f779b675b9e6ad917ae0b04512fcfbd783",
+    "fixSubject": "fix: center align text when wrapped in container via context menu (#6480)",
+    "verdict": "reject",
+    "reason": "Introducer 0f06fa3851 already set textAlign CENTER when wrapping; centering was removed later by 5c0b15ce2 (#6310), so SZZ blames the wrong commit."
+  },
+  {
+    "repo": "excalidraw",
+    "introducer": "0d1058a596145894b703fe3078b574f83bfbb312",
+    "fix": "02286465079be6c6af646f41317fbc5178c8dc4d",
+    "fixSubject": "fix: line editor points rendering below elements (#5781)",
+    "verdict": "reject",
+    "reason": "renderLinearPointHandles was already called inside the per-element render loop before the introducer (0d1058a596^ line 419); the below-elements bug predates the midpoints feature."
+  },
+  {
+    "repo": "excalidraw",
+    "introducer": "104664cb9eda69df696fee458801fd460a3f75a9",
+    "fix": "fe56975f19bf661b8e21832804914117823a2e03",
+    "fixSubject": "fix: cleanup the condition for dragging elements (#5555)",
+    "verdict": "reject",
+    "reason": "Refactor/cleanup of the drag condition (and test reformatting); no behavior bug shown, introducer 104664cb9e is 240 days earlier."
+  },
+  {
+    "repo": "excalidraw",
+    "introducer": "d2ae18995c269fdd2808aeecf6b2faecf926d3d8",
+    "fix": "60cea7a0c26ef35c4cf33333d3b5e589c53ea0d8",
+    "fixSubject": "fix: selectedGroupIds not being stored in history (#3630)",
+    "verdict": "reject",
+    "reason": "Missing selectedGroupIds in history predates the introducer (d2ae18995c added shouldCreateEntry only); SZZ blamed an unchanged skip line."
+  },
+  {
+    "repo": "excalidraw",
+    "introducer": "790c9fd02e8c2ddbdc99366e6887dc8100a0fbf5",
+    "fix": "abebf9aff80fe6f29d331cf47e3d4dba63450099",
+    "fixSubject": "fix: small UI issues around image export dialog (#3642)",
+    "verdict": "reject",
+    "reason": "Cosmetic CSS/icon polish one day after the export redesign; no behavior regression, only a snapshot changed."
+  },
+  {
+    "repo": "excalidraw",
+    "introducer": "97b11b0f53c97f9e2b6866e0995105088149f4ec",
+    "fix": "166ad0412ce47b247c6bb712036cb188afa9c408",
+    "fixSubject": "Fix to reflect `textAlign` property to SVG export (#1375)",
+    "verdict": "reject",
+    "reason": "SVG export never supported textAlign; fix adds missing feature, not a regression."
+  },
+  {
+    "repo": "excalidraw",
+    "introducer": "9a0889c698d40f6f87122eb22efe94f710baba22",
+    "fix": "16a3aa7561cf5960b780fb9448c0d6d7afcb06f8",
+    "fixSubject": "Fix mobile dialog styling (#1363)",
+    "verdict": "reject",
+    "reason": "CSS/styling-only mobile dialog fix."
+  },
+  {
+    "repo": "excalidraw",
+    "introducer": "adfd95be3394a2ea00088e9a8d609cd01cfefcf6",
+    "fix": "f299514e445b4078a55b0856892e6c707043aa44",
+    "fixSubject": "fix: umd build so it can be used in browser (#7349)",
+    "verdict": "reject",
+    "reason": "Build config (webpack/UMD) and docs fix; not an app behavior regression from the introducer."
+  },
+  {
+    "repo": "excalidraw",
+    "introducer": "7eff6893c5c1e09739dfc4a28a2e0bec738c80f4",
+    "fix": "eb24e8ffe422656e66cf8f829daad7e6b01cc033",
+    "fixSubject": "fix: Wrap excalidraw in position relative & hide scrollbars in zen mode (#3174)",
+    "verdict": "reject",
+    "reason": "Layout/CSS positioning change to host wrapper; not a clear behavior regression."
+  },
+  {
+    "repo": "excalidraw",
+    "introducer": "81ab857a6fc66254239947524faccf45d5925f69",
+    "fix": "7c0b3295760d3492a980f2f6416a36c9ef592103",
+    "fixSubject": "fix(editor): increase autoresize handle threshold until it hides (#11773)",
+    "verdict": "reject",
+    "reason": "UI threshold tuning for a handle the introducer created; not a clear regression."
+  },
+  {
+    "repo": "excalidraw",
+    "introducer": "001880ba88854de709c5a22e90f47dde3fef409f",
+    "fix": "adcd28f348c8c2272b6ce5bccc094d22f00202fe",
+    "fixSubject": "fix: delay version logging & prevent duplicates (#2770)",
+    "verdict": "reject",
+    "reason": "Analytics version-logging timing; not user-observable."
+  },
+  {
+    "repo": "excalidraw",
+    "introducer": "b82b0754acdd40e2c539483fdc8e0ebe5a900381",
+    "fix": "5670c4778950ee31dcb7484578d8d0f6a7ed53d9",
+    "fixSubject": "🐛 Fix emoji rendering (#2030)",
+    "verdict": "reject",
+    "reason": "Emoji font styling only."
+  },
+  {
+    "repo": "excalidraw",
+    "introducer": "02daf6ffbde191ded8eba24ce844a81dc81565b1",
+    "fix": "dd2a7eb5972fc5070f225f345a9f5d481fda19ac",
+    "fixSubject": "Fix copy-paste on input (#331)",
+    "verdict": "reject",
+    "reason": "Introducer only recovered/moved index.tsx; bug (copy-paste in inputs) predates it."
+  },
+  {
+    "repo": "excalidraw",
+    "introducer": "015b46ab233e1a6a8d1ca81fa8fd9d2b36a37567",
+    "fix": "4d83d1c91e8a13ae639032e7cba3900d7729ffc5",
+    "fixSubject": "fix: use Reflect API instead of Object.hasOwn (#7958)",
+    "verdict": "reject",
+    "reason": "Compat tweak (Object.hasOwn to Reflect); no verified user-visible behavior change at the introducer."
+  },
+  {
+    "repo": "consola",
+    "introducer": "17df6397349c2433a0e0dfc16ffff72042ba2dc9",
+    "fix": "e46733b3e66920cac7fd1d07ccd469da12ac662e",
+    "fixSubject": "fix(types): add backward compatible declarations",
+    "verdict": "reject",
+    "reason": "Fix only repoints type-declaration re-exports to renamed dist files; packaging/typing-only, no runtime behavior."
+  },
+  {
+    "repo": "consola",
+    "introducer": "3a8f6627d30c161a1b40542d5416e09c2b52751f",
+    "fix": "fafbec2b1bc75912eea5d0618a27b982738d6cda",
+    "fixSubject": "fix: new LogLevel enum is not exported properly #95 (#96)",
+    "verdict": "reject",
+    "reason": "LogLevel enum did not exist at the introducer; the fix exports an enum added later, so the introducer did not cause the omission."
+  },
+  {
+    "repo": "consola",
+    "introducer": "47af1df9df9e99d557fd3e685a0734ef399f19e9",
+    "fix": "7b0f838fbc95859d699aabd6225669e051c89cb1",
+    "fixSubject": "fix: bundle std-env and entrypoint",
+    "verdict": "reject",
+    "reason": "Build/packaging-only fix (bundle std-env, move entrypoint); no observable runtime logic regression shown."
+  },
+  {
+    "repo": "consola",
+    "introducer": "851fb9158a6f3a225eab9389c062a3b369cb2671",
+    "fix": "b66fde0f28fa6fa0d6eeadeee75127e44c84c9e9",
+    "fixSubject": "fix(fancy): remove extra icons",
+    "verdict": "reject",
+    "reason": "Cosmetic icon removal (and badge tweak) after a deliberate \"minimal fancy\" redesign; not a behavior regression."
+  },
+  {
+    "repo": "consola",
+    "introducer": "661752c3a9330226384c1cb5b3acc81488f0a657",
+    "fix": "3afa9aa7c862e4f4f4cccf839920eb41d61d1222",
+    "fixSubject": "fix(error): always strip first line from stack",
+    "verdict": "reject",
+    "reason": "Introducer only moved parseStack from utils/index.js into utils/error.js; the first-line logic already existed before it."
+  },
+  {
+    "repo": "consola",
+    "introducer": "2d4af390c0861734c41bedb91c66cd06d67120c1",
+    "fix": "f07e05637ffe89504b2897d2933fdd0ecc2996bc",
+    "fixSubject": "fix: don't return this when calling log functions",
+    "verdict": "reject",
+    "reason": "Return-this behavior pre-existed the introducer (old log fn also returned this); fix is a design change, not a regression."
+  },
+  {
+    "repo": "json-server",
+    "introducer": "ada86ac596867e32f6d609a7fc2191bbf0b47fb5",
+    "fix": "503b96970edeb36c3f533acaa478176378b8e7cb",
+    "fixSubject": "fix: return 400 for invalid JSON request bodies",
+    "verdict": "reject",
+    "reason": "Silent ignore of non-object bodies already existed in the pre-introducer route handlers; introducer only refactored them into withBody helpers."
+  },
+  {
+    "repo": "json-server",
+    "introducer": "95f334f095acc4167c6ece044307a29b93ca5ccc",
+    "fix": "2d278fbcb872d5c6a97439ba8334ba6da350d39b",
+    "fixSubject": "Fix PUT should replace resource",
+    "verdict": "reject",
+    "reason": "Plural PUT used updateById (merge) before the introducer, which only moved it; same merge semantics in singular.js is a design gap shared with older code, not a clean regression."
+  },
+  {
+    "repo": "json-server",
+    "introducer": "7da6045201f644c2715f425a0e7c4295eedf95d9",
+    "fix": "6718a8deac0393f3180b3de45cd38f437a69f5ee",
+    "fixSubject": "Fix logger",
+    "verdict": "reject",
+    "reason": "Introducer moved the logger condition from index.js; fix mixes a new favicon-skip feature with removing the condition and states no symptom, so causation is unverifiable."
+  },
+  {
+    "repo": "json-server",
+    "introducer": "25b2e436489c1557f6595811ba95207857d2853a",
+    "fix": "053484d072a1995556fb017f21ff23d5313d338d",
+    "fixSubject": "Fix #25",
+    "verdict": "reject",
+    "reason": "toNative already existed in utils/utils.js before the introducer; it was only moved."
+  },
+  {
+    "repo": "json-server",
+    "introducer": "ca775b754492921d22e1e2f4ee011d6c186c0cbe",
+    "fix": "98add5aff5da6865791b8f807f6e8da10fa72361",
+    "fixSubject": "Fix tests",
+    "verdict": "reject",
+    "reason": "Fix only renames the low dependency to lowdb in source and tests (dependency/test fix), no behavior regression."
+  },
+  {
+    "repo": "pathe",
+    "introducer": "d8d0cb51dbca7295248c36f93510738057f2828d",
+    "fix": "34a55cf41c9da75d63bff9abc3d5b0b50068b6ac",
+    "fixSubject": "fix: improve windows path handling and improve coverage (#36)",
+    "verdict": "reject",
+    "reason": "Broad hardening commit touching many windows-path edge cases at once (isAbsolute, normalize, dirname, join, resolve); no single traceable regression, truth would be noisy."
+  }
+]
