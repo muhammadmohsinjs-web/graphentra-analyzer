@@ -57,8 +57,21 @@
       "src/utils/format.ts",
       "src/utils/ids.ts",
       "src/utils/math.ts",
+      "tests/app.test.ts",
+      "tests/components.test.ts",
+      "tests/format.test.ts",
       "tests/handlers.test.ts",
-      "tests/order-service.test.ts"
+      "tests/ids.test.ts",
+      "tests/inventory.test.ts",
+      "tests/logger.test.ts",
+      "tests/math.test.ts",
+      "tests/order-service.test.ts",
+      "tests/page.test.ts",
+      "tests/react-stubs.test.ts",
+      "tests/router.test.ts",
+      "tests/support/factories.ts",
+      "tests/support/fake-res.ts",
+      "tests/support/react-shim.ts"
     ],
     "entities": [
       {

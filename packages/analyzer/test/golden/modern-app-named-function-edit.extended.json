@@ -72,8 +72,21 @@
       "src/utils/format.ts",
       "src/utils/ids.ts",
       "src/utils/math.ts",
+      "tests/app.test.ts",
+      "tests/components.test.ts",
+      "tests/format.test.ts",
       "tests/handlers.test.ts",
-      "tests/order-service.test.ts"
+      "tests/ids.test.ts",
+      "tests/inventory.test.ts",
+      "tests/logger.test.ts",
+      "tests/math.test.ts",
+      "tests/order-service.test.ts",
+      "tests/page.test.ts",
+      "tests/react-stubs.test.ts",
+      "tests/router.test.ts",
+      "tests/support/factories.ts",
+      "tests/support/fake-res.ts",
+      "tests/support/react-shim.ts"
     ],
     "entities": [
       {
@@ -774,53 +787,233 @@
         "exported": true
       },
       {
+        "id": "tests/support/fake-res.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "tests/support/fake-res.ts",
+        "startLine": 1,
+        "endLine": 25,
+        "language": "typescript"
+      },
+      {
+        "id": "tests/support/fake-res.ts#fakeRes",
+        "kind": "function",
+        "name": "fakeRes",
+        "file": "tests/support/fake-res.ts",
+        "startLine": 9,
+        "endLine": 24,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "tests/support/fake-res.ts#fakeRes>res.status",
+        "kind": "method",
+        "name": "fakeRes>res.status",
+        "file": "tests/support/fake-res.ts",
+        "startLine": 12,
+        "endLine": 15,
+        "language": "typescript",
+        "container": "fakeRes>res"
+      },
+      {
+        "id": "tests/support/fake-res.ts#fakeRes>res.json",
+        "kind": "method",
+        "name": "fakeRes>res.json",
+        "file": "tests/support/fake-res.ts",
+        "startLine": 16,
+        "endLine": 18,
+        "language": "typescript",
+        "container": "fakeRes>res"
+      },
+      {
+        "id": "tests/support/fake-res.ts#fakeRes>res.send",
+        "kind": "method",
+        "name": "fakeRes>res.send",
+        "file": "tests/support/fake-res.ts",
+        "startLine": 19,
+        "endLine": 21,
+        "language": "typescript",
+        "container": "fakeRes>res"
+      },
+      {
+        "id": "tests/app.test.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "tests/app.test.ts",
+        "startLine": 1,
+        "endLine": 67,
+        "language": "typescript"
+      },
+      {
+        "id": "tests/app.test.ts#loggedLines",
+        "kind": "function",
+        "name": "loggedLines",
+        "file": "tests/app.test.ts",
+        "startLine": 17,
+        "endLine": 17,
+        "language": "typescript",
+        "exported": false
+      },
+      {
+        "id": "tests/support/react-shim.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "tests/support/react-shim.ts",
+        "startLine": 1,
+        "endLine": 18,
+        "language": "typescript"
+      },
+      {
+        "id": "tests/support/react-shim.ts#createElement",
+        "kind": "function",
+        "name": "createElement",
+        "file": "tests/support/react-shim.ts",
+        "startLine": 11,
+        "endLine": 15,
+        "language": "typescript",
+        "exported": false
+      },
+      {
+        "id": "tests/components.test.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "tests/components.test.ts",
+        "startLine": 1,
+        "endLine": 103,
+        "language": "typescript"
+      },
+      {
+        "id": "tests/components.test.ts#noop",
+        "kind": "function",
+        "name": "noop",
+        "file": "tests/components.test.ts",
+        "startLine": 10,
+        "endLine": 10,
+        "language": "typescript",
+        "exported": false
+      },
+      {
+        "id": "tests/components.test.ts#render",
+        "kind": "function",
+        "name": "render",
+        "file": "tests/components.test.ts",
+        "startLine": 15,
+        "endLine": 15,
+        "language": "typescript",
+        "exported": false
+      },
+      {
+        "id": "tests/components.test.ts#propsOf",
+        "kind": "function",
+        "name": "propsOf",
+        "file": "tests/components.test.ts",
+        "startLine": 16,
+        "endLine": 16,
+        "language": "typescript",
+        "exported": false
+      },
+      {
+        "id": "tests/format.test.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "tests/format.test.ts",
+        "startLine": 1,
+        "endLine": 71,
+        "language": "typescript"
+      },
+      {
         "id": "tests/handlers.test.ts#<module>",
         "kind": "module",
         "name": "<module>",
         "file": "tests/handlers.test.ts",
         "startLine": 1,
-        "endLine": 48,
+        "endLine": 118,
         "language": "typescript"
       },
       {
-        "id": "tests/handlers.test.ts#fakeRes",
-        "kind": "function",
-        "name": "fakeRes",
-        "file": "tests/handlers.test.ts",
-        "startLine": 7,
+        "id": "tests/ids.test.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "tests/ids.test.ts",
+        "startLine": 1,
         "endLine": 22,
+        "language": "typescript"
+      },
+      {
+        "id": "tests/ids.test.ts#sequenceOf",
+        "kind": "function",
+        "name": "sequenceOf",
+        "file": "tests/ids.test.ts",
+        "startLine": 5,
+        "endLine": 5,
         "language": "typescript",
         "exported": false
       },
       {
-        "id": "tests/handlers.test.ts#fakeRes>res.status",
-        "kind": "method",
-        "name": "fakeRes>res.status",
-        "file": "tests/handlers.test.ts",
-        "startLine": 10,
-        "endLine": 13,
-        "language": "typescript",
-        "container": "fakeRes>res"
+        "id": "tests/inventory.test.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "tests/inventory.test.ts",
+        "startLine": 1,
+        "endLine": 52,
+        "language": "typescript"
       },
       {
-        "id": "tests/handlers.test.ts#fakeRes>res.json",
-        "kind": "method",
-        "name": "fakeRes>res.json",
-        "file": "tests/handlers.test.ts",
-        "startLine": 14,
-        "endLine": 16,
-        "language": "typescript",
-        "container": "fakeRes>res"
+        "id": "tests/support/factories.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "tests/support/factories.ts",
+        "startLine": 1,
+        "endLine": 10,
+        "language": "typescript"
       },
       {
-        "id": "tests/handlers.test.ts#fakeRes>res.send",
-        "kind": "method",
-        "name": "fakeRes>res.send",
-        "file": "tests/handlers.test.ts",
-        "startLine": 17,
-        "endLine": 19,
+        "id": "tests/support/factories.ts#newLogger",
+        "kind": "function",
+        "name": "newLogger",
+        "file": "tests/support/factories.ts",
+        "startLine": 7,
+        "endLine": 7,
         "language": "typescript",
-        "container": "fakeRes>res"
+        "exported": true
+      },
+      {
+        "id": "tests/support/factories.ts#newOrderService",
+        "kind": "function",
+        "name": "newOrderService",
+        "file": "tests/support/factories.ts",
+        "startLine": 9,
+        "endLine": 9,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "tests/logger.test.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "tests/logger.test.ts",
+        "startLine": 1,
+        "endLine": 41,
+        "language": "typescript"
+      },
+      {
+        "id": "tests/logger.test.ts#linesOf",
+        "kind": "function",
+        "name": "linesOf",
+        "file": "tests/logger.test.ts",
+        "startLine": 7,
+        "endLine": 7,
+        "language": "typescript",
+        "exported": false
+      },
+      {
+        "id": "tests/math.test.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "tests/math.test.ts",
+        "startLine": 1,
+        "endLine": 65,
+        "language": "typescript"
       },
       {
         "id": "tests/order-service.test.ts#<module>",
@@ -828,8 +1021,65 @@
         "name": "<module>",
         "file": "tests/order-service.test.ts",
         "startLine": 1,
-        "endLine": 24,
+        "endLine": 85,
         "language": "typescript"
+      },
+      {
+        "id": "tests/order-service.test.ts#loggerOf",
+        "kind": "function",
+        "name": "loggerOf",
+        "file": "tests/order-service.test.ts",
+        "startLine": 14,
+        "endLine": 14,
+        "language": "typescript",
+        "exported": false
+      },
+      {
+        "id": "tests/order-service.test.ts#linesOf",
+        "kind": "function",
+        "name": "linesOf",
+        "file": "tests/order-service.test.ts",
+        "startLine": 15,
+        "endLine": 15,
+        "language": "typescript",
+        "exported": false
+      },
+      {
+        "id": "tests/page.test.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "tests/page.test.ts",
+        "startLine": 1,
+        "endLine": 26,
+        "language": "typescript"
+      },
+      {
+        "id": "tests/react-stubs.test.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "tests/react-stubs.test.ts",
+        "startLine": 1,
+        "endLine": 55,
+        "language": "typescript"
+      },
+      {
+        "id": "tests/router.test.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "tests/router.test.ts",
+        "startLine": 1,
+        "endLine": 106,
+        "language": "typescript"
+      },
+      {
+        "id": "tests/router.test.ts#noop",
+        "kind": "function",
+        "name": "noop",
+        "file": "tests/router.test.ts",
+        "startLine": 7,
+        "endLine": 7,
+        "language": "typescript",
+        "exported": false
       }
     ],
     "relations": [
@@ -1075,8 +1325,95 @@
         "type": "CALLS"
       },
       {
+        "from": "tests/app.test.ts#<module>",
+        "to": "src/server/app.ts#buildApp",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/app.test.ts#<module>",
+        "to": "tests/support/fake-res.ts#fakeRes",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/app.test.ts#<module>",
+        "to": "src/server/router.ts#Router.dispatch",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/app.test.ts#<module>",
+        "to": "tests/app.test.ts#loggedLines",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/support/react-shim.ts#<module>",
+        "to": "tests/support/react-shim.ts#createElement",
+        "type": "REFERENCES"
+      },
+      {
+        "from": "tests/components.test.ts#<module>",
+        "to": "tests/components.test.ts#render",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/components.test.ts#<module>",
+        "to": "src/components/OrderRow.tsx#OrderRow",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/components.test.ts#<module>",
+        "to": "tests/components.test.ts#noop",
+        "type": "REFERENCES"
+      },
+      {
+        "from": "tests/components.test.ts#<module>",
+        "to": "tests/components.test.ts#propsOf",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/components.test.ts#<module>",
+        "to": "src/components/OrderList.tsx#OrderList",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/components.test.ts#<module>",
+        "to": "src/components/Summary.tsx#Summary",
+        "type": "REFERENCES",
+        "confidence": "likely"
+      },
+      {
+        "from": "tests/components.test.ts#<module>",
+        "to": "src/components/OrderRow.tsx#OrderRow",
+        "type": "REFERENCES",
+        "confidence": "likely"
+      },
+      {
+        "from": "tests/components.test.ts#<module>",
+        "to": "src/components/Summary.tsx#Summary",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/format.test.ts#<module>",
+        "to": "src/utils/format.ts#formatPrice",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/format.test.ts#<module>",
+        "to": "src/utils/format.ts#pad",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/format.test.ts#<module>",
+        "to": "src/utils/format.ts#slugify",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/format.test.ts#<module>",
+        "to": "src/utils/format.ts#titleCase",
+        "type": "CALLS"
+      },
+      {
         "from": "tests/handlers.test.ts#<module>",
-        "to": "tests/handlers.test.ts#fakeRes",
+        "to": "tests/support/fake-res.ts#fakeRes",
         "type": "CALLS"
       },
       {
@@ -1096,12 +1433,77 @@
       },
       {
         "from": "tests/handlers.test.ts#<module>",
-        "to": "src/server/app.ts#buildApp",
+        "to": "src/services/order-service.ts#OrderService.total",
         "type": "CALLS"
       },
       {
-        "from": "tests/handlers.test.ts#<module>",
-        "to": "src/server/router.ts#Router.dispatch",
+        "from": "tests/ids.test.ts#<module>",
+        "to": "src/utils/ids.ts#makeId",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/ids.test.ts#<module>",
+        "to": "tests/ids.test.ts#sequenceOf",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/inventory.test.ts#<module>",
+        "to": "src/services/inventory.ts#checkStock",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/inventory.test.ts#<module>",
+        "to": "src/services/inventory.ts#inventory.reserve",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/inventory.test.ts#<module>",
+        "to": "src/services/inventory.ts#inventory.release",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/support/factories.ts#newLogger",
+        "to": "src/services/logger.ts#Logger.constructor",
+        "type": "INSTANTIATES"
+      },
+      {
+        "from": "tests/support/factories.ts#newOrderService",
+        "to": "src/services/order-service.ts#OrderService.constructor",
+        "type": "INSTANTIATES"
+      },
+      {
+        "from": "tests/logger.test.ts#<module>",
+        "to": "tests/support/factories.ts#newLogger",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/logger.test.ts#<module>",
+        "to": "src/services/logger.ts#Logger.info",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/logger.test.ts#<module>",
+        "to": "tests/logger.test.ts#linesOf",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/logger.test.ts#<module>",
+        "to": "src/services/logger.ts#Logger.create",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/math.test.ts#<module>",
+        "to": "src/utils/math.ts#clamp",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/math.test.ts#<module>",
+        "to": "src/utils/math.ts#sum",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/math.test.ts#<module>",
+        "to": "src/utils/math.ts#orderTotal",
         "type": "CALLS"
       },
       {
@@ -1127,6 +1529,94 @@
       {
         "from": "tests/order-service.test.ts#<module>",
         "to": "src/services/order-service.ts#OrderService.total",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/order-service.test.ts#<module>",
+        "to": "tests/support/factories.ts#newLogger",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/order-service.test.ts#<module>",
+        "to": "tests/support/factories.ts#newOrderService",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/order-service.test.ts#<module>",
+        "to": "tests/order-service.test.ts#linesOf",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/order-service.test.ts#<module>",
+        "to": "src/services/order-service.ts#createDefaultService",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/order-service.test.ts#<module>",
+        "to": "tests/order-service.test.ts#loggerOf",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/page.test.ts#<module>",
+        "to": "src/app/orders/page.tsx#OrdersPage",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/page.test.ts#<module>",
+        "to": "src/components/OrderList.tsx#OrderList",
+        "type": "REFERENCES",
+        "confidence": "likely"
+      },
+      {
+        "from": "tests/page.test.ts#<module>",
+        "to": "src/components/Summary.tsx#Summary",
+        "type": "REFERENCES",
+        "confidence": "likely"
+      },
+      {
+        "from": "tests/react-stubs.test.ts#<module>",
+        "to": "src/stubs/react.ts#useState",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/react-stubs.test.ts#<module>",
+        "to": "src/stubs/react.ts#useEffect",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/react-stubs.test.ts#<module>",
+        "to": "src/stubs/react.ts#useMemo",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/router.test.ts#<module>",
+        "to": "src/server/router.ts#Router.post",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/router.test.ts#<module>",
+        "to": "src/server/router.ts#Router.get",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/router.test.ts#<module>",
+        "to": "tests/router.test.ts#noop",
+        "type": "REFERENCES",
+        "confidence": "likely"
+      },
+      {
+        "from": "tests/router.test.ts#<module>",
+        "to": "src/server/router.ts#Router.use",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/router.test.ts#<module>",
+        "to": "tests/support/fake-res.ts#fakeRes",
+        "type": "CALLS"
+      },
+      {
+        "from": "tests/router.test.ts#<module>",
+        "to": "src/server/router.ts#Router.dispatch",
         "type": "CALLS"
       }
     ]
@@ -1259,18 +1749,136 @@
         ],
         "diff": "--- a/src/utils/format.ts\n+++ b/src/utils/format.ts\n@@ -16,7 +16,7 @@\n export default function slugify(s: string): string {\n   return s\n     .toLowerCase()\n-    .trim()\n+    .trim().normalize()\n     .replace(/[^a-z0-9]+/g, '-')\n     .replace(/^-+|-+$/g, '');\n }"
       },
-      "directDependents": [],
+      "directDependents": [
+        {
+          "id": "tests/format.test.ts#<module>",
+          "kind": "module",
+          "name": "<module>",
+          "file": "tests/format.test.ts",
+          "startLine": 1,
+          "endLine": 71,
+          "language": "typescript"
+        }
+      ],
       "blastRadius": {
-        "totalAffectedEntities": 0,
-        "entities": [],
-        "paths": [],
+        "totalAffectedEntities": 1,
+        "entities": [
+          {
+            "id": "tests/format.test.ts#<module>",
+            "kind": "module",
+            "name": "<module>",
+            "file": "tests/format.test.ts",
+            "startLine": 1,
+            "endLine": 71,
+            "language": "typescript"
+          }
+        ],
+        "paths": [
+          {
+            "target": {
+              "id": "tests/format.test.ts#<module>",
+              "kind": "module",
+              "name": "<module>",
+              "file": "tests/format.test.ts",
+              "startLine": 1,
+              "endLine": 71,
+              "language": "typescript"
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/utils/format.ts#slugify",
+                "kind": "function",
+                "name": "slugify",
+                "file": "src/utils/format.ts",
+                "startLine": 16,
+                "endLine": 22,
+                "language": "typescript",
+                "exported": true,
+                "exportName": "default"
+              },
+              {
+                "id": "tests/format.test.ts#<module>",
+                "kind": "module",
+                "name": "<module>",
+                "file": "tests/format.test.ts",
+                "startLine": 1,
+                "endLine": 71,
+                "language": "typescript"
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          }
+        ],
         "truncated": false
       },
-      "terminalDependents": [],
+      "terminalDependents": [
+        {
+          "id": "tests/format.test.ts#<module>",
+          "kind": "module",
+          "name": "<module>",
+          "file": "tests/format.test.ts",
+          "startLine": 1,
+          "endLine": 71,
+          "language": "typescript"
+        }
+      ],
       "confidence": "proven"
     }
   ],
   "diagnostics": [
+    {
+      "code": "FRONTIER_CAPPED",
+      "severity": "info",
+      "entityId": "tests/app.test.ts#<module>",
+      "message": "More than 20 unresolved dependency sites; only the first 20 in sorted order are reported."
+    },
+    {
+      "code": "FRONTIER_CAPPED",
+      "severity": "info",
+      "entityId": "tests/components.test.ts#<module>",
+      "message": "More than 20 unresolved dependency sites; only the first 20 in sorted order are reported."
+    },
+    {
+      "code": "FRONTIER_CAPPED",
+      "severity": "info",
+      "entityId": "tests/format.test.ts#<module>",
+      "message": "More than 20 unresolved dependency sites; only the first 20 in sorted order are reported."
+    },
+    {
+      "code": "FRONTIER_CAPPED",
+      "severity": "info",
+      "entityId": "tests/handlers.test.ts#<module>",
+      "message": "More than 20 unresolved dependency sites; only the first 20 in sorted order are reported."
+    },
+    {
+      "code": "FRONTIER_CAPPED",
+      "severity": "info",
+      "entityId": "tests/inventory.test.ts#<module>",
+      "message": "More than 20 unresolved dependency sites; only the first 20 in sorted order are reported."
+    },
+    {
+      "code": "FRONTIER_CAPPED",
+      "severity": "info",
+      "entityId": "tests/math.test.ts#<module>",
+      "message": "More than 20 unresolved dependency sites; only the first 20 in sorted order are reported."
+    },
+    {
+      "code": "FRONTIER_CAPPED",
+      "severity": "info",
+      "entityId": "tests/order-service.test.ts#<module>",
+      "message": "More than 20 unresolved dependency sites; only the first 20 in sorted order are reported."
+    },
+    {
+      "code": "FRONTIER_CAPPED",
+      "severity": "info",
+      "entityId": "tests/router.test.ts#<module>",
+      "message": "More than 20 unresolved dependency sites; only the first 20 in sorted order are reported."
+    },
     {
       "code": "ATTRIBUTED_LINE_RATIO",
       "severity": "info",
@@ -1288,7 +1896,128 @@
     "Application surfaces are not yet discovered.",
     "Blast radius is limited to depth 6."
   ],
-  "frontier": [],
+  "frontier": [
+    {
+      "entityId": "tests/format.test.ts#<module>",
+      "file": "tests/format.test.ts",
+      "line": 5,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/format.test.ts#<module>",
+      "file": "tests/format.test.ts",
+      "line": 6,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/format.test.ts#<module>",
+      "file": "tests/format.test.ts",
+      "line": 7,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/format.test.ts#<module>",
+      "file": "tests/format.test.ts",
+      "line": 8,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/format.test.ts#<module>",
+      "file": "tests/format.test.ts",
+      "line": 11,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/format.test.ts#<module>",
+      "file": "tests/format.test.ts",
+      "line": 12,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/format.test.ts#<module>",
+      "file": "tests/format.test.ts",
+      "line": 13,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/format.test.ts#<module>",
+      "file": "tests/format.test.ts",
+      "line": 16,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/format.test.ts#<module>",
+      "file": "tests/format.test.ts",
+      "line": 17,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/format.test.ts#<module>",
+      "file": "tests/format.test.ts",
+      "line": 21,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/format.test.ts#<module>",
+      "file": "tests/format.test.ts",
+      "line": 22,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/format.test.ts#<module>",
+      "file": "tests/format.test.ts",
+      "line": 23,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/format.test.ts#<module>",
+      "file": "tests/format.test.ts",
+      "line": 26,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/format.test.ts#<module>",
+      "file": "tests/format.test.ts",
+      "line": 27,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/format.test.ts#<module>",
+      "file": "tests/format.test.ts",
+      "line": 28,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/format.test.ts#<module>",
+      "file": "tests/format.test.ts",
+      "line": 31,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/format.test.ts#<module>",
+      "file": "tests/format.test.ts",
+      "line": 32,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/format.test.ts#<module>",
+      "file": "tests/format.test.ts",
+      "line": 36,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/format.test.ts#<module>",
+      "file": "tests/format.test.ts",
+      "line": 37,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/format.test.ts#<module>",
+      "file": "tests/format.test.ts",
+      "line": 38,
+      "reason": "any_typed_call"
+    }
+  ],
   "coverage": {
     "byLanguage": [
       {
@@ -1309,6 +2038,6 @@
       }
     ],
     "skippedFiles": [],
-    "frontierTotal": 20
+    "frontierTotal": 209
   }
 }
