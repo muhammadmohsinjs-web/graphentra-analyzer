@@ -1,0 +1,61 @@
+[
+  {
+    "id": "GAP-001",
+    "title": "Impact walks only to dependents, so downstream consumers of changed code are never listed",
+    "cause": "traversal-direction",
+    "status": "open",
+    "foundDate": "2026-11-04",
+    "foundIn": ["excalidraw-11"],
+    "missed": [
+      { "entry": "excalidraw-11", "entity": "src/charts.ts#tryParseSpreadsheet" }
+    ],
+    "evidence": "The graph at the introducer has parseClipboard -> parsePotentialSpreadsheet -> tryParseSpreadsheet (CALLS), and parseClipboard is a changed entity. buildImpact walks reverse edges only, so the consumer is in no blast radius.",
+    "possibleFixes": [
+      "Walk 2 to 3 steps forward from changed entities and label the result as a separate tier",
+      "Add value-flow edges (output of A reaches input of B) to limit the forward walk to code that receives the changed value",
+      "Send the consumer's code to the report so it can see assumptions such as split(\"\\t\")"
+    ],
+    "roadmapTask": null,
+    "limitation": null,
+    "pinnedBy": "packages/analyzer/test/known-gaps.test.ts :: GAP-001 a consumer downstream of a changed function is not in the impact",
+    "pinExempt": null,
+    "fixedIn": null
+  },
+  {
+    "id": "GAP-002",
+    "title": "The report gets no features for a change when the context is file-level and the repo has no surfaces",
+    "cause": "report-context",
+    "status": "open",
+    "foundDate": "2026-11-04",
+    "foundIn": ["excalidraw-11"],
+    "missed": [],
+    "evidence": "Rebuilt payload for excalidraw-11: features is empty on the clipboard changes, although feature charts-and-paste lists src/clipboard.ts in files. buildContextPack links features only through annotations and surfaces (context-pack.ts:149-152); this context has 0 annotations and 0 surfaces, and feature.files is never read. Contributing cause only: fixing it does not prove the report would then name chart paste.",
+    "possibleFixes": [
+      "Link features through feature.files for the changed file, as rules already do through rule.files"
+    ],
+    "roadmapTask": null,
+    "limitation": null,
+    "pinnedBy": "packages/reporting/test/known-gaps.test.ts :: GAP-002 a feature that lists the changed file is not linked to the change",
+    "pinExempt": null,
+    "fixedIn": null
+  },
+  {
+    "id": "GAP-003",
+    "title": "The report describes a changed behavior as intended and does not ask what relied on the old behavior",
+    "cause": "model-reasoning",
+    "status": "open",
+    "foundDate": "2026-11-04",
+    "foundIn": ["excalidraw-11"],
+    "missed": [],
+    "evidence": "The QA report for excalidraw-11 tells QA to verify that tabs display as eight spaces and never names spreadsheet or chart paste. The payload did hold pointers: the clipboard.ts role mentions spreadsheet data, the parseClipboard diff shows parsePotentialSpreadsheet, and charts.ts and PasteChartDialog are listed as dependents of normalizeText. One run of openai/gpt-6-luna, so variance is unknown.",
+    "possibleFixes": [
+      "Add a report instruction: for each removed guarantee, name what could have relied on it",
+      "Repeat the report on several runs to measure how often it names the consumer"
+    ],
+    "roadmapTask": null,
+    "limitation": null,
+    "pinnedBy": null,
+    "pinExempt": "LLM output is not deterministic, so a unit test cannot pin it. Track it by re-running the report on the corpus.",
+    "fixedIn": null
+  }
+]

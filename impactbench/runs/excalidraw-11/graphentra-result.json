@@ -1,0 +1,26 @@
+{
+  "entry": "excalidraw-11",
+  "analyzerVersion": "0.5.0",
+  "headSha": "baf9651d343b1ce10a94c54ca1ee799058e9d6cb",
+  "flaggedCounts": {
+    "changed": 14,
+    "blastOnly": 42
+  },
+  "truth": [
+    {
+      "id": "src/clipboard.ts#getSystemClipboard",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "src/clipboard.ts#parseClipboard",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "src/charts.ts#tryParseSpreadsheet",
+      "outsideIntroducerDiff": true,
+      "flagged": null
+    }
+  ]
+}

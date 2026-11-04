@@ -30,11 +30,12 @@
     "verify:distribution": "node tools/verify-distribution.mjs",
     "sync:evidence-schema": "node tools/sync-evidence-schema.mjs",
     "verify:schema": "node tools/sync-evidence-schema.mjs --check",
-    "verify:all": "npm run build && npm run typecheck && npm test && npm run verify:boundaries && npm run verify:schema && npm run verify:distribution",
+    "verify:all": "npm run build && npm run typecheck && npm test && npm run verify:boundaries && npm run verify:schema && npm run verify:distribution && npm run bench:gaps -- check",
     "fetch:large-repos": "node tools/fetch-large-repos.mjs",
     "bench:fetch": "node tools/impactbench.mjs fetch",
     "bench:baseline": "node tools/impactbench.mjs baseline",
-    "bench:corpus": "node tools/impactbench-corpus.mjs"
+    "bench:corpus": "node tools/impactbench-corpus.mjs",
+    "bench:gaps": "node tools/impactbench-gaps.mjs"
   },
   "repository": {
     "type": "git",
