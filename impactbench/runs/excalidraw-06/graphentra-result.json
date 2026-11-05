@@ -1,0 +1,37 @@
+{
+  "entry": "excalidraw-06",
+  "analyzerVersion": "0.5.0",
+  "headSha": "dd8e465304033681bf610f98d27cde833c39eba5",
+  "flaggedCounts": {
+    "changed": 10,
+    "blastOnly": 36,
+    "valueOnly": 15
+  },
+  "truth": [
+    {
+      "id": "src/element/textElement.ts#redrawTextBoundingBox",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "src/actions/actionProperties.tsx#actionChangeFontSize.perform",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "src/actions/actionProperties.tsx#actionChangeFontFamily.perform",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "src/actions/actionProperties.tsx#actionChangeTextAlign.perform",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "src/actions/actionStyles.ts#actionPasteStyles.perform",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    }
+  ]
+}

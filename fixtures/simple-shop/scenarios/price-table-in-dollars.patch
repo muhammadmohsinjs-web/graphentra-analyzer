@@ -1,0 +1,9 @@
+diff --git a/src/catalog.ts b/src/catalog.ts
+index 96ec129..f9f5f81 100644
+--- a/src/catalog.ts
++++ b/src/catalog.ts
+@@ -1,3 +1,3 @@
+-const PRICES_IN_CENTS: Record<string, number> = { 'TEA-1': 500 };
++const PRICES_IN_CENTS: Record<string, number> = { 'TEA-1': 5 };
+ 
+ export const getPrice = (code: string): number => PRICES_IN_CENTS[code] ?? 0;

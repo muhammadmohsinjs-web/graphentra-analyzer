@@ -67,7 +67,8 @@ for (const scenario of scenarios) {
     const evidence = JSON.parse(fs.readFileSync(evidencePath, 'utf8'));
     const changed = evidence.impacts.map(impact => impact.changedEntity.id);
     const blast = [...new Set(evidence.impacts.flatMap(impact => impact.blastRadius.entities.map(entity => entity.id)))];
-    const flagged = new Set([...changed, ...blast]);
+    const received = [...new Set(evidence.impacts.flatMap(impact => (impact.receivesChangedValue ?? []).map(target => target.entity.id)))];
+    const flagged = new Set([...changed, ...blast, ...received]);
     const missed = scenario.receivesChangedValue.filter(id => !flagged.has(id));
     const noise = scenario.doesNotReceiveChangedValue.filter(id => flagged.has(id));
     const linked = (from, to) => evidence.technicalGraph.relations.some(relation => relation.from === from && relation.to === to);
@@ -75,6 +76,7 @@ for (const scenario of scenarios) {
     check(`Graphentra sees the changed code: ${scenario.changed.join(', ')}`, scenario.changed.every(id => flagged.has(id)));
     console.log(`  changed: ${changed.join(', ')}`);
     console.log(`  blast radius: ${blast.join(', ') || 'none'}`);
+    console.log(`  receives the changed value: ${received.join(', ') || 'none'}`);
     console.log(`  score: found ${scenario.receivesChangedValue.length - missed.length} of ${scenario.receivesChangedValue.length}, wrongly flagged ${noise.length} of ${scenario.doesNotReceiveChangedValue.length}`);
     for (const id of missed) console.log(`  missed: ${id}`);
     for (const id of noise) console.log(`  wrongly flagged: ${id}`);

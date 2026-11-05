@@ -26,6 +26,7 @@
     "visualize:evidence": "node tools/visualize-evidence.mjs",
     "serve": "tsx tools/server.ts",
     "publish:report": "tsx tools/publish-report.ts",
+    "bench:corpus": "node tools/impactbench-run.mjs",
     "bench:perf": "node tools/bench-perf.mjs --profile",
     "verify:boundaries": "node tools/verify-boundaries.mjs",
     "verify:distribution": "node tools/verify-distribution.mjs",

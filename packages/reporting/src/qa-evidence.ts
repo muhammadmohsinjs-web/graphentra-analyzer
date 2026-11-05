@@ -20,6 +20,7 @@ export function selectRelevantApplicationContext(
     impacts.flatMap(impact => [
       impact.changedEntity.id,
       ...impact.blastRadius.entities.map(entity => entity.id),
+      ...(impact.receivesChangedValue ?? []).map(target => target.entity.id),
     ]),
   );
   const annotations = context.entityAnnotations.filter(annotation =>
@@ -169,6 +170,9 @@ export function buildLLMPayload(impacts: EntityImpact[], context: AnyApplication
         ),
         testDependents: dependents.filter(entity => entity.sourceRole === 'test'),
         terminalDependents: impact.terminalDependents.map(withRole),
+        ...(impact.receivesChangedValue?.length
+          ? { receivesChangedValue: impact.receivesChangedValue.map(target => ({ ...withRole(target.entity), through: target.through })) }
+          : {}),
       };
     }),
     applicationContext: buildContextPack(toV2(context, impacts), impacts, {

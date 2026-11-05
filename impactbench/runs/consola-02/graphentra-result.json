@@ -1,0 +1,17 @@
+{
+  "entry": "consola-02",
+  "analyzerVersion": "0.5.0",
+  "headSha": "ef6e5e5a098adc80bc2b0badfbfb10d3ea723e43",
+  "flaggedCounts": {
+    "changed": 13,
+    "blastOnly": 0,
+    "valueOnly": 1
+  },
+  "truth": [
+    {
+      "id": "src/index.ts#_createConsola",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    }
+  ]
+}

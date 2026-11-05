@@ -695,7 +695,7 @@
         "name": "<module>",
         "file": "src/server/handlers.ts",
         "startLine": 1,
-        "endLine": 27,
+        "endLine": 29,
         "language": "typescript"
       },
       {
@@ -703,8 +703,8 @@
         "kind": "function",
         "name": "listOrders",
         "file": "src/server/handlers.ts",
-        "startLine": 9,
-        "endLine": 11,
+        "startLine": 10,
+        "endLine": 12,
         "language": "typescript",
         "exported": true
       },
@@ -713,8 +713,8 @@
         "kind": "function",
         "name": "createOrder",
         "file": "src/server/handlers.ts",
-        "startLine": 13,
-        "endLine": 22,
+        "startLine": 14,
+        "endLine": 24,
         "language": "typescript",
         "exported": true
       },
@@ -723,8 +723,8 @@
         "kind": "function",
         "name": "health",
         "file": "src/server/handlers.ts",
-        "startLine": 24,
-        "endLine": 26,
+        "startLine": 26,
+        "endLine": 28,
         "language": "typescript",
         "exported": true
       },
@@ -1262,6 +1262,11 @@
       },
       {
         "from": "src/server/handlers.ts#createOrder",
+        "to": "src/utils/format.ts#slugify",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/server/handlers.ts#createOrder",
         "to": "src/services/inventory.ts#checkStock",
         "type": "CALLS"
       },
@@ -1751,6 +1756,16 @@
       },
       "directDependents": [
         {
+          "id": "src/server/handlers.ts#createOrder",
+          "kind": "function",
+          "name": "createOrder",
+          "file": "src/server/handlers.ts",
+          "startLine": 14,
+          "endLine": 24,
+          "language": "typescript",
+          "exported": true
+        },
+        {
           "id": "tests/format.test.ts#<module>",
           "kind": "module",
           "name": "<module>",
@@ -1761,8 +1776,18 @@
         }
       ],
       "blastRadius": {
-        "totalAffectedEntities": 1,
+        "totalAffectedEntities": 5,
         "entities": [
+          {
+            "id": "src/server/handlers.ts#createOrder",
+            "kind": "function",
+            "name": "createOrder",
+            "file": "src/server/handlers.ts",
+            "startLine": 14,
+            "endLine": 24,
+            "language": "typescript",
+            "exported": true
+          },
           {
             "id": "tests/format.test.ts#<module>",
             "kind": "module",
@@ -1771,9 +1796,78 @@
             "startLine": 1,
             "endLine": 71,
             "language": "typescript"
+          },
+          {
+            "id": "src/server/app.ts#buildApp",
+            "kind": "function",
+            "name": "buildApp",
+            "file": "src/server/app.ts",
+            "startLine": 9,
+            "endLine": 16,
+            "language": "typescript",
+            "exported": true
+          },
+          {
+            "id": "tests/handlers.test.ts#<module>",
+            "kind": "module",
+            "name": "<module>",
+            "file": "tests/handlers.test.ts",
+            "startLine": 1,
+            "endLine": 118,
+            "language": "typescript"
+          },
+          {
+            "id": "tests/app.test.ts#<module>",
+            "kind": "module",
+            "name": "<module>",
+            "file": "tests/app.test.ts",
+            "startLine": 1,
+            "endLine": 67,
+            "language": "typescript"
           }
         ],
         "paths": [
+          {
+            "target": {
+              "id": "src/server/handlers.ts#createOrder",
+              "kind": "function",
+              "name": "createOrder",
+              "file": "src/server/handlers.ts",
+              "startLine": 14,
+              "endLine": 24,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/utils/format.ts#slugify",
+                "kind": "function",
+                "name": "slugify",
+                "file": "src/utils/format.ts",
+                "startLine": 16,
+                "endLine": 22,
+                "language": "typescript",
+                "exported": true,
+                "exportName": "default"
+              },
+              {
+                "id": "src/server/handlers.ts#createOrder",
+                "kind": "function",
+                "name": "createOrder",
+                "file": "src/server/handlers.ts",
+                "startLine": 14,
+                "endLine": 24,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
           {
             "target": {
               "id": "tests/format.test.ts#<module>",
@@ -1812,6 +1906,169 @@
               "CALLS"
             ],
             "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "src/server/app.ts#buildApp",
+              "kind": "function",
+              "name": "buildApp",
+              "file": "src/server/app.ts",
+              "startLine": 9,
+              "endLine": 16,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 2,
+            "path": [
+              {
+                "id": "src/utils/format.ts#slugify",
+                "kind": "function",
+                "name": "slugify",
+                "file": "src/utils/format.ts",
+                "startLine": 16,
+                "endLine": 22,
+                "language": "typescript",
+                "exported": true,
+                "exportName": "default"
+              },
+              {
+                "id": "src/server/handlers.ts#createOrder",
+                "kind": "function",
+                "name": "createOrder",
+                "file": "src/server/handlers.ts",
+                "startLine": 14,
+                "endLine": 24,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/server/app.ts#buildApp",
+                "kind": "function",
+                "name": "buildApp",
+                "file": "src/server/app.ts",
+                "startLine": 9,
+                "endLine": 16,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS",
+              "REFERENCES"
+            ],
+            "confidence": "likely"
+          },
+          {
+            "target": {
+              "id": "tests/handlers.test.ts#<module>",
+              "kind": "module",
+              "name": "<module>",
+              "file": "tests/handlers.test.ts",
+              "startLine": 1,
+              "endLine": 118,
+              "language": "typescript"
+            },
+            "depth": 2,
+            "path": [
+              {
+                "id": "src/utils/format.ts#slugify",
+                "kind": "function",
+                "name": "slugify",
+                "file": "src/utils/format.ts",
+                "startLine": 16,
+                "endLine": 22,
+                "language": "typescript",
+                "exported": true,
+                "exportName": "default"
+              },
+              {
+                "id": "src/server/handlers.ts#createOrder",
+                "kind": "function",
+                "name": "createOrder",
+                "file": "src/server/handlers.ts",
+                "startLine": 14,
+                "endLine": 24,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "tests/handlers.test.ts#<module>",
+                "kind": "module",
+                "name": "<module>",
+                "file": "tests/handlers.test.ts",
+                "startLine": 1,
+                "endLine": 118,
+                "language": "typescript"
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS",
+              "CALLS"
+            ],
+            "confidence": "proven"
+          },
+          {
+            "target": {
+              "id": "tests/app.test.ts#<module>",
+              "kind": "module",
+              "name": "<module>",
+              "file": "tests/app.test.ts",
+              "startLine": 1,
+              "endLine": 67,
+              "language": "typescript"
+            },
+            "depth": 3,
+            "path": [
+              {
+                "id": "src/utils/format.ts#slugify",
+                "kind": "function",
+                "name": "slugify",
+                "file": "src/utils/format.ts",
+                "startLine": 16,
+                "endLine": 22,
+                "language": "typescript",
+                "exported": true,
+                "exportName": "default"
+              },
+              {
+                "id": "src/server/handlers.ts#createOrder",
+                "kind": "function",
+                "name": "createOrder",
+                "file": "src/server/handlers.ts",
+                "startLine": 14,
+                "endLine": 24,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "src/server/app.ts#buildApp",
+                "kind": "function",
+                "name": "buildApp",
+                "file": "src/server/app.ts",
+                "startLine": 9,
+                "endLine": 16,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "tests/app.test.ts#<module>",
+                "kind": "module",
+                "name": "<module>",
+                "file": "tests/app.test.ts",
+                "startLine": 1,
+                "endLine": 67,
+                "language": "typescript"
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS",
+              "REFERENCES",
+              "CALLS"
+            ],
+            "confidence": "likely"
           }
         ],
         "truncated": false
@@ -1825,9 +2082,27 @@
           "startLine": 1,
           "endLine": 71,
           "language": "typescript"
+        },
+        {
+          "id": "tests/handlers.test.ts#<module>",
+          "kind": "module",
+          "name": "<module>",
+          "file": "tests/handlers.test.ts",
+          "startLine": 1,
+          "endLine": 118,
+          "language": "typescript"
+        },
+        {
+          "id": "tests/app.test.ts#<module>",
+          "kind": "module",
+          "name": "<module>",
+          "file": "tests/app.test.ts",
+          "startLine": 1,
+          "endLine": 67,
+          "language": "typescript"
         }
       ],
-      "confidence": "proven"
+      "confidence": "likely"
     }
   ],
   "diagnostics": [
@@ -1890,6 +2165,7 @@
     "Entities are named functions, variable-bound arrow functions and function expressions, class and object-literal methods, constructors, accessors, React components, and module-level code.",
     "Classes, interfaces, type aliases, and enums are not entities.",
     "Relationships are CALLS, RENDERS (JSX elements), INSTANTIATES (new expressions), and REFERENCES (functions passed or stored as values).",
+    "Changed values are followed through arguments, local variables and return values, one caller up and one call down; values stored in object fields or shared state are not followed.",
     "Dynamic calls and calls through interface-typed receivers are not analyzed.",
     "Renamed entities may lack removed-code evidence.",
     "Partially overlapping entity line ranges are skipped rather than sharing ambiguous evidence.",
@@ -1897,6 +2173,138 @@
     "Blast radius is limited to depth 6."
   ],
   "frontier": [
+    {
+      "entityId": "src/server/handlers.ts#createOrder",
+      "file": "src/server/handlers.ts",
+      "line": 19,
+      "reason": "interface_dispatch"
+    },
+    {
+      "entityId": "src/server/handlers.ts#createOrder",
+      "file": "src/server/handlers.ts",
+      "line": 23,
+      "reason": "interface_dispatch"
+    },
+    {
+      "entityId": "tests/app.test.ts#<module>",
+      "file": "tests/app.test.ts",
+      "line": 7,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/app.test.ts#<module>",
+      "file": "tests/app.test.ts",
+      "line": 10,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/app.test.ts#<module>",
+      "file": "tests/app.test.ts",
+      "line": 13,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/app.test.ts#<module>",
+      "file": "tests/app.test.ts",
+      "line": 14,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/app.test.ts#<module>",
+      "file": "tests/app.test.ts",
+      "line": 19,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/app.test.ts#<module>",
+      "file": "tests/app.test.ts",
+      "line": 20,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/app.test.ts#<module>",
+      "file": "tests/app.test.ts",
+      "line": 22,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/app.test.ts#<module>",
+      "file": "tests/app.test.ts",
+      "line": 28,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/app.test.ts#<module>",
+      "file": "tests/app.test.ts",
+      "line": 31,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/app.test.ts#<module>",
+      "file": "tests/app.test.ts",
+      "line": 32,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/app.test.ts#<module>",
+      "file": "tests/app.test.ts",
+      "line": 35,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/app.test.ts#<module>",
+      "file": "tests/app.test.ts",
+      "line": 38,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/app.test.ts#<module>",
+      "file": "tests/app.test.ts",
+      "line": 39,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/app.test.ts#<module>",
+      "file": "tests/app.test.ts",
+      "line": 42,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/app.test.ts#<module>",
+      "file": "tests/app.test.ts",
+      "line": 49,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/app.test.ts#<module>",
+      "file": "tests/app.test.ts",
+      "line": 50,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/app.test.ts#<module>",
+      "file": "tests/app.test.ts",
+      "line": 53,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/app.test.ts#<module>",
+      "file": "tests/app.test.ts",
+      "line": 57,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/app.test.ts#<module>",
+      "file": "tests/app.test.ts",
+      "line": 60,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/app.test.ts#<module>",
+      "file": "tests/app.test.ts",
+      "line": 63,
+      "reason": "any_typed_call"
+    },
     {
       "entityId": "tests/format.test.ts#<module>",
       "file": "tests/format.test.ts",
@@ -2015,6 +2423,126 @@
       "entityId": "tests/format.test.ts#<module>",
       "file": "tests/format.test.ts",
       "line": 38,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 10,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 15,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 16,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 19,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 20,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 24,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 25,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 28,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 31,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 39,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 43,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 44,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 52,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 53,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 56,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 62,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 65,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 72,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 75,
+      "reason": "any_typed_call"
+    },
+    {
+      "entityId": "tests/handlers.test.ts#<module>",
+      "file": "tests/handlers.test.ts",
+      "line": 83,
       "reason": "any_typed_call"
     }
   ],

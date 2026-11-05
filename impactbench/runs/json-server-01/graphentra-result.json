@@ -1,0 +1,17 @@
+{
+  "entry": "json-server-01",
+  "analyzerVersion": "0.5.0",
+  "headSha": "e8fe1ad89a7188a53631b632003f7814deddcc1c",
+  "flaggedCounts": {
+    "changed": 1,
+    "blastOnly": 1,
+    "valueOnly": 0
+  },
+  "truth": [
+    {
+      "id": "src/router.js#show",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    }
+  ]
+}

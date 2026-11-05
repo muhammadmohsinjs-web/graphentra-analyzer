@@ -1,0 +1,27 @@
+{
+  "entry": "ufo-01",
+  "analyzerVersion": "0.5.0",
+  "headSha": "3809d28e0fcb653ae91ed9c9707ad670ded68c6e",
+  "flaggedCounts": {
+    "changed": 46,
+    "blastOnly": 5,
+    "valueOnly": 0
+  },
+  "truth": [
+    {
+      "id": "src/encoding.ts#<module>",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "src/encoding.ts#encodePath",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "src/utils.ts#normalizeURL",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    }
+  ]
+}

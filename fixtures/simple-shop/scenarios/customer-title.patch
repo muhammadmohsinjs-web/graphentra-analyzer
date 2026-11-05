@@ -1,0 +1,12 @@
+diff --git a/src/shop.ts b/src/shop.ts
+index b7365b0..0768e2d 100644
+--- a/src/shop.ts
++++ b/src/shop.ts
+@@ -9,6 +9,6 @@ export const placeOrder = (customerId: string, code: string, qty: number) => {
+     return { ok: false, reason: 'out of stock' };
+   }
+   const charged = chargeCard(getPrice(code) * qty);
+-  const receipt = buildReceipt(getCustomerName(customerId), code);
++  const receipt = buildReceipt(`Ms. ${getCustomerName(customerId)}`, code);
+   return { ok: true, charged, receipt };
+ };

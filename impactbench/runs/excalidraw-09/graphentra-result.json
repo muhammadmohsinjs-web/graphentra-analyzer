@@ -1,0 +1,37 @@
+{
+  "entry": "excalidraw-09",
+  "analyzerVersion": "0.5.0",
+  "headSha": "b6bb74d08d7650ed87b9a631436001df74b5869f",
+  "flaggedCounts": {
+    "changed": 8,
+    "blastOnly": 21,
+    "valueOnly": 0
+  },
+  "truth": [
+    {
+      "id": "src/components/App.tsx#App.componentDidUpdate",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "src/components/App.tsx#App.componentDidMount",
+      "outsideIntroducerDiff": true,
+      "flagged": null
+    },
+    {
+      "id": "src/renderer/renderScene.ts#renderSceneThrottled",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "src/renderer/renderScene.ts#renderScene",
+      "outsideIntroducerDiff": true,
+      "flagged": null
+    },
+    {
+      "id": "src/excalidraw-app/index.tsx#<module>",
+      "outsideIntroducerDiff": true,
+      "flagged": null
+    }
+  ]
+}

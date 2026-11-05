@@ -3,11 +3,18 @@
     "id": "GAP-001",
     "title": "Impact walks only to dependents, so downstream consumers of changed code are never listed",
     "cause": "traversal-direction",
-    "status": "open",
+    "status": "fixed",
     "foundDate": "2026-11-04",
-    "foundIn": ["excalidraw-11"],
-    "missed": [{ "entry": "excalidraw-11", "entity": "src/charts.ts#tryParseSpreadsheet" }],
-    "evidence": "The graph at the introducer has parseClipboard -> parsePotentialSpreadsheet -> tryParseSpreadsheet (CALLS), and parseClipboard is a changed entity. buildImpact walks reverse edges only, so the consumer is in no blast radius.",
+    "foundIn": [
+      "excalidraw-11"
+    ],
+    "missed": [
+      {
+        "entry": "excalidraw-11",
+        "entity": "src/charts.ts#tryParseSpreadsheet"
+      }
+    ],
+    "evidence": "The graph at the introducer has parseClipboard -> parsePotentialSpreadsheet -> tryParseSpreadsheet (CALLS), and parseClipboard is a changed entity. buildImpact walks reverse edges only, so the consumer is in no blast radius. On the whole corpus, a forward walk of 1 to 3 steps added 73 to 198 entities per entry and found 1 more consumer at most. Following values (arguments, locals, returns, one caller up and one call down) found the consumers with far less noise, and collecting functions wrapped in a call found the rest.",
     "possibleFixes": [
       "Walk 2 to 3 steps forward from changed entities and label the result as a separate tier",
       "Add value-flow edges (output of A reaches input of B) to limit the forward walk to code that receives the changed value",
@@ -15,9 +22,9 @@
     ],
     "roadmapTask": null,
     "limitation": null,
-    "pinnedBy": "packages/analyzer/test/known-gaps.test.ts :: GAP-001 a consumer downstream of a changed function is not in the impact",
+    "pinnedBy": "packages/analyzer/test/known-gaps.test.ts :: GAP-001 a consumer downstream of a changed function receives the changed value",
     "pinExempt": null,
-    "fixedIn": null
+    "fixedIn": "packages/analyzer/src/value-flow.ts and entity-collector.ts. D-0 corpus, entities flagged: 57/78 to 71/78; outside the diff 6/17 to 13/17; consumers 1/9 to 7/9; value flow adds a mean of 13.5 entities per entry (median 5, max 84)."
   },
   {
     "id": "GAP-002",
@@ -25,10 +32,14 @@
     "cause": "report-context",
     "status": "open",
     "foundDate": "2026-11-04",
-    "foundIn": ["excalidraw-11"],
+    "foundIn": [
+      "excalidraw-11"
+    ],
     "missed": [],
     "evidence": "Rebuilt payload for excalidraw-11: features is empty on the clipboard changes, although feature charts-and-paste lists src/clipboard.ts in files. buildContextPack links features only through annotations and surfaces (context-pack.ts:149-152); this context has 0 annotations and 0 surfaces, and feature.files is never read. Contributing cause only: fixing it does not prove the report would then name chart paste.",
-    "possibleFixes": ["Link features through feature.files for the changed file, as rules already do through rule.files"],
+    "possibleFixes": [
+      "Link features through feature.files for the changed file, as rules already do through rule.files"
+    ],
     "roadmapTask": null,
     "limitation": null,
     "pinnedBy": "packages/reporting/test/known-gaps.test.ts :: GAP-002 a feature that lists the changed file is not linked to the change",
@@ -41,14 +52,91 @@
     "cause": "model-reasoning",
     "status": "open",
     "foundDate": "2026-11-04",
-    "foundIn": ["excalidraw-11"],
+    "foundIn": [
+      "excalidraw-11"
+    ],
     "missed": [],
     "evidence": "The QA report for excalidraw-11 tells QA to verify that tabs display as eight spaces and never names spreadsheet or chart paste. The payload did hold pointers: the clipboard.ts role mentions spreadsheet data, the parseClipboard diff shows parsePotentialSpreadsheet, and charts.ts and PasteChartDialog are listed as dependents of normalizeText. One run of openai/gpt-6-luna, so variance is unknown.",
-    "possibleFixes": ["Add a report instruction: for each removed guarantee, name what could have relied on it", "Repeat the report on several runs to measure how often it names the consumer"],
+    "possibleFixes": [
+      "Add a report instruction: for each removed guarantee, name what could have relied on it",
+      "Repeat the report on several runs to measure how often it names the consumer"
+    ],
     "roadmapTask": null,
     "limitation": null,
     "pinnedBy": null,
     "pinExempt": "LLM output is not deterministic, so a unit test cannot pin it. Track it by re-running the report on the corpus.",
+    "fixedIn": null
+  },
+  {
+    "id": "GAP-004",
+    "title": "A constant built by a call with a non-function argument has no entity",
+    "cause": "entity-collection",
+    "foundIn": [
+      "excalidraw-14"
+    ],
+    "missed": [
+      {
+        "entry": "excalidraw-14",
+        "entity": "packages/excalidraw/components/icons.tsx#SendBackwardIcon"
+      },
+      {
+        "entry": "excalidraw-14",
+        "entity": "packages/excalidraw/components/icons.tsx#SendToBackIcon"
+      }
+    ],
+    "evidence": "The icons are `const SendBackwardIcon = createIcon(<g />)`. The collector makes entities for a call wrapping a function or an object literal, not for this form, so the change lands on the module entity. Collecting every call result would also collect ordinary values, so this was left open.",
+    "possibleFixes": [
+      "Collect a call result as an entity when the callee returns a function or a component"
+    ],
+    "limitation": null,
+    "pinnedBy": "packages/analyzer/test/known-gaps.test.ts :: GAP-004 a constant built by a call with a non-function argument is not an entity",
+    "status": "open",
+    "foundDate": "2026-11-05",
+    "roadmapTask": null,
+    "pinExempt": null,
+    "fixedIn": null
+  },
+  {
+    "id": "GAP-005",
+    "title": "A value stored in an object field or shared state does not reach the code that reads it",
+    "cause": "data-flow",
+    "foundIn": [
+      "excalidraw-07",
+      "excalidraw-09"
+    ],
+    "missed": [
+      {
+        "entry": "excalidraw-07",
+        "entity": "src/actions/actionFinalize.tsx#actionFinalize.perform"
+      },
+      {
+        "entry": "excalidraw-07",
+        "entity": "src/data/restore.ts#restoreAppState"
+      },
+      {
+        "entry": "excalidraw-09",
+        "entity": "src/components/App.tsx#App.componentDidMount"
+      },
+      {
+        "entry": "excalidraw-09",
+        "entity": "src/renderer/renderScene.ts#renderScene"
+      },
+      {
+        "entry": "excalidraw-09",
+        "entity": "src/excalidraw-app/index.tsx#<module>"
+      }
+    ],
+    "evidence": "excalidraw-07 travels through appState.activeTool, and excalidraw-09 through a rendering schedule, with no call or argument between the changed code and the code that went wrong. Following object fields as values was tested: it found nothing more on the corpus and raised the added entities from a mean of 19.7 to 28.5 per entry, and a first prototype that matched writes to reads of a field also found nothing, though it was not tuned. Neither was shipped.",
+    "possibleFixes": [
+      "Field-sensitive tracking of writes to reads on the same object type",
+      "Name the state fields a change writes in the report, so the reader can check them"
+    ],
+    "limitation": "Changed values are followed through arguments, local variables and return values, one caller up and one call down; values stored in object fields or shared state are not followed.",
+    "pinnedBy": "packages/analyzer/test/known-gaps.test.ts :: GAP-005 a value stored in a shared object field does not reach the code that reads the field",
+    "status": "open",
+    "foundDate": "2026-11-05",
+    "roadmapTask": null,
+    "pinExempt": null,
     "fixedIn": null
   }
 ]

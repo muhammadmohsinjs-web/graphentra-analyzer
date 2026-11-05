@@ -1,0 +1,27 @@
+{
+  "entry": "excalidraw-16",
+  "analyzerVersion": "0.5.0",
+  "headSha": "58f7d33d80198a2a80c6d3eb38b3432e062dfbea",
+  "flaggedCounts": {
+    "changed": 15,
+    "blastOnly": 25,
+    "valueOnly": 1
+  },
+  "truth": [
+    {
+      "id": "packages/excalidraw/eraser/index.ts#EraserTrail.updateElementsToBeErased",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "packages/excalidraw/eraser/index.ts#eraserTest",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "packages/excalidraw/components/App.tsx#App.handleEraser",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    }
+  ]
+}

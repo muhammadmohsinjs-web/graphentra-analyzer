@@ -1,0 +1,22 @@
+{
+  "entry": "consola-01",
+  "analyzerVersion": "0.5.0",
+  "headSha": "197a6b398e7475e20e114ac488f9645bb4d8088e",
+  "flaggedCounts": {
+    "changed": 2,
+    "blastOnly": 16,
+    "valueOnly": 1
+  },
+  "truth": [
+    {
+      "id": "src/consola.js#Consola._logFn",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "src/consola.js#Consola.constructor",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    }
+  ]
+}

@@ -33,6 +33,7 @@ export const EXTENDED_LIMITATIONS = [
   'Entities are named functions, variable-bound arrow functions and function expressions, class and object-literal methods, constructors, accessors, React components, and module-level code.',
   'Classes, interfaces, type aliases, and enums are not entities.',
   'Relationships are CALLS, RENDERS (JSX elements), INSTANTIATES (new expressions), and REFERENCES (functions passed or stored as values).',
+  'Changed values are followed through arguments, local variables and return values, one caller up and one call down; values stored in object fields or shared state are not followed.',
   'Dynamic calls and calls through interface-typed receivers are not analyzed.',
   'Renamed entities may lack removed-code evidence.',
   'Partially overlapping entity line ranges are skipped rather than sharing ambiguous evidence.',
@@ -176,6 +177,9 @@ export function formatDeterministicMarkdown(result: AnalyzeResult): string {
           lines.push(hub.entityId === impact.changedEntity.id
             ? `- Changed a hub used by ${hub.fanIn} callers (reach ${hub.reach})`
             : `- Traversal stopped at hub \`${hub.entityId}\` used by ${hub.fanIn} callers (reach ${hub.reach})`);
+        }
+        if (impact.receivesChangedValue?.length) {
+          lines.push(`- Receives the changed value: ${impact.receivesChangedValue.map(target => `\`${target.entity.id}\``).join(', ')}`);
         }
         if (impact.directDependents.length > 0) {
           lines.push('  - Direct: ' + impact.directDependents.map(d => `\`${d.id}\``).join(', '));

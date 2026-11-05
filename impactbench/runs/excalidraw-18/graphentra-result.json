@@ -1,0 +1,17 @@
+{
+  "entry": "excalidraw-18",
+  "analyzerVersion": "0.5.0",
+  "headSha": "5bcd8280c97c97b95f4fd268dbd4ff3d7905f87b",
+  "flaggedCounts": {
+    "changed": 15,
+    "blastOnly": 5,
+    "valueOnly": 1
+  },
+  "truth": [
+    {
+      "id": "excalidraw-app/components/ExcalidrawPlusPromoBanner.tsx#ExcalidrawPlusPromoBanner",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    }
+  ]
+}

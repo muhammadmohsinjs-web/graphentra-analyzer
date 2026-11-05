@@ -762,6 +762,25 @@
             "$ref": "#/$defs/entity"
           }
         },
+        "receivesChangedValue": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "entity": {
+                "$ref": "#/$defs/entity"
+              },
+              "through": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "entity",
+              "through"
+            ],
+            "additionalProperties": false
+          }
+        },
         "contractRisk": {
           "type": "boolean"
         },

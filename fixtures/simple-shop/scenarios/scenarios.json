@@ -12,6 +12,18 @@
     "doesNotReceiveChangedValue": ["src/catalog.ts#getPrice", "src/customers.ts#getCustomerName", "src/payment.ts#chargeCard"]
   },
   {
+    "id": "customer-title",
+    "title": "The receipt greets the customer by their title",
+    "patch": "customer-title.patch",
+    "subject": "feat(shop): address customers by title on the receipt",
+    "shape": "Two steps forward from the changed function",
+    "correct": { "ok": true, "charged": "$10.00", "receipt": "Thanks Ada! Your TEA-1 is on its way." },
+    "withChange": { "ok": true, "charged": "$10.00", "receipt": "Thanks Ms.! Your TEA-1 is on its way." },
+    "changed": ["src/shop.ts#placeOrder"],
+    "receivesChangedValue": ["src/receipt.ts#buildReceipt", "src/receipt.ts#firstName"],
+    "doesNotReceiveChangedValue": ["src/stock.ts#stockOf", "src/catalog.ts#getPrice", "src/customers.ts#getCustomerName", "src/payment.ts#chargeCard"]
+  },
+  {
     "id": "price-in-dollars",
     "title": "The card is charged dollars as if they were cents",
     "patch": "price-in-dollars.patch",
@@ -34,5 +46,17 @@
     "changed": ["src/customers.ts#getCustomerName"],
     "receivesChangedValue": ["src/receipt.ts#buildReceipt", "src/receipt.ts#firstName"],
     "doesNotReceiveChangedValue": ["src/stock.ts#stockOf", "src/catalog.ts#getPrice", "src/payment.ts#chargeCard"]
+  },
+  {
+    "id": "price-table-in-dollars",
+    "title": "The price table holds dollars, so the card is charged too little",
+    "patch": "price-table-in-dollars.patch",
+    "subject": "chore(catalog): set the tea price to 5",
+    "shape": "Data only: no function changed, and nothing links a function to the table",
+    "correct": { "ok": true, "charged": "$10.00", "receipt": "Thanks Ada! Your TEA-1 is on its way." },
+    "withChange": { "ok": true, "charged": "$0.10", "receipt": "Thanks Ada! Your TEA-1 is on its way." },
+    "changed": ["src/catalog.ts#<module>"],
+    "receivesChangedValue": ["src/catalog.ts#getPrice", "src/shop.ts#placeOrder", "src/payment.ts#chargeCard"],
+    "doesNotReceiveChangedValue": ["src/stock.ts#stockOf", "src/customers.ts#getCustomerName", "src/receipt.ts#buildReceipt"]
   }
 ]

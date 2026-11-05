@@ -1,0 +1,27 @@
+{
+  "entry": "excalidraw-21",
+  "analyzerVersion": "0.5.0",
+  "headSha": "5ca083436d44a51a0705d43ea22d323839d5fe8e",
+  "flaggedCounts": {
+    "changed": 71,
+    "blastOnly": 78,
+    "valueOnly": 49
+  },
+  "truth": [
+    {
+      "id": "packages/excalidraw/components/App.tsx#App.isActiveToolPointerCapturing",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "packages/excalidraw/components/App.tsx#App.handleCanvasPointerDown",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "packages/excalidraw/components/App.tsx#App.handleCanvasPanUsingWheelOrSpaceDrag",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    }
+  ]
+}

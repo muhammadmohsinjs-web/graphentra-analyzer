@@ -1,0 +1,27 @@
+{
+  "entry": "excalidraw-07",
+  "analyzerVersion": "0.5.0",
+  "headSha": "1331cffe93ffec7e94670b3d95e3e3c1bd228c57",
+  "flaggedCounts": {
+    "changed": 5,
+    "blastOnly": 0,
+    "valueOnly": 7
+  },
+  "truth": [
+    {
+      "id": "src/actions/actionFinalize.tsx#actionFinalize.perform",
+      "outsideIntroducerDiff": false,
+      "flagged": null
+    },
+    {
+      "id": "src/actions/actionCanvas.tsx#actionErase.perform",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "src/data/restore.ts#restoreAppState",
+      "outsideIntroducerDiff": true,
+      "flagged": null
+    }
+  ]
+}

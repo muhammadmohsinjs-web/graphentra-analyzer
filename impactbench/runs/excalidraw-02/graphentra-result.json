@@ -1,0 +1,22 @@
+{
+  "entry": "excalidraw-02",
+  "analyzerVersion": "0.5.0",
+  "headSha": "2340dddaad685bd1d196952b1113d1b9381e40da",
+  "flaggedCounts": {
+    "changed": 22,
+    "blastOnly": 1,
+    "valueOnly": 5
+  },
+  "truth": [
+    {
+      "id": "src/actions/actionProperties.tsx#getFormValue",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "src/actions/actionProperties.tsx#actionChangeOpacity.PanelComponent",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "entry": "excalidraw-14",
+  "analyzerVersion": "0.5.0",
+  "headSha": "d1f37cc64f3dd09e6cc0f1b5bca73e6b1957d39b",
+  "flaggedCounts": {
+    "changed": 20,
+    "blastOnly": 14,
+    "valueOnly": 12
+  },
+  "truth": [
+    {
+      "id": "packages/excalidraw/components/icons.tsx#SendBackwardIcon",
+      "outsideIntroducerDiff": false,
+      "flagged": null
+    },
+    {
+      "id": "packages/excalidraw/components/icons.tsx#SendToBackIcon",
+      "outsideIntroducerDiff": false,
+      "flagged": null
+    },
+    {
+      "id": "packages/excalidraw/actions/actionZindex.tsx#actionSendBackward.PanelComponent",
+      "outsideIntroducerDiff": true,
+      "flagged": "value"
+    },
+    {
+      "id": "packages/excalidraw/actions/actionZindex.tsx#actionSendToBack.PanelComponent",
+      "outsideIntroducerDiff": true,
+      "flagged": "value"
+    }
+  ]
+}

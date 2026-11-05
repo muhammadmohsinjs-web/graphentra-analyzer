@@ -15,6 +15,7 @@
     --muted: #94938a;
     --changed: #d03b3b;
     --affected: #fab219;
+    --value: #2bb39a;
     --focus: #f0efec;
     --ink-on-mark: #141413;
     --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -38,6 +39,7 @@
   .swatch { flex: none; width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
   .swatch.changed { background: var(--changed); }
   .swatch.direct { background: var(--affected); }
+  .swatch.value { background: var(--value); }
   .swatch.transitive { background: rgba(250, 178, 25, .22); box-shadow: inset 0 0 0 1.5px var(--affected); }
   .swatch.ghost { box-shadow: none; border: 1.5px dashed var(--changed); }
   .swatch.plain { background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
@@ -134,6 +136,7 @@
       <div><i class="swatch direct"></i>Affected, direct dependent (d1)</div>
       <div><i class="swatch transitive"></i>Affected, transitive (d2 and deeper)</div>
       <div><i class="swatch ghost"></i>Not in the current graph (deleted)</div>
+      <div><i class="swatch value"></i>Receives the changed value</div>
       <div><i class="swatch plain"></i>Not affected</div>
     </div>
     <h2 style="margin-top:14px">Relations</h2>
@@ -149,6 +152,8 @@
   <section>
     <h2 id="affectedHeading">Affected</h2>
     <ul class="list" id="affectedList"></ul>
+    <h2 id="valueHeading">Receives the changed value</h2>
+    <ul class="list" id="valueList"></ul>
   </section>
 
   <section id="limitsSection">
@@ -200,7 +205,7 @@ const MARKER_ZOOM = 0.5;
 const COLORS = {
   surface: '#1a1a19', card: '#232322', header: '#2c2c2a', line: '#383835',
   text: '#f0efec', text2: '#c3c2b7', muted: '#94938a',
-  changed: '#d03b3b', affected: '#fab219', ink: '#141413', onChanged: '#ffffff',
+  changed: '#d03b3b', affected: '#fab219', value: '#2bb39a', ink: '#141413', onChanged: '#ffffff',
 };
 const RELATION_STYLE = {
   CALLS: { color: '#3987e5', dash: [] },
@@ -233,9 +238,11 @@ const state = {
 const statusText = (node) => {
   if (node.changed) return node.affected ? 'Changed, and reached by another change' : 'Changed';
   if (node.affected) return node.depth === null ? 'Affected' : `Affected at depth ${node.depth}`;
+  if (node.receivesValue) return 'Receives the changed value';
   return 'Not affected';
 };
 const affectedOnly = (node) => node.affected && !node.changed;
+const valueOnly = (node) => node.receivesValue && !node.affected && !node.changed;
 const isTransitive = (node) => affectedOnly(node) && !node.direct && node.depth !== 1;
 
 /* ------------------------------ scene ------------------------------ */
@@ -384,7 +391,7 @@ function fitImpact() {
   if (!scene) return;
   const box = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
   nodes.forEach((node, index) => {
-    if (!(node.changed || node.affected) || scene.cardOf[index] < 0) return;
+    if (!(node.changed || node.affected || node.receivesValue) || scene.cardOf[index] < 0) return;
     const card = scene.cards[scene.cardOf[index]];
     box.minX = Math.min(box.minX, card.x);
     box.maxX = Math.max(box.maxX, card.x + card.w);
@@ -579,7 +586,7 @@ function drawRow(card, row, index, labels) {
   const h = ROW_H - 2;
   const transitive = isTransitive(node);
   const direct = affectedOnly(node) && !transitive;
-  const marked = node.changed || node.affected;
+  const marked = node.changed || node.affected || node.receivesValue;
 
   if (marked || !labels) {
     if (node.ghost) {
@@ -597,6 +604,11 @@ function drawRow(card, row, index, labels) {
       ctx.fill();
     } else if (direct) {
       ctx.fillStyle = COLORS.affected;
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, 4);
+      ctx.fill();
+    } else if (valueOnly(node)) {
+      ctx.fillStyle = COLORS.value;
       ctx.beginPath();
       ctx.roundRect(x, y, w, h, 4);
       ctx.fill();
@@ -728,7 +740,7 @@ function nodeAt(sx, sy) {
   let best = null;
   let bestDistance = 100;
   nodes.forEach((node, index) => {
-    if (!(node.changed || node.affected) || scene.cardOf[index] < 0) return;
+    if (!(node.changed || node.affected || node.receivesValue) || scene.cardOf[index] < 0) return;
     const card = scene.cards[scene.cardOf[index]];
     const dx = cam.x + (card.x + card.w / 2) * cam.k - sx;
     const dy = cam.y + (scene.y[index] + ROW_H / 2) * cam.k - sy;
@@ -847,7 +859,7 @@ function entityButton(index, tag, onPick) {
   button.className = 'entity';
   button.type = 'button';
   const swatch = document.createElement('i');
-  swatch.className = 'swatch ' + (node.ghost ? 'ghost' : node.changed ? 'changed' : isTransitive(node) ? 'transitive' : affectedOnly(node) ? 'direct' : 'plain');
+  swatch.className = 'swatch ' + (node.ghost ? 'ghost' : node.changed ? 'changed' : isTransitive(node) ? 'transitive' : affectedOnly(node) ? 'direct' : valueOnly(node) ? 'value' : 'plain');
   const text = document.createElement('span');
   text.className = 'name';
   text.textContent = node.name;
@@ -1021,6 +1033,7 @@ function renderSidebar() {
     ['Relations in graph', number(stats.relations)],
     ['Files in graph', number(stats.files)],
   ];
+  if (stats.receivesValueEntities > 0) rows.push(['Receives the changed value', number(stats.receivesValueEntities)]);
   for (const [label, value] of Object.entries(stats.affectedByConfidence)) rows.push([`Affected, ${label}`, number(value)]);
   if (stats.changedLines > 0) rows.push(['Changed lines tied to entities', `${number(stats.attributedLines)} of ${number(stats.changedLines)}`]);
   if (stats.changedAlsoReached > 0) rows.push(['Changed and also reached', number(stats.changedAlsoReached)]);
@@ -1093,6 +1106,9 @@ function renderSidebar() {
   $('affectedHeading').textContent = `Affected (${number(affected.length)})`;
   fillList('changedList', changed, (node) => (node.blastCount !== null ? `→ ${node.blastCount}` : node.changeKind));
   fillList('affectedList', affected, (node) => (node.depth !== null ? `d${node.depth}` : ''));
+  const valueTargets = allIndexes.filter((index) => valueOnly(nodes[index]));
+  $('valueHeading').textContent = `Receives the changed value (${number(valueTargets.length)})`;
+  fillList('valueList', valueTargets, () => '');
 
   const limits = $('limits');
   if (data.limitations.length === 0) $('limitsSection').hidden = true;

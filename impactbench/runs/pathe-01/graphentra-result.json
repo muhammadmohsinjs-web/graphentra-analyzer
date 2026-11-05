@@ -1,0 +1,22 @@
+{
+  "entry": "pathe-01",
+  "analyzerVersion": "0.5.0",
+  "headSha": "6136b3ca9c1c26ec2a0002b24f08f8dcf28a78af",
+  "flaggedCounts": {
+    "changed": 8,
+    "blastOnly": 1,
+    "valueOnly": 4
+  },
+  "truth": [
+    {
+      "id": "src/path.ts#extname",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "src/path.ts#parse",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    }
+  ]
+}

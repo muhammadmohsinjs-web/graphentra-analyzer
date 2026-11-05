@@ -3,8 +3,9 @@
   "analyzerVersion": "0.5.0",
   "headSha": "baf9651d343b1ce10a94c54ca1ee799058e9d6cb",
   "flaggedCounts": {
-    "changed": 14,
-    "blastOnly": 42
+    "changed": 17,
+    "blastOnly": 50,
+    "valueOnly": 39
   },
   "truth": [
     {
@@ -20,7 +21,7 @@
     {
       "id": "src/charts.ts#tryParseSpreadsheet",
       "outsideIntroducerDiff": true,
-      "flagged": null
+      "flagged": "value"
     }
   ]
 }

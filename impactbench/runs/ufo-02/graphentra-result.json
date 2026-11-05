@@ -1,0 +1,22 @@
+{
+  "entry": "ufo-02",
+  "analyzerVersion": "0.5.0",
+  "headSha": "38631cfb90995acde56e0cbef0e341710dcc9e65",
+  "flaggedCounts": {
+    "changed": 51,
+    "blastOnly": 6,
+    "valueOnly": 5
+  },
+  "truth": [
+    {
+      "id": "src/query.ts#encodeQueryItem",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "src/utils.ts#withQuery",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    }
+  ]
+}

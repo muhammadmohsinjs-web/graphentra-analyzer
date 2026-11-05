@@ -1,0 +1,22 @@
+{
+  "entry": "excalidraw-10",
+  "analyzerVersion": "0.5.0",
+  "headSha": "cad6097d604d891e94e397af6bec0d2f3d2eed9b",
+  "flaggedCounts": {
+    "changed": 38,
+    "blastOnly": 31,
+    "valueOnly": 17
+  },
+  "truth": [
+    {
+      "id": "src/data/library.ts#useHandleLibrary>importLibraryFromURL",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "src/excalidraw-app/index.tsx#ExcalidrawWrapper",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    }
+  ]
+}

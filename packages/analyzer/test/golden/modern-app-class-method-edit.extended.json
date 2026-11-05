@@ -695,7 +695,7 @@
         "name": "<module>",
         "file": "src/server/handlers.ts",
         "startLine": 1,
-        "endLine": 27,
+        "endLine": 29,
         "language": "typescript"
       },
       {
@@ -703,8 +703,8 @@
         "kind": "function",
         "name": "listOrders",
         "file": "src/server/handlers.ts",
-        "startLine": 9,
-        "endLine": 11,
+        "startLine": 10,
+        "endLine": 12,
         "language": "typescript",
         "exported": true
       },
@@ -713,8 +713,8 @@
         "kind": "function",
         "name": "createOrder",
         "file": "src/server/handlers.ts",
-        "startLine": 13,
-        "endLine": 22,
+        "startLine": 14,
+        "endLine": 24,
         "language": "typescript",
         "exported": true
       },
@@ -723,8 +723,8 @@
         "kind": "function",
         "name": "health",
         "file": "src/server/handlers.ts",
-        "startLine": 24,
-        "endLine": 26,
+        "startLine": 26,
+        "endLine": 28,
         "language": "typescript",
         "exported": true
       },
@@ -1262,6 +1262,11 @@
       },
       {
         "from": "src/server/handlers.ts#createOrder",
+        "to": "src/utils/format.ts#slugify",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/server/handlers.ts#createOrder",
         "to": "src/services/inventory.ts#checkStock",
         "type": "CALLS"
       },
@@ -1753,8 +1758,8 @@
           "kind": "function",
           "name": "createOrder",
           "file": "src/server/handlers.ts",
-          "startLine": 13,
-          "endLine": 22,
+          "startLine": 14,
+          "endLine": 24,
           "language": "typescript",
           "exported": true
         },
@@ -1785,8 +1790,8 @@
             "kind": "function",
             "name": "createOrder",
             "file": "src/server/handlers.ts",
-            "startLine": 13,
-            "endLine": 22,
+            "startLine": 14,
+            "endLine": 24,
             "language": "typescript",
             "exported": true
           },
@@ -1835,8 +1840,8 @@
               "kind": "function",
               "name": "createOrder",
               "file": "src/server/handlers.ts",
-              "startLine": 13,
-              "endLine": 22,
+              "startLine": 14,
+              "endLine": 24,
               "language": "typescript",
               "exported": true
             },
@@ -1857,8 +1862,8 @@
                 "kind": "function",
                 "name": "createOrder",
                 "file": "src/server/handlers.ts",
-                "startLine": 13,
-                "endLine": 22,
+                "startLine": 14,
+                "endLine": 24,
                 "language": "typescript",
                 "exported": true
               }
@@ -1973,8 +1978,8 @@
                 "kind": "function",
                 "name": "createOrder",
                 "file": "src/server/handlers.ts",
-                "startLine": 13,
-                "endLine": 22,
+                "startLine": 14,
+                "endLine": 24,
                 "language": "typescript",
                 "exported": true
               },
@@ -2023,8 +2028,8 @@
                 "kind": "function",
                 "name": "createOrder",
                 "file": "src/server/handlers.ts",
-                "startLine": 13,
-                "endLine": 22,
+                "startLine": 14,
+                "endLine": 24,
                 "language": "typescript",
                 "exported": true
               },
@@ -2088,7 +2093,22 @@
           "language": "typescript"
         }
       ],
-      "confidence": "likely"
+      "confidence": "likely",
+      "receivesChangedValue": [
+        {
+          "entity": {
+            "id": "src/utils/format.ts#formatPrice",
+            "kind": "function",
+            "name": "formatPrice",
+            "file": "src/utils/format.ts",
+            "startLine": 3,
+            "endLine": 6,
+            "language": "typescript",
+            "exported": true
+          },
+          "through": "src/services/order-service.ts#OrderService.total"
+        }
+      ]
     }
   ],
   "diagnostics": [
@@ -2151,6 +2171,7 @@
     "Entities are named functions, variable-bound arrow functions and function expressions, class and object-literal methods, constructors, accessors, React components, and module-level code.",
     "Classes, interfaces, type aliases, and enums are not entities.",
     "Relationships are CALLS, RENDERS (JSX elements), INSTANTIATES (new expressions), and REFERENCES (functions passed or stored as values).",
+    "Changed values are followed through arguments, local variables and return values, one caller up and one call down; values stored in object fields or shared state are not followed.",
     "Dynamic calls and calls through interface-typed receivers are not analyzed.",
     "Renamed entities may lack removed-code evidence.",
     "Partially overlapping entity line ranges are skipped rather than sharing ambiguous evidence.",
@@ -2161,13 +2182,13 @@
     {
       "entityId": "src/server/handlers.ts#createOrder",
       "file": "src/server/handlers.ts",
-      "line": 17,
+      "line": 19,
       "reason": "interface_dispatch"
     },
     {
       "entityId": "src/server/handlers.ts#createOrder",
       "file": "src/server/handlers.ts",
-      "line": 21,
+      "line": 23,
       "reason": "interface_dispatch"
     },
     {

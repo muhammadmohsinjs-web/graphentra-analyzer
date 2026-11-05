@@ -137,6 +137,12 @@ export interface ImpactPath {
   confidence?: PathConfidence;
 }
 
+/** An entity that gets a changed value, with the entity the value arrived through. */
+export interface ValueFlowTarget {
+  entity: Entity;
+  through: string;
+}
+
 export interface EntityImpact {
   changedEntity: Entity;
   change: EntityChange;
@@ -151,6 +157,8 @@ export interface EntityImpact {
     hubs?: Array<{ entityId: string; fanIn: number; reach: number }>;
   };
   terminalDependents: Entity[];
+  /** Schema 2.1: code that receives a changed value and is not otherwise flagged, sorted by entity id. Absent when empty. */
+  receivesChangedValue?: ValueFlowTarget[];
   /** Schema 2.1: true when the changed entity's contract changed. */
   contractRisk?: boolean;
   /** Schema 2.1: weakest confidence over its paths; 'proven' when there are no paths. */

@@ -98,7 +98,7 @@ export function buildContextPack(context: ApplicationContextV2, impacts: EntityI
   const describedSurface = new Map(context.surfaces.map(surface => [surface.surfaceId, surface]));
   const surfaceById = new Map((map?.surfaces ?? []).map(surface => [surface.id, surface]));
   const fileRoleOf = new Map((context.fileSummaries ?? []).map(item => [item.file, item.summary]));
-  const entityFile = new Map(impacts.flatMap(impact => [impact.changedEntity, ...impact.blastRadius.entities])
+  const entityFile = new Map(impacts.flatMap(impact => [impact.changedEntity, ...impact.blastRadius.entities, ...(impact.receivesChangedValue ?? []).map(target => target.entity)])
     .map(entity => [entity.id, entity.file]));
   const fileOf = (id: string) => entityFile.get(id) ?? id.split('#')[0]!;
   // Functions without their own annotation fall back to their file's role.
@@ -106,7 +106,7 @@ export function buildContextPack(context: ApplicationContextV2, impacts: EntityI
     ?? (fileRoleOf.has(fileOf(id)) ? `Part of ${fileOf(id)}: ${fileRoleOf.get(fileOf(id))}` : undefined);
   const criticalityRank = { critical: 0, high: 1, normal: 2, low: 3 } as Record<string, number>;
 
-  const relevantIds = new Set(impacts.flatMap(impact => [impact.changedEntity.id, ...impact.blastRadius.entities.map(entity => entity.id)]));
+  const relevantIds = new Set(impacts.flatMap(impact => [impact.changedEntity.id, ...impact.blastRadius.entities.map(entity => entity.id), ...(impact.receivesChangedValue ?? []).map(target => target.entity.id)]));
 
   const describeArea = (surface: Surface, path: string[]): AffectedArea => {
     const described = describedSurface.get(surface.id);
@@ -140,7 +140,7 @@ export function buildContextPack(context: ApplicationContextV2, impacts: EntityI
     const id = impact.changedEntity.id;
     const annotation = annotationById.get(id);
     const dependents = impact.blastRadius.entities.map(entity => entity.id);
-    const scopeIds = [id, ...dependents];
+    const scopeIds = [id, ...dependents, ...(impact.receivesChangedValue ?? []).map(target => target.entity.id)];
     const areas = map
       ? findSurfacesForEntity(map, relations, id, MAX_AREAS_PER_CHANGE * 2).map(item => describeArea(item.surface, item.path))
         .sort((a, b) => (criticalityRank[a.feature?.criticality ?? 'normal']! - criticalityRank[b.feature?.criticality ?? 'normal']!) || a.distance - b.distance)
