@@ -22,7 +22,10 @@ modern-app/
 │   ├── app/orders/page.tsx  # Next-style page
 │   ├── stubs/react.ts     # local hook stubs
 │   └── types/jsx.d.ts     # global JSX types
-└── tests/                 # order-service.test.ts, handlers.test.ts
+└── tests/                 # one *.test.ts per module (format, math, ids, inventory, logger,
+                           # order-service, router, handlers, app, components, page,
+                           # react-stubs); support/ holds shared helpers
+                           # run: node --import tsx --test tests/*.test.ts
 ```
 
 ## Expectations table

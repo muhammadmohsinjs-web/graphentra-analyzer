@@ -1,0 +1,262 @@
+{
+  "id": "modern-app-sku-slugify",
+  "kind": "synthetic",
+  "app": "fixtures/modern-app",
+  "baseCommit": "bd85cbe3fc798f18858a277b4085ee163b049788",
+  "gap": "GAP-001",
+  "changeClass": "same-signature-behavior",
+  "change": {
+    "subject": "feat(orders): normalize SKUs with slugify when an order is created",
+    "summary": "createOrder rebuilds the order with every SKU converted by slugify, then uses that order for the stock check, for saving and for the total."
+  },
+  "symptom": "Valid orders for in-stock products are rejected with 409 \"out of stock\", because stock is saved under the original code. Orders that used to be rejected can now be accepted and saved under a different code, and an item with no code now crashes the handler.",
+  "behavior": [
+    {
+      "name": "In-stock product with a capital letter in its code",
+      "stock": {
+        "A-1": 10
+      },
+      "items": [
+        {
+          "sku": "A-1",
+          "qty": 2
+        }
+      ],
+      "before": {
+        "status": 201,
+        "saved": [
+          "A-1"
+        ],
+        "total": "$2.00"
+      },
+      "withChange": {
+        "status": 409,
+        "saved": null,
+        "total": null
+      }
+    },
+    {
+      "name": "In-stock product with an all-lowercase code",
+      "stock": {
+        "a-1": 10
+      },
+      "items": [
+        {
+          "sku": "a-1",
+          "qty": 2
+        }
+      ],
+      "before": {
+        "status": 201,
+        "saved": [
+          "a-1"
+        ],
+        "total": "$2.00"
+      },
+      "withChange": {
+        "status": 201,
+        "saved": [
+          "a-1"
+        ],
+        "total": "$2.00"
+      }
+    },
+    {
+      "name": "In-stock lowercase code containing a character slugify replaces",
+      "stock": {
+        "a_1": 10
+      },
+      "items": [
+        {
+          "sku": "a_1",
+          "qty": 2
+        }
+      ],
+      "before": {
+        "status": 201,
+        "saved": [
+          "a_1"
+        ],
+        "total": "$2.00"
+      },
+      "withChange": {
+        "status": 409,
+        "saved": null,
+        "total": null
+      }
+    },
+    {
+      "name": "One order mixing a capitalized and a lowercase code, both in stock",
+      "stock": {
+        "A-1": 10,
+        "b-2": 10
+      },
+      "items": [
+        {
+          "sku": "A-1",
+          "qty": 1
+        },
+        {
+          "sku": "b-2",
+          "qty": 1
+        }
+      ],
+      "before": {
+        "status": 201,
+        "saved": [
+          "A-1",
+          "b-2"
+        ],
+        "total": "$2.00"
+      },
+      "withChange": {
+        "status": 409,
+        "saved": null,
+        "total": null
+      }
+    },
+    {
+      "name": "Product that really is out of stock",
+      "stock": {
+        "A-1": 0
+      },
+      "items": [
+        {
+          "sku": "A-1",
+          "qty": 1
+        }
+      ],
+      "before": {
+        "status": 409,
+        "saved": null,
+        "total": null
+      },
+      "withChange": {
+        "status": 409,
+        "saved": null,
+        "total": null
+      }
+    },
+    {
+      "name": "Capitalized code when stock is saved under the lowercase code",
+      "stock": {
+        "a-1": 10
+      },
+      "items": [
+        {
+          "sku": "A-1",
+          "qty": 2
+        }
+      ],
+      "before": {
+        "status": 409,
+        "saved": null,
+        "total": null
+      },
+      "withChange": {
+        "status": 201,
+        "saved": [
+          "a-1"
+        ],
+        "total": "$2.00"
+      }
+    },
+    {
+      "name": "Item with no product code",
+      "stock": {
+        "A-1": 10
+      },
+      "items": [
+        {
+          "qty": 1
+        }
+      ],
+      "before": {
+        "status": 409,
+        "saved": null,
+        "total": null
+      },
+      "withChange": {
+        "status": "crash",
+        "saved": null,
+        "total": null
+      }
+    }
+  ],
+  "appTestsFailingWithChange": [
+    "POST /orders creates an order when stock is available",
+    "accepts a quantity equal to the stock on hand",
+    "reflects orders created through createOrder",
+    "responds 201 with the id, total and formatted total",
+    "stores the order so it can be priced later"
+  ],
+  "analyzer": {
+    "mustFind": [
+      {
+        "id": "src/server/handlers.ts#createOrder",
+        "outsideIntroducerDiff": false,
+        "role": "fault"
+      },
+      {
+        "id": "src/services/inventory.ts#checkStock",
+        "outsideIntroducerDiff": true,
+        "role": "consumer"
+      },
+      {
+        "id": "src/services/order-service.ts#OrderService.add",
+        "outsideIntroducerDiff": true,
+        "role": "consumer"
+      },
+      {
+        "id": "src/server/app.ts#buildApp",
+        "outsideIntroducerDiff": true,
+        "role": "caller"
+      },
+      {
+        "id": "tests/handlers.test.ts#<module>",
+        "outsideIntroducerDiff": true,
+        "role": "test"
+      },
+      {
+        "id": "tests/app.test.ts#<module>",
+        "outsideIntroducerDiff": true,
+        "role": "test"
+      }
+    ],
+    "mustNotFlag": [
+      {
+        "id": "src/services/order-service.ts#OrderService.total",
+        "why": "Takes the order id and returns a price that doesn't depend on the code"
+      },
+      {
+        "id": "src/services/order-service.ts#OrderService.record",
+        "why": "Receives the converted order but only logs its id"
+      },
+      {
+        "id": "src/utils/math.ts#orderTotal",
+        "why": "Receives the converted order but only reads price and quantity"
+      }
+    ]
+  },
+  "qaReport": {
+    "areas": [
+      "Placing an order",
+      "Stock check at checkout",
+      "Saved order data"
+    ],
+    "mustSay": [
+      "Valid orders for in-stock products can be rejected as out of stock",
+      "The cause is that the stock check looks up the converted code while stock is saved under the original code",
+      "Product codes with capital letters are affected, and so are codes with characters such as underscores",
+      "A single affected product causes the whole order to be rejected",
+      "The saved order now carries the converted code, so an order can be saved under a different code than the customer sent",
+      "An order that used to be rejected can now be accepted if stock is saved under the converted code",
+      "An item with no product code now crashes the request instead of returning 409"
+    ],
+    "mustNotSay": [
+      "Stock counts go down when an order is placed, because createOrder only reads stock",
+      "Order totals change, because totals use only price and quantity"
+    ],
+    "severity": "High: it stops valid sales"
+  }
+}

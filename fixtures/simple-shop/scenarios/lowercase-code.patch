@@ -1,0 +1,13 @@
+diff --git a/src/shop.ts b/src/shop.ts
+index b7365b0..a183ce9 100644
+--- a/src/shop.ts
++++ b/src/shop.ts
+@@ -5,7 +5,7 @@ import { buildReceipt } from './receipt';
+ import { stockOf } from './stock';
+ 
+ export const placeOrder = (customerId: string, code: string, qty: number) => {
+-  if (stockOf(code) < qty) {
++  if (stockOf(code.toLowerCase()) < qty) {
+     return { ok: false, reason: 'out of stock' };
+   }
+   const charged = chargeCard(getPrice(code) * qty);

@@ -1,0 +1,11 @@
+diff --git a/src/customers.ts b/src/customers.ts
+index 4bd8ff6..a952d86 100644
+--- a/src/customers.ts
++++ b/src/customers.ts
+@@ -4,5 +4,5 @@ const CUSTOMERS: Record<string, { first: string; last: string }> = {
+ 
+ export const getCustomerName = (id: string): string => {
+   const customer = CUSTOMERS[id];
+-  return `${customer.first} ${customer.last}`;
++  return `${customer.last}, ${customer.first}`;
+ };

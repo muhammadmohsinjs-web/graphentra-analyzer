@@ -13,3 +13,5 @@ branch or tag), then run both commands. Keep it only if its baseline passes and
 the tests take under about 2 minutes. Use permissive licenses only (MIT, ISC, Apache-2.0, BSD).
 Bump a pin on purpose: change `commit`, re-run both commands, commit the new baseline.
 `work/` is git-ignored.
+
+What Graphentra misses on real commits is tracked in [`gaps/`](gaps/README.md).
