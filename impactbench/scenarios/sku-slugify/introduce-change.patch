@@ -1,0 +1,24 @@
+diff --git a/src/server/handlers.ts b/src/server/handlers.ts
+index 6ea4ddf..9d1d295 100644
+--- a/src/server/handlers.ts
++++ b/src/server/handlers.ts
+@@ -3,6 +3,7 @@ import type { Order } from '../types';
+ import { OrderService, createDefaultService } from '../services/order-service';
+ import { orderTotal } from '../utils/math';
+ import { checkStock } from '../services/inventory';
++import slugify from '../utils/format';
+ 
+ export const service: OrderService = createDefaultService();
+ 
+@@ -11,8 +12,9 @@ export const listOrders: Handler = (_req, res) => {
+ };
+ 
+ export const createOrder: Handler = (req, res) => {
+-  const order = req.body as Order;
+-  const inStock = order.items.every((i) => checkStock(i.sku) >= i.qty);
++  const body = req.body as Order;
++  const order: Order = { ...body, items: body.items.map((i) => ({ ...i, sku: slugify(i.sku) })) };
++  const inStock = order.items.every(i => checkStock(i.sku) >= i.qty);
+   if (!inStock) {
+     res.status(409).json({ error: 'out of stock' });
+     return;

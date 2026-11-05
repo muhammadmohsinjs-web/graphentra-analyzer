@@ -6,9 +6,7 @@
     "status": "open",
     "foundDate": "2026-11-04",
     "foundIn": ["excalidraw-11"],
-    "missed": [
-      { "entry": "excalidraw-11", "entity": "src/charts.ts#tryParseSpreadsheet" }
-    ],
+    "missed": [{ "entry": "excalidraw-11", "entity": "src/charts.ts#tryParseSpreadsheet" }],
     "evidence": "The graph at the introducer has parseClipboard -> parsePotentialSpreadsheet -> tryParseSpreadsheet (CALLS), and parseClipboard is a changed entity. buildImpact walks reverse edges only, so the consumer is in no blast radius.",
     "possibleFixes": [
       "Walk 2 to 3 steps forward from changed entities and label the result as a separate tier",
@@ -30,9 +28,7 @@
     "foundIn": ["excalidraw-11"],
     "missed": [],
     "evidence": "Rebuilt payload for excalidraw-11: features is empty on the clipboard changes, although feature charts-and-paste lists src/clipboard.ts in files. buildContextPack links features only through annotations and surfaces (context-pack.ts:149-152); this context has 0 annotations and 0 surfaces, and feature.files is never read. Contributing cause only: fixing it does not prove the report would then name chart paste.",
-    "possibleFixes": [
-      "Link features through feature.files for the changed file, as rules already do through rule.files"
-    ],
+    "possibleFixes": ["Link features through feature.files for the changed file, as rules already do through rule.files"],
     "roadmapTask": null,
     "limitation": null,
     "pinnedBy": "packages/reporting/test/known-gaps.test.ts :: GAP-002 a feature that lists the changed file is not linked to the change",
@@ -48,10 +44,7 @@
     "foundIn": ["excalidraw-11"],
     "missed": [],
     "evidence": "The QA report for excalidraw-11 tells QA to verify that tabs display as eight spaces and never names spreadsheet or chart paste. The payload did hold pointers: the clipboard.ts role mentions spreadsheet data, the parseClipboard diff shows parsePotentialSpreadsheet, and charts.ts and PasteChartDialog are listed as dependents of normalizeText. One run of openai/gpt-6-luna, so variance is unknown.",
-    "possibleFixes": [
-      "Add a report instruction: for each removed guarantee, name what could have relied on it",
-      "Repeat the report on several runs to measure how often it names the consumer"
-    ],
+    "possibleFixes": ["Add a report instruction: for each removed guarantee, name what could have relied on it", "Repeat the report on several runs to measure how often it names the consumer"],
     "roadmapTask": null,
     "limitation": null,
     "pinnedBy": null,

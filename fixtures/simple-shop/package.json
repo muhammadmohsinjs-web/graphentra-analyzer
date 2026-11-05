@@ -1,0 +1,6 @@
+{
+  "name": "graphentra-simple-shop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A tiny shop whose one-line changes break code that Graphentra does not flag"
+}

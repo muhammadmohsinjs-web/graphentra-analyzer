@@ -23,6 +23,7 @@
     "analyze:modern-app": "tsx packages/analyzer/src/cli.ts --target fixtures/modern-app --working-tree --output fixtures/modern-app/output/evidence.json",
     "report": "tsx tools/report.ts",
     "visualize": "tsx apps/visualizer/src/visualize.ts",
+    "visualize:evidence": "node tools/visualize-evidence.mjs",
     "serve": "tsx tools/server.ts",
     "publish:report": "tsx tools/publish-report.ts",
     "bench:perf": "node tools/bench-perf.mjs --profile",

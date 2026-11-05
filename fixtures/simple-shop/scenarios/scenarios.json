@@ -1,0 +1,38 @@
+[
+  {
+    "id": "lowercase-code",
+    "title": "The stock check gets a lowercase code",
+    "patch": "lowercase-code.patch",
+    "subject": "feat(shop): normalize product codes before the stock check",
+    "shape": "One step forward from the changed function",
+    "correct": { "ok": true, "charged": "$10.00", "receipt": "Thanks Ada! Your TEA-1 is on its way." },
+    "withChange": { "ok": false, "reason": "out of stock" },
+    "changed": ["src/shop.ts#placeOrder"],
+    "receivesChangedValue": ["src/stock.ts#stockOf"],
+    "doesNotReceiveChangedValue": ["src/catalog.ts#getPrice", "src/customers.ts#getCustomerName", "src/payment.ts#chargeCard"]
+  },
+  {
+    "id": "price-in-dollars",
+    "title": "The card is charged dollars as if they were cents",
+    "patch": "price-in-dollars.patch",
+    "subject": "feat(catalog): return prices in dollars",
+    "shape": "Back up to the caller, then forward",
+    "correct": { "ok": true, "charged": "$10.00", "receipt": "Thanks Ada! Your TEA-1 is on its way." },
+    "withChange": { "ok": true, "charged": "$0.10", "receipt": "Thanks Ada! Your TEA-1 is on its way." },
+    "changed": ["src/catalog.ts#getPrice"],
+    "receivesChangedValue": ["src/payment.ts#chargeCard"],
+    "doesNotReceiveChangedValue": ["src/stock.ts#stockOf", "src/customers.ts#getCustomerName", "src/receipt.ts#buildReceipt"]
+  },
+  {
+    "id": "last-name-first",
+    "title": "The receipt greets the customer by the wrong name",
+    "patch": "last-name-first.patch",
+    "subject": "feat(customers): show names as last, first",
+    "shape": "Back up to the caller, then forward two steps",
+    "correct": { "ok": true, "charged": "$10.00", "receipt": "Thanks Ada! Your TEA-1 is on its way." },
+    "withChange": { "ok": true, "charged": "$10.00", "receipt": "Thanks Lovelace,! Your TEA-1 is on its way." },
+    "changed": ["src/customers.ts#getCustomerName"],
+    "receivesChangedValue": ["src/receipt.ts#buildReceipt", "src/receipt.ts#firstName"],
+    "doesNotReceiveChangedValue": ["src/stock.ts#stockOf", "src/catalog.ts#getPrice", "src/payment.ts#chargeCard"]
+  }
+]

@@ -1,0 +1,530 @@
+{
+  "schemaVersion": "2.0",
+  "meta": {
+    "generatedAt": "2026-11-05T05:54:15.287Z",
+    "generator": {
+      "model": "openai/gpt-6-luna",
+      "promptVersion": "context-v2.2"
+    },
+    "sourceHeadSha": "bd85cbe3fc798f18858a277b4085ee163b049788",
+    "analyzerVersion": "0.5.0",
+    "coverage": {
+      "eligibleEntities": 53,
+      "annotatedEntities": 0,
+      "surfaces": 3,
+      "describedSurfaces": 3,
+      "files": 18,
+      "summarizedFiles": 18
+    },
+    "unassignedFiles": []
+  },
+  "application": {
+    "name": "graphentra-modern-app",
+    "summary": "A small order-management application fixture with an orders page and an API for health checks and order requests. The README describes it as a TypeScript baseline used to exercise Graphentra’s code analyzer, not as a production application.",
+    "purpose": "Demonstrate an order workflow—displaying and pricing orders, checking stock, and creating orders—while providing a fixture for evaluating analyzer support for modern TypeScript patterns.",
+    "platform": "fullstack",
+    "userRoles": [
+      {
+        "id": "api-client",
+        "name": "API client",
+        "description": "A client that sends requests to the health and order endpoints. The repository does not identify specific client types or permissions."
+      }
+    ]
+  },
+  "features": [
+    {
+      "id": "order-browsing",
+      "name": "Browse and display orders",
+      "description": "Presents the orders page, order rows, order count, and summary information. The page is described as loading orders and passing them to the list; the API surface includes an endpoint for retrieving orders.",
+      "criticality": "high",
+      "criticalityReason": "This is the main visible order-browsing experience.",
+      "files": [
+        "src/app/orders/page.tsx",
+        "src/components/OrderList.tsx",
+        "src/components/OrderRow.tsx",
+        "src/components/Summary.tsx",
+        "src/stubs/react.ts",
+        "src/utils/format.ts",
+        "src/utils/math.ts",
+        "src/server/handlers.ts",
+        "src/services/order-service.ts",
+        "src/server/app.ts",
+        "src/server/router.ts"
+      ],
+      "surfaceIds": [
+        "api:GET /orders"
+      ],
+      "basis": "tests"
+    },
+    {
+      "id": "order-pricing",
+      "name": "Calculate and format order totals",
+      "description": "Calculates totals from item prices and quantities, applies the documented test expectation of a 1,000,000 cap, and formats prices for display and order responses.",
+      "criticality": "critical",
+      "criticalityReason": "Order totals represent money, so incorrect calculations or formatting could affect the core order journey.",
+      "files": [
+        "src/utils/math.ts",
+        "src/utils/format.ts",
+        "src/services/order-service.ts",
+        "src/components/OrderRow.tsx",
+        "src/components/Summary.tsx",
+        "src/server/handlers.ts"
+      ],
+      "surfaceIds": [
+        "api:POST /orders"
+      ],
+      "basis": "tests"
+    },
+    {
+      "id": "create-orders-and-check-stock",
+      "name": "Create orders and check stock",
+      "description": "Accepts order requests, checks requested quantities against stock, creates an order identifier, and stores accepted orders. Tests specify a 201 response for an accepted order and a 409 response for an unknown SKU or a line that exceeds available stock.",
+      "criticality": "critical",
+      "criticalityReason": "Order creation is a core journey and depends on correct stock checks and order data handling.",
+      "files": [
+        "src/server/handlers.ts",
+        "src/services/inventory.ts",
+        "src/services/order-service.ts",
+        "src/utils/ids.ts",
+        "src/utils/math.ts",
+        "src/server/app.ts",
+        "src/server/router.ts"
+      ],
+      "surfaceIds": [
+        "api:POST /orders"
+      ],
+      "basis": "tests"
+    },
+    {
+      "id": "health-check",
+      "name": "Check API health",
+      "description": "Provides a health endpoint whose tested response is `ok` with status 200.",
+      "criticality": "normal",
+      "criticalityReason": "It is a useful API capability, but the supplied evidence does not make it part of the order-creation journey.",
+      "files": [
+        "src/server/handlers.ts",
+        "src/server/app.ts",
+        "src/server/router.ts"
+      ],
+      "surfaceIds": [
+        "api:GET /health"
+      ],
+      "basis": "tests"
+    },
+    {
+      "id": "request-and-order-logging",
+      "name": "Record request and order activity",
+      "description": "Logs requests through server middleware and records informational messages for order-service activity. Tests cover logging each request, including unknown routes, and recording a line when an order is added.",
+      "criticality": "normal",
+      "criticalityReason": "Logging supports internal visibility and troubleshooting; no business requirement for retention or audit use is supplied.",
+      "files": [
+        "src/server/app.ts",
+        "src/services/logger.ts",
+        "src/services/order-service.ts"
+      ],
+      "surfaceIds": [
+        "api:GET /health",
+        "api:GET /orders",
+        "api:POST /orders"
+      ],
+      "basis": "tests"
+    },
+    {
+      "id": "legacy-examples",
+      "name": "Legacy display and formatting examples",
+      "description": "Contains a label-based display component and standalone legacy modules for name formatting, price descriptions, collections, and greetings. The supplied summaries do not show these modules connected to the orders workflow.",
+      "criticality": "low",
+      "criticalityReason": "These appear to be isolated legacy examples rather than part of the main order journey.",
+      "files": [
+        "src/legacy/Badge.jsx",
+        "src/legacy/cjs-module.js",
+        "src/legacy/esm.mjs",
+        "src/legacy/use-legacy.js"
+      ],
+      "surfaceIds": [],
+      "basis": "code"
+    }
+  ],
+  "surfaces": [
+    {
+      "surfaceId": "api:GET /health",
+      "businessName": "Health check API",
+      "purpose": "Check whether the API is responding; the tested response is status 200 with `ok`.",
+      "featureIds": [
+        "health-check",
+        "request-and-order-logging"
+      ],
+      "howToReach": [
+        "Send GET /health.",
+        "Authentication: no requirement found in the supplied information."
+      ],
+      "access": "No access restriction found in code",
+      "setup": [
+        "No test data or account requirements are stated."
+      ],
+      "basis": "tests"
+    },
+    {
+      "surfaceId": "api:GET /orders",
+      "businessName": "Get orders API",
+      "purpose": "Retrieve orders for browsing and display.",
+      "featureIds": [
+        "order-browsing",
+        "request-and-order-logging"
+      ],
+      "howToReach": [
+        "Send GET /orders.",
+        "Authentication: no requirement found in the supplied information."
+      ],
+      "access": "No access restriction found in code",
+      "setup": [
+        "No specific order data or account requirements are stated."
+      ],
+      "basis": "code"
+    },
+    {
+      "surfaceId": "api:POST /orders",
+      "businessName": "Create order API",
+      "purpose": "Submit an order request, check requested quantities against stock, and create and store an order when accepted. Tests specify status 201 for an accepted order and status 409 for an unknown SKU or a line that exceeds available stock.",
+      "featureIds": [
+        "create-orders-and-check-stock",
+        "order-pricing",
+        "request-and-order-logging"
+      ],
+      "howToReach": [
+        "Send POST /orders.",
+        "Authentication: no requirement found in the supplied information."
+      ],
+      "access": "No access restriction found in code",
+      "setup": [
+        "To test an accepted order, provide order line(s) whose SKU exists and whose requested quantity does not exceed available stock. The exact request schema, SKU, and stock values are not supplied.",
+        "To test a conflict, use an unknown SKU or request more than the available stock."
+      ],
+      "basis": "tests"
+    }
+  ],
+  "fileSummaries": [
+    {
+      "file": "src/app/orders/page.tsx",
+      "summary": "OrdersPage presents the orders page using the order list and summary components.",
+      "fingerprint": "2021863a7d57ad82",
+      "basis": "code"
+    },
+    {
+      "file": "src/components/OrderList.tsx",
+      "summary": "OrderList displays orders, a Clear control, and a summary; changes would most likely touch OrderList.",
+      "fingerprint": "2d3311924ced3238",
+      "basis": "code"
+    },
+    {
+      "file": "src/components/OrderRow.tsx",
+      "summary": "OrderRow displays an order and its calculated total; changes would most likely touch OrderRow or orderTotal.",
+      "fingerprint": "17a78a9448f896fc",
+      "basis": "code"
+    },
+    {
+      "file": "src/components/Summary.tsx",
+      "summary": "Summary displays order-count and sample-price information; changes would most likely touch Summary.",
+      "fingerprint": "fbc712a2e07f252c",
+      "basis": "code"
+    },
+    {
+      "file": "src/legacy/Badge.jsx",
+      "summary": "Badge provides a legacy display component that accepts a label.",
+      "fingerprint": "4a98dd1f7d696f6f",
+      "basis": "code"
+    },
+    {
+      "file": "src/legacy/cjs-module.js",
+      "summary": "This legacy CommonJS module provides name-formatting functions; changes would most likely touch formatName.",
+      "fingerprint": "8b90c3071ba14b17",
+      "basis": "code"
+    },
+    {
+      "file": "src/legacy/esm.mjs",
+      "summary": "This legacy ES module describes prices and collections of values; changes would most likely touch describePrice or describeAll.",
+      "fingerprint": "785c3d00c7d0e00a",
+      "basis": "code"
+    },
+    {
+      "file": "src/legacy/use-legacy.js",
+      "summary": "This legacy module provides a greeting function; changes would most likely touch greet.",
+      "fingerprint": "a3b9a13b1e1e1102",
+      "basis": "code"
+    },
+    {
+      "file": "src/server/app.ts",
+      "summary": "buildApp assembles the server routes and request logging middleware for API clients.",
+      "fingerprint": "464c432fdbb259b4",
+      "basis": "code"
+    },
+    {
+      "file": "src/server/handlers.ts",
+      "summary": "Handlers serve health and order requests, including order creation; changes would most likely touch createOrder.",
+      "fingerprint": "a9ef3dd1f936bad8",
+      "basis": "code"
+    },
+    {
+      "file": "src/server/router.ts",
+      "summary": "Router registers and dispatches GET and POST requests, with middleware support; changes would most likely touch dispatch.",
+      "fingerprint": "fde788e2f67b1a6d",
+      "basis": "code"
+    },
+    {
+      "file": "src/services/inventory.ts",
+      "summary": "Inventory functions check, reserve, and release stock; changes would most likely touch inventory.reserve or checkStock.",
+      "fingerprint": "6166c64b5bfb8bfe",
+      "basis": "code"
+    },
+    {
+      "file": "src/services/logger.ts",
+      "summary": "Logger records informational messages and exposes a line count; changes would most likely touch info.",
+      "fingerprint": "2d37d3ed9f30cec0",
+      "basis": "code"
+    },
+    {
+      "file": "src/services/order-service.ts",
+      "summary": "OrderService stores orders and provides totals and counts; changes would most likely touch add or total.",
+      "fingerprint": "923a3b9ac08414f9",
+      "basis": "code"
+    },
+    {
+      "file": "src/stubs/react.ts",
+      "summary": "Local React hook stubs support state, effects, and memoized values for the fixture components.",
+      "fingerprint": "59cadefd6231f4b7",
+      "basis": "code"
+    },
+    {
+      "file": "src/utils/format.ts",
+      "summary": "Formatting helpers produce prices, padded text, slugs, and title case; changes would most likely touch formatPrice or slugify.",
+      "fingerprint": "242933388641890d",
+      "basis": "code"
+    },
+    {
+      "file": "src/utils/ids.ts",
+      "summary": "makeId creates prefixed identifiers using a shared counter.",
+      "fingerprint": "6de378fc86bd8ce8",
+      "basis": "code"
+    },
+    {
+      "file": "src/utils/math.ts",
+      "summary": "Math helpers clamp values, sum numbers, and calculate order totals; changes would most likely touch orderTotal.",
+      "fingerprint": "f53f0386749053d2",
+      "basis": "code"
+    }
+  ],
+  "glossary": [
+    {
+      "term": "Order list",
+      "identifiers": [
+        "OrderList"
+      ],
+      "meaning": "The component that displays orders and a Clear control.",
+      "basis": "code"
+    },
+    {
+      "term": "Order row",
+      "identifiers": [
+        "OrderRow"
+      ],
+      "meaning": "A displayed order and its calculated total.",
+      "basis": "code"
+    },
+    {
+      "term": "Order summary",
+      "identifiers": [
+        "Summary"
+      ],
+      "meaning": "The displayed order count and sample-price information.",
+      "basis": "code"
+    },
+    {
+      "term": "Create order",
+      "identifiers": [
+        "createOrder"
+      ],
+      "meaning": "API handler for order creation.",
+      "basis": "code"
+    },
+    {
+      "term": "Stock check",
+      "identifiers": [
+        "checkStock"
+      ],
+      "meaning": "Inventory lookup by SKU.",
+      "basis": "code"
+    },
+    {
+      "term": "Order total",
+      "identifiers": [
+        "orderTotal",
+        "OrderService.total",
+        "formatPrice"
+      ],
+      "meaning": "The calculated price for an order’s items, formatted for display or an API response. Tests specify a cap of 1,000,000 for `orderTotal`.",
+      "basis": "tests"
+    },
+    {
+      "term": "Request router",
+      "identifiers": [
+        "Router"
+      ],
+      "meaning": "Registers and dispatches API requests.",
+      "basis": "code"
+    },
+    {
+      "term": "Generated ID",
+      "identifiers": [
+        "makeId"
+      ],
+      "meaning": "An identifier created with a supplied prefix.",
+      "basis": "code"
+    },
+    {
+      "term": "Order",
+      "identifiers": [
+        "Order",
+        "OrderService"
+      ],
+      "meaning": "A record with an identifier and a collection of items. The order service stores orders and can provide their totals and counts.",
+      "basis": "documentation"
+    },
+    {
+      "term": "Item",
+      "identifiers": [
+        "Item"
+      ],
+      "meaning": "An order line with a SKU, price, and quantity.",
+      "basis": "documentation"
+    },
+    {
+      "term": "SKU and stock",
+      "identifiers": [
+        "checkStock",
+        "inventory.reserve",
+        "inventory.release"
+      ],
+      "meaning": "A SKU identifies stock that can be checked, reserved, or released. Tests specify zero stock for an unknown SKU and that reserve does not reduce stock below zero.",
+      "basis": "tests"
+    },
+    {
+      "term": "Order identifier",
+      "identifiers": [
+        "makeId"
+      ],
+      "meaning": "A prefixed identifier generated from a shared sequence; tests expect each call to return a different identifier.",
+      "basis": "tests"
+    },
+    {
+      "term": "Health endpoint",
+      "identifiers": [
+        "health",
+        "buildApp"
+      ],
+      "meaning": "The API endpoint tested to respond `ok` with status 200.",
+      "basis": "tests"
+    }
+  ],
+  "entityAnnotations": [],
+  "rules": [
+    {
+      "id": "rule-1",
+      "statement": "Inventory includes a check for quantities below 0.",
+      "kind": "observed",
+      "entityIds": [
+        "src/services/inventory.ts#clamp"
+      ],
+      "files": [
+        "src/services/inventory.ts"
+      ],
+      "featureIds": [
+        "create-orders-and-check-stock"
+      ],
+      "basis": "code"
+    },
+    {
+      "id": "rule-2",
+      "statement": "Formatting logic includes a check for widths greater than 0.",
+      "kind": "observed",
+      "entityIds": [
+        "src/utils/format.ts#pad"
+      ],
+      "files": [
+        "src/utils/format.ts"
+      ],
+      "featureIds": [
+        "order-browsing",
+        "order-pricing"
+      ],
+      "basis": "code"
+    }
+  ],
+  "openQuestions": [
+    {
+      "id": "q-1",
+      "question": "When an order is accepted, must its quantities be reserved from inventory? The supplied tests establish stock validation and separately test reserve behavior, but do not establish whether order creation performs a reservation.",
+      "entityIds": [],
+      "featureIds": [
+        "create-orders-and-check-stock"
+      ]
+    },
+    {
+      "id": "q-2",
+      "question": "What should happen when a request has a negative or zero quantity, a negative price, or an otherwise malformed order? The supplied rules and test titles do not define these cases.",
+      "entityIds": [],
+      "featureIds": [
+        "create-orders-and-check-stock",
+        "order-pricing"
+      ]
+    },
+    {
+      "id": "q-3",
+      "question": "What exact response body and error details should clients receive for rejected orders, beyond the tested 409 status for unknown or insufficient stock?",
+      "entityIds": [],
+      "featureIds": [
+        "create-orders-and-check-stock"
+      ]
+    },
+    {
+      "id": "q-4",
+      "question": "What should the Clear control do to the displayed orders? The supplied test only checks that its handler runs without throwing.",
+      "entityIds": [],
+      "featureIds": [
+        "order-browsing"
+      ]
+    },
+    {
+      "id": "q-5",
+      "question": "Should the orders page load its data from the API, and how should it behave when loading fails or returns no orders? The supplied summaries do not define those user-facing behaviors.",
+      "entityIds": [],
+      "featureIds": [
+        "order-browsing"
+      ]
+    },
+    {
+      "id": "q-6",
+      "question": "Are any API endpoints intended to require authentication or authorization? No access rules are shown in the supplied application map.",
+      "entityIds": [],
+      "featureIds": [
+        "create-orders-and-check-stock",
+        "health-check"
+      ]
+    },
+    {
+      "id": "q-7",
+      "question": "Is the 1,000,000 order-total cap a customer-facing business rule, a safety limit, or only a fixture test expectation?",
+      "entityIds": [],
+      "featureIds": [
+        "order-pricing"
+      ]
+    }
+  ],
+  "unknowns": [
+    "The repository describes this as an analyzer fixture with local React and server stubs; it does not establish a production deployment or persistence system.",
+    "No authentication, authorization, named human user roles, or access policies are shown.",
+    "The application map supplies API routes but no UI route identifiers, client-request mapping, or end-to-end flows.",
+    "The supplied evidence does not establish whether inventory changes persist or whether successful order creation reserves stock.",
+    "The supplied evidence does not explain how the legacy modules are used or whether they are connected to the orders application.",
+    "No external integrations, operational requirements, or data-retention rules are identified."
+  ]
+}
