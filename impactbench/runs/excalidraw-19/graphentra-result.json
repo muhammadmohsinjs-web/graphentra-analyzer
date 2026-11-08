@@ -1,0 +1,32 @@
+{
+  "entry": "excalidraw-19",
+  "analyzerVersion": "0.5.0",
+  "headSha": "b552c6071417d731874c43e38d41dc6f76409fc9",
+  "flaggedCounts": {
+    "changed": 41,
+    "blastOnly": 370,
+    "valueOnly": 84
+  },
+  "truth": [
+    {
+      "id": "packages/element/src/arrows/focus.ts#isFocusPointVisible",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "packages/element/src/arrows/focus.ts#handleFocusPointPointerDown",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "packages/element/src/arrows/focus.ts#handleFocusPointHover",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "packages/excalidraw/renderer/interactiveScene.ts#renderFocusPointIndicator",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    }
+  ]
+}

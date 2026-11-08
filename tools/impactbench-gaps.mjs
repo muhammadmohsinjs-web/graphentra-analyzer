@@ -33,7 +33,7 @@ function loadResults() {
     .map(readJson);
 }
 
-/** Which level each truth entity was flagged at: changed, blast, or null for a miss. */
+/** Which level each truth entity was flagged at: changed, blast, value, or null for a miss. */
 function record(entryId, evidencePath) {
   const entry = readJson(CORPUS).find((item) => item.id === entryId);
   if (!entry) throw new Error(`No corpus entry ${entryId}`);
@@ -44,15 +44,16 @@ function record(entryId, evidencePath) {
   }
   const changed = new Set(evidence.impacts.map((impact) => impact.changedEntity.id));
   const blast = new Set(evidence.impacts.flatMap((impact) => impact.blastRadius.entities.map((item) => item.id)));
+  const received = new Set(evidence.impacts.flatMap((impact) => (impact.receivesChangedValue ?? []).map((target) => target.entity.id)));
   const result = {
     entry: entryId,
     analyzerVersion: evidence.analyzerVersion,
     headSha: evidence.comparison.resolvedHeadSha,
-    flaggedCounts: { changed: changed.size, blastOnly: [...blast].filter((id) => !changed.has(id)).length },
+    flaggedCounts: { changed: changed.size, blastOnly: [...blast].filter((id) => !changed.has(id)).length, valueOnly: [...received].filter((id) => !changed.has(id) && !blast.has(id)).length },
     truth: entry.affected.entities.map((item) => ({
       id: item.id,
       outsideIntroducerDiff: item.outsideIntroducerDiff,
-      flagged: changed.has(item.id) ? 'changed' : blast.has(item.id) ? 'blast' : null,
+      flagged: changed.has(item.id) ? 'changed' : blast.has(item.id) ? 'blast' : received.has(item.id) ? 'value' : null,
     })),
   };
   fs.mkdirSync(dir, { recursive: true });

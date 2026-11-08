@@ -8,6 +8,9 @@ const PACK_BUDGET_CHARS = 40_000;
 const MAX_AREAS_PER_CHANGE = 6;
 const MAX_DEPENDENT_MEANINGS = 12;
 const MAX_RULES = 12;
+const MAX_VALUE_RECEIVERS = 8;
+/** A function with more callers than this is treated as a generic helper when ranking receivers. */
+const SPECIFIC_FAN_IN = 5;
 const MAX_GLOSSARY = 25;
 
 export type AnnotationVersion = 'current-version' | 'version-before-this-change' | 'possibly-outdated' | 'unknown-version';
@@ -42,6 +45,8 @@ export interface ContextPack {
     affectedAreas: AffectedArea[];
     /** Business role of the changed function's file (file-level contexts). */
     fileRole?: string;
+    /** Code the changed value reaches, ranked and capped for the report. evidence.json keeps the full list. */
+    receivesChangedValue?: Array<{ entityId: string; receivedThrough: string; meaning?: string; assumptionConflict?: string }>;
     dependentMeanings: Array<{ entityId: string; businessMeaning: string; userVisibleEffect: string }>;
     /** File-level contexts: the role of each file holding dependents that have no annotation of their own. */
     dependentFileRoles: Array<{ file: string; role: string; entityIds: string[] }>;
@@ -88,6 +93,11 @@ function fallbackAccess(surface: Surface): string {
   return hints.length ? `Restricted by ${[...new Set(hints)].join(', ')}` : 'No access restriction found in code';
 }
 
+const describeConflict = (characters: string[]): string => {
+  const names = characters.length === 1 ? `the ${characters[0]} character` : `the ${characters.slice(0, -1).join(', ')} and ${characters.at(-1)} characters`;
+  return `This code splits or searches its input on ${names}, which the changed code now removes before the value reaches it.`;
+};
+
 export function buildContextPack(context: ApplicationContextV2, impacts: EntityImpact[], options: BuildContextPackOptions = {}): ContextPack {
   const map = options.applicationMap;
   const relations = options.relations ?? [];
@@ -98,7 +108,21 @@ export function buildContextPack(context: ApplicationContextV2, impacts: EntityI
   const describedSurface = new Map(context.surfaces.map(surface => [surface.surfaceId, surface]));
   const surfaceById = new Map((map?.surfaces ?? []).map(surface => [surface.id, surface]));
   const fileRoleOf = new Map((context.fileSummaries ?? []).map(item => [item.file, item.summary]));
-  const entityFile = new Map(impacts.flatMap(impact => [impact.changedEntity, ...impact.blastRadius.entities])
+  const fanIn = new Map<string, Set<string>>();
+  for (const relation of options.relations ?? []) {
+    if (!fanIn.has(relation.to)) fanIn.set(relation.to, new Set());
+    fanIn.get(relation.to)!.add(relation.from);
+  }
+  const callersOf = (id: string) => fanIn.get(id)?.size ?? 0;
+  // A report reads these, so rank specific code in another file first: it is the likeliest to hold a hidden assumption.
+  // A receiver that relies on a character the change removes comes first: it is the strongest lead the analyzer has.
+  const receiversOf = (impact: EntityImpact) => [...(impact.receivesChangedValue ?? [])].sort((a, b) =>
+    Number(!a.reliesOnRemovedCharacters?.length) - Number(!b.reliesOnRemovedCharacters?.length)
+    || Number(callersOf(a.entity.id) > SPECIFIC_FAN_IN) - Number(callersOf(b.entity.id) > SPECIFIC_FAN_IN)
+    || Number(a.entity.file === impact.changedEntity.file) - Number(b.entity.file === impact.changedEntity.file)
+    || callersOf(a.entity.id) - callersOf(b.entity.id)
+    || (a.entity.id < b.entity.id ? -1 : 1)).slice(0, MAX_VALUE_RECEIVERS);
+  const entityFile = new Map(impacts.flatMap(impact => [impact.changedEntity, ...impact.blastRadius.entities, ...(impact.receivesChangedValue ?? []).map(target => target.entity)])
     .map(entity => [entity.id, entity.file]));
   const fileOf = (id: string) => entityFile.get(id) ?? id.split('#')[0]!;
   // Functions without their own annotation fall back to their file's role.
@@ -106,7 +130,7 @@ export function buildContextPack(context: ApplicationContextV2, impacts: EntityI
     ?? (fileRoleOf.has(fileOf(id)) ? `Part of ${fileOf(id)}: ${fileRoleOf.get(fileOf(id))}` : undefined);
   const criticalityRank = { critical: 0, high: 1, normal: 2, low: 3 } as Record<string, number>;
 
-  const relevantIds = new Set(impacts.flatMap(impact => [impact.changedEntity.id, ...impact.blastRadius.entities.map(entity => entity.id)]));
+  const relevantIds = new Set(impacts.flatMap(impact => [impact.changedEntity.id, ...impact.blastRadius.entities.map(entity => entity.id), ...receiversOf(impact).map(target => target.entity.id)]));
 
   const describeArea = (surface: Surface, path: string[]): AffectedArea => {
     const described = describedSurface.get(surface.id);
@@ -140,7 +164,10 @@ export function buildContextPack(context: ApplicationContextV2, impacts: EntityI
     const id = impact.changedEntity.id;
     const annotation = annotationById.get(id);
     const dependents = impact.blastRadius.entities.map(entity => entity.id);
-    const scopeIds = [id, ...dependents];
+    const receivers = receiversOf(impact);
+    const scopeIds = [id, ...dependents, ...receivers.map(target => target.entity.id)];
+    const hiddenReceivers = (impact.receivesChangedValue?.length ?? 0) - receivers.length;
+    if (hiddenReceivers > 0) omitted.push(`${hiddenReceivers} code locations that receive a changed value`);
     const areas = map
       ? findSurfacesForEntity(map, relations, id, MAX_AREAS_PER_CHANGE * 2).map(item => describeArea(item.surface, item.path))
         .sort((a, b) => (criticalityRank[a.feature?.criticality ?? 'normal']! - criticalityRank[b.feature?.criticality ?? 'normal']!) || a.distance - b.distance)
@@ -175,6 +202,10 @@ export function buildContextPack(context: ApplicationContextV2, impacts: EntityI
       features: [...featureIds].map(featureId => featureById.get(featureId)).filter(Boolean)
         .map(feature => ({ id: feature!.id, name: feature!.name, criticality: feature!.criticality, criticalityReason: feature!.criticalityReason })),
       ...(fileRoleOf.has(changedFile) ? { fileRole: fileRoleOf.get(changedFile)! } : {}),
+      ...(receivers.length > 0 ? { receivesChangedValue: receivers.map(target => ({
+        entityId: target.entity.id, receivedThrough: target.through, ...(meaningOf(target.entity.id) ? { meaning: meaningOf(target.entity.id)! } : {}),
+        ...(target.reliesOnRemovedCharacters?.length ? { assumptionConflict: describeConflict(target.reliesOnRemovedCharacters) } : {}),
+      })) } : {}),
       affectedAreas: areas.slice(0, MAX_AREAS_PER_CHANGE),
       dependentMeanings: dependentMeanings.slice(0, MAX_DEPENDENT_MEANINGS),
       dependentFileRoles: dependentFileRoles.slice(0, MAX_DEPENDENT_MEANINGS),
@@ -219,6 +250,7 @@ export function buildContextPack(context: ApplicationContextV2, impacts: EntityI
 
   // Enforce the size budget by dropping the least important detail first.
   const shrinkSteps: Array<[string, () => void]> = [
+    ['changed value receivers', () => pack.changes.forEach(change => { if (change.receivesChangedValue) change.receivesChangedValue = change.receivesChangedValue.slice(0, 3); })],
     ['end-to-end flow steps', () => pack.changes.forEach(change => change.affectedAreas.forEach(area => { area.e2eFlows = area.e2eFlows.slice(0, 1).map(flow => ({ ...flow, steps: flow.steps.slice(0, 5) })); }))],
     ['dependent descriptions', () => pack.changes.forEach(change => {
       change.dependentMeanings = change.dependentMeanings.slice(0, 4);

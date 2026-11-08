@@ -1,0 +1,17 @@
+{
+  "entry": "excalidraw-04",
+  "analyzerVersion": "0.5.0",
+  "headSha": "b2d442abce7f677aeeb4e605c71316d415e3553d",
+  "flaggedCounts": {
+    "changed": 12,
+    "blastOnly": 20,
+    "valueOnly": 18
+  },
+  "truth": [
+    {
+      "id": "src/charts.ts#renderSpreadsheet",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    }
+  ]
+}

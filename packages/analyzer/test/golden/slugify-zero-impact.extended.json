@@ -638,6 +638,7 @@
     "Entities are named functions, variable-bound arrow functions and function expressions, class and object-literal methods, constructors, accessors, React components, and module-level code.",
     "Classes, interfaces, type aliases, and enums are not entities.",
     "Relationships are CALLS, RENDERS (JSX elements), INSTANTIATES (new expressions), and REFERENCES (functions passed or stored as values).",
+    "Changed values are followed through arguments, local variables and return values, one caller up and one call down; values stored in object fields or shared state are not followed.",
     "Dynamic calls and calls through interface-typed receivers are not analyzed.",
     "Renamed entities may lack removed-code evidence.",
     "Partially overlapping entity line ranges are skipped rather than sharing ambiguous evidence.",

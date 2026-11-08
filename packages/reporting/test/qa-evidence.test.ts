@@ -181,6 +181,8 @@ test('obvious test paths are deterministic and ordinary files remain production'
 });
 
 test('instructions preserve evidence authority, precise quantities, and plain field content', () => {
+  assert.match(qaInstruction, /receivesChangedValue lists code/);
+  assert.match(qaInstruction, /never name the receiver/);
   assert.match(qaInstruction, /50 array entries, not necessarily 50 products/);
   assert.match(qaInstruction, /Test entities represent test coverage\/evidence/);
   assert.match(qaInstruction, /Never discover new dependencies/);

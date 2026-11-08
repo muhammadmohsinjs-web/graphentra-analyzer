@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { buildContextPack } from '../src/context-pack';
+import type { ApplicationContextV2 } from '../src/context-contract';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { test } from 'node:test';
@@ -89,4 +91,52 @@ test('extended (2.1) evidence: QA payload reports entity granularity and kinds, 
     assert.ok(payload.changes.length > 0);
     assert.ok(payload.changes.every(change => typeof change.changedEntity.kind === 'string'));
   } finally { repo.cleanup(); }
+});
+
+const receiverContext = {
+  schemaVersion: '2.0', meta: { coverage: {} },
+  application: { name: 'app', summary: '', purpose: '', platform: '', userRoles: [] },
+  features: [], surfaces: [],
+  fileSummaries: [{ file: 'src/charts.ts', fingerprint: 'f', summary: 'Builds charts from pasted spreadsheet data.' }],
+  glossary: [], entityAnnotations: [], rules: [], openQuestions: [], unknowns: [],
+} as unknown as ApplicationContextV2;
+const receiverEntity = (id: string) => ({ id, kind: 'function', name: id.split('#')[1], file: id.split('#')[0], startLine: 1, endLine: 2 });
+const receiverImpact = (ids: string[]) => ({
+  changedEntity: receiverEntity('src/clipboard.ts#read'), change: { file: 'src/clipboard.ts', diff: '' }, directDependents: [],
+  blastRadius: { totalAffectedEntities: 0, entities: [], paths: [], truncated: false }, terminalDependents: [],
+  receivesChangedValue: ids.map(id => ({ entity: receiverEntity(id), through: 'src/clipboard.ts#read' })),
+}) as unknown as Parameters<typeof buildContextPack>[1][number];
+
+test('context pack: receivers come with their meaning and through which code they get the value', () => {
+  const pack = buildContextPack(receiverContext, [receiverImpact(['src/charts.ts#parse'])]);
+  assert.deepEqual(pack.changes[0]!.receivesChangedValue, [
+    { entityId: 'src/charts.ts#parse', receivedThrough: 'src/clipboard.ts#read', meaning: 'Part of src/charts.ts: Builds charts from pasted spreadsheet data.' },
+  ]);
+});
+
+test('context pack: receivers rank specific code in another file above generic helpers and the same file', () => {
+  const helper = 'src/utils.ts#arrayToMap';
+  const relations = Array.from({ length: 6 }, (_, index) => ({ from: `src/a${index}.ts#f`, to: helper, type: 'CALLS' as const }));
+  const pack = buildContextPack(receiverContext, [receiverImpact([helper, 'src/clipboard.ts#local', 'src/charts.ts#parse'])], { relations });
+  assert.deepEqual(pack.changes[0]!.receivesChangedValue!.map(item => item.entityId), ['src/charts.ts#parse', 'src/clipboard.ts#local', helper]);
+});
+
+test('context pack: receivers are capped and the rest are reported as omitted', () => {
+  const ids = Array.from({ length: 11 }, (_, index) => `src/m${String(index).padStart(2, '0')}.ts#f`);
+  const pack = buildContextPack(receiverContext, [receiverImpact(ids)]);
+  assert.equal(pack.changes[0]!.receivesChangedValue!.length, 8);
+  assert.ok(pack.omitted.some(note => note.startsWith('3 code locations')));
+});
+
+test('context pack: a change with no receivers has no field', () => {
+  assert.ok(!('receivesChangedValue' in buildContextPack(receiverContext, [receiverImpact([])]).changes[0]!));
+});
+
+test('context pack: a receiver relying on a removed character ranks first and says so in plain words', () => {
+  const impact = receiverImpact(['src/a.ts#first', 'src/charts.ts#parse']);
+  impact.receivesChangedValue![1] = { ...impact.receivesChangedValue![1]!, reliesOnRemovedCharacters: ['tab'] };
+  const receivers = buildContextPack(receiverContext, [impact]).changes[0]!.receivesChangedValue!;
+  assert.equal(receivers[0]!.entityId, 'src/charts.ts#parse');
+  assert.equal(receivers[0]!.assumptionConflict, 'This code splits or searches its input on the tab character, which the changed code now removes before the value reaches it.');
+  assert.ok(!('assumptionConflict' in receivers[1]!));
 });

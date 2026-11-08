@@ -1,0 +1,17 @@
+{
+  "entry": "excalidraw-13",
+  "analyzerVersion": "0.5.0",
+  "headSha": "9659254fd66138d65f60281323fc2fd7deae2e0a",
+  "flaggedCounts": {
+    "changed": 28,
+    "blastOnly": 170,
+    "valueOnly": 38
+  },
+  "truth": [
+    {
+      "id": "src/element/textWysiwyg.tsx#textWysiwyg",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    }
+  ]
+}

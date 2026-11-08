@@ -81,9 +81,18 @@ function isFunctionInitializer(initializer: ts.Expression | undefined): boolean 
   if (!ts.isCallExpression(value)) return false;
   const callee = value.expression;
   const calleeName = ts.isIdentifier(callee) ? callee.text : ts.isPropertyAccessExpression(callee) ? callee.name.text : undefined;
-  if (calleeName === undefined || !WRAPPER_CALLEES.has(calleeName)) return false;
+  if (calleeName === undefined) return false;
+  // A plain call such as `throttle(fn)` wraps its function; a method call such as `list.map(fn)` usually computes a value.
+  if (!WRAPPER_CALLEES.has(calleeName) && !ts.isIdentifier(callee)) return false;
   const first = value.arguments[0];
   return !!first && isFunctionLike(unwrapExpression(first));
+}
+
+/** `const action = register({ perform() {} })`: the object literal handed to a plain call. */
+function wrappedObjectLiteral(value: ts.Expression): ts.ObjectLiteralExpression | undefined {
+  if (!ts.isCallExpression(value) || !ts.isIdentifier(value.expression) || value.arguments.length !== 1) return undefined;
+  const first = unwrapExpression(value.arguments[0]!);
+  return ts.isObjectLiteralExpression(first) ? first : undefined;
 }
 
 const hasModifier = (node: ts.Node, kind: ts.SyntaxKind): boolean =>
@@ -221,7 +230,7 @@ function collectExtendedEntities(sourceFile: ts.SourceFile, relativeFile: string
         if (member.body && key !== undefined) {
           owner = addMember(container, accessorSegment(ts.isGetAccessorDeclaration(member) ? 'get' : 'set', key), parent, member, member.getStart(sourceFile), undefined);
         }
-      } else if (ts.isPropertyDeclaration(member) && member.initializer && isFunctionLike(unwrapExpression(member.initializer))) {
+      } else if (ts.isPropertyDeclaration(member) && member.initializer && isFunctionInitializer(member.initializer)) {
         const key = memberKey(member.name);
         if (key !== undefined) owner = addMember(container, escapeSegment(key), parent, member, member.getStart(sourceFile), member.name);
       }
@@ -271,6 +280,11 @@ function collectExtendedEntities(sourceFile: ts.SourceFile, relativeFile: string
       }
       if (ts.isObjectLiteralExpression(value)) {
         visitObjectMembers(value, containerFor(parent, node.name.text), parent);
+        return;
+      }
+      const wrapped = wrappedObjectLiteral(value);
+      if (wrapped) {
+        visitObjectMembers(wrapped, containerFor(parent, node.name.text), parent);
         return;
       }
     }

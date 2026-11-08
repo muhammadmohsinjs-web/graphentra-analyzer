@@ -1,0 +1,17 @@
+{
+  "entry": "consola-03",
+  "analyzerVersion": "0.5.0",
+  "headSha": "cf93d42ab7ac4469846f438e04d1bc2951fba357",
+  "flaggedCounts": {
+    "changed": 47,
+    "blastOnly": 12,
+    "valueOnly": 0
+  },
+  "truth": [
+    {
+      "id": "src/prompt.ts#prompt",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    }
+  ]
+}

@@ -7,6 +7,7 @@ This folder is the source of truth. Roadmap notes and tasks link to a gap id and
 npm run bench:gaps -- record excalidraw-11   # impactbench/runs/<id>/graphentra-evidence.json -> graphentra-result.json
 npm run bench:gaps -- check                  # also runs in verify:all
 npm run bench:gaps -- summary                # counts by cause, recall so far
+npm run bench:corpus -- <history-dir>         # analyzes and records every corpus entry, prints recall and noise
 ```
 
 ## The loop

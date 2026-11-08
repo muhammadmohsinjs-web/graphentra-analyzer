@@ -44,6 +44,7 @@ function validatePhase3Fields(evidence: DeterministicEvidence, isExtendedSchema:
     });
     evidence.impacts.forEach((impact, i) => {
       if (impact.contractRisk !== undefined) errors.push(`impacts[${i}].contractRisk is not allowed in schema 2.0.`);
+      if (impact.receivesChangedValue !== undefined) errors.push(`impacts[${i}].receivesChangedValue is not allowed in schema 2.0.`);
       impact.blastRadius.paths.forEach((path, p) => {
         if (path.contractRisk !== undefined) errors.push(`impacts[${i}].blastRadius.paths[${p}].contractRisk is not allowed in schema 2.0.`);
       });

@@ -91,6 +91,8 @@ function buildModel(evidence, evidencePath) {
         ghost: !inGraph,
         changed: false,
         affected: false,
+        receivesValue: false,
+        through: null,
         direct: false,
         depth: null,
         confidence: null,
@@ -125,6 +127,12 @@ function buildModel(evidence, evidencePath) {
     for (const entity of blast.entities ?? []) {
       const node = ensure(entity, false);
       node.affected = true;
+      node.reachedFrom.add(source.id);
+    }
+    for (const target of impact.receivesChangedValue ?? []) {
+      const node = ensure(target.entity, false);
+      node.receivesValue = true;
+      node.through ??= target.through;
       node.reachedFrom.add(source.id);
     }
     for (const entity of impact.directDependents ?? []) {
@@ -183,7 +191,7 @@ function buildModel(evidence, evidencePath) {
   );
 
   const types = [...new Set(edges.map((edge) => edge.type))].sort(compareStrings);
-  const impactIndexes = nodes.flatMap((node, index) => (node.changed || node.affected ? [index] : []));
+  const impactIndexes = nodes.flatMap((node, index) => (node.changed || node.affected || node.receivesValue ? [index] : []));
   const compactEdges = edges.map((edge) => ({ a: indexOf.get(edge.from), b: indexOf.get(edge.to) }));
   const impactSet = new Set(impactIndexes);
   const impactEdges = compactEdges.filter((edge) => impactSet.has(edge.a) && impactSet.has(edge.b));
@@ -211,6 +219,8 @@ function buildModel(evidence, evidencePath) {
       ghost: node.ghost,
       changed: node.changed,
       affected: node.affected,
+      receivesValue: node.receivesValue,
+      through: node.through,
       direct: node.direct,
       depth: node.depth,
       confidence: node.confidence,
@@ -279,12 +289,13 @@ function buildStats(evidence, nodes, edges, truncated) {
     files: new Set(nodes.filter((node) => !node.ghost).map((node) => node.file)).size,
     changedEntities: changed.length,
     affectedEntities: affected.length,
+    receivesValueEntities: nodes.filter((node) => node.receivesValue && !node.affected && !node.changed).length,
     directAffected: direct.length,
     transitiveAffected: affected.length - direct.length,
     changedFiles: (evidence.changedFiles ?? []).length,
     affectedFiles: new Set(affected.map((node) => node.file)).size,
     changedAlsoReached: changed.filter((node) => node.affected).length,
-    impactShare: inGraph === 0 ? 0 : (changed.length + affected.length) / inGraph,
+    impactShare: inGraph === 0 ? 0 : (changed.length + affected.length + nodes.filter((node) => node.receivesValue && !node.affected && !node.changed).length) / inGraph,
     maxBlastDepth: evidence.technicalGraph.capabilities?.maxBlastDepth ?? null,
     affectedByDepth: tally(affected.filter((node) => node.depth !== null), (node) => node.depth),
     affectedByKind: tally(affected, (node) => node.kind),

@@ -1,0 +1,17 @@
+{
+  "entry": "excalidraw-08",
+  "analyzerVersion": "0.5.0",
+  "headSha": "49172ac2d309790d5ab5d55bdbd9ebf549ee5b01",
+  "flaggedCounts": {
+    "changed": 10,
+    "blastOnly": 0,
+    "valueOnly": 2
+  },
+  "truth": [
+    {
+      "id": "src/components/ColorPicker.tsx#Picker",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    }
+  ]
+}

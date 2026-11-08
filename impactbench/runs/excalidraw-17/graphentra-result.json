@@ -1,0 +1,22 @@
+{
+  "entry": "excalidraw-17",
+  "analyzerVersion": "0.5.0",
+  "headSha": "d33e42e3a1a955fa95c61310128dfe4ca2e5fdae",
+  "flaggedCounts": {
+    "changed": 21,
+    "blastOnly": 126,
+    "valueOnly": 8
+  },
+  "truth": [
+    {
+      "id": "packages/excalidraw/actions/actionProperties.tsx#getArrowheadOptions",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "packages/excalidraw/actions/actionProperties.tsx#actionChangeArrowhead.PanelComponent",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    }
+  ]
+}

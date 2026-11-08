@@ -1,0 +1,52 @@
+{
+  "entry": "excalidraw-15",
+  "analyzerVersion": "0.5.0",
+  "headSha": "b63689c23095d7a5fcea35a8d1e892f3ddacc1d0",
+  "flaggedCounts": {
+    "changed": 5,
+    "blastOnly": 66,
+    "valueOnly": 0
+  },
+  "truth": [
+    {
+      "id": "packages/excalidraw/data/url.ts#normalizeLink",
+      "outsideIntroducerDiff": false,
+      "flagged": "blast"
+    },
+    {
+      "id": "packages/excalidraw/utils.ts#sanitizeHTMLAttribute",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "packages/excalidraw/element/embeddable.ts#getEmbedLink",
+      "outsideIntroducerDiff": false,
+      "flagged": "blast"
+    },
+    {
+      "id": "packages/excalidraw/components/hyperlink/Hyperlink.tsx#Hyperlink",
+      "outsideIntroducerDiff": true,
+      "flagged": "blast"
+    },
+    {
+      "id": "packages/excalidraw/data/restore.ts#restoreElementWithProperties",
+      "outsideIntroducerDiff": true,
+      "flagged": "blast"
+    },
+    {
+      "id": "packages/excalidraw/components/App.tsx#App.pasteFromClipboard",
+      "outsideIntroducerDiff": true,
+      "flagged": "blast"
+    },
+    {
+      "id": "packages/excalidraw/components/App.tsx#App.handleAppOnDrop",
+      "outsideIntroducerDiff": true,
+      "flagged": "blast"
+    },
+    {
+      "id": "packages/excalidraw/element/elementLink.ts#defaultGetElementLinkFromSelection",
+      "outsideIntroducerDiff": true,
+      "flagged": "blast"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "entry": "excalidraw-20",
+  "analyzerVersion": "0.5.0",
+  "headSha": "d9e8a33aa4b48d920ecb9d3fde15cf0e8b72fd5c",
+  "flaggedCounts": {
+    "changed": 38,
+    "blastOnly": 558,
+    "valueOnly": 53
+  },
+  "truth": [
+    {
+      "id": "packages/element/src/frame.ts#isElementContainingFrame",
+      "outsideIntroducerDiff": true,
+      "flagged": "blast"
+    },
+    {
+      "id": "packages/element/src/selection.ts#getElementsWithinSelection",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "packages/element/src/frame.ts#elementOverlapsWithFrame",
+      "outsideIntroducerDiff": true,
+      "flagged": "blast"
+    }
+  ]
+}

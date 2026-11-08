@@ -1,0 +1,22 @@
+{
+  "entry": "ofetch-01",
+  "analyzerVersion": "0.5.0",
+  "headSha": "d7fb8f688c2b3f574430b40f7139ee144850be23",
+  "flaggedCounts": {
+    "changed": 3,
+    "blastOnly": 5,
+    "valueOnly": 4
+  },
+  "truth": [
+    {
+      "id": "src/fetch.ts#createFetch",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "src/fetch.ts#createFetch>$fetchRaw",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    }
+  ]
+}

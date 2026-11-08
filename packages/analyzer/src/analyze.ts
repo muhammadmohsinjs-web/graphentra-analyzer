@@ -42,6 +42,7 @@ import { extractTechnicalGraph, isAnalyzableFile, type ExtractedGraph } from './
 import { APPLICATION_MAP_SCHEMA_VERSION, extractApplicationMap, type ApplicationMap } from './application-map';
 import { buildToolchainRecord, toolchainDiagnostics } from './toolchain';
 import { assertValidEvidenceEnvelope } from './validator';
+import { withChangedValueTargets } from './value-flow';
 import type { CompilerOptions } from 'typescript';
 
 export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
@@ -207,6 +208,7 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
     impacts = changedEntities.map(changed => buildImpact(changed, extracted.reverseAdjacency, extracted.entityById,
       options.maxDepth, engine, maxAffected, options.hubThreshold));
   }
+  if (engine === 'extended') impacts = withChangedValueTargets({ extracted, changedEntities, changedFiles: supportedChanges, impacts });
   const baseEntities = [...baseOnly.values()].sort((a, b) => compareStrings(a.id, b.id));
   for (const impact of impacts) {
     if (impact.blastRadius.truncated) {

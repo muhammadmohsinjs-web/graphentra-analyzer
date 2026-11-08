@@ -1,0 +1,27 @@
+{
+  "entry": "excalidraw-12",
+  "analyzerVersion": "0.5.0",
+  "headSha": "1db078a3dceb76c53d27932049563ed28a7c4b62",
+  "flaggedCounts": {
+    "changed": 23,
+    "blastOnly": 46,
+    "valueOnly": 0
+  },
+  "truth": [
+    {
+      "id": "src/components/ActiveConfirmDialog.tsx#ActiveConfirmDialog",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "src/components/LibraryMenuHeaderContent.tsx#LibraryMenuHeader",
+      "outsideIntroducerDiff": false,
+      "flagged": "blast"
+    },
+    {
+      "id": "src/components/main-menu/DefaultItems.tsx#ClearCanvas",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    }
+  ]
+}

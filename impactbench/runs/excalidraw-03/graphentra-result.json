@@ -1,0 +1,32 @@
+{
+  "entry": "excalidraw-03",
+  "analyzerVersion": "0.5.0",
+  "headSha": "1866074c078d0eddd001de1f1a04a6f19adf69e0",
+  "flaggedCounts": {
+    "changed": 20,
+    "blastOnly": 37,
+    "valueOnly": 37
+  },
+  "truth": [
+    {
+      "id": "src/components/ToolButton.tsx#ToolButton",
+      "outsideIntroducerDiff": false,
+      "flagged": "changed"
+    },
+    {
+      "id": "src/actions/actionDeleteSelected.tsx#actionDeleteSelected.PanelComponent",
+      "outsideIntroducerDiff": true,
+      "flagged": "blast"
+    },
+    {
+      "id": "src/actions/actionDuplicateSelection.tsx#actionDuplicateSelection.PanelComponent",
+      "outsideIntroducerDiff": true,
+      "flagged": "blast"
+    },
+    {
+      "id": "src/actions/actionFinalize.tsx#actionFinalize.PanelComponent",
+      "outsideIntroducerDiff": true,
+      "flagged": "blast"
+    }
+  ]
+}
