@@ -7,6 +7,7 @@ update the table when numbers change. Do not delete old results; add a dated lin
 | Commit | Gap | Start | Now | State | Last updated |
 |---|---|---|---|---|---|
 | excalidraw-11 | GAP-001 (analyzer), GAP-003 (report) | Analyzer missed the receiver. Report caught the bug 5 of 9, explained 1 of 9. | Analyzer finds it. Report catches 18 of 20 and 19 of 20 (two shipped variants), explains almost all of those. | Improved on this commit only. GAP-003 open. | 2026-11-08 |
+| excalidraw-15 | none | Baseline on shipped code: report caught the bug 10 of 10 runs and explained it 10 of 10. | No change needed. | Already handled. No gap. | 2026-11-08 |
 
 ---
 
@@ -70,3 +71,34 @@ The analyzer scan of all 32 corpus commits: the new note fires once (excalidraw-
 
 Raw runs and the harness live outside the repo in the session scratchpad. If you want them kept, copy `runs.jsonl` into
 `impactbench/gaps/data/` before the next session.
+
+---
+
+## excalidraw-15: "feat: make HTML attribute sanitization stricter (#8977)"
+
+**The bug.** `sanitizeHTMLAttribute` moved to `utils.ts` and now escapes `&`, `<`, `>`, `'` and `"` as HTML entities. The functions that
+store hyperlinks and embed links (`normalizeLink`, `getEmbedLink`) call it, so `?a=1&b=2` was saved as `?a=1&amp;b=2`. Fixed upstream three weeks later.
+Chosen because it was the nearest analogue of excalidraw-11 in `commit-patterns.md` (pattern A1).
+
+### Start state (measured before changing anything)
+- The analyzer evidence has no value-flow receivers for this commit (0 on all 5 changed entities). The untouched callers are found as blast radius only.
+- Report, shipped code, deepseek/deepseek-v4.1-flash-1017, 10 runs, judged per check by openai/gpt-5.6-luna with a rubric written for this bug
+  (a check that uses a link with an ampersand or apostrophe and expects the URL unchanged):
+  **10 valid reports, 10 caught, 10 explained.** Spot-checked four reports; the hits are real checks (for example "attach https://example.com/search?a=1&b=2 and
+  follow it; no escaped ampersand text").
+
+### What this tells us
+- No fix is needed here. The report already catches it.
+- Why it differs from excalidraw-11: here the new behaviour **is** the bug (the changed function escapes more), so the prompt's normal
+  question "what does the new behaviour do and what could it break" leads straight to it. In excalidraw-11 the harm came from something the change
+  **removed**, which the prompt did not ask about.
+- So pattern A1 splits in two: "the new behaviour is the harm" (excalidraw-15, handled) and "the harm is a lost property" (excalidraw-11, needed the new check).
+  The value-flow work only matters for the second kind.
+
+### Caveats
+- 10 runs of one model on one commit. No variants were tried because none was needed.
+- The rubric was written by me from the corpus symptom, as was the judge's reading of it. A different rubric could score differently.
+- Application context is today's Excalidraw summaries (the commit is from January 2025, so the layout matches).
+
+### Cost
+About $0.03 in OpenRouter credit for 10 runs (about $0.003 each with prompt caching), much less than the earlier estimate.

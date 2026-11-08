@@ -10,7 +10,7 @@ npm run bench:gaps -- summary                # counts by cause, recall so far
 npm run bench:corpus -- <history-dir>         # analyzes and records every corpus entry, prints recall and noise
 ```
 
-Per-commit progress (what failed at the start, what we changed, what improved, what is still open) is in `progress.md`.
+Per-commit progress (what failed at the start, what we changed, what improved, what is still open) is in `progress.md`. How the 32 corpus commits group by bug pattern is in `commit-patterns.md`.
 
 ## The loop
 
