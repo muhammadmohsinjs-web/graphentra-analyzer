@@ -1,32 +1,5 @@
 [
   {
-    "id": "GAP-001",
-    "title": "Impact walks only to dependents, so downstream consumers of changed code are never listed",
-    "cause": "traversal-direction",
-    "status": "fixed",
-    "foundDate": "2026-11-04",
-    "foundIn": [
-      "excalidraw-11"
-    ],
-    "missed": [
-      {
-        "entry": "excalidraw-11",
-        "entity": "src/charts.ts#tryParseSpreadsheet"
-      }
-    ],
-    "evidence": "The graph at the introducer has parseClipboard -> parsePotentialSpreadsheet -> tryParseSpreadsheet (CALLS), and parseClipboard is a changed entity. buildImpact walks reverse edges only, so the consumer is in no blast radius. On the whole corpus, a forward walk of 1 to 3 steps added 73 to 198 entities per entry and found 1 more consumer at most. Following values (arguments, locals, returns, one caller up and one call down) found the consumers with far less noise, and collecting functions wrapped in a call found the rest.",
-    "possibleFixes": [
-      "Walk 2 to 3 steps forward from changed entities and label the result as a separate tier",
-      "Add value-flow edges (output of A reaches input of B) to limit the forward walk to code that receives the changed value",
-      "Send the consumer's code to the report so it can see assumptions such as split(\"\\t\")"
-    ],
-    "roadmapTask": null,
-    "limitation": null,
-    "pinnedBy": "packages/analyzer/test/known-gaps.test.ts :: GAP-001 a consumer downstream of a changed function receives the changed value",
-    "pinExempt": null,
-    "fixedIn": "packages/analyzer/src/value-flow.ts and entity-collector.ts. D-0 corpus, entities flagged: 57/78 to 71/78; outside the diff 6/17 to 13/17; consumers 1/9 to 7/9; value flow adds a mean of 13.5 entities per entry (median 5, max 84)."
-  },
-  {
     "id": "GAP-002",
     "title": "The report gets no features for a change when the context is file-level and the repo has no surfaces",
     "cause": "report-context",
@@ -56,10 +29,11 @@
       "excalidraw-11"
     ],
     "missed": [],
-    "evidence": "The QA report for excalidraw-11 tells QA to verify that tabs display as eight spaces and never names spreadsheet or chart paste. The payload did hold pointers: the clipboard.ts role mentions spreadsheet data, the parseClipboard diff shows parsePotentialSpreadsheet, and charts.ts and PasteChartDialog are listed as dependents of normalizeText. One run of openai/gpt-6-luna, so variance is unknown.",
+    "evidence": "The QA report for excalidraw-11 tells QA to verify that tabs display as eight spaces and never names spreadsheet or chart paste. The payload did hold pointers: the clipboard.ts role mentions spreadsheet data, the parseClipboard diff shows parsePotentialSpreadsheet, and charts.ts and PasteChartDialog are listed as dependents of normalizeText. One run of openai/gpt-6-luna, so variance is unknown. Follow-up on 2026-11-05 with openai/gpt-6-luna: sending receivers of the changed value, ranked and capped, with an instruction to ask what each one assumed about the old value. Without them, 0 of 2 excalidraw-11 reports mentioned spreadsheet paste. With them, 2 of 3 did, and 1 of 3 had the check that catches the bug (ordinary-pasting spreadsheet rows opens the chart flow). Report length did not grow. Improved, not closed: the report still misses it in most runs. Follow-up on 2026-11-08 with deepseek/deepseek-v4.1-flash-1017, graded per check by a second model (a check counts only if it normal-pastes spreadsheet cells and expects the chart flow; plain-paste and comma-only checks do not): raw receiver list with no instruction caught it in 5 of 9 reports but explained the cause in 1 of 9; ranked receivers plus an instruction, 5 of 9 (4 explained); adding a meaning for the receiver, 9 of 10 (3 explained); a 'what did the old value guarantee' instruction, 7 of 10 (8 explained). Showing the receiver's source code made it worse: 4 of 10 reports were rejected because the model copied identifiers into its checks. A deterministic analyzer note (the receiver splits on a character the change removes) with the receiver meaning caught it in 18 of 18 valid reports (18 explained); adding the guarantees instruction also gave 18 of 18. 2 of 20 runs per setup produced no report (empty output or a rejected identifier), so 18 of 20 attempts. The note fires on 1 of 32 corpus commits (excalidraw-11) and on no other.",
     "possibleFixes": [
-      "Add a report instruction: for each removed guarantee, name what could have relied on it",
-      "Repeat the report on several runs to measure how often it names the consumer"
+      "Generalize the removed-character check beyond tab, newline, comma, semicolon and pipe, for example to number formats and case changes",
+      "Retry a report that is empty or rejected, so a failed run does not count as a miss",
+      "Repeat the run on the other consumer-type entries (7 of the 9 in the corpus) to see whether the lift holds beyond this one commit"
     ],
     "roadmapTask": null,
     "limitation": null,

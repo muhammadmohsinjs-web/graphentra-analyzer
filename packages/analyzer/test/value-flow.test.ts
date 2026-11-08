@@ -116,3 +116,37 @@ test('value flow: the legacy engine reports nothing', () => {
     assert.ok(result.impacts.every(impact => impact.receivesChangedValue === undefined));
   } finally { repo.cleanup(); }
 });
+
+const CLIPBOARD: Record<string, string> = {
+  'src/charts.ts': 'export const tryParseSpreadsheet = (text: string) => text.split("\\n").map((line) => line.trim().split("\\t"));\n',
+  'src/text.ts': [
+    'export const expandTabs = (text: string) => text.replace(/\\t/g, "        ");',
+    'export const unifyNewlines = (text: string) => text.replace(/\\r?\\n|\\r/g, "\\n");',
+    '',
+  ].join('\n'),
+  'src/clipboard.ts': [
+    'import { tryParseSpreadsheet } from "./charts";',
+    'import { expandTabs, unifyNewlines } from "./text";',
+    'const parsePotentialSpreadsheet = (text: string) => tryParseSpreadsheet(text);',
+    'export const getSystemClipboard = (raw: string) => raw.trim();',
+    'export const parseClipboard = (raw: string) => parsePotentialSpreadsheet(getSystemClipboard(raw));',
+    'export const unused = [expandTabs, unifyNewlines];',
+    '',
+  ].join('\n'),
+};
+
+test('value flow: a receiver that splits on a character the change now removes is marked (excalidraw-11)', () => {
+  const { targets } = received({ 'src/clipboard.ts': source => source.replace('=> raw.trim()', '=> expandTabs(raw).trim()') }, CLIPBOARD);
+  const parser = targets.find(target => target.entity.id === 'src/charts.ts#tryParseSpreadsheet');
+  assert.deepEqual(parser?.reliesOnRemovedCharacters, ['tab']);
+  assert.ok(targets.filter(target => target.entity.id !== 'src/charts.ts#tryParseSpreadsheet').every(target => !target.reliesOnRemovedCharacters));
+});
+
+test('value flow: a replacement that keeps the character, or a call that already existed, marks nothing', () => {
+  const unify = received({ 'src/clipboard.ts': source => source.replace('=> raw.trim()', '=> unifyNewlines(raw).trim()') }, CLIPBOARD);
+  assert.ok(unify.targets.some(target => target.entity.id === 'src/charts.ts#tryParseSpreadsheet'));
+  assert.ok(unify.targets.every(target => !target.reliesOnRemovedCharacters));
+  const base = { ...CLIPBOARD, 'src/clipboard.ts': CLIPBOARD['src/clipboard.ts']!.replace('=> raw.trim()', '=> expandTabs(raw).trim()') };
+  const unchangedCall = received({ 'src/clipboard.ts': source => source.replace('expandTabs(raw).trim()', 'expandTabs(raw).trim() + ""') }, base);
+  assert.ok(unchangedCall.targets.every(target => !target.reliesOnRemovedCharacters));
+});

@@ -35,4 +35,49 @@ Limits of these numbers:
 - Few misses separate the approaches, and all the real ones are in excalidraw, so the limits may need another look as the corpus grows.
 - The field-matching prototype was not tuned, so its result is weak evidence.
 
+## What QA reports get
+
+`evidence.json` keeps the full list. The report gets at most 8 receivers per change, specific code in other files first, with each one's meaning, and a count of what was left out. The report format was already capped at 5 test areas with 4 checks each, and it never names functions, so a long list can't reach a tester directly.
+
+Real reports, with and without receivers. The final instruction ran 2 or 3 times per case, and these are small samples of one model:
+
+| Case | What the bug needs | Without receivers | With receivers |
+|---|---|---|---|
+| excalidraw-11, chart paste | A check that pasting spreadsheet rows still opens the chart flow | 0 of 2 mention it | 2 of 3 mention it, 1 of 3 has the check that catches it |
+| Shop, price table | Say where the wrong price lands | 2 of 2 check the stored price and say its use is unknown | Run 1 of 2 read: checks the amount charged |
+| Shop, customer title | Notice the greeting uses the first word | 2 of 2 check that the title appears | Run 1 of 2 read: same check, and it raises the first-name conflict as an open question |
+
+| Measure | Without | With |
+|---|---|---|
+| Excalidraw report length, characters, mean (excalidraw-11, -14, -06) | 2,660 | 2,673 |
+| Checks per report, mean | 6.0 | 5.7 |
+| Prompt size, 21 excalidraw commits, mean | 848 KB | 852 KB (+0.5%) |
+
+excalidraw-11 ran with file summaries from a much newer excalidraw, so its main consumer had a name but no description. A context from that commit could do better or worse.
+
+## Raising the chance the report names the consumer (GAP-003, 2026-11-08)
+
+Same commit every time (excalidraw-11), `deepseek/deepseek-v4.1-flash-1017`, a second model grading each check. A report is a catch only if one check normal-pastes spreadsheet cells and expects the chart flow; checks about plain paste or comma-separated data do not count. "Explained" means the report says the tab change could break spreadsheet detection. Runs that returned no valid report are listed apart: they catch nothing.
+
+| Setup | Valid reports | Caught | Explained | No report |
+|---|---|---|---|---|
+| Raw receiver list, no instruction | 9 | 5 | 1 | 1 |
+| Ranked receivers + instruction | 9 | 5 | 4 | 1 |
+| + meaning of the receiver | 10 | 9 | 3 | 0 |
+| + "what did the old value guarantee" instruction | 10 | 7 | 8 | 0 |
+| + receiver source code | 6 | 2 | 2 | 4 |
+| + a separate risk-hunting pass (with source code) | 6 | 6 | 4 | 4 |
+| Analyzer note only | 9 | 8 | 9 | 1 |
+| Analyzer note + all of the above | 8 | 7 | 8 | 2 |
+| **Analyzer note + meaning** | **18** | **18** | **18** | **2 of 20** |
+| Analyzer note + meaning + guarantees instruction | 18 | 18 | 18 | 2 of 20 |
+
+What decided it:
+
+- The analyzer note is the part that matters: when the changed code stops passing a character (here, tab) and a receiver splits or searches on it, the evidence says so. It costs no model call.
+- Showing the receiver's source made things worse. The model copied identifiers into its checks, and the report format rejects those.
+- Instructions alone moved the explanation rate but not reliably the catch rate.
+- The note fires on 1 of 32 corpus commits (excalidraw-11) and on no other, so it adds no noise there.
+- Limits: one commit, one model, one grader. The note only knows six characters (tab, newline, carriage return, comma, semicolon, pipe). 2 of 20 runs per setup had no valid report, so the ceiling for attempts is about 90% until empty or rejected reports are retried.
+
 Reproduce the shipped row with `npm run bench:corpus -- <history-dir>`.

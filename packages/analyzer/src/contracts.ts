@@ -141,6 +141,8 @@ export interface ImpactPath {
 export interface ValueFlowTarget {
   entity: Entity;
   through: string;
+  /** Characters this code splits or searches its input on that the change now removes (for example 'tab'), sorted. */
+  reliesOnRemovedCharacters?: string[];
 }
 
 export interface EntityImpact {

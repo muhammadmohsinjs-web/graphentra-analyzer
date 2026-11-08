@@ -772,6 +772,12 @@
               },
               "through": {
                 "type": "string"
+              },
+              "reliesOnRemovedCharacters": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               }
             },
             "required": [

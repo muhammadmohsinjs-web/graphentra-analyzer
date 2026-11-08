@@ -110,6 +110,72 @@ function overlaps(sourceFile: ts.SourceFile, node: ts.Node, lines: Set<number>):
   return false;
 }
 
+// Characters a change stops passing on, and characters a receiver splits or searches on. When the two meet, the receiver
+// likely relied on the old value (excalidraw-11: tabs became spaces before the spreadsheet parser split rows on tabs).
+const WATCHED_CHARACTERS: Array<[string, string]> = [['\t', 'tab'], ['\n', 'newline'], ['\r', 'carriage return'], [',', 'comma'], [';', 'semicolon'], ['|', 'pipe']];
+const SEARCHES = new Set(['split', 'includes', 'indexOf', 'lastIndexOf', 'startsWith', 'endsWith']);
+
+function patternMatches(pattern: ts.Expression, character: string): boolean {
+  if (ts.isStringLiteralLike(pattern)) return pattern.text.includes(character);
+  if (!ts.isRegularExpressionLiteral(pattern)) return false;
+  const source = pattern.text.slice(1, pattern.text.lastIndexOf('/'));
+  try { return new RegExp(source).test(character); } catch { return false; }
+}
+
+/** Characters this `replace` call removes: matched by the pattern and absent from a literal replacement. */
+function removedBy(call: ts.CallExpression): string[] {
+  if (!ts.isPropertyAccessExpression(call.expression) || !['replace', 'replaceAll'].includes(call.expression.name.text)) return [];
+  const [pattern, replacement] = call.arguments;
+  if (!pattern || !replacement || !ts.isStringLiteralLike(replacement)) return [];
+  return WATCHED_CHARACTERS.filter(([character]) => patternMatches(pattern, character) && !replacement.text.includes(character)).map(([, name]) => name);
+}
+
+/** Characters the changed lines newly remove, directly or in a function they newly call (one call down). */
+function charactersRemovedByChange(index: ProgramIndex, changed: ChangedEntity): Set<string> {
+  const { entity, change } = changed;
+  const sourceFile = index.sourceFiles.get(entity.file);
+  const removedNames = new Set<string>();
+  if (!sourceFile) return removedNames;
+  const lines = new Set(change.changedLines);
+  const before = change.removedCode.join('\n');
+  const scan = (root: ts.Node, onlyChanged: boolean): void => {
+    const visit = (node: ts.Node): void => {
+      if (ts.isCallExpression(node) && (!onlyChanged || (overlaps(sourceFile, node, lines) && !before.includes(node.getText(sourceFile))))) {
+        for (const name of removedBy(node)) removedNames.add(name);
+        if (onlyChanged) {
+          const symbol = index.calleeSymbol(node);
+          const callee = index.functionOf(symbol);
+          const calleeName = ts.isIdentifier(node.expression) ? node.expression.text : undefined;
+          if (callee?.body && calleeName && !before.includes(`${calleeName}(`)) scan(callee.body, false);
+        }
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(root);
+  };
+  const statements = sourceFile.statements.filter(statement => lineOf(sourceFile, statement.end) >= entity.startLine && lineOf(sourceFile, statement.getStart(sourceFile)) <= entity.endLine);
+  for (const statement of statements) scan(statement, true);
+  return removedNames;
+}
+
+/** Characters a receiver splits or searches its input on. */
+function charactersSearchedBy(index: ProgramIndex, entity: Entity): Set<string> {
+  const names = new Set<string>();
+  const sourceFile = index.sourceFiles.get(entity.file);
+  if (!sourceFile) return names;
+  const visit = (node: ts.Node): void => {
+    if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression) && SEARCHES.has(node.expression.name.text) && node.arguments[0]) {
+      const line = lineOf(sourceFile, node.getStart(sourceFile));
+      if (line >= entity.startLine && line <= entity.endLine) {
+        for (const [character, name] of WATCHED_CHARACTERS) if (patternMatches(node.arguments[0], character)) names.add(name);
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  return names;
+}
+
 /** Values a changed entity's own changed lines produce: call arguments, and its return value. */
 function changedLineSeeds(index: ProgramIndex, changed: ChangedEntity): Seed[] {
   const { entity, change } = changed;
@@ -336,9 +402,14 @@ export function withChangedValueTargets(options: {
       !changed.changeClasses?.some(value => value === 'test_only' || value === 'log_only' || value === 'cosmetic');
     const seeds = [...(usable ? changedLineSeeds(index, changed) : []), ...(kind === 'module' ? constantSeeds.get(file) ?? [] : [])];
     if (seeds.length === 0) return impact;
+    const removedCharacters = usable ? charactersRemovedByChange(index, changed) : new Set<string>();
     const targets: ValueFlowTarget[] = [...follow(index, id, seeds)]
       .filter(([target]) => !flagged.has(target) && !TEST_FILE.test(extracted.entityById.get(target)?.file ?? ''))
-      .map(([target, through]) => ({ entity: extracted.entityById.get(target)!, through }))
+      .map(([target, through]) => {
+        const entity = extracted.entityById.get(target)!;
+        const relied = removedCharacters.size > 0 ? [...charactersSearchedBy(index, entity)].filter(name => removedCharacters.has(name)).sort(compareStrings) : [];
+        return relied.length > 0 ? { entity, through, reliesOnRemovedCharacters: relied } : { entity, through };
+      })
       .sort((left, right) => compareStrings(left.entity.id, right.entity.id));
     return targets.length > 0 ? { ...impact, receivesChangedValue: targets } : impact;
   });
