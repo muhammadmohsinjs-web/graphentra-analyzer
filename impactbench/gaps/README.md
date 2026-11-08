@@ -10,6 +10,8 @@ npm run bench:gaps -- summary                # counts by cause, recall so far
 npm run bench:corpus -- <history-dir>         # analyzes and records every corpus entry, prints recall and noise
 ```
 
+Per-commit progress (what failed at the start, what we changed, what improved, what is still open) is in `progress.md`.
+
 ## The loop
 
 1. Run Graphentra on a corpus commit, save the evidence, then `record` it.
