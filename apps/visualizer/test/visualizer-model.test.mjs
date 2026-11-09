@@ -132,3 +132,23 @@ test('typed relations merge per entity pair and recorded step types must match t
   typed.analysis.impacts[0].blastRadius.paths[0].stepTypes = ['CALLS'];
   assert.equal(prepareData(typed).analysis, null);
 });
+
+test('surfaceData is empty for 2.x evidence and populated for 3.0 evidence', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { surfaceData } = await import('../public/model.mjs');
+  const v21 = JSON.parse(readFileSync(new URL('./fixtures/evidence-2.1.json', import.meta.url), 'utf8'));
+  assert.deepEqual(surfaceData(v21), { surfaces: [], surfaceEdges: [], tests: [], testsToRun: [], uncoveredSurfaces: [], affected: [] });
+  const v30 = JSON.parse(readFileSync(new URL('../../../packages/analyzer/test/fixtures/evidence-3.0/tests-mapping.json', import.meta.url), 'utf8'));
+  const data = surfaceData(v30);
+  assert.ok(data.surfaces.length > 0 && data.affected.some(item => item.surfaceId === 'api:GET /api/users'));
+  assert.deepEqual(data.uncoveredSurfaces, ['ui:/settings']);
+});
+
+test('model accepts 3.0 evidence and exposes its surfaces', async () => {
+  const { readFileSync } = await import('node:fs');
+  const evidence = JSON.parse(readFileSync(new URL('../../../packages/analyzer/test/fixtures/evidence-3.0/tests-mapping.json', import.meta.url), 'utf8'));
+  const graph = evidence.technicalGraph;
+  const model = prepareData({ evidence, graph, warnings: [] });
+  assert.equal(model.schemaVersion, '3.0');
+  assert.equal(model.surfaceData.surfaces.length, evidence.surfaces.length);
+});

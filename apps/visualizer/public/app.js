@@ -15,17 +15,35 @@ const svg = (tag, attributes = {}) => {
   return element;
 };
 
+// Schema 3.0 only: surfaces, their edges, affected surfaces and the test mapping. The panel stays hidden for 2.x evidence.
+function renderSurfaces(data) {
+  if (!data.surfaces.length) return;
+  const panel = $('surfaces-panel'); const content = $('surfaces-content');
+  const section = (title, items) => {
+    if (!items.length) return;
+    const block = text('section', ''); block.append(text('h3', title));
+    const list = text('ul', ''); list.append(...items.map(value => text('li', value))); block.append(list); content.append(block);
+  };
+  section('Surfaces', data.surfaces.map(surface => `${surface.id} (${surface.kind}, ${surface.confidence}) ${surface.file}:${surface.line}`));
+  section('Surface edges', data.surfaceEdges.map(edge => `${edge.from} ${edge.type} ${edge.to} (${edge.confidence})`));
+  section('Affected surfaces', data.affected.map(item => `${item.surfaceId} depth ${item.depth}, ${item.confidence}, from ${item.changedEntityId}`));
+  section('Tests to run', data.testsToRun.map(test => `${test.testId} reaches ${test.reaches.join(', ') || 'no surface'}`));
+  section('Uncovered surfaces', data.uncoveredSurfaces);
+  panel.hidden = false;
+}
+
 async function main() {
   const response = await fetch('/api/data');
   const data = await response.json();
   if (!response.ok) throw new Error(data.error ?? 'Could not load local artifacts.');
   const model = prepareData(data);
-  const extended = model.schemaVersion === '2.1';
+  const extended = model.schemaVersion === '2.1' || model.schemaVersion === '3.0';
   if (extended) {
     document.querySelector('#function-count + span').textContent = 'ENTITIES';
     document.querySelector('label[for="search"]').textContent = 'FILTER ENTITIES';
     $('graph').setAttribute('aria-label', 'Interactive entity dependency graph. Select nodes for evidence; drag the background to pan.');
   }
+  renderSurfaces(model.surfaceData);
   const layout = layoutGraph(model.entities);
   const relationByKey = new Map(model.relations.map(relation => [edgeKey(relation.from, relation.to), relation]));
   const presentTypes = RELATION_TYPES.filter(type => model.relations.some(relation => relation.type === type));

@@ -1,4 +1,4 @@
-import { assertValidEvidenceEnvelope, computeDeterministicEvidenceIdentity } from '@graphentra/analyzer';
+import { computeDeterministicEvidenceIdentity, readEvidence } from '@graphentra/analyzer';
 import type {
   ApplicationMap,
   ChangedEntity,
@@ -14,6 +14,7 @@ import {
   type LLMClientOptions,
 } from './llm-client';
 import { buildLLMPayload, qaInstruction } from './qa-evidence';
+import { buildSurfaceEvidence, formatSurfaceEvidence } from './surface-evidence';
 
 export interface GenerateReportResult {
   evidenceIdentity: string;
@@ -29,18 +30,21 @@ export interface GenerateReportExtras {
 }
 
 export async function generateQAReport(
-  evidence: unknown,
+  rawEvidence: unknown,
   applicationContext: unknown,
   options?: LLMClientOptions,
   extras: GenerateReportExtras = {},
 ): Promise<GenerateReportResult> {
-  assertValidEvidenceEnvelope(evidence);
+  const evidence = readEvidence(rawEvidence);
   const { context, warnings } = loadApplicationContext(applicationContext, evidence.technicalGraph);
-  const evidenceIdentity = computeDeterministicEvidenceIdentity(evidence);
+  // Identity comes from the document as given: normalizing adds empty 3.0 collections that must not change a 2.x identity.
+  const evidenceIdentity = computeDeterministicEvidenceIdentity(rawEvidence as typeof evidence);
   const applicationMap = extras.applicationMap && extras.applicationMap.schemaVersion === '1.0' ? extras.applicationMap : undefined;
+  const surfaceEvidence = buildSurfaceEvidence(evidence);
   const payload = buildLLMPayload(evidence.impacts, context, {
     applicationMap, relations: evidence.technicalGraph.relations, contextWarnings: warnings,
     capabilities: evidence.technicalGraph.capabilities,
+    surfaceEvidence,
   });
   const qaReport = await generateImpactReport({
     instruction: qaInstruction,
@@ -49,7 +53,7 @@ export async function generateQAReport(
     allowedSurfaceIds: payload.applicationContext.allowedSurfaceIds,
   });
 
-  const markdownReport = `# Graphentra QA Impact Report\n\nEvidence Identity: ${evidenceIdentity}\n\n${formatImpactReport(qaReport)}`;
+  const markdownReport = `# Graphentra QA Impact Report\n\nEvidence Identity: ${evidenceIdentity}\n\n${formatImpactReport(qaReport)}${formatSurfaceEvidence(surfaceEvidence)}`;
 
   return {
     evidenceIdentity,

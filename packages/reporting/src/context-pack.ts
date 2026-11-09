@@ -1,6 +1,7 @@
 import {
   findSurfacesForEntity, type ApplicationMap, type EntityImpact, type Relation, type Surface,
 } from '@graphentra/analyzer';
+import type { SurfaceEvidence } from './surface-evidence';
 import type { ApplicationContextV2, EntityAnnotationV2 } from './context-contract';
 
 /** Budget for the serialized pack; beyond this, lower-priority detail is dropped and listed in `omitted`. */
@@ -60,6 +61,8 @@ export interface ContextPack {
   /** All surface IDs the report may reference in testAreas[].surfaceIds. */
   allowedSurfaceIds: string[];
   contextStatus: { schemaVersion: '2.0'; migratedFrom?: string; generatedAt: string; coverage: ApplicationContextV2['meta']['coverage']; warnings: string[] };
+  /** Schema 3.0 only: affected surfaces, tests to run and uncovered surfaces. */
+  surfaceEvidence?: SurfaceEvidence;
   omitted: string[];
 }
 
@@ -67,6 +70,7 @@ export interface BuildContextPackOptions {
   applicationMap?: ApplicationMap;
   relations?: Relation[];
   warnings?: string[];
+  surfaceEvidence?: SurfaceEvidence;
 }
 
 function splitIdentifier(identifier: string): string {
@@ -245,6 +249,7 @@ export function buildContextPack(context: ApplicationContextV2, impacts: EntityI
       schemaVersion: '2.0', ...(context.meta.migratedFrom ? { migratedFrom: context.meta.migratedFrom } : {}),
       generatedAt: context.meta.generatedAt, coverage: context.meta.coverage, warnings: options.warnings ?? [],
     },
+    ...(options.surfaceEvidence ? { surfaceEvidence: options.surfaceEvidence } : {}),
     omitted,
   };
 

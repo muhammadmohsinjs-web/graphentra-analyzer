@@ -5,7 +5,7 @@ import {
   type DeterministicEvidence,
   type EngineProfile,
   analyzeRepository,
-  assertValidEvidenceEnvelope,
+  readEvidence,
   writeJsonArtifact,
 } from '@graphentra/analyzer';
 import type {
@@ -110,7 +110,7 @@ export async function resubmitEvidenceFile(options: {
   }
 
   const raw = JSON.parse(fs.readFileSync(evidencePath, 'utf8'));
-  assertValidEvidenceEnvelope(raw);
+  readEvidence(raw);
 
   return submitEvidence({
     backendUrl,

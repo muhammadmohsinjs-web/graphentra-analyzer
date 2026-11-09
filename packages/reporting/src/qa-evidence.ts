@@ -3,6 +3,7 @@ import { isExtendedGraph } from './extended-graph';
 import type { ApplicationContext } from './contracts';
 import { migrateApplicationContextV1, type AnyApplicationContext, type ApplicationContextV2 } from './context-contract';
 import { buildContextPack } from './context-pack';
+import type { SurfaceEvidence } from './surface-evidence';
 
 export function getSourceRole(file: string): 'production' | 'test' {
   const normalized = file.replace(/\\/g, '/');
@@ -124,6 +125,8 @@ export interface BuildPayloadOptions {
   contextWarnings?: string[];
   /** Graph capabilities; extended (2.1) graphs report entity granularity and kinds. */
   capabilities?: TechnicalGraph['capabilities'];
+  /** Schema 3.0 surfaces and test mapping; absent for 2.x evidence. */
+  surfaceEvidence?: SurfaceEvidence;
 }
 
 function toV2(context: AnyApplicationContext, impacts: EntityImpact[]): ApplicationContextV2 {
@@ -183,6 +186,7 @@ export function buildLLMPayload(impacts: EntityImpact[], context: AnyApplication
     }),
     applicationContext: buildContextPack(toV2(context, impacts), impacts, {
       applicationMap: options.applicationMap, relations: options.relations, warnings: options.contextWarnings,
+      surfaceEvidence: options.surfaceEvidence,
     }),
     limitations: [
       extended

@@ -23,9 +23,20 @@ export const STEP_LABELS = { CALLS: 'called by', RENDERS: 'rendered by', INSTANT
 export const edgeType = types => RELATION_TYPES.find(type => types.includes(type)) ?? 'CALLS';
 export const edgeClass = type => `edge-${type.toLowerCase()}`;
 
+// Schema 3.0 surfaces, their edges and the test mapping. Empty for 2.x evidence, which renders as before.
+export function surfaceData(evidence) {
+  const list = value => Array.isArray(value) ? value : [];
+  const mapping = evidence?.testMapping;
+  return {
+    surfaces: list(evidence?.surfaces), surfaceEdges: list(evidence?.surfaceEdges), tests: list(evidence?.tests),
+    testsToRun: list(mapping?.testsToRun), uncoveredSurfaces: list(mapping?.uncoveredSurfaces),
+    affected: list(evidence?.impacts).flatMap(impact => list(impact.affectedSurfaces).map(item => ({ ...item, changedEntityId: impact.changedEntity?.id }))),
+  };
+}
+
 export function prepareData(data) {
   const { graph } = data;
-  if (data.evidence && (data.evidence.artifactKind !== 'graphentra-evidence' || !['2.0', '2.1'].includes(data.evidence.schemaVersion) || !['completed','no_changes','no_supported_changes','no_source_files'].includes(data.evidence.outcome))) throw new Error('Invalid evidence envelope.');
+  if (data.evidence && (data.evidence.artifactKind !== 'graphentra-evidence' || !['2.0', '2.1', '3.0'].includes(data.evidence.schemaVersion) || !['completed','no_changes','no_supported_changes','no_source_files'].includes(data.evidence.outcome))) throw new Error('Invalid evidence envelope.');
   if (graph?.schemaVersion !== '1.0' || !Array.isArray(graph.entities) || !Array.isArray(graph.relations)) {
     throw new Error('Unsupported technical graph. Regenerate it with the analyzer.');
   }
@@ -89,7 +100,7 @@ export function prepareData(data) {
       analysis = null;
     }
   }
-  return { schemaVersion: data.evidence?.schemaVersion, graph, entities, relations, analysis, context: data.context, warnings, maxDepth, outcome: data.evidence?.outcome, diagnostics: data.evidence?.diagnostics ?? [], limitations: data.evidence?.limitations ?? [], provenance: data.evidence ? { comparison: data.evidence.comparison, sourceState: data.evidence.sourceState, options: data.evidence.options } : undefined };
+  return { schemaVersion: data.evidence?.schemaVersion, surfaceData: surfaceData(data.evidence), graph, entities, relations, analysis, context: data.context, warnings, maxDepth, outcome: data.evidence?.outcome, diagnostics: data.evidence?.diagnostics ?? [], limitations: data.evidence?.limitations ?? [], provenance: data.evidence ? { comparison: data.evidence.comparison, sourceState: data.evidence.sourceState, options: data.evidence.options } : undefined };
 }
 
 // Recorded paths remain the authority; reverse traversal is only used in explicit what-if mode.

@@ -5,7 +5,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { test } from 'node:test';
-import type { DeterministicEvidence } from '@graphentra/analyzer';
+import { readEvidence, type DeterministicEvidence } from '@graphentra/analyzer';
 import {
   SubmissionClientError,
   analyzeAndSubmit,
@@ -470,4 +470,18 @@ test('ci-runner CLI: --engine without a value exits non-zero', async () => {
     process.exit = originalExit;
     console.error = originalError;
   }
+});
+
+test('ci-runner: idempotency key accepts 3.0 evidence and includes surface data only for 3.0', () => {
+  const repository = { name: 'acme/webapp' };
+  const doc = () => JSON.parse(fs.readFileSync(path.join(__dirname, '../../../packages/analyzer/test/fixtures/evidence-3.0/tests-mapping.json'), 'utf8'));
+  const key = (evidence: DeterministicEvidence) =>
+    computeSubmissionIdempotencyKey({ repository, comparisonPolicy: 'merge-base-to-head', evidence });
+  const base = doc();
+  assert.equal(base.schemaVersion, '3.0');
+  assert.doesNotThrow(() => readEvidence(base));
+  assert.equal(key(base), key(doc()));
+  const changed = doc();
+  changed.testMapping.uncoveredSurfaces = [];
+  assert.notEqual(key(base), key(changed));
 });
