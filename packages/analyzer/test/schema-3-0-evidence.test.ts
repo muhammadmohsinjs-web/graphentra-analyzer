@@ -37,8 +37,12 @@ test('schema 3.0 on the web-app fixture: valid, deterministic, surfaces with pro
     const validation = validateEvidenceEnvelope(evidence);
     assert.deepEqual(validation.errors, []);
     assert.ok(evidence.surfaces && evidence.surfaces.length > 0, 'surfaces emitted');
-    assert.deepEqual(evidence.tests, []);
-    assert.ok(evidence.surfaceEdges!.every(edge => edge.type === 'SURFACE_HANDLED_BY'));
+    // P5-7: the Playwright spec is a test node; P5-4/P5-7 edges join SURFACE_HANDLED_BY in surfaceEdges.
+    assert.deepEqual(evidence.tests!.map(t => t.id), ['test:e2e/checkout.spec.ts#checkout > customer places an order with a saved card']);
+    assert.ok(evidence.surfaceEdges!.some(edge => edge.type === 'SURFACE_HANDLED_BY'));
+    assert.ok(evidence.surfaceEdges!.every(edge => edge.type !== 'TEST_COVERS' || edge.from.startsWith('test:')));
+    assert.ok(evidence.testMapping, 'testMapping emitted when test extraction succeeds');
+    assert.equal(evidence.config, undefined, 'web-app has no graphentra.yml');
     assert.ok(evidence.adapters && evidence.adapters.length > 0);
     for (const surface of evidence.surfaces) {
       assert.ok(surface.adapter.id && surface.adapter.version, `${surface.id} has provenance`);
@@ -60,7 +64,7 @@ test('schema 3.0 on the web-app fixture: valid, deterministic, surfaces with pro
     // Default (2.1) output carries none of the 3.0 fields.
     const legacyShape = analyzeRepository({ target: repo.dir, comparison: { mode: 'working-tree' } }).evidence;
     assert.equal(legacyShape.schemaVersion, '2.1');
-    for (const key of ['surfaces', 'surfaceEdges', 'tests', 'adapters']) assert.ok(!(key in legacyShape), key);
+    for (const key of ['surfaces', 'surfaceEdges', 'tests', 'testMapping', 'config', 'adapters']) assert.ok(!(key in legacyShape), key);
     assert.ok(legacyShape.impacts.every(impact => impact.affectedSurfaces === undefined));
   } finally { repo.cleanup(); }
 });

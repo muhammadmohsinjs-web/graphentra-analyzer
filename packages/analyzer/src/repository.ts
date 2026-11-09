@@ -1,3 +1,4 @@
+import { matchesGlob } from './config';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import * as fs from 'node:fs';
@@ -47,7 +48,9 @@ export interface RepositoryContext {
 export function createRepositoryContext(
   projectRootInput: string,
   comparisonOptions: ComparisonOptions,
-  options: { gitTimeoutMs?: number; excludePaths?: string[]; engine?: EngineProfile } = {},
+  options: { gitTimeoutMs?: number; excludePaths?: string[]; engine?: EngineProfile;
+    /** Glob exclusions (graphentra.yml `ignore`, schema 3.0 only); a match also excludes everything below it. */
+    excludeGlobs?: string[] } = {},
 ): RepositoryContext {
   if (!comparisonOptions || typeof comparisonOptions !== 'object' ||
       !['commit', 'working-tree'].includes(comparisonOptions.mode)) {
@@ -153,11 +156,14 @@ export function createRepositoryContext(
     );
   }
 
-  const excludePaths = [...new Set((options.excludePaths ?? []).map(value =>
+  const prefixExcludes = [...new Set((options.excludePaths ?? []).map(value =>
     path.posix.normalize(value.replace(/\\/g, '/')).replace(/\/$/, '')))].sort();
+  const excludeGlobs = [...new Set(options.excludeGlobs ?? [])].sort();
+  const excludePaths = excludeGlobs.length === 0 ? prefixExcludes : [...new Set([...prefixExcludes, ...excludeGlobs])].sort();
   function includesPath(file: string): boolean {
     return !file.split('/').some(part => IGNORED_DIRECTORIES.has(part)) &&
-      !excludePaths.some(excluded => excluded === '.' || file === excluded || file.startsWith(`${excluded}/`));
+      !prefixExcludes.some(excluded => excluded === '.' || file === excluded || file.startsWith(`${excluded}/`)) &&
+      !excludeGlobs.some(glob => matchesGlob(file, glob) || matchesGlob(file, `${glob.replace(/\/+$/, '')}/**`));
   }
   const targetFilter = ['--', projectInsideRepository];
   function listFiles(untracked = false): string[] {

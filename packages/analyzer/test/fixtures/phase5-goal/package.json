@@ -1,0 +1,7 @@
+{
+  "name": "fixture-phase5-goal",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": { "next": "14.2.5", "react": "18.2.0", "react-dom": "18.2.0" },
+  "devDependencies": { "@playwright/test": "1.46.0" }
+}

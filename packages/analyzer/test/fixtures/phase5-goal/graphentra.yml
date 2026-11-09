@@ -1,0 +1,6 @@
+version: 1
+criticality:
+  "api:POST /api/orders": critical
+  "ui:**": normal
+ignore:
+  - scripts/**

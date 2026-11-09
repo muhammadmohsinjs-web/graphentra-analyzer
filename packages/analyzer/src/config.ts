@@ -3,15 +3,11 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { LineCounter, isMap, isScalar, isSeq, parseDocument } from 'yaml';
 import type { Node } from 'yaml';
-import type { DiagnosticItem } from './contracts.js';
+import { SURFACE_KINDS, type DiagnosticItem, type EvidenceSurfaceKind } from './contracts.js';
 import { compareStrings } from './deterministic.js';
 
 export const CONFIG_FILE_NAME = 'graphentra.yml';
 export const CRITICALITY_LEVELS = ['critical', 'high', 'normal', 'low'] as const;
-export const SURFACE_KINDS = [
-  'api_endpoint', 'cli_command', 'graphql_operation', 'library_export', 'mobile_screen', 'queue_consumer',
-  'rpc_method', 'scheduled_job', 'serverless_function', 'ui_route', 'webhook',
-] as const;
 
 export type CriticalityLevel = typeof CRITICALITY_LEVELS[number];
 
@@ -20,7 +16,7 @@ export interface GraphentraConfig {
   criticality: Array<{ pattern: string; level: CriticalityLevel }>;
   ignore: string[];
   tests: string[];
-  surfaces: Array<{ id: string; kind: string; route: string; method?: string; handler: string }>;
+  surfaces: Array<{ id: string; kind: EvidenceSurfaceKind; route: string; method?: string; handler: string }>;
 }
 
 export interface LoadedGraphentraConfig {

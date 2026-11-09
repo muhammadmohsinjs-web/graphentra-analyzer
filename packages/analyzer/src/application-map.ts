@@ -10,7 +10,7 @@ import { createAdapterContext } from './adapters/context';
 import { detectClientRequest } from './adapters/http-client';
 import { ADAPTERS } from './adapters/registry';
 import { isRouteObject, isRouteTag, jsxAttribute, jsxAttributeValue } from './adapters/shared';
-import { compareOrder, type DetectedSurface, type FrameworkAdapter } from './adapters/types';
+import { compareOrder, type AdapterContext, type DetectedSurface, type FrameworkAdapter } from './adapters/types';
 import { compareStrings } from './deterministic';
 import type { FrameworkDetection } from './framework-version';
 
@@ -144,7 +144,9 @@ export function extractApplicationMap(input: ExtractApplicationMapInput): Applic
   return extractApplicationMapWithProvenance(input).map;
 }
 
-export function extractApplicationMapWithProvenance(input: ExtractApplicationMapInput): { map: ApplicationMap; provenance: SurfaceProvenance } {
+/** The map plus out-of-map data: surface provenance and the adapter context (reused for endpoint links, P5-4). */
+export function extractApplicationMapWithProvenance(input: ExtractApplicationMapInput):
+  { map: ApplicationMap; provenance: SurfaceProvenance; context: AdapterContext } {
   const { symbolToEntity, toProjectPath } = input;
   const ctx = createAdapterContext(input);
   const { sourceFiles, relativeOf, entityDeclaration, entityForDeclaration, resolve, symbolOf, declarationBody, resolveConstant, str, moduleDefault } = ctx;
@@ -557,7 +559,7 @@ export function extractApplicationMapWithProvenance(input: ExtractApplicationMap
     entityFingerprints,
     limitations: [...APPLICATION_MAP_LIMITATIONS],
   };
-  return { map, provenance };
+  return { map, provenance, context: ctx };
 }
 
 /**

@@ -40,3 +40,15 @@ Certified versions: Express 4.19.2 (`express-4`), 5.0.0 (`express-5`); identical
 | `app.get/post(path, handler)` | Entry entities for inline anonymous handlers |
 | `express.Router()` routes with `app.use('/api', router)` prefix, including route params | Middleware as separate surfaces or access hints (not asserted) |
 | Handlers imported from other files resolved to entry entity ids | Routers declared in and mounted from other files (not certified) |
+
+## config (any kind, schema 3.0)
+
+Surfaces declared under `surfaces:` in `graphentra.yml` (D12) are recorded with adapter id `config`, `source: config`,
+`confidence: proven`. A declared surface replaces a detected surface with the same id. A surface whose `handler` is not an
+entity of the analyzed graph is dropped with a `CONFIG_SURFACE_HANDLER_NOT_FOUND` warning.
+
+| Detected | Not detected |
+| --- | --- |
+| Client calls (`fetch`, axios, wrappers) inside an entity, linked to api surfaces as `CALLS_ENDPOINT` (D9) | Client calls at module top level (no enclosing entity) |
+| Unresolvable call URLs as `dynamic_endpoint_url` frontier items | Proxied or runtime-computed base URLs |
+| Playwright `goto` / Cypress `visit` routes as `TEST_COVERS` (via `goto`) to ui surfaces; test references as `TEST_COVERS` (via `import`) | Routes reached by clicking links inside a test |

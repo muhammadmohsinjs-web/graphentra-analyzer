@@ -1,0 +1,614 @@
+{
+  "artifactKind": "graphentra-evidence",
+  "schemaVersion": "3.0",
+  "analyzerVersion": "<VERSION>",
+  "target": {
+    "targetPath": "."
+  },
+  "comparison": {
+    "mode": "commit",
+    "requestedBase": "<SHA>",
+    "requestedHead": "<SHA>",
+    "resolvedBaseSha": "<SHA>",
+    "resolvedHeadSha": "<SHA>",
+    "comparedTo": "`<SHA>`"
+  },
+  "sourceState": {
+    "checkoutSha": "<SHA>",
+    "isTrackedDirty": false,
+    "untrackedSourcePolicy": "excluded",
+    "contentIdentity": "<CONTENT>"
+  },
+  "options": {
+    "excludePaths": [
+      "scripts/**"
+    ],
+    "sourcePolicy": "git-tracked",
+    "engine": "extended"
+  },
+  "toolchain": {
+    "typescript": "5.8.2",
+    "node": "<NODE>"
+  },
+  "outcome": "completed",
+  "technicalGraph": {
+    "schemaVersion": "1.0",
+    "repository": {
+      "targetPath": ".",
+      "headSha": "<SHA>",
+      "analyzerVersion": "<VERSION>"
+    },
+    "capabilities": {
+      "language": "typescript",
+      "entityKinds": [
+        "component",
+        "function",
+        "method",
+        "module"
+      ],
+      "relationTypes": [
+        "CALLS",
+        "INSTANTIATES",
+        "REFERENCES",
+        "RENDERS"
+      ],
+      "maxBlastDepth": 6
+    },
+    "analyzedFiles": [
+      "app/api/orders/route.ts",
+      "app/checkout/page.tsx",
+      "app/quick-buy/page.tsx",
+      "e2e/checkout.spec.ts",
+      "lib/orders.ts"
+    ],
+    "entities": [
+      {
+        "id": "lib/orders.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "lib/orders.ts",
+        "startLine": 1,
+        "endLine": 7,
+        "language": "typescript"
+      },
+      {
+        "id": "lib/orders.ts#createOrder",
+        "kind": "function",
+        "name": "createOrder",
+        "file": "lib/orders.ts",
+        "startLine": 3,
+        "endLine": 6,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "app/api/orders/route.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "app/api/orders/route.ts",
+        "startLine": 1,
+        "endLine": 7,
+        "language": "typescript"
+      },
+      {
+        "id": "app/api/orders/route.ts#POST",
+        "kind": "function",
+        "name": "POST",
+        "file": "app/api/orders/route.ts",
+        "startLine": 3,
+        "endLine": 6,
+        "language": "typescript",
+        "exported": true
+      },
+      {
+        "id": "app/checkout/page.tsx#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "app/checkout/page.tsx",
+        "startLine": 1,
+        "endLine": 7,
+        "language": "typescript"
+      },
+      {
+        "id": "app/checkout/page.tsx#CheckoutPage",
+        "kind": "component",
+        "name": "CheckoutPage",
+        "file": "app/checkout/page.tsx",
+        "startLine": 1,
+        "endLine": 6,
+        "language": "typescript",
+        "exported": true,
+        "exportName": "default"
+      },
+      {
+        "id": "app/checkout/page.tsx#CheckoutPage>pay",
+        "kind": "function",
+        "name": "CheckoutPage>pay",
+        "file": "app/checkout/page.tsx",
+        "startLine": 2,
+        "endLine": 4,
+        "language": "typescript"
+      },
+      {
+        "id": "app/quick-buy/page.tsx#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "app/quick-buy/page.tsx",
+        "startLine": 1,
+        "endLine": 7,
+        "language": "typescript"
+      },
+      {
+        "id": "app/quick-buy/page.tsx#QuickBuyPage",
+        "kind": "component",
+        "name": "QuickBuyPage",
+        "file": "app/quick-buy/page.tsx",
+        "startLine": 1,
+        "endLine": 6,
+        "language": "typescript",
+        "exported": true,
+        "exportName": "default"
+      },
+      {
+        "id": "app/quick-buy/page.tsx#QuickBuyPage>buy",
+        "kind": "function",
+        "name": "QuickBuyPage>buy",
+        "file": "app/quick-buy/page.tsx",
+        "startLine": 2,
+        "endLine": 4,
+        "language": "typescript"
+      },
+      {
+        "id": "e2e/checkout.spec.ts#<module>",
+        "kind": "module",
+        "name": "<module>",
+        "file": "e2e/checkout.spec.ts",
+        "startLine": 1,
+        "endLine": 10,
+        "language": "typescript"
+      }
+    ],
+    "relations": [
+      {
+        "from": "app/api/orders/route.ts#POST",
+        "to": "lib/orders.ts#createOrder",
+        "type": "CALLS"
+      },
+      {
+        "from": "app/checkout/page.tsx#CheckoutPage",
+        "to": "app/checkout/page.tsx#CheckoutPage>pay",
+        "type": "REFERENCES"
+      },
+      {
+        "from": "app/quick-buy/page.tsx#QuickBuyPage",
+        "to": "app/quick-buy/page.tsx#QuickBuyPage>buy",
+        "type": "REFERENCES"
+      }
+    ]
+  },
+  "changedFiles": [
+    {
+      "file": "lib/orders.ts",
+      "oldFile": "lib/orders.ts",
+      "changedLines": [
+        4
+      ],
+      "addedCode": [
+        "  if (amount <= 0) throw new Error('amount too small');"
+      ],
+      "removedCode": [
+        "  if (amount < 1) throw new Error('amount too small');"
+      ],
+      "diff": "diff --git a/lib/orders.ts b/lib/orders.ts\nindex 160f769..98d3ac1 100644\n--- a/lib/orders.ts\n+++ b/lib/orders.ts\n@@ -1,6 +1,6 @@\n export interface Order { id: number; amount: number }\n \n export function createOrder(amount: number): Order {\n-  if (amount < 1) throw new Error('amount too small');\n+  if (amount <= 0) throw new Error('amount too small');\n   return { id: 1, amount };\n }",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "export interface Order { id: number; amount: number }",
+              "oldLine": 1,
+              "newLine": 1
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 2,
+              "newLine": 2
+            },
+            {
+              "kind": " ",
+              "code": "export function createOrder(amount: number): Order {",
+              "oldLine": 3,
+              "newLine": 3
+            },
+            {
+              "kind": "-",
+              "code": "  if (amount < 1) throw new Error('amount too small');",
+              "oldLine": 4,
+              "newLine": 4
+            },
+            {
+              "kind": "+",
+              "code": "  if (amount <= 0) throw new Error('amount too small');",
+              "oldLine": 5,
+              "newLine": 4
+            },
+            {
+              "kind": " ",
+              "code": "  return { id: 1, amount };",
+              "oldLine": 5,
+              "newLine": 5
+            },
+            {
+              "kind": " ",
+              "code": "}",
+              "oldLine": 6,
+              "newLine": 6
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "changedEntities": [
+    {
+      "entity": {
+        "id": "lib/orders.ts#createOrder",
+        "kind": "function",
+        "name": "createOrder",
+        "file": "lib/orders.ts",
+        "startLine": 3,
+        "endLine": 6,
+        "language": "typescript",
+        "exported": true
+      },
+      "change": {
+        "file": "lib/orders.ts",
+        "changedLines": [
+          4
+        ],
+        "addedCode": [
+          "  if (amount <= 0) throw new Error('amount too small');"
+        ],
+        "removedCode": [
+          "  if (amount < 1) throw new Error('amount too small');"
+        ],
+        "diff": "--- a/lib/orders.ts\n+++ b/lib/orders.ts\n@@ -3,4 +3,4 @@\n export function createOrder(amount: number): Order {\n-  if (amount < 1) throw new Error('amount too small');\n+  if (amount <= 0) throw new Error('amount too small');\n   return { id: 1, amount };\n }"
+      },
+      "changeKind": "modified",
+      "changeClasses": [
+        "body"
+      ]
+    }
+  ],
+  "impacts": [
+    {
+      "changedEntity": {
+        "id": "lib/orders.ts#createOrder",
+        "kind": "function",
+        "name": "createOrder",
+        "file": "lib/orders.ts",
+        "startLine": 3,
+        "endLine": 6,
+        "language": "typescript",
+        "exported": true
+      },
+      "change": {
+        "file": "lib/orders.ts",
+        "changedLines": [
+          4
+        ],
+        "addedCode": [
+          "  if (amount <= 0) throw new Error('amount too small');"
+        ],
+        "removedCode": [
+          "  if (amount < 1) throw new Error('amount too small');"
+        ],
+        "diff": "--- a/lib/orders.ts\n+++ b/lib/orders.ts\n@@ -3,4 +3,4 @@\n export function createOrder(amount: number): Order {\n-  if (amount < 1) throw new Error('amount too small');\n+  if (amount <= 0) throw new Error('amount too small');\n   return { id: 1, amount };\n }"
+      },
+      "directDependents": [
+        {
+          "id": "app/api/orders/route.ts#POST",
+          "kind": "function",
+          "name": "POST",
+          "file": "app/api/orders/route.ts",
+          "startLine": 3,
+          "endLine": 6,
+          "language": "typescript",
+          "exported": true
+        }
+      ],
+      "blastRadius": {
+        "totalAffectedEntities": 1,
+        "entities": [
+          {
+            "id": "app/api/orders/route.ts#POST",
+            "kind": "function",
+            "name": "POST",
+            "file": "app/api/orders/route.ts",
+            "startLine": 3,
+            "endLine": 6,
+            "language": "typescript",
+            "exported": true
+          }
+        ],
+        "paths": [
+          {
+            "target": {
+              "id": "app/api/orders/route.ts#POST",
+              "kind": "function",
+              "name": "POST",
+              "file": "app/api/orders/route.ts",
+              "startLine": 3,
+              "endLine": 6,
+              "language": "typescript",
+              "exported": true
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "lib/orders.ts#createOrder",
+                "kind": "function",
+                "name": "createOrder",
+                "file": "lib/orders.ts",
+                "startLine": 3,
+                "endLine": 6,
+                "language": "typescript",
+                "exported": true
+              },
+              {
+                "id": "app/api/orders/route.ts#POST",
+                "kind": "function",
+                "name": "POST",
+                "file": "app/api/orders/route.ts",
+                "startLine": 3,
+                "endLine": 6,
+                "language": "typescript",
+                "exported": true
+              }
+            ],
+            "pathCount": 1,
+            "stepTypes": [
+              "CALLS"
+            ],
+            "confidence": "proven"
+          }
+        ],
+        "truncated": false
+      },
+      "terminalDependents": [
+        {
+          "id": "app/api/orders/route.ts#POST",
+          "kind": "function",
+          "name": "POST",
+          "file": "app/api/orders/route.ts",
+          "startLine": 3,
+          "endLine": 6,
+          "language": "typescript",
+          "exported": true
+        }
+      ],
+      "confidence": "proven",
+      "affectedSurfaces": [
+        {
+          "surfaceId": "api:POST /api/orders",
+          "depth": 2,
+          "path": [
+            "lib/orders.ts#createOrder",
+            "app/api/orders/route.ts#POST",
+            "api:POST /api/orders"
+          ],
+          "confidence": "proven"
+        },
+        {
+          "surfaceId": "ui:/checkout",
+          "depth": 5,
+          "path": [
+            "lib/orders.ts#createOrder",
+            "app/api/orders/route.ts#POST",
+            "api:POST /api/orders",
+            "app/checkout/page.tsx#CheckoutPage>pay",
+            "app/checkout/page.tsx#CheckoutPage",
+            "ui:/checkout"
+          ],
+          "confidence": "proven"
+        },
+        {
+          "surfaceId": "ui:/quick-buy",
+          "depth": 5,
+          "path": [
+            "lib/orders.ts#createOrder",
+            "app/api/orders/route.ts#POST",
+            "api:POST /api/orders",
+            "app/quick-buy/page.tsx#QuickBuyPage>buy",
+            "app/quick-buy/page.tsx#QuickBuyPage",
+            "ui:/quick-buy"
+          ],
+          "confidence": "proven"
+        }
+      ]
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "ATTRIBUTED_LINE_RATIO",
+      "severity": "info",
+      "message": "2 of 2 changed lines attributed to code entities (ratio 1.0000); 0 module-level, 0 unattributed."
+    }
+  ],
+  "limitations": [
+    "Only TypeScript and JavaScript are analyzed; JavaScript is not type-checked.",
+    "Entities are named functions, variable-bound arrow functions and function expressions, class and object-literal methods, constructors, accessors, React components, and module-level code.",
+    "Classes, interfaces, type aliases, and enums are not entities.",
+    "Relationships are CALLS, RENDERS (JSX elements), INSTANTIATES (new expressions), and REFERENCES (functions passed or stored as values).",
+    "Changed values are followed through arguments, local variables and return values, one caller up and one call down; values stored in object fields or shared state are not followed.",
+    "Dynamic calls and calls through interface-typed receivers are not analyzed.",
+    "Renamed entities may lack removed-code evidence.",
+    "Partially overlapping entity line ranges are skipped rather than sharing ambiguous evidence.",
+    "Application surfaces are not yet discovered.",
+    "Blast radius is limited to depth 6."
+  ],
+  "frontier": [],
+  "coverage": {
+    "byLanguage": [
+      {
+        "key": "typescript",
+        "changedLines": 1,
+        "attributedLines": 1,
+        "ratio": 1,
+        "frontierCount": 0
+      }
+    ],
+    "byDirectory": [
+      {
+        "key": "lib",
+        "changedLines": 1,
+        "attributedLines": 1,
+        "ratio": 1,
+        "frontierCount": 0
+      }
+    ],
+    "skippedFiles": [],
+    "frontierTotal": 5
+  },
+  "surfaces": [
+    {
+      "id": "api:POST /api/orders",
+      "kind": "api_endpoint",
+      "route": "/api/orders",
+      "method": "POST",
+      "file": "app/api/orders/route.ts",
+      "line": 1,
+      "handlerEntityIds": [
+        "app/api/orders/route.ts#POST"
+      ],
+      "framework": "nextjs@14",
+      "adapter": {
+        "id": "nextjs-route-handler",
+        "version": "1.0.0"
+      },
+      "confidence": "proven",
+      "source": "detected",
+      "criticality": "critical"
+    },
+    {
+      "id": "ui:/checkout",
+      "kind": "ui_route",
+      "route": "/checkout",
+      "file": "app/checkout/page.tsx",
+      "line": 1,
+      "handlerEntityIds": [
+        "app/checkout/page.tsx#CheckoutPage"
+      ],
+      "framework": "nextjs@14",
+      "adapter": {
+        "id": "nextjs-app-router",
+        "version": "1.0.0"
+      },
+      "confidence": "proven",
+      "source": "detected",
+      "criticality": "normal"
+    },
+    {
+      "id": "ui:/quick-buy",
+      "kind": "ui_route",
+      "route": "/quick-buy",
+      "file": "app/quick-buy/page.tsx",
+      "line": 1,
+      "handlerEntityIds": [
+        "app/quick-buy/page.tsx#QuickBuyPage"
+      ],
+      "framework": "nextjs@14",
+      "adapter": {
+        "id": "nextjs-app-router",
+        "version": "1.0.0"
+      },
+      "confidence": "proven",
+      "source": "detected",
+      "criticality": "normal"
+    }
+  ],
+  "surfaceEdges": [
+    {
+      "from": "api:POST /api/orders",
+      "to": "app/api/orders/route.ts#POST",
+      "type": "SURFACE_HANDLED_BY",
+      "confidence": "proven"
+    },
+    {
+      "from": "app/checkout/page.tsx#CheckoutPage>pay",
+      "to": "api:POST /api/orders",
+      "type": "CALLS_ENDPOINT",
+      "confidence": "proven"
+    },
+    {
+      "from": "app/quick-buy/page.tsx#QuickBuyPage>buy",
+      "to": "api:POST /api/orders",
+      "type": "CALLS_ENDPOINT",
+      "confidence": "proven"
+    },
+    {
+      "from": "test:e2e/checkout.spec.ts#checkout > pays for an order",
+      "to": "ui:/checkout",
+      "type": "TEST_COVERS",
+      "confidence": "proven",
+      "via": "goto"
+    },
+    {
+      "from": "ui:/checkout",
+      "to": "app/checkout/page.tsx#CheckoutPage",
+      "type": "SURFACE_HANDLED_BY",
+      "confidence": "proven"
+    },
+    {
+      "from": "ui:/quick-buy",
+      "to": "app/quick-buy/page.tsx#QuickBuyPage",
+      "type": "SURFACE_HANDLED_BY",
+      "confidence": "proven"
+    }
+  ],
+  "tests": [
+    {
+      "id": "test:e2e/checkout.spec.ts#checkout > pays for an order",
+      "file": "e2e/checkout.spec.ts",
+      "line": 4,
+      "name": "pays for an order",
+      "framework": "playwright"
+    }
+  ],
+  "testMapping": {
+    "basis": "static-reach",
+    "testsToRun": [
+      {
+        "testId": "test:e2e/checkout.spec.ts#checkout > pays for an order",
+        "reaches": [
+          "api:POST /api/orders",
+          "ui:/checkout"
+        ]
+      }
+    ],
+    "uncoveredSurfaces": [
+      "ui:/quick-buy"
+    ]
+  },
+  "config": {
+    "file": "graphentra.yml",
+    "sha256": "800a92b6a9074d7a6462c785ffec8f2737b1d0453d6a618a83890520c0ea2178"
+  },
+  "adapters": [
+    {
+      "id": "nextjs-app-router",
+      "version": "1.0.0",
+      "framework": "next",
+      "detectedVersion": "14.2.5",
+      "certified": true
+    },
+    {
+      "id": "nextjs-route-handler",
+      "version": "1.0.0",
+      "framework": "next",
+      "detectedVersion": "14.2.5",
+      "certified": true
+    }
+  ]
+}

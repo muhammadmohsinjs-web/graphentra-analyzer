@@ -24,3 +24,12 @@ export { computeAffectedSurfaces, createSurfaceReach, withAffectedSurfaces, type
 export {
   CERTIFIED_MAJORS, detectFrameworkVersions, frameworkLabel, nextRouterRules, type FrameworkDetection, type FrameworkPackage,
 } from './framework-version';
+export { collectClientCalls, linkEndpoints, type ClientCall, type EndpointLinks } from './endpoint-links';
+export {
+  CONFIG_FILE_NAME, CRITICALITY_LEVELS, criticalityFor, loadGraphentraConfig, matchesGlob,
+  type CriticalityLevel, type GraphentraConfig, type LoadedGraphentraConfig,
+} from './config';
+export { extractTests, type ExtractTestsInput, type ExtractTestsResult, type TestNodeLike } from './test-mapping';
+export {
+  CONFIG_ADAPTER_ID, buildPhase5Evidence, computeTestMapping, type Phase5Evidence, type Phase5Input, type Phase5Stages,
+} from './phase5-evidence';
