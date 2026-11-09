@@ -3,6 +3,8 @@ import { computeDeterministicEvidenceIdentity } from '@graphentra/analyzer';
 import type { SubmissionPayload } from './contracts';
 
 export function computeSubmissionIdempotencyKey(payload: SubmissionPayload): string {
+  // The identity hashes the document as given (not the normalized view), so the 3.0 collections
+  // (surfaces, tests, testMapping, adapters) enter the key only for 3.0 evidence and 2.x keys are unchanged.
   const evidenceIdentity = computeDeterministicEvidenceIdentity(payload.evidence);
 
   const canonicalFields = {

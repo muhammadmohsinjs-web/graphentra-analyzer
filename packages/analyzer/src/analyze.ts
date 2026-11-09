@@ -8,6 +8,7 @@ import {
   MAX_AFFECTED_ENTITIES,
   EVIDENCE_SCHEMA_VERSION,
   EXTENDED_EVIDENCE_SCHEMA_VERSION,
+  EVIDENCE_SCHEMA_VERSION_3,
   type AnalyzeOptions,
   type AnalyzeResult,
   type DiagnosticItem,
@@ -30,7 +31,7 @@ import {
 } from './impact';
 import { fingerprint, normalizeNode } from './ast-normalize';
 import { classifyChange, fingerprintsOf, type EntityFingerprints } from './change-taxonomy';
-import { DEFAULT_LIMITATIONS, EXTENDED_LIMITATIONS } from './output';
+import { DEFAULT_LIMITATIONS, EXTENDED_LIMITATIONS, SCHEMA_3_LIMITATIONS } from './output';
 import { createBaselineSnapshot } from './baseline-host';
 import { buildCoverage, mapSnapshotSkipReason } from './coverage';
 import { DEFAULT_INPUT_LIMITS, inspectContent, type SkippedInput } from './input-limits';
@@ -39,11 +40,17 @@ import { captureSourceSnapshot } from './source-snapshot';
 import { classifyFileOrigin } from './file-origin';
 import { createRepositoryContext, type RepositoryContext } from './repository';
 import { extractTechnicalGraph, isAnalyzableFile, type ExtractedGraph } from './technical-graph';
-import { APPLICATION_MAP_SCHEMA_VERSION, extractApplicationMap, type ApplicationMap } from './application-map';
+import { APPLICATION_MAP_SCHEMA_VERSION, extractApplicationMapWithProvenance, type ApplicationMap, type SurfaceProvenance } from './application-map';
+import { createFrameworkVersionResolver, detectFrameworkVersions, type FrameworkDetection } from './framework-version';
+import { CONFIG_FILE_NAME, loadGraphentraConfig } from './config';
+import { buildPhase5Evidence } from './phase5-evidence';
 import { buildToolchainRecord, toolchainDiagnostics } from './toolchain';
 import { assertValidEvidenceEnvelope } from './validator';
 import { withChangedValueTargets } from './value-flow';
 import type { CompilerOptions } from 'typescript';
+import type { AdapterContext } from './adapters/types';
+
+const EVIDENCE_SCHEMA_OPTIONS: ReadonlyArray<NonNullable<AnalyzeOptions['evidenceSchema']>> = ['2.1', '3.0'];
 
 export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
   if (options.engine !== undefined && !ENGINE_PROFILES.includes(options.engine)) {
@@ -58,11 +65,21 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
       throw new GraphentraError(`${name} must be a positive integer, got ${String(value)}.`, 'INVALID_OPTIONS');
     }
   }
+  if (options.evidenceSchema !== undefined && !EVIDENCE_SCHEMA_OPTIONS.includes(options.evidenceSchema)) {
+    throw new GraphentraError(`Unknown evidence schema "${String(options.evidenceSchema)}". Expected one of: ${EVIDENCE_SCHEMA_OPTIONS.join(', ')}.`, 'INVALID_OPTIONS');
+  }
   const engine = options.engine ?? DEFAULT_ENGINE;
+  if (options.evidenceSchema === '3.0' && engine !== 'extended') {
+    throw new GraphentraError('Evidence schema 3.0 requires the extended engine.', 'INVALID_OPTIONS');
+  }
+  // D12: graphentra.yml is read for schema 3.0 only, so 2.x output never depends on it.
+  const loadedConfig = options.evidenceSchema === '3.0' ? loadGraphentraConfig(resolveTargetRoot(options.target)) : undefined;
+  const config = loadedConfig?.config;
   const repo =createRepositoryContext(options.target, options.comparison, {
     gitTimeoutMs: options.gitTimeoutMs,
     excludePaths: options.excludePaths,
     engine,
+    ...(config && config.ignore.length > 0 ? { excludeGlobs: config.ignore } : {}),
   });
 
   const targetPath = repo.projectInsideRepository;
@@ -87,6 +104,7 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
 
   const diagnostics: DiagnosticItem[] = [...toolchainDiagnostics()];
   if (engine === 'extended') diagnostics.push(...extracted.diagnostics);
+  if (loadedConfig) diagnostics.push(...loadedConfig.diagnostics);
   let gitDiff = snapshot.gitDiff;
   if (repo.comparison.mode === 'working-tree') {
     for (const file of repo.listFiles(true).filter(file => isAnalyzableFile(file, engine))) {
@@ -268,7 +286,21 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
     for (const entity of impact.directDependents) relevantIds.add(entity.id);
     for (const impactPath of impact.blastRadius.paths) for (const entity of impactPath.path) relevantIds.add(entity.id);
   }
-  const frontier = extended ? extracted.frontier.filter(item => relevantIds.has(item.entityId)) : undefined;
+  const frameworkVersions = detectFrameworkVersions({ projectRoot: repo.projectRoot, repoRoot: repo.gitRepositoryRoot });
+  const mapResult = buildApplicationMap(extracted, repo.projectRoot, headSha, frameworkVersions);
+  const schema3 = extended && options.evidenceSchema === '3.0';
+  // Schema 3.0 (D8, D10): surfaces, endpoint links, tests and test mapping; failures never block evidence.
+  const frameworkVersionsFor = createFrameworkVersionResolver({ projectRoot: repo.projectRoot, repoRoot: repo.gitRepositoryRoot });
+  const phase5 = schema3 ? buildPhase5Evidence({ extracted, mapResult, frameworkVersions, frameworkVersionsFor, impacts, config }) : undefined;
+  if (phase5) {
+    impacts = phase5.impacts;
+    diagnostics.push(...phase5.diagnostics);
+  }
+  const allFrontier = phase5 && phase5.frontier.length > 0
+    ? [...extracted.frontier, ...phase5.frontier].sort((a, b) => compareStrings(a.file, b.file) || a.line - b.line ||
+      compareStrings(a.reason, b.reason) || compareStrings(a.entityId, b.entityId))
+    : extracted.frontier;
+  const frontier = extended ? allFrontier.filter(item => relevantIds.has(item.entityId)) : undefined;
   let coverage: DeterministicEvidence['coverage'];
   if (extended) {
     const attributedLines = new Map<string, Set<number>>();
@@ -285,13 +317,13 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
     for (const item of nonSource) if (!skipped.has(item.file)) skipped.set(item.file, 'generated');
     for (const change of unsupportedChanges) if (!skipped.has(change.file)) skipped.set(change.file, 'unsupported_language');
     coverage = buildCoverage({
-      changedFiles, attributedLines, frontier: frontier!.filter(item => changedPaths.has(item.file)), frontierTotal: extracted.frontier.length,
+      changedFiles, attributedLines, frontier: frontier!.filter(item => changedPaths.has(item.file)), frontierTotal: allFrontier.length,
       skipped: [...skipped].map(([file, reason]) => ({ file, reason })),
     });
   }
   const evidence: DeterministicEvidence = {
     artifactKind: EVIDENCE_ARTIFACT_KIND,
-    schemaVersion: extended ? EXTENDED_EVIDENCE_SCHEMA_VERSION : EVIDENCE_SCHEMA_VERSION,
+    schemaVersion: schema3 ? EVIDENCE_SCHEMA_VERSION_3 : extended ? EXTENDED_EVIDENCE_SCHEMA_VERSION : EVIDENCE_SCHEMA_VERSION,
     analyzerVersion: ANALYZER_VERSION,
     target: { targetPath },
     comparison: repo.comparison,
@@ -300,15 +332,21 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
       : { excludePaths: repo.excludePaths, sourcePolicy },
     ...(extended ? { toolchain: buildToolchainRecord() } : {}),
     outcome, technicalGraph: extracted.technicalGraph, changedFiles, changedEntities, impacts,
-    diagnostics, limitations: [...(extended ? EXTENDED_LIMITATIONS : DEFAULT_LIMITATIONS)],
+    diagnostics, limitations: [...(schema3 ? SCHEMA_3_LIMITATIONS : extended ? EXTENDED_LIMITATIONS : DEFAULT_LIMITATIONS)],
     ...(baseEntities.length > 0 ? { baseEntities } : {}),
     ...(skippedEntities.length > 0 ? { skippedEntities } : {}),
     ...(frontier ? { frontier } : {}),
     ...(coverage ? { coverage } : {}),
+    ...(phase5 ? {
+      surfaces: phase5.surfaces, surfaceEdges: phase5.surfaceEdges, tests: phase5.tests,
+      ...(phase5.testMapping ? { testMapping: phase5.testMapping } : {}),
+      ...(loadedConfig?.sha256 && config ? { config: { file: CONFIG_FILE_NAME, sha256: loadedConfig.sha256 } } : {}),
+      adapters: phase5.adapters,
+    } : {}),
   };
   snapshot.verify();
   assertValidEvidenceEnvelope(evidence);
-  const applicationMap = buildApplicationMap(extracted, repo.projectRoot, headSha);
+  const applicationMap = mapResult.map;
   const summaryMessage = outcome === 'completed'
     ? `Deterministic impact evidence built for ${impacts.length} changed functions.${skippedEntities.length > 0 ? ` ${skippedEntities.length} cosmetic or test-only changes were not traversed.` : ''}`
     : outcome === 'no_changes' ? 'No changes were found in the included target scope.'
@@ -384,17 +422,27 @@ function emptyApplicationMap(headSha: string, reason?: string): ApplicationMap {
   };
 }
 
+/** The analyzed project root as the repository context resolves it (real path when it exists). */
+function resolveTargetRoot(target: string): string {
+  const resolved = path.resolve(target);
+  try { return fs.realpathSync(resolved); } catch { return resolved; }
+}
+
 /** The application map is best-effort: a failure never blocks deterministic evidence. */
-function buildApplicationMap(extracted: ExtractedGraph, projectRoot: string, headSha: string): ApplicationMap {
-  if (!extracted.program || !extracted.checker || !extracted.symbolToEntity || !extracted.toProjectPath) return emptyApplicationMap(headSha);
+function buildApplicationMap(extracted: ExtractedGraph, projectRoot: string, headSha: string, frameworkVersions: readonly FrameworkDetection[]):
+  { map: ApplicationMap; provenance: SurfaceProvenance; context?: AdapterContext; failure?: string } {
+  if (!extracted.program || !extracted.checker || !extracted.symbolToEntity || !extracted.toProjectPath) {
+    return { map: emptyApplicationMap(headSha), provenance: new Map() };
+  }
   try {
-    return extractApplicationMap({
+    return extractApplicationMapWithProvenance({
       program: extracted.program, checker: extracted.checker, symbolToEntity: extracted.symbolToEntity,
       entities: extracted.entities, relations: extracted.relations, files: extracted.files,
-      toProjectPath: extracted.toProjectPath, projectRoot, headSha,
+      toProjectPath: extracted.toProjectPath, projectRoot, headSha, frameworkVersions,
     });
   } catch (error) {
-    return emptyApplicationMap(headSha, `Application map extraction failed: ${error instanceof Error ? error.message : 'unknown error'}`);
+    const failure = `Application map extraction failed: ${error instanceof Error ? error.message : 'unknown error'}`;
+    return { map: emptyApplicationMap(headSha, failure), provenance: new Map(), failure };
   }
 }
 

@@ -1,0 +1,74 @@
+[
+  {
+    "id": "api:ANY /api/health",
+    "kind": "api_endpoint",
+    "route": "/api/health",
+    "method": "ANY",
+    "source": "next-pages-router",
+    "file": "pages/api/health.ts",
+    "line": 1,
+    "entryEntityIds": [
+      "pages/api/health.ts#handler"
+    ]
+  },
+  {
+    "id": "api:GET /api/orders",
+    "kind": "api_endpoint",
+    "route": "/api/orders",
+    "method": "GET",
+    "source": "next-route-handler",
+    "file": "app/api/orders/route.ts",
+    "line": 1,
+    "entryEntityIds": [
+      "app/api/orders/route.ts#GET"
+    ]
+  },
+  {
+    "id": "api:POST /api/orders",
+    "kind": "api_endpoint",
+    "route": "/api/orders",
+    "method": "POST",
+    "source": "next-route-handler",
+    "file": "app/api/orders/route.ts",
+    "line": 1,
+    "entryEntityIds": [
+      "app/api/orders/route.ts#POST"
+    ]
+  },
+  {
+    "id": "ui:/",
+    "kind": "ui_route",
+    "route": "/",
+    "method": null,
+    "source": "next-app-router",
+    "file": "app/page.tsx",
+    "line": 1,
+    "entryEntityIds": [
+      "app/page.tsx#HomePage"
+    ]
+  },
+  {
+    "id": "ui:/legacy",
+    "kind": "ui_route",
+    "route": "/legacy",
+    "method": null,
+    "source": "next-pages-router",
+    "file": "pages/legacy.tsx",
+    "line": 1,
+    "entryEntityIds": [
+      "pages/legacy.tsx#LegacyOrders"
+    ]
+  },
+  {
+    "id": "ui:/products/[id]",
+    "kind": "ui_route",
+    "route": "/products/[id]",
+    "method": null,
+    "source": "next-app-router",
+    "file": "app/(shop)/products/[id]/page.tsx",
+    "line": 1,
+    "entryEntityIds": [
+      "app/(shop)/products/[id]/page.tsx#ProductPage"
+    ]
+  }
+]

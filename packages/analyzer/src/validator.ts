@@ -6,6 +6,9 @@ import {
   CHANGE_CLASSES,
   CONFIDENCE_LEVELS,
   FRONTIER_REASONS,
+  SURFACE_EDGE_TYPES,
+  SURFACE_KINDS,
+  TEST_FRAMEWORKS,
   SKIP_REASONS,
   EVIDENCE_SCHEMA_VERSIONS,
   MAX_BLAST_DEPTH,
@@ -156,6 +159,97 @@ function validatePhase4Fields(evidence: DeterministicEvidence, isExtendedSchema:
   }
 }
 
+/** Schema 3.0: surfaces, surface edges, tests, test mapping, config and adapters. Not allowed in 2.x. */
+function validatePhase5Fields(evidence: DeterministicEvidence, isSchema3: boolean, errors: string[]): void {
+  if (!isSchema3) {
+    for (const field of ['surfaces', 'surfaceEdges', 'tests', 'testMapping', 'config', 'adapters'] as const) {
+      if (evidence[field] !== undefined) errors.push(`${field} is not allowed in schema ${evidence.schemaVersion}.`);
+    }
+    evidence.impacts.forEach((impact, i) => {
+      if (impact.affectedSurfaces !== undefined) errors.push(`impacts[${i}].affectedSurfaces is not allowed in schema ${evidence.schemaVersion}.`);
+    });
+    return;
+  }
+  const levels = CONFIDENCE_LEVELS as readonly string[];
+  const entityIds = new Set(evidence.technicalGraph.entities.map(entity => entity.id));
+  const surfaces = evidence.surfaces ?? [];
+  const surfaceById = new Map(surfaces.map(surface => [surface.id, surface]));
+  const testIds = new Set((evidence.tests ?? []).map(test => test.id));
+
+  if (evidence.surfaces !== undefined) {
+    if (!strictlyAscending(surfaces.map(surface => surface.id))) errors.push('surfaces must be sorted by id with unique ids.');
+    surfaces.forEach((surface, i) => {
+      if (!(SURFACE_KINDS as readonly string[]).includes(surface.kind)) errors.push(`surfaces[${i}].kind must be one of ${SURFACE_KINDS.join(', ')}.`);
+      if (!levels.includes(surface.confidence)) errors.push(`surfaces[${i}].confidence must be one of ${CONFIDENCE_LEVELS.join(', ')}.`);
+      if (surface.source !== 'detected' && surface.source !== 'config') errors.push(`surfaces[${i}].source must be "detected" or "config".`);
+      if (!strictlyAscending(surface.handlerEntityIds)) errors.push(`surfaces[${i}].handlerEntityIds must be sorted with unique ids.`);
+      surface.handlerEntityIds.forEach(id => {
+        if (!entityIds.has(id)) errors.push(`surfaces[${i}].handlerEntityIds entity "${id}" not found in technicalGraph.entities.`);
+      });
+    });
+  }
+  if (evidence.surfaceEdges !== undefined) {
+    const edges = evidence.surfaceEdges;
+    if (!strictlyAscending(edges.map(edge => `${edge.from}|${edge.type}|${edge.to}`))) errors.push('surfaceEdges must be sorted by from, type, to with unique edges.');
+    edges.forEach((edge, i) => {
+      if (!(SURFACE_EDGE_TYPES as readonly string[]).includes(edge.type)) {
+        errors.push(`surfaceEdges[${i}].type must be one of ${SURFACE_EDGE_TYPES.join(', ')}.`);
+        return;
+      }
+      if (!levels.includes(edge.confidence)) errors.push(`surfaceEdges[${i}].confidence must be one of ${CONFIDENCE_LEVELS.join(', ')}.`);
+      if (edge.via !== undefined && edge.type !== 'TEST_COVERS') errors.push(`surfaceEdges[${i}].via is only allowed on TEST_COVERS edges.`);
+      if (edge.type === 'SURFACE_HANDLED_BY') {
+        if (!surfaceById.has(edge.from)) errors.push(`surfaceEdges[${i}].from surface "${edge.from}" not found in surfaces.`);
+        if (!entityIds.has(edge.to)) errors.push(`surfaceEdges[${i}].to entity "${edge.to}" not found in technicalGraph.entities.`);
+      } else if (edge.type === 'CALLS_ENDPOINT') {
+        if (!entityIds.has(edge.from)) errors.push(`surfaceEdges[${i}].from entity "${edge.from}" not found in technicalGraph.entities.`);
+        const target = surfaceById.get(edge.to);
+        if (!target) errors.push(`surfaceEdges[${i}].to surface "${edge.to}" not found in surfaces.`);
+        else if (target.kind !== 'api_endpoint') errors.push(`surfaceEdges[${i}].to surface "${edge.to}" must be of kind api_endpoint.`);
+      } else {
+        if (!testIds.has(edge.from)) errors.push(`surfaceEdges[${i}].from test "${edge.from}" not found in tests.`);
+        if (!entityIds.has(edge.to) && !surfaceById.has(edge.to)) errors.push(`surfaceEdges[${i}].to "${edge.to}" not found in technicalGraph.entities or surfaces.`);
+      }
+    });
+  }
+  if (evidence.tests !== undefined) {
+    if (!strictlyAscending(evidence.tests.map(test => test.id))) errors.push('tests must be sorted by id with unique ids.');
+    evidence.tests.forEach((test, i) => {
+      if (!(TEST_FRAMEWORKS as readonly string[]).includes(test.framework)) errors.push(`tests[${i}].framework must be one of ${TEST_FRAMEWORKS.join(', ')}.`);
+    });
+  }
+  if (evidence.adapters !== undefined) {
+    if (!strictlyAscending(evidence.adapters.map(adapter => adapter.id))) errors.push('adapters must be sorted by id with unique ids.');
+  }
+  const mapping = evidence.testMapping;
+  if (mapping !== undefined) {
+    if (mapping.basis !== 'static-reach') errors.push('testMapping.basis must be "static-reach".');
+    if (!strictlyAscending(mapping.testsToRun.map(entry => entry.testId))) errors.push('testMapping.testsToRun must be sorted by testId with unique ids.');
+    mapping.testsToRun.forEach((entry, i) => {
+      if (!testIds.has(entry.testId)) errors.push(`testMapping.testsToRun[${i}].testId "${entry.testId}" not found in tests.`);
+      if (!strictlyAscending(entry.reaches)) errors.push(`testMapping.testsToRun[${i}].reaches must be sorted with unique ids.`);
+      entry.reaches.forEach(id => {
+        if (!surfaceById.has(id)) errors.push(`testMapping.testsToRun[${i}].reaches surface "${id}" not found in surfaces.`);
+      });
+    });
+    if (!strictlyAscending(mapping.uncoveredSurfaces)) errors.push('testMapping.uncoveredSurfaces must be sorted with unique ids.');
+    mapping.uncoveredSurfaces.forEach(id => {
+      if (!surfaceById.has(id)) errors.push(`testMapping.uncoveredSurfaces surface "${id}" not found in surfaces.`);
+    });
+  }
+  evidence.impacts.forEach((impact, i) => {
+    const affected = impact.affectedSurfaces;
+    if (affected === undefined) return;
+    const outOfOrder = affected.some((item, k) => k > 0 && (affected[k - 1].depth - item.depth || compareStrings(affected[k - 1].surfaceId, item.surfaceId)) >= 0);
+    if (outOfOrder) errors.push(`impacts[${i}].affectedSurfaces must be sorted by depth then surfaceId with unique surfaces.`);
+    affected.forEach((item, k) => {
+      if (!surfaceById.has(item.surfaceId)) errors.push(`impacts[${i}].affectedSurfaces[${k}].surfaceId "${item.surfaceId}" not found in surfaces.`);
+      if (item.path.at(-1) !== item.surfaceId) errors.push(`impacts[${i}].affectedSurfaces[${k}].path must end with its surfaceId.`);
+      if (!levels.includes(item.confidence)) errors.push(`impacts[${i}].affectedSurfaces[${k}].confidence must be one of ${CONFIDENCE_LEVELS.join(', ')}.`);
+    });
+  });
+}
+
 export function validateEvidenceEnvelope(data: unknown): ValidationResult {
   const errors: string[] = [];
   if (!structuralValidator(data)) return { valid: false, errors: (structuralValidator.errors ?? []).map(error => `${error.instancePath || '/'}: ${error.message}`) };
@@ -171,7 +265,7 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
   if (!(EVIDENCE_SCHEMA_VERSIONS as readonly unknown[]).includes(data.schemaVersion)) {
     errors.push(`Expected schemaVersion one of ${EVIDENCE_SCHEMA_VERSIONS.map(v => `"${v}"`).join(', ')}, got "${String(data.schemaVersion)}".`);
   }
-  const isExtendedSchema = data.schemaVersion === '2.1';
+  const isExtendedSchema = data.schemaVersion === '2.1' || data.schemaVersion === '3.0';
   const entityKindsField = isObject(data.technicalGraph) && isObject(data.technicalGraph.capabilities)
     ? data.technicalGraph.capabilities.entityKinds : undefined;
   const declaredKinds: string[] = Array.isArray(entityKindsField) ? entityKindsField : [];
@@ -510,6 +604,7 @@ export function validateEvidenceEnvelope(data: unknown): ValidationResult {
   }
   validatePhase3Fields(evidence, isExtendedSchema, errors);
   validatePhase4Fields(evidence, isExtendedSchema, errors);
+  validatePhase5Fields(evidence, data.schemaVersion === '3.0', errors);
   for (const diagnostic of evidence.diagnostics) {
     if (diagnostic.entityId && !entityMap.has(diagnostic.entityId)) errors.push('Diagnostic entity is absent from graph.');
   }

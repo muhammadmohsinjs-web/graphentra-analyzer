@@ -1,7 +1,7 @@
 import { request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
 import { URL } from 'node:url';
-import { assertValidEvidenceEnvelope } from '@graphentra/analyzer';
+import { readEvidence } from '@graphentra/analyzer';
 import type { SubmissionPayload, SubmissionResult } from './contracts';
 import { computeSubmissionIdempotencyKey } from './idempotency';
 
@@ -102,7 +102,7 @@ export async function submitEvidence(options: SubmitEvidenceOptions): Promise<Su
   }
 
   // 1. Validate evidence envelope before submitting
-  assertValidEvidenceEnvelope(payload.evidence);
+  readEvidence(payload.evidence);
 
   const initialUrl = new URL(backendUrl);
 

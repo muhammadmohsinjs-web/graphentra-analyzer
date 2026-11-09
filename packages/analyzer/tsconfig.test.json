@@ -5,5 +5,5 @@
     "noEmit": true
   },
   "include": ["src/**/*", "test/**/*"],
-  "exclude": ["test/fixtures/web-app"]
+  "exclude": ["test/fixtures/web-app", "test/fixtures/frameworks", "test/fixtures/phase5-goal"]
 }

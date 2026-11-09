@@ -10,7 +10,8 @@
     "schemaVersion": {
       "enum": [
         "2.0",
-        "2.1"
+        "2.1",
+        "3.0"
       ]
     },
     "analyzerVersion": {
@@ -178,6 +179,7 @@
               "any_typed_call",
               "computed_member_call",
               "di_token",
+              "dynamic_endpoint_url",
               "dynamic_import",
               "dynamic_require",
               "eval",
@@ -313,6 +315,121 @@
         "frontierTotal"
       ],
       "additionalProperties": false
+    },
+    "surfaces": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/surface"
+      }
+    },
+    "surfaceEdges": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/surfaceEdge"
+      }
+    },
+    "tests": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/testNode"
+      }
+    },
+    "testMapping": {
+      "type": "object",
+      "properties": {
+        "basis": {
+          "const": "static-reach"
+        },
+        "testsToRun": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "testId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "reaches": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              }
+            },
+            "required": [
+              "testId",
+              "reaches"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "uncoveredSurfaces": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "basis",
+        "testsToRun",
+        "uncoveredSurfaces"
+      ],
+      "additionalProperties": false
+    },
+    "config": {
+      "type": "object",
+      "properties": {
+        "file": {
+          "const": "graphentra.yml"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "file",
+        "sha256"
+      ],
+      "additionalProperties": false
+    },
+    "adapters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1
+          },
+          "framework": {
+            "type": "string",
+            "minLength": 1
+          },
+          "detectedVersion": {
+            "type": "string",
+            "minLength": 1
+          },
+          "certified": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "certified"
+        ],
+        "additionalProperties": false
+      }
     }
   },
   "required": [
@@ -795,6 +912,12 @@
             "likely",
             "proven"
           ]
+        },
+        "affectedSurfaces": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/affectedSurface"
+          }
         }
       },
       "required": [
@@ -1070,6 +1193,216 @@
         "file",
         "startLine",
         "endLine"
+      ],
+      "additionalProperties": false
+    },
+    "surface": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "api_endpoint",
+            "cli_command",
+            "graphql_operation",
+            "library_export",
+            "mobile_screen",
+            "queue_consumer",
+            "rpc_method",
+            "scheduled_job",
+            "serverless_function",
+            "ui_route",
+            "webhook"
+          ]
+        },
+        "route": {
+          "type": "string",
+          "minLength": 1
+        },
+        "method": {
+          "type": "string",
+          "minLength": 1
+        },
+        "file": {
+          "type": "string",
+          "minLength": 1
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "handlerEntityIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "framework": {
+          "type": "string",
+          "minLength": 1
+        },
+        "adapter": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false
+        },
+        "confidence": {
+          "enum": [
+            "likely",
+            "proven"
+          ]
+        },
+        "source": {
+          "enum": [
+            "config",
+            "detected"
+          ]
+        },
+        "criticality": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "route",
+        "file",
+        "line",
+        "handlerEntityIds",
+        "adapter",
+        "confidence",
+        "source"
+      ],
+      "additionalProperties": false
+    },
+    "surfaceEdge": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string",
+          "minLength": 1
+        },
+        "to": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "enum": [
+            "CALLS_ENDPOINT",
+            "SURFACE_HANDLED_BY",
+            "TEST_COVERS"
+          ]
+        },
+        "confidence": {
+          "enum": [
+            "likely",
+            "proven"
+          ]
+        },
+        "via": {
+          "enum": [
+            "goto",
+            "import"
+          ]
+        }
+      },
+      "required": [
+        "from",
+        "to",
+        "type",
+        "confidence"
+      ],
+      "additionalProperties": false
+    },
+    "testNode": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^test:.+"
+        },
+        "file": {
+          "type": "string",
+          "minLength": 1
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "framework": {
+          "enum": [
+            "cypress",
+            "jest",
+            "node-test",
+            "playwright",
+            "unknown",
+            "vitest"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "file",
+        "line",
+        "name",
+        "framework"
+      ],
+      "additionalProperties": false
+    },
+    "affectedSurface": {
+      "type": "object",
+      "properties": {
+        "surfaceId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "depth": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "path": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 2
+        },
+        "confidence": {
+          "enum": [
+            "likely",
+            "proven"
+          ]
+        }
+      },
+      "required": [
+        "surfaceId",
+        "depth",
+        "path",
+        "confidence"
       ],
       "additionalProperties": false
     }

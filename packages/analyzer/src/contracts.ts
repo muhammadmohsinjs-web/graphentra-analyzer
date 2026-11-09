@@ -3,7 +3,9 @@ import type { ApplicationMap } from './application-map';
 export const ANALYZER_VERSION: string = require('../package.json').version;
 export const EVIDENCE_SCHEMA_VERSION = '2.0';
 export const EXTENDED_EVIDENCE_SCHEMA_VERSION = '2.1';
-export const EVIDENCE_SCHEMA_VERSIONS = ['2.0', '2.1'] as const;
+/** Schema 3.0: 2.1 plus surfaces, surface edges, tests, test mapping, config and adapters. Opt-in. */
+export const EVIDENCE_SCHEMA_VERSION_3 = '3.0';
+export const EVIDENCE_SCHEMA_VERSIONS = ['2.0', '2.1', '3.0'] as const;
 export const EVIDENCE_ARTIFACT_KIND = 'graphentra-evidence';
 
 export const MAX_BLAST_DEPTH = 6;
@@ -165,10 +167,90 @@ export interface EntityImpact {
   contractRisk?: boolean;
   /** Schema 2.1: weakest confidence over its paths; 'proven' when there are no paths. */
   confidence?: PathConfidence;
+  /** Schema 3.0: surfaces reachable from the changed entity, sorted by depth then surfaceId. Absent when empty. */
+  affectedSurfaces?: AffectedSurface[];
+}
+
+/** Schema 3.0: sorted ascending. All kinds are accepted by the schema; the MVP emits only api_endpoint and ui_route. */
+export const SURFACE_KINDS = ['api_endpoint', 'cli_command', 'graphql_operation', 'library_export', 'mobile_screen', 'queue_consumer', 'rpc_method', 'scheduled_job', 'serverless_function', 'ui_route', 'webhook'] as const;
+export type EvidenceSurfaceKind = typeof SURFACE_KINDS[number];
+
+/** Schema 3.0: sorted ascending. */
+export const SURFACE_EDGE_TYPES = ['CALLS_ENDPOINT', 'SURFACE_HANDLED_BY', 'TEST_COVERS'] as const;
+export type SurfaceEdgeType = typeof SURFACE_EDGE_TYPES[number];
+
+/** Schema 3.0: sorted ascending. */
+export const TEST_FRAMEWORKS = ['cypress', 'jest', 'node-test', 'playwright', 'unknown', 'vitest'] as const;
+export type TestFramework = typeof TEST_FRAMEWORKS[number];
+
+/** Schema 3.0: surface confidence reuses the edge confidence levels. */
+export const SURFACE_CONFIDENCE = CONFIDENCE_LEVELS;
+
+/** Schema 3.0: an externally reachable entry point (route, endpoint, command, job). Ids: `ui:<route>`, `api:<METHOD> <route>`. */
+export interface SurfaceNode {
+  id: string;
+  kind: EvidenceSurfaceKind;
+  route: string;
+  method?: string;
+  file: string;
+  line: number;
+  /** Sorted, unique entity ids. */
+  handlerEntityIds: string[];
+  /** For example "nextjs@14". */
+  framework?: string;
+  adapter: { id: string; version: string };
+  confidence: EdgeConfidence;
+  source: 'detected' | 'config';
+  criticality?: string;
+}
+
+/** Schema 3.0: sorted by from, type, to. Kept in evidence.surfaceEdges, never in technicalGraph.relations. */
+export interface SurfaceEdge {
+  from: string;
+  to: string;
+  type: SurfaceEdgeType;
+  confidence: EdgeConfidence;
+  /** TEST_COVERS only. */
+  via?: 'goto' | 'import';
+}
+
+/** Schema 3.0: one node per it/test block; id is `test:<file>#<suite> > <name>`, duplicates get #2, #3 suffixes. */
+export interface TestNode {
+  id: string;
+  file: string;
+  line: number;
+  name: string;
+  framework: TestFramework;
+}
+
+/** Schema 3.0: a surface reached from a changed entity. path runs from the changed entity to the surface. */
+export interface AffectedSurface {
+  surfaceId: string;
+  depth: number;
+  path: string[];
+  confidence: EdgeConfidence;
+}
+
+/** Schema 3.0: tests to run for the change, with the surfaces each one reaches. */
+export interface TestMapping {
+  basis: 'static-reach';
+  /** Sorted by testId; reaches sorted. */
+  testsToRun: Array<{ testId: string; reaches: string[] }>;
+  /** Sorted surface ids reached by the change that no test covers. */
+  uncoveredSurfaces: string[];
+}
+
+/** Schema 3.0: a framework adapter that ran. */
+export interface AdapterRecord {
+  id: string;
+  version: string;
+  framework?: string;
+  detectedVersion?: string;
+  certified: boolean;
 }
 
 /** Schema 2.1: why a call site cannot be resolved statically. Sorted ascending; the validator requires compareStrings order. */
-export const FRONTIER_REASONS = ['any_typed_call', 'computed_member_call', 'di_token', 'dynamic_import', 'dynamic_require', 'eval', 'function_constructor', 'interface_dispatch', 'jsx_prop_component'] as const;
+export const FRONTIER_REASONS = ['any_typed_call', 'computed_member_call', 'di_token', 'dynamic_endpoint_url', 'dynamic_import', 'dynamic_require', 'eval', 'function_constructor', 'interface_dispatch', 'jsx_prop_component'] as const;
 export type FrontierReason = typeof FRONTIER_REASONS[number];
 
 /** Schema 2.1: an unresolved dependency site reported instead of an edge. */
@@ -256,7 +338,7 @@ export interface EvidenceSourceState {
 
 export interface DeterministicEvidence {
   artifactKind: typeof EVIDENCE_ARTIFACT_KIND;
-  schemaVersion: '2.0' | '2.1';
+  schemaVersion: '2.0' | '2.1' | '3.0';
   analyzerVersion: string;
   target: {
     targetPath: string;
@@ -285,6 +367,18 @@ export interface DeterministicEvidence {
     skippedFiles: Array<{ file: string; reason: SkipReason }>;
     frontierTotal: number;
   };
+  /** Schema 3.0: sorted by id. */
+  surfaces?: SurfaceNode[];
+  /** Schema 3.0: sorted by from, type, to. */
+  surfaceEdges?: SurfaceEdge[];
+  /** Schema 3.0: sorted by id. */
+  tests?: TestNode[];
+  /** Schema 3.0 */
+  testMapping?: TestMapping;
+  /** Schema 3.0: the graphentra.yml that shaped this analysis. */
+  config?: { file: 'graphentra.yml'; sha256: string };
+  /** Schema 3.0: sorted by id. */
+  adapters?: AdapterRecord[];
 }
 
 export type EngineProfile = 'legacy' | 'extended';
@@ -303,6 +397,8 @@ export interface AnalyzeOptions {
   maxDepth?: number;
   /** Extended engine: direct fan-in at which a node is summarized as a hub (default HUB_THRESHOLD). */
   hubThreshold?: number;
+  /** Schema 3.0: evidence schema to emit (default '2.1'). Only the extended engine can emit '3.0'. */
+  evidenceSchema?: '2.1' | '3.0';
 }
 
 export interface AnalyzeResult {

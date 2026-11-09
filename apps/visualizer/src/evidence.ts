@@ -12,17 +12,32 @@ const ordered = (items: any[]): any[] => [...items].sort((a, b) => {
   const left = JSON.stringify(canonical(a)), right = JSON.stringify(canonical(b));
   return left < right ? -1 : left > right ? 1 : 0;
 });
+/**
+ * Mirrors computeDeterministicEvidenceIdentity in packages/analyzer/src/deterministic.ts (the visualizer may not import
+ * the analyzer): toolchain.node is volatile, and the schema 3.0 arrays are ordered the same way. Keep the two in step;
+ * test/evidence-identity.test.ts checks both against packages/analyzer/test/fixtures/evidence-3.0/identities.json.
+ */
 export function computeEvidenceIdentity(evidence: any): string {
   const { generatedAt: _timestamp, ...repository } = evidence.technicalGraph.repository;
-  const payload = { ...evidence,
+  const { toolchain, ...rest } = evidence;
+  const payload = { ...rest,
+    ...(toolchain ? { toolchain: { typescript: toolchain.typescript } } : {}),
     options: { ...evidence.options, excludePaths: ordered(evidence.options.excludePaths) },
     technicalGraph: { ...evidence.technicalGraph, repository, analyzedFiles: ordered(evidence.technicalGraph.analyzedFiles),
       entities: ordered(evidence.technicalGraph.entities), relations: ordered(evidence.technicalGraph.relations) },
     changedFiles: ordered(evidence.changedFiles), changedEntities: ordered(evidence.changedEntities),
     impacts: ordered(evidence.impacts.map((impact: any) => ({ ...impact,
       directDependents: ordered(impact.directDependents), terminalDependents: ordered(impact.terminalDependents),
-      blastRadius: { ...impact.blastRadius, entities: ordered(impact.blastRadius.entities), paths: ordered(impact.blastRadius.paths) } }))),
-    diagnostics: ordered(evidence.diagnostics), limitations: ordered(evidence.limitations) };
+      blastRadius: { ...impact.blastRadius, entities: ordered(impact.blastRadius.entities), paths: ordered(impact.blastRadius.paths) },
+      ...(impact.affectedSurfaces ? { affectedSurfaces: ordered(impact.affectedSurfaces) } : {}) }))),
+    diagnostics: ordered(evidence.diagnostics), limitations: ordered(evidence.limitations),
+    ...(evidence.surfaces ? { surfaces: ordered(evidence.surfaces.map((surface: any) => ({ ...surface, handlerEntityIds: ordered(surface.handlerEntityIds) }))) } : {}),
+    ...(evidence.surfaceEdges ? { surfaceEdges: ordered(evidence.surfaceEdges) } : {}),
+    ...(evidence.tests ? { tests: ordered(evidence.tests) } : {}),
+    ...(evidence.adapters ? { adapters: ordered(evidence.adapters) } : {}),
+    ...(evidence.testMapping ? { testMapping: { ...evidence.testMapping,
+      testsToRun: ordered(evidence.testMapping.testsToRun.map((entry: any) => ({ ...entry, reaches: ordered(entry.reaches) }))),
+      uncoveredSurfaces: ordered(evidence.testMapping.uncoveredSurfaces) } } : {}) };
   return createHash('sha256').update(JSON.stringify(canonical(payload))).digest('hex');
 }
 export function validateEvidenceEnvelope(value: unknown): { valid: boolean; errors: string[] } {

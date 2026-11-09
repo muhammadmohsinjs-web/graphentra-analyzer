@@ -1,0 +1,6 @@
+{
+  "apps/visualizer/test/fixtures/evidence-2.1.json": "b71b8dfb5524fb0531607ce10dc7df985b926973bd321fbb7396231a2cf7b7c0",
+  "packages/analyzer/test/fixtures/evidence-3.0/non-web-config.json": "cd6f52c1d1a73800f412d5524b7088c4f7496fa09b6367b08ed993abc029e5e9",
+  "packages/analyzer/test/fixtures/evidence-3.0/tests-mapping.json": "822bed3797337a64459e236f7edad6ad7a5b3ec912d61ef5ed5943682ea5d5d0",
+  "packages/analyzer/test/fixtures/evidence-3.0/web-app.json": "eea48e1769ff34b73158c4dc04fdfacf0d2e426511ed934b4694c2c27a4e7c27"
+}

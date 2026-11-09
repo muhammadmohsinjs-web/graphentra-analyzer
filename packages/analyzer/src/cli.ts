@@ -13,7 +13,7 @@ export function runCli(argv: string[] = process.argv.slice(2)): void {
   try {
     options = parseCliOptions(argv);
     if (options.help) {
-      console.log(`Graphentra Analyzer v${ANALYZER_VERSION}\nUsage: graphentra-analyze --target <dir> [--base <ref> --head <ref> | --working-tree] [--output <file>] [--engine extended|legacy (default: extended)] [--max-affected-entities <n> (alias --max-affected; extended; default: 2000)] [--max-depth <n> (default: 6)] [--hub-threshold <n> (extended; default: 25)]\n--output names one evidence file (default: <target>/.graphentra/evidence.json).\n--help, -h   Show help\n--version, -v   Show version\nQA Markdown: npm run report -- --report <file>`);
+      console.log(`Graphentra Analyzer v${ANALYZER_VERSION}\nUsage: graphentra-analyze --target <dir> [--base <ref> --head <ref> | --working-tree] [--output <file>] [--engine extended|legacy (default: extended)] [--max-affected-entities <n> (alias --max-affected; extended; default: 2000)] [--max-depth <n> (default: 6)] [--hub-threshold <n> (extended; default: 25)] [--schema 2.1|3.0 (extended; default: 2.1; 3.0 adds surfaces)]\n--output names one evidence file (default: <target>/.graphentra/evidence.json).\n--help, -h   Show help\n--version, -v   Show version\nQA Markdown: npm run report -- --report <file>`);
       return;
     }
     if (options.version) { console.log(ANALYZER_VERSION); return; }
@@ -28,7 +28,8 @@ export function runCli(argv: string[] = process.argv.slice(2)): void {
     const target = path.resolve(options.target);
     const output = path.resolve(options.output ?? path.join(target, '.graphentra/evidence.json'));
     const result = analyzeRepository({ target, comparison, engine: options.engine,
-      maxAffectedEntities: options.maxAffectedEntities, maxDepth: options.maxDepth, hubThreshold: options.hubThreshold });
+      maxAffectedEntities: options.maxAffectedEntities, maxDepth: options.maxDepth, hubThreshold: options.hubThreshold,
+      ...(options.evidenceSchema ? { evidenceSchema: options.evidenceSchema } : {}) });
     const canonical = (file: string): string => {
       if (fs.existsSync(file)) return fs.realpathSync(file);
       const parent = path.dirname(file);
