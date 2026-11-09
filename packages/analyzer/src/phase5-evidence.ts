@@ -28,6 +28,8 @@ export interface Phase5Input {
   extracted: ExtractedGraph;
   mapResult: Phase5MapResult;
   frameworkVersions: readonly FrameworkDetection[];
+  /** Per-file framework versions (nearest manifest + its workspace lockfile entry, D11); default: `frameworkVersions`. */
+  frameworkVersionsFor?: (file: string) => readonly FrameworkDetection[];
   impacts: EntityImpact[];
   config?: GraphentraConfig;
   /** Stage overrides; tests use them to force the D10 failure paths. */
@@ -79,7 +81,7 @@ const message = (error: unknown): string => (error instanceof Error ? error.mess
 export function surfaceStage(input: Phase5Input, entityIds: ReadonlySet<string>): SurfaceStageResult {
   if (input.mapResult.failure) throw new Error(input.mapResult.failure);
   const built = buildSurfaceEvidence({ map: input.mapResult.map, provenance: input.mapResult.provenance,
-    frameworkVersions: input.frameworkVersions, entityIds });
+    frameworkVersions: input.frameworkVersions, ...(input.frameworkVersionsFor ? { frameworkVersionsFor: input.frameworkVersionsFor } : {}), entityIds });
   const diagnostics = [...built.diagnostics];
   const byId = new Map(built.surfaces.map(surface => [surface.id, surface]));
   let handled = built.surfaceEdges;

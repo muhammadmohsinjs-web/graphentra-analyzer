@@ -11,10 +11,11 @@ const NEXT_SOURCES = new Set(['next-app-router', 'next-pages-router', 'next-rout
 /** Next.js map sources that exist only with the app/ router (Next.js 13+, D11). */
 const NEXT_APP_ROUTER_SOURCES = new Set(['next-app-router', 'next-route-handler']);
 /**
- * Adapters that run only because their framework package is a dependency (`detectByDependency`). Without a
- * detected version their framework major is unknown, so D11 applies: surfaces are likely, with a diagnostic.
- * Syntactic adapters (route-config, react-router, nestjs, and express/http-router when they ran without the package)
- * have no framework package to version and keep proven surfaces.
+ * Fallback for provenance entries without `dependencyGated`: the adapters that only ever run because their framework
+ * package is a dependency (`detectByDependency`). The analyzer records the flag from each adapter's detect evidence
+ * (anything but `syntactic` is dependency-gated), which also covers express and http-router when they ran on a
+ * declared package. Without a detected version such a framework's major is unknown, so D11 applies: surfaces are likely,
+ * with a diagnostic. Syntactic adapters have no framework package to version and keep proven surfaces.
  */
 export const DEPENDENCY_GATED_ADAPTERS = new Set(['nextjs-app-router', 'nextjs-pages-router', 'nextjs-route-handler']);
 
@@ -33,6 +34,11 @@ export interface BuildSurfaceEvidenceInput {
   frameworkVersions: readonly FrameworkDetection[];
   /** Entity ids of the head technical graph; handler ids outside it are dropped (the validator requires them). */
   entityIds: ReadonlySet<string>;
+  /**
+   * Framework versions that apply to one project-relative surface file: the manifest that gated it (nearest
+   * package.json) plus its workspace lockfile entry (D11, monorepos). Default: `frameworkVersions` for every file.
+   */
+  frameworkVersionsFor?: (file: string) => readonly FrameworkDetection[];
   /** Adapter metadata used to map an adapter to its framework (default: the built-in registry). */
   adapters?: readonly FrameworkAdapter[];
 }
@@ -52,59 +58,72 @@ export interface SurfaceEvidence {
 }
 
 interface AdapterInfo {
-  record: AdapterRecord;
-  detection?: FrameworkDetection;
-  /** Dependency-gated adapter that ran with no detected framework version (D11: unknown major). */
+  id: string;
+  version: string;
+  /** The first detection seen (surfaces are visited in sorted map id order), recorded on the adapter. */
+  first?: FrameworkDetection;
+  /** Every surface had a certified detection. */
+  allCertified: boolean;
+  /** Uncertified detections by `framework|version`, one diagnostic each. */
+  uncertified: Map<string, FrameworkDetection>;
+  /** A dependency-gated surface ran with no detected framework version (D11: unknown major). */
   versionUnknown: boolean;
 }
+
+const weaker = (a: EdgeConfidence, b: EdgeConfidence): EdgeConfidence => (a === 'likely' || b === 'likely' ? 'likely' : 'proven');
+const versionOf = (detection: FrameworkDetection): string => detection.resolved ?? detection.declared ?? 'unknown version';
 
 /**
  * Projects the application map onto evidence 3.0 surfaces (D4). Only identity, routing, handler and provenance
  * fields enter evidence; presentation extras (uiText, textKeys, navigation, access, e2e flows) stay in the map.
+ * D11 applies per surface, with the framework version of the manifest that gated the surface's file.
  */
 export function buildSurfaceEvidence(input: BuildSurfaceEvidenceInput): SurfaceEvidence {
   const registry = new Map((input.adapters ?? ADAPTERS).map(adapter => [adapter.id, adapter]));
-  const detections = [...input.frameworkVersions].sort((a, b) => compareStrings(a.framework, b.framework));
+  const projectDetections = [...input.frameworkVersions].sort((a, b) => compareStrings(a.framework, b.framework));
+  const detectionsFor = (file: string): readonly FrameworkDetection[] =>
+    input.frameworkVersionsFor ? [...input.frameworkVersionsFor(file)].sort((a, b) => compareStrings(a.framework, b.framework)) : projectDetections;
   const adapterInfo = new Map<string, AdapterInfo>();
-  const infoFor = (adapterId: string, adapterVersion: string): AdapterInfo => {
-    const existing = adapterInfo.get(adapterId);
-    if (existing) return existing;
-    const frameworks = registry.get(adapterId)?.frameworks ?? [];
-    const detection = detections.find(item => frameworks.includes(item.framework));
-    const detectedVersion = detection ? detection.resolved ?? detection.declared : undefined;
-    const record: AdapterRecord = {
-      id: adapterId, version: adapterVersion,
-      ...(detection ? { framework: detection.framework } : {}),
-      ...(detectedVersion ? { detectedVersion } : {}),
-      certified: detection?.certified ?? false,
-    };
-    const info: AdapterInfo = { record, ...(detection ? { detection } : {}), versionUnknown: !detection && DEPENDENCY_GATED_ADAPTERS.has(adapterId) };
-    adapterInfo.set(adapterId, info);
-    return info;
-  };
 
   const byId = new Map<string, SurfaceNode>();
-  const droppedAppRouter: string[] = [];
-  const nextDetection = detections.find(item => item.framework === 'next');
+  const droppedAppRouter = new Map<string, string[]>();
   for (const surface of [...input.map.surfaces].sort((a, b) => compareStrings(a.id, b.id))) {
+    const detections = detectionsFor(surface.file);
     // D11: app/ is a router only from Next.js 13 on. The 2.x map keeps these surfaces as on base; 3.0 drops them.
-    if (NEXT_APP_ROUTER_SOURCES.has(surface.source) && !nextRouterRules(nextDetection?.major).appRouter) {
-      droppedAppRouter.push(surface.id);
+    const nextDetection = detections.find(item => item.framework === 'next');
+    if (NEXT_APP_ROUTER_SOURCES.has(surface.source) && nextDetection && !nextRouterRules(nextDetection.major).appRouter) {
+      const version = versionOf(nextDetection);
+      droppedAppRouter.set(version, [...(droppedAppRouter.get(version) ?? []), surface.id]);
       continue;
     }
     // Every map surface is recorded by its adapter; the fallback only guards a missing provenance entry.
     const origin = input.provenance.get(surface.id) ?? { adapterId: surface.source, adapterVersion: ADAPTER_VERSION };
-    const info = infoFor(origin.adapterId, origin.adapterVersion);
-    const { detection } = info;
+    const frameworks = registry.get(origin.adapterId)?.frameworks ?? [];
+    const detection = detections.find(item => frameworks.includes(item.framework));
+    const gated = origin.dependencyGated ?? DEPENDENCY_GATED_ADAPTERS.has(origin.adapterId);
+    const versionUnknown = !detection && gated;
+    let info = adapterInfo.get(origin.adapterId);
+    if (!info) {
+      info = { id: origin.adapterId, version: origin.adapterVersion, allCertified: true, uncertified: new Map(), versionUnknown: false };
+      adapterInfo.set(origin.adapterId, info);
+    }
+    if (detection) {
+      info.first ??= detection;
+      if (!detection.certified) info.uncertified.set(`${detection.framework}|${versionOf(detection)}`, detection);
+    }
+    if (!detection?.certified) info.allCertified = false;
+    if (versionUnknown) info.versionUnknown = true;
     // D11: a detected framework with an unknown or uncertified major still runs, but its surfaces are only likely.
-    const confidence: EdgeConfidence = (detection && !detection.certified) || info.versionUnknown ? 'likely' : 'proven';
+    const confidence: EdgeConfidence = (detection && !detection.certified) || versionUnknown ? 'likely' : 'proven';
     const framework = detection ? frameworkLabel(detection) : undefined;
     const { id, route } = projectSurfaceRoute(surface);
     const handlers = surface.entryEntityIds.filter(entityId => input.entityIds.has(entityId));
     const existing = byId.get(id);
     if (existing) {
-      // Two map ids can project to one 3.0 id (`[id]` and `:id`); the first keeps its fields, handlers are merged.
+      // Two map ids can project to one 3.0 id (`[id]` and `:id`): the first (by map id) keeps its location fields,
+      // handlers are merged and the weaker confidence wins, so the result does not depend on which one came first.
       existing.handlerEntityIds = [...new Set([...existing.handlerEntityIds, ...handlers])].sort(compareStrings);
+      existing.confidence = weaker(existing.confidence, confidence);
       continue;
     }
     byId.set(id, {
@@ -121,22 +140,31 @@ export function buildSurfaceEvidence(input: BuildSurfaceEvidenceInput): SurfaceE
   surfaces.sort((a, b) => compareStrings(a.id, b.id));
   surfaceEdges.sort((a, b) => compareStrings(`${a.from}|${a.type}|${a.to}`, `${b.from}|${b.type}|${b.to}`));
 
-  const infos = [...adapterInfo.values()].sort((a, b) => compareStrings(a.record.id, b.record.id));
+  const infos = [...adapterInfo.values()].sort((a, b) => compareStrings(a.id, b.id));
+  const records: AdapterRecord[] = [];
   const diagnostics: DiagnosticItem[] = [];
-  for (const { record, detection, versionUnknown } of infos) {
-    if (versionUnknown) {
+  for (const info of infos) {
+    const detectedVersion = info.first ? info.first.resolved ?? info.first.declared : undefined;
+    records.push({
+      id: info.id, version: info.version,
+      ...(info.first ? { framework: info.first.framework } : {}),
+      ...(detectedVersion ? { detectedVersion } : {}),
+      certified: info.first !== undefined && info.allCertified,
+    });
+    if (info.versionUnknown) {
       diagnostics.push({ code: 'FRAMEWORK_VERSION_NOT_CERTIFIED', severity: 'info',
-        message: `Adapter ${record.id} ran without a detected framework version in the project's package.json; its surfaces are reported as likely.` });
-      continue;
+        message: `Adapter ${info.id} ran without a detected framework version in the package.json that declares it; its surfaces are reported as likely.` });
     }
-    if (!detection || detection.certified) continue;
-    const version = record.detectedVersion ?? 'unknown version';
-    diagnostics.push({ code: 'FRAMEWORK_VERSION_NOT_CERTIFIED', severity: 'info',
-      message: `Adapter ${record.id} ran on ${detection.framework} ${version}, which is not a certified major; its surfaces are reported as likely.` });
+    for (const key of [...info.uncertified.keys()].sort(compareStrings)) {
+      const detection = info.uncertified.get(key)!;
+      diagnostics.push({ code: 'FRAMEWORK_VERSION_NOT_CERTIFIED', severity: 'info',
+        message: `Adapter ${info.id} ran on ${detection.framework} ${versionOf(detection)}, which is not a certified major; its surfaces are reported as likely.` });
+    }
   }
-  if (droppedAppRouter.length > 0) {
+  for (const version of [...droppedAppRouter.keys()].sort(compareStrings)) {
+    const dropped = [...droppedAppRouter.get(version)!].sort(compareStrings);
     diagnostics.push({ code: 'NEXT_APP_ROUTER_UNSUPPORTED', severity: 'info',
-      message: `Next.js ${nextDetection?.resolved ?? nextDetection?.declared ?? ''} is below 13, where app/ is not a router; ${droppedAppRouter.length} app/ surface(s) are left out of evidence: ${[...droppedAppRouter].sort(compareStrings).join(', ')}.` });
+      message: `Next.js ${version} is below 13, where app/ is not a router; ${dropped.length} app/ surface(s) are left out of evidence: ${dropped.join(', ')}.` });
   }
-  return { surfaces, surfaceEdges, adapters: infos.map(info => info.record), diagnostics };
+  return { surfaces, surfaceEdges, adapters: records, diagnostics };
 }

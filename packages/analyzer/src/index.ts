@@ -22,7 +22,7 @@ export * from './evidence-reader';
 export { buildSurfaceEvidence, type BuildSurfaceEvidenceInput, type SurfaceEvidence } from './surface-evidence';
 export { computeAffectedSurfaces, createSurfaceReach, withAffectedSurfaces, type SurfaceReachInput } from './surface-impact';
 export {
-  CERTIFIED_MAJORS, detectFrameworkVersions, frameworkLabel, nextRouterRules, type FrameworkDetection, type FrameworkPackage,
+  CERTIFIED_MAJORS, createFrameworkVersionResolver, detectFrameworkVersions, frameworkLabel, nextRouterRules, type FrameworkDetection, type FrameworkPackage,
 } from './framework-version';
 export { collectClientCalls, linkEndpoints, type ClientCall, type EndpointLinks } from './endpoint-links';
 export {

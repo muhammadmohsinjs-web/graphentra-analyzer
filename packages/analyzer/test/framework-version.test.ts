@@ -3,7 +3,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { test } from 'node:test';
-import { detectFrameworkVersions, frameworkLabel, nextRouterRules } from '../src/framework-version';
+import { createFrameworkVersionResolver, detectFrameworkVersions, frameworkLabel, nextRouterRules } from '../src/framework-version';
 
 const setup = (files: Record<string, string>, project = '.') => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'fwv-'));
@@ -88,6 +88,18 @@ test('yarn classic and berry', () => {
   assert.equal(b[0].resolved, '15.1.0');
 });
 
+test('yarn workspace lockfile: an entry whose key does not list the declared range is never borrowed', () => {
+  // apps/api declares express ^3.0.0; the only express entry is another workspace's ^4.18.0.
+  const lock = '# yarn lockfile v1\n\n\nexpress@^4.18.0:\n  version "4.18.2"\n  resolved "x"\n\n"next@^14.0.0":\n  version "14.2.3"\n';
+  const [api] = detectFrameworkVersions(setup({ 'yarn.lock': lock, 'apps/api/package.json': pkg({ express: '^3.0.0' }) }, 'apps/api'));
+  assert.equal(api.resolved, undefined);
+  assert.equal(api.source, 'package.json');
+  assert.equal(api.major, 3);
+  assert.equal(api.certified, false);
+  const [web] = detectFrameworkVersions(setup({ 'yarn.lock': lock, 'apps/web/package.json': pkg({ next: '^14.0.0' }) }, 'apps/web'));
+  assert.equal(web.resolved, '14.2.3');
+});
+
 test('monorepo lockfile above project, nearest workspace entry wins', () => {
   const lock = JSON.stringify({ packages: {
     'node_modules/next': { version: '12.0.0' },
@@ -129,4 +141,17 @@ test('nextRouterRules and frameworkLabel', () => {
   assert.equal(frameworkLabel({ framework: 'express', major: 4 }), 'express@4');
   assert.equal(frameworkLabel({ framework: '@nestjs/core', major: 10 }), 'nestjs@10');
   assert.equal(frameworkLabel({ framework: 'next' }), undefined);
+});
+
+test('per-file resolver: the nearest manifest naming the framework wins; peer-only there means unknown', () => {
+  const roots = setup({
+    'package.json': pkg({ next: '14.2.3', express: '4.18.2' }),
+    'apps/web/package.json': pkg({ next: '12.3.4' }),
+    'apps/lib/package.json': JSON.stringify({ peerDependencies: { next: '>=13' } }),
+  });
+  const forFile = createFrameworkVersionResolver(roots);
+  const summary = (file: string) => forFile(file).map(d => `${d.framework}@${d.major}:${d.certified}`);
+  assert.deepEqual(summary('apps/web/app/page.tsx'), ['express@4:true', 'next@12:false']);
+  assert.deepEqual(summary('apps/lib/src/x.ts'), ['express@4:true'], 'peer-only next: unknown, the root version is not used');
+  assert.deepEqual(summary('src/server.ts'), ['express@4:true', 'next@14:true']);
 });

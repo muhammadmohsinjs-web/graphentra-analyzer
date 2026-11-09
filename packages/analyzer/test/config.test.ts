@@ -125,3 +125,13 @@ test('sha256 is of raw bytes and stable', () => {
   assert.equal(load(text).sha256, a.sha256);
   assert.notEqual(load('version: 1\nignore: []\n').sha256, a.sha256);
 });
+
+test('config surface method is upper-cased and validated (HTTP methods plus ANY)', () => {
+  const s = (id: string, method: string) => `  - id: "${id}"\n    kind: api_endpoint\n    route: /a\n    method: ${method}\n    handler: h\n`;
+  const lower = load(`version: 1\nsurfaces:\n${s('api:GET /a', 'get')}`);
+  assert.deepEqual(lower.diagnostics, []);
+  assert.equal(lower.config?.surfaces[0]?.method, 'GET');
+  assertInvalid(`version: 1\nsurfaces:\n${s('api:GET /a', 'GET')}${s('api:GET /a', 'get')}`, '8:9', /duplicate surface id "api:GET \/a"/);
+  assertInvalid(`version: 1\nsurfaces:\n${s('api:FETCH /a', 'fetch')}`, '6:13', /surface method "fetch" must be one of GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS, ANY/);
+  assert.equal(load(`version: 1\nsurfaces:\n${s('api:ANY /a', 'any')}`).config?.surfaces[0]?.method, 'ANY');
+});

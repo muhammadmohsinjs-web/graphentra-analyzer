@@ -138,7 +138,12 @@ export function fingerprintSource(text: string): string {
 }
 
 /** Which adapter (and adapter version) discovered each surface, keyed by surface id. Kept out of the map JSON. */
-export type SurfaceProvenance = Map<string, { adapterId: string; adapterVersion: string }>;
+export type SurfaceProvenance = Map<string, {
+  adapterId: string;
+  adapterVersion: string;
+  /** The adapter ran because a framework package is a dependency (its detect evidence is not `syntactic`, D11). */
+  dependencyGated?: boolean;
+}>;
 
 export function extractApplicationMap(input: ExtractApplicationMapInput): ApplicationMap {
   return extractApplicationMapWithProvenance(input).map;
@@ -252,8 +257,11 @@ export function extractApplicationMapWithProvenance(input: ExtractApplicationMap
     }
   }
   const discovered: Array<{ surface: DetectedSurface; adapter: FrameworkAdapter }> = [];
+  const dependencyGated = new Map<string, boolean>();
   for (const adapter of ADAPTERS) {
-    if (!adapter.detect(ctx).present) continue;
+    const detection = adapter.detect(ctx);
+    if (!detection.present) continue;
+    dependencyGated.set(adapter.id, !(detection.evidence ?? []).includes('syntactic'));
     for (const surface of adapter.surfaces(ctx)) discovered.push({ surface, adapter });
   }
   // Stable sort: merging same-id surfaces depends on discovery order (file, then source position).
@@ -426,7 +434,7 @@ export function extractApplicationMapWithProvenance(input: ExtractApplicationMap
       uiText = [...uiText, ...scanned.uiText];
       textKeys = [...textKeys, ...scanned.textKeys];
     }
-    if (!provenance.has(id)) provenance.set(id, { adapterId: adapter.id, adapterVersion: adapter.version });
+    if (!provenance.has(id)) provenance.set(id, { adapterId: adapter.id, adapterVersion: adapter.version, dependencyGated: dependencyGated.get(adapter.id) ?? false });
     const surface: Surface = surfaces.get(id) ?? {
       id, kind: item.kind, route: item.route, ...(item.method ? { method: item.method } : {}), source: item.source,
       file: relativeOf(item.node), line: ts.isSourceFile(item.node) ? 1 : lineOf(item.node),

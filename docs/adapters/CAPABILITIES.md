@@ -49,21 +49,31 @@ The application map and 2.x output are unchanged by Phase 5. Only when surfaces 
 - Next.js routes (`next-app-router`, `next-pages-router`, `next-route-handler`) get dynamic segments in `:param` form,
   and their ids are rebuilt from it: map `ui:/products/[id]` is evidence `ui:/products/:id`. Endpoint links, test
   `goto` matching and `graphentra.yml` surface ids use the 3.0 form; `/products/42` matches `ui:/products/:id`.
-- Next.js below 13: `app/` surfaces (`next-app-router`, `next-route-handler`) are left out of evidence with one
-  `NEXT_APP_ROUTER_UNSUPPORTED` info diagnostic listing their map ids. An unknown `next` major keeps them.
+- Versions per surface (monorepos): each surface uses the framework version of the manifest that gated its file, the
+  nearest `package.json` from the file up to the project root that names the framework (`dependencies`,
+  `devDependencies` or `peerDependencies`), resolved through that workspace's lockfile entry (npm, pnpm importer, or
+  the yarn entry whose key lists the declared range; another workspace's version is never borrowed). A framework named
+  only in `peerDependencies` of its nearest manifest has an unknown major.
+- Next.js below 13: `app/` surfaces (`next-app-router`, `next-route-handler`) whose `next` is below 13 are left out of
+  evidence with one `NEXT_APP_ROUTER_UNSUPPORTED` info diagnostic per such `next` version, listing their map ids. An
+  unknown `next` major keeps them.
 - Confidence (D11): a framework detected with an uncertified or unknown major gives `likely` surfaces and one
-  `FRAMEWORK_VERSION_NOT_CERTIFIED` info per adapter. The dependency-gated adapters (`nextjs-app-router`,
-  `nextjs-pages-router`, `nextjs-route-handler`, which run only because `next` is a dependency) get the same when the
-  project's `package.json` gives no `next` version at all. Syntactic adapters (`route-config`, `react-router`, `nestjs`,
-  and `express-declarative` / `http-router` when they ran without their package) have no framework package to version:
-  their surfaces stay `proven`, uncertified, without a diagnostic.
+  `FRAMEWORK_VERSION_NOT_CERTIFIED` info per adapter and framework version. An adapter whose detect evidence is not
+  `syntactic` is dependency-gated (the Next.js adapters always; `express-declarative` / `http-router` when they ran on a
+  declared package): its surfaces get the same when the gating manifest gives no version. Syntactic adapters
+  (`route-config`, `react-router`, `nestjs`, and `express-declarative` / `http-router` when they ran without their
+  package) have no framework package to version: without a detection their surfaces stay `proven`, uncertified,
+  without a diagnostic.
+- Two map ids that project to one 3.0 id (`[id]` and `:id`) become one surface: handlers are merged and the weaker
+  confidence wins, for the surface and its `SURFACE_HANDLED_BY` edges.
 
 ## config (any kind, schema 3.0)
 
 Surfaces declared under `surfaces:` in `graphentra.yml` (D12) are recorded with adapter id `config`, `source: config`,
 `confidence: proven`. A declared surface replaces a detected surface with the same id. A surface whose `handler` is not an
 entity of the analyzed graph is dropped with a `CONFIG_SURFACE_HANDLER_NOT_FOUND` warning. A `ui_route` id must be
-`ui:<route>` and an `api_endpoint` id `api:<METHOD> <route>` (method `ANY` when omitted); a mismatched or duplicate id,
+`ui:<route>` and an `api_endpoint` id `api:<METHOD> <route>` (method `ANY` when omitted; `method` is upper-cased and must be one of GET, POST, PUT, PATCH,
+DELETE, HEAD, OPTIONS, ANY); an unknown method, a mismatched or duplicate id,
 or an `ignore` / `tests` entry that is not a project-relative path (leading `/`, `..` segment, `//`, empty), makes the
 file `CONFIG_INVALID` (error with `file:line`): the whole config is ignored and analysis continues. `tests:` entries use
 the same matching as `ignore:`: a bare directory such as `qa` covers `qa/**`.

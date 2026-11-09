@@ -25,7 +25,10 @@ export interface EndpointLinks {
 
 const ANY_METHOD = new Set(['ALL', 'ANY', '*']);
 
-/** Compares route shapes ignoring parameter names, so `/a/:id` and `/a/[id]` are equal to `/a/:param`. */
+/**
+ * Exact route equality, ignoring only trailing slashes. Parameter names are compared too (`/a/:id` is not `/a/:param`),
+ * so a call that reaches an endpoint only through a parameter match (`routeMatches`) stays `likely` (D9).
+ */
 const sameRoute = (route: string, target: string): boolean => route.replace(/\/+$/, '') === target.replace(/\/+$/, '');
 
 /**

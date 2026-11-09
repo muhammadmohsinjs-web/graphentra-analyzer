@@ -9,6 +9,6 @@ test('nextjs-app-router: app/**/page.tsx becomes a ui route', () => {
     'app/orders/[id]/page.tsx': 'export default function Page() { return null; }\n',
   });
   assert.deepEqual(map.surfaces.map(s => [s.id, s.source]), [['ui:/orders/[id]', 'next-app-router']]);
-  assert.deepEqual(provenance.get('ui:/orders/[id]'), { adapterId: 'nextjs-app-router', adapterVersion: nextjsAppRouterAdapter.version });
+  assert.deepEqual(provenance.get('ui:/orders/[id]'), { adapterId: 'nextjs-app-router', adapterVersion: nextjsAppRouterAdapter.version, dependencyGated: true });
   assert.equal('provenance' in map, false);
 });

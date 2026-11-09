@@ -136,8 +136,13 @@ const fromPnpmLock = (text: string, name: string, relProject: string): string | 
   return undefined;
 };
 
+/**
+ * The version of the yarn.lock entry whose key lists the declared range (`name@range` or berry `name@npm:range`).
+ * No fallback to another entry of the same package: in a workspace lockfile that would borrow another workspace's
+ * version (the same rule as the pnpm importer lookup).
+ */
 const fromYarnLock = (text: string, name: string, declared: string | undefined): string | undefined => {
-  let fallback: string | undefined;
+  if (declared === undefined) return undefined;
   for (const block of text.split(/\r?\n\r?\n/)) {
     const lines = block.split(/\r?\n/).filter((l) => !l.startsWith('#') && l.trim() !== '');
     const header = lines[0];
@@ -147,10 +152,9 @@ const fromYarnLock = (text: string, name: string, declared: string | undefined):
     if (mine.length === 0) continue;
     const vm = /^[ \t]+version:?[ \t]+["']?([^"'\s]+)/m.exec(block);
     if (!vm) continue;
-    if (declared !== undefined && mine.some((s) => s === declared || s === `npm:${declared}`)) return vm[1];
-    fallback ??= vm[1];
+    if (mine.some((s) => s === declared || s === `npm:${declared}`)) return vm[1];
   }
-  return fallback;
+  return undefined;
 };
 
 const dirsUpTo = (projectRoot: string, repoRoot: string): string[] => {
@@ -220,6 +224,65 @@ export const detectFrameworkVersions = (input: {
   } catch {
     return [];
   }
+};
+
+/**
+ * Framework versions that apply to a project-relative file: for each framework, the nearest `package.json` from the
+ * file's directory up to the project root that names it (dependencies, devDependencies or peerDependencies, the same
+ * manifests that gate the adapters), resolved through the lockfile entry of that workspace. A framework named only in
+ * peerDependencies of its nearest manifest has no detection (unknown major, D11); a farther manifest never fills it in.
+ */
+export const createFrameworkVersionResolver = (input: {
+  projectRoot: string;
+  repoRoot: string;
+  readFile?: (absPath: string) => string | undefined;
+}): ((file: string) => FrameworkDetection[]) => {
+  const read: ReadFile = input.readFile ?? defaultReadFile;
+  const projectRoot = path.resolve(input.projectRoot);
+  const perDir = new Map<string, { named: Set<string>; detections: FrameworkDetection[] } | null>();
+  const perFile = new Map<string, FrameworkDetection[]>();
+  const manifestAt = (dir: string) => {
+    if (perDir.has(dir)) return perDir.get(dir)!;
+    let entry: { named: Set<string>; detections: FrameworkDetection[] } | null = null;
+    const pkg = parseJson(read(path.join(dir, 'package.json')));
+    if (isRecord(pkg)) {
+      const named = new Set<string>();
+      for (const field of ['dependencies', 'devDependencies', 'peerDependencies']) {
+        const deps = pkg[field];
+        if (isRecord(deps)) for (const name of Object.keys(deps)) named.add(name);
+      }
+      const detections = detectFrameworkVersions({ projectRoot: dir, repoRoot: input.repoRoot, readFile: read });
+      entry = { named, detections };
+    }
+    perDir.set(dir, entry);
+    return entry;
+  };
+  return (file: string): FrameworkDetection[] => {
+    const start = path.dirname(path.resolve(projectRoot, file));
+    const key = start;
+    const cached = perFile.get(key);
+    if (cached) return cached;
+    const decided = new Map<string, FrameworkDetection | null>();
+    const inside = !path.relative(projectRoot, start).startsWith('..');
+    let cur = inside ? start : projectRoot;
+    for (let guard = 0; guard < 64; guard += 1) {
+      const manifest = manifestAt(cur);
+      if (manifest) {
+        for (const framework of FRAMEWORKS) {
+          if (decided.has(framework) || !manifest.named.has(framework)) continue;
+          decided.set(framework, manifest.detections.find(item => item.framework === framework) ?? null);
+        }
+      }
+      if (cur === projectRoot) break;
+      const parent = path.dirname(cur);
+      if (parent === cur) break;
+      cur = parent;
+    }
+    const out = [...decided.values()].filter((item): item is FrameworkDetection => item !== null)
+      .sort((a, b) => compareStrings(a.framework, b.framework));
+    perFile.set(key, out);
+    return out;
+  };
 };
 
 export const nextRouterRules = (major?: number): { appRouter: boolean; pagesRouter: boolean } => ({

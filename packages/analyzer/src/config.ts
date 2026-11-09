@@ -27,6 +27,8 @@ export interface LoadedGraphentraConfig {
 
 const TOP_KEYS = new Set(['version', 'criticality', 'ignore', 'tests', 'surfaces']);
 const SURFACE_KEYS = new Set(['id', 'kind', 'route', 'method', 'handler']);
+/** Methods a graphentra.yml surface may declare; matched case-insensitively and stored upper-case (as detected ids are). */
+export const CONFIG_SURFACE_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS', 'ANY'] as const;
 
 class ConfigError extends Error {
   constructor(readonly offset: number | undefined, reason: string) { super(reason); }
@@ -144,6 +146,14 @@ export function loadGraphentraConfig(
             }
             if (name === 'kind' && !(SURFACE_KINDS as readonly string[]).includes(pv.value)) {
               throw new ConfigError(pv.range?.[0], `surface kind "${pv.value}" must be one of ${SURFACE_KINDS.join(', ')}`);
+            }
+            if (name === 'method') {
+              const method = pv.value.toUpperCase();
+              if (!(CONFIG_SURFACE_METHODS as readonly string[]).includes(method)) {
+                throw new ConfigError(pv.range?.[0], `surface method "${pv.value}" must be one of ${CONFIG_SURFACE_METHODS.join(', ')}`);
+              }
+              fields[name] = method;
+              continue;
             }
             fields[name] = pv.value;
           }

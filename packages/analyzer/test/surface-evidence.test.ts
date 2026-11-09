@@ -143,3 +143,53 @@ for (const [version, appRouter] of [['12.3.4', false], ['13.5.6', true]] as cons
     } finally { repo.cleanup(); }
   });
 }
+
+test('D4/D11: [id] and :id merged into one 3.0 surface take the weaker confidence, independent of order', () => {
+  const nextUi = surface('ui:/p/[id]', ['p#Next'], { route: '/p/[id]', file: 'apps/web/app/p/[id]/page.tsx' });
+  const rr = surface('ui:/p/:id', ['p#Rr'], { route: '/p/:id', source: 'jsx-route', file: 'apps/spa/routes.tsx' });
+  const prov = provenance({ 'ui:/p/[id]': 'nextjs-app-router', 'ui:/p/:id': 'react-router' });
+  const versions = (file: string) => (file.startsWith('apps/web/') ? [next(16, false)] : []);
+  const results = [[nextUi, rr], [rr, nextUi]].map(list => buildSurfaceEvidence({ map: mapOf(list), provenance: prov, frameworkVersions: [],
+    frameworkVersionsFor: versions, entityIds: new Set(['p#Next', 'p#Rr']) }));
+  assert.deepEqual(results[0], results[1]);
+  const [merged] = results[0]!.surfaces;
+  assert.equal(results[0]!.surfaces.length, 1);
+  assert.equal(merged!.id, 'ui:/p/:id');
+  assert.equal(merged!.confidence, 'likely', 'the uncertified Next.js surface weakens the merged one');
+  assert.deepEqual(merged!.handlerEntityIds, ['p#Next', 'p#Rr']);
+  assert.ok(results[0]!.surfaceEdges.every(e => e.confidence === 'likely'));
+});
+
+test('D11 in a monorepo: each surface uses the version of the package.json that gated it; the 2.x map is unchanged', () => {
+  const expressTypes = "declare module 'express' {\n  interface App { get(path: string, handler: (req: unknown, res: unknown) => void): App }\n" +
+    '  const express: () => App;\n  export default express;\n}\n';
+  const repo = repositoryWith({
+    'package.json': JSON.stringify({ private: true, workspaces: ['apps/*'] }),
+    'tsconfig.json': JSON.stringify({ compilerOptions: { jsx: 'react-jsx', noEmit: true, esModuleInterop: true } }),
+    'types.d.ts': expressTypes,
+    'apps/api/package.json': JSON.stringify({ name: 'api', dependencies: { express: '3.0.0' } }),
+    'apps/api/server.ts': "import express from 'express';\nconst app = express();\nexport function listOrders(_req: unknown, _res: unknown) {}\napp.get('/orders', listOrders);\n",
+    'apps/web/package.json': JSON.stringify({ name: 'web', dependencies: { next: '12.3.4' } }),
+    'apps/web/app/shop/page.tsx': 'export default function Shop() { return <h1>Shop</h1>; }\n',
+    'apps/web/pages/legacy.tsx': 'export default function Legacy() { return <h1>Legacy</h1>; }\n',
+  });
+  try {
+    const base = analyzeRepository({ target: repo.dir, comparison: { mode: 'working-tree' } });
+    const mapIds = base.applicationMap.surfaces.map(s => s.id);
+    for (const id of ['api:GET /orders', 'ui:/shop', 'ui:/legacy']) assert.ok(mapIds.includes(id), `map: ${mapIds.join(', ')}`);
+    const evidence = analyzeRepository({ target: repo.dir, comparison: { mode: 'working-tree' }, evidenceSchema: '3.0' }).evidence;
+    const byId = new Map(evidence.surfaces!.map(s => [s.id, s]));
+    assert.equal(byId.get('api:GET /orders')?.confidence, 'likely', [...byId.keys()].join(', '));
+    assert.equal(byId.get('api:GET /orders')?.framework, 'express@3');
+    assert.equal(byId.has('ui:/shop'), false, 'next 12 in apps/web: app/ is not a router');
+    assert.equal(byId.get('ui:/legacy')?.confidence, 'likely', 'next 12 is not a certified major');
+    const express = evidence.adapters!.find(a => a.id === 'express-declarative');
+    assert.deepEqual(express && { framework: express.framework, detectedVersion: express.detectedVersion, certified: express.certified },
+      { framework: 'express', detectedVersion: '3.0.0', certified: false });
+    const diagnostics = evidence.diagnostics.filter(d => d.code === 'FRAMEWORK_VERSION_NOT_CERTIFIED' || d.code === 'NEXT_APP_ROUTER_UNSUPPORTED');
+    assert.ok(diagnostics.some(d => d.code === 'FRAMEWORK_VERSION_NOT_CERTIFIED' && /express-declarative ran on express 3\.0\.0/.test(d.message)),
+      diagnostics.map(d => d.message).join('\n'));
+    assert.ok(diagnostics.some(d => d.code === 'NEXT_APP_ROUTER_UNSUPPORTED' && /Next\.js 12\.3\.4/.test(d.message) && /ui:\/shop/.test(d.message)));
+    assert.ok(diagnostics.every(d => d.severity === 'info'));
+  } finally { repo.cleanup(); }
+});

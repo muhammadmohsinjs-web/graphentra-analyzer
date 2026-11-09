@@ -41,7 +41,7 @@ import { classifyFileOrigin } from './file-origin';
 import { createRepositoryContext, type RepositoryContext } from './repository';
 import { extractTechnicalGraph, isAnalyzableFile, type ExtractedGraph } from './technical-graph';
 import { APPLICATION_MAP_SCHEMA_VERSION, extractApplicationMapWithProvenance, type ApplicationMap, type SurfaceProvenance } from './application-map';
-import { detectFrameworkVersions, type FrameworkDetection } from './framework-version';
+import { createFrameworkVersionResolver, detectFrameworkVersions, type FrameworkDetection } from './framework-version';
 import { CONFIG_FILE_NAME, loadGraphentraConfig } from './config';
 import { buildPhase5Evidence } from './phase5-evidence';
 import { buildToolchainRecord, toolchainDiagnostics } from './toolchain';
@@ -290,7 +290,8 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
   const mapResult = buildApplicationMap(extracted, repo.projectRoot, headSha, frameworkVersions);
   const schema3 = extended && options.evidenceSchema === '3.0';
   // Schema 3.0 (D8, D10): surfaces, endpoint links, tests and test mapping; failures never block evidence.
-  const phase5 = schema3 ? buildPhase5Evidence({ extracted, mapResult, frameworkVersions, impacts, config }) : undefined;
+  const frameworkVersionsFor = createFrameworkVersionResolver({ projectRoot: repo.projectRoot, repoRoot: repo.gitRepositoryRoot });
+  const phase5 = schema3 ? buildPhase5Evidence({ extracted, mapResult, frameworkVersions, frameworkVersionsFor, impacts, config }) : undefined;
   if (phase5) {
     impacts = phase5.impacts;
     diagnostics.push(...phase5.diagnostics);
