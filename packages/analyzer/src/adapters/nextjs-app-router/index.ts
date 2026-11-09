@@ -1,5 +1,6 @@
 import { ADAPTER_VERSION, detectByDependency, type AdapterContext, type DetectedSurface, type FrameworkAdapter } from '../types';
-import { matchAppFile, segmentsToRoute } from '../nextjs-files';
+import { matchAppFile, nextMajor, segmentsToRoute } from '../nextjs-files';
+import { nextRouterRules } from '../../framework-version';
 
 /** Next.js App Router `app/**\/page.tsx` pages. */
 export const nextjsAppRouterAdapter: FrameworkAdapter = {
@@ -9,6 +10,8 @@ export const nextjsAppRouterAdapter: FrameworkAdapter = {
   detect: ctx => detectByDependency(ctx, ['next']),
   surfaces(ctx: AdapterContext): DetectedSurface[] {
     const found: DetectedSurface[] = [];
+    // D11: the app/ directory is a router only from Next.js 13 on (unknown major: assume it is).
+    if (!nextRouterRules(nextMajor(ctx.frameworkVersions)).appRouter) return found;
     for (const { sourceFile, file, index, dependencies } of ctx.files) {
       if (!dependencies.has('next')) continue;
       const match = matchAppFile(file);

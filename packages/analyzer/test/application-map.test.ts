@@ -134,7 +134,7 @@ test('Next.js app/pages routing, route config objects, and NestJS controllers be
     fs.appendFileSync(path.join(repo.dir, 'src/billing.controller.ts'), '\n');
     const map = analyzeRepository({ target: repo.dir, comparison: { mode: 'working-tree' } }).applicationMap;
     const ids = map.surfaces.map(surface => surface.id);
-    for (const id of ['ui:/orders/[id]', 'api:GET /api/invoices', 'ui:/settings', 'ui:/admin', 'ui:/admin/users', 'api:POST /billing/refunds']) {
+    for (const id of ['ui:/orders/:id', 'api:GET /api/invoices', 'ui:/settings', 'ui:/admin', 'ui:/admin/users', 'api:POST /billing/refunds']) {
       assert.ok(ids.includes(id), `${id} missing from ${ids.join(', ')}`);
     }
     const users = map.surfaces.find(surface => surface.id === 'ui:/admin/users')!;

@@ -9,8 +9,9 @@ Certified versions: Next.js 13.5.6 (`nextjs-13`), 14.2.5 (`nextjs-14`).
 | Detected | Not detected |
 | --- | --- |
 | `app/**/page.tsx` default export as `ui:<route>` | `layout.tsx`, `loading`, `error`, `template` (not surfaces) |
-| Route groups `(name)` dropped from the route | Dynamic segments normalized to `:id` (stay `[id]`; gap) |
-| Nested static segments | Parallel/intercepting routes beyond `@slot` skipping (not certified) |
+| Route groups `(name)` dropped from the route | Parallel/intercepting routes beyond `@slot` skipping (not certified) |
+| Dynamic segments normalized: `[id]` → `:id`, `[...slug]` and `[[...slug]]` → `:slug*` (one form for both catch-alls) | `app/` rules when the detected `next` major is below 13 (skipped by design, D11) |
+| Nested static segments | |
 
 ## next-pages-router (ui_route, api_endpoint)
 
@@ -20,7 +21,7 @@ Certified versions: Next.js 14.2.5 (`nextjs-14`).
 | --- | --- |
 | `pages/*.tsx` default export as `ui:<route>` | Per-method splitting inside `pages/api/*` handlers |
 | `pages/api/*` default export as `api:ANY <route>` | `_app`, `_document` (skipped by design) |
-| | Dynamic segments normalized to `:id` (gap; not fixture-covered for pages) |
+| Dynamic segments normalized the same way as the App Router (unit-tested, not fixture-covered for pages) | |
 
 ## next-route-handler (api_endpoint)
 

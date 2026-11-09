@@ -8,6 +8,7 @@ import {
   MAX_AFFECTED_ENTITIES,
   EVIDENCE_SCHEMA_VERSION,
   EXTENDED_EVIDENCE_SCHEMA_VERSION,
+  EVIDENCE_SCHEMA_VERSION_3,
   type AnalyzeOptions,
   type AnalyzeResult,
   type DiagnosticItem,
@@ -39,11 +40,16 @@ import { captureSourceSnapshot } from './source-snapshot';
 import { classifyFileOrigin } from './file-origin';
 import { createRepositoryContext, type RepositoryContext } from './repository';
 import { extractTechnicalGraph, isAnalyzableFile, type ExtractedGraph } from './technical-graph';
-import { APPLICATION_MAP_SCHEMA_VERSION, extractApplicationMap, type ApplicationMap } from './application-map';
+import { APPLICATION_MAP_SCHEMA_VERSION, extractApplicationMapWithProvenance, type ApplicationMap, type SurfaceProvenance } from './application-map';
+import { detectFrameworkVersions, type FrameworkDetection } from './framework-version';
+import { buildSurfaceEvidence } from './surface-evidence';
+import { withAffectedSurfaces } from './surface-impact';
 import { buildToolchainRecord, toolchainDiagnostics } from './toolchain';
 import { assertValidEvidenceEnvelope } from './validator';
 import { withChangedValueTargets } from './value-flow';
 import type { CompilerOptions } from 'typescript';
+
+const EVIDENCE_SCHEMA_OPTIONS: ReadonlyArray<NonNullable<AnalyzeOptions['evidenceSchema']>> = ['2.1', '3.0'];
 
 export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
   if (options.engine !== undefined && !ENGINE_PROFILES.includes(options.engine)) {
@@ -58,7 +64,13 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
       throw new GraphentraError(`${name} must be a positive integer, got ${String(value)}.`, 'INVALID_OPTIONS');
     }
   }
+  if (options.evidenceSchema !== undefined && !EVIDENCE_SCHEMA_OPTIONS.includes(options.evidenceSchema)) {
+    throw new GraphentraError(`Unknown evidence schema "${String(options.evidenceSchema)}". Expected one of: ${EVIDENCE_SCHEMA_OPTIONS.join(', ')}.`, 'INVALID_OPTIONS');
+  }
   const engine = options.engine ?? DEFAULT_ENGINE;
+  if (options.evidenceSchema === '3.0' && engine !== 'extended') {
+    throw new GraphentraError('Evidence schema 3.0 requires the extended engine.', 'INVALID_OPTIONS');
+  }
   const repo =createRepositoryContext(options.target, options.comparison, {
     gitTimeoutMs: options.gitTimeoutMs,
     excludePaths: options.excludePaths,
@@ -289,9 +301,30 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
       skipped: [...skipped].map(([file, reason]) => ({ file, reason })),
     });
   }
+  const frameworkVersions = detectFrameworkVersions({ projectRoot: repo.projectRoot, repoRoot: repo.gitRepositoryRoot });
+  const mapResult = buildApplicationMap(extracted, repo.projectRoot, headSha, frameworkVersions);
+  const schema3 = extended && options.evidenceSchema === '3.0';
+  let surfaceFields: Pick<DeterministicEvidence, 'surfaces' | 'surfaceEdges' | 'tests' | 'adapters'> | undefined;
+  if (schema3) {
+    // D10: surface extraction never blocks evidence; a failure leaves empty surfaces and one warning.
+    surfaceFields = { surfaces: [], surfaceEdges: [], tests: [], adapters: [] };
+    try {
+      if (mapResult.failure) throw new Error(mapResult.failure);
+      const built = buildSurfaceEvidence({ map: mapResult.map, provenance: mapResult.provenance, frameworkVersions,
+        entityIds: new Set(extracted.technicalGraph.entities.map(entity => entity.id)) });
+      const reached = withAffectedSurfaces(impacts, { relations: extracted.technicalGraph.relations,
+        surfaceEdges: built.surfaceEdges, surfaceIds: built.surfaces.map(surface => surface.id) });
+      impacts = reached;
+      surfaceFields = { surfaces: built.surfaces, surfaceEdges: built.surfaceEdges, tests: [], adapters: built.adapters };
+      diagnostics.push(...built.diagnostics);
+    } catch (error) {
+      diagnostics.push({ code: 'SURFACE_EXTRACTION_FAILED', severity: 'warning',
+        message: `Surface extraction failed; evidence has no surfaces: ${error instanceof Error ? error.message : 'unknown error'}` });
+    }
+  }
   const evidence: DeterministicEvidence = {
     artifactKind: EVIDENCE_ARTIFACT_KIND,
-    schemaVersion: extended ? EXTENDED_EVIDENCE_SCHEMA_VERSION : EVIDENCE_SCHEMA_VERSION,
+    schemaVersion: schema3 ? EVIDENCE_SCHEMA_VERSION_3 : extended ? EXTENDED_EVIDENCE_SCHEMA_VERSION : EVIDENCE_SCHEMA_VERSION,
     analyzerVersion: ANALYZER_VERSION,
     target: { targetPath },
     comparison: repo.comparison,
@@ -305,10 +338,11 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
     ...(skippedEntities.length > 0 ? { skippedEntities } : {}),
     ...(frontier ? { frontier } : {}),
     ...(coverage ? { coverage } : {}),
+    ...(surfaceFields ?? {}),
   };
   snapshot.verify();
   assertValidEvidenceEnvelope(evidence);
-  const applicationMap = buildApplicationMap(extracted, repo.projectRoot, headSha);
+  const applicationMap = mapResult.map;
   const summaryMessage = outcome === 'completed'
     ? `Deterministic impact evidence built for ${impacts.length} changed functions.${skippedEntities.length > 0 ? ` ${skippedEntities.length} cosmetic or test-only changes were not traversed.` : ''}`
     : outcome === 'no_changes' ? 'No changes were found in the included target scope.'
@@ -385,16 +419,20 @@ function emptyApplicationMap(headSha: string, reason?: string): ApplicationMap {
 }
 
 /** The application map is best-effort: a failure never blocks deterministic evidence. */
-function buildApplicationMap(extracted: ExtractedGraph, projectRoot: string, headSha: string): ApplicationMap {
-  if (!extracted.program || !extracted.checker || !extracted.symbolToEntity || !extracted.toProjectPath) return emptyApplicationMap(headSha);
+function buildApplicationMap(extracted: ExtractedGraph, projectRoot: string, headSha: string, frameworkVersions: readonly FrameworkDetection[]):
+  { map: ApplicationMap; provenance: SurfaceProvenance; failure?: string } {
+  if (!extracted.program || !extracted.checker || !extracted.symbolToEntity || !extracted.toProjectPath) {
+    return { map: emptyApplicationMap(headSha), provenance: new Map() };
+  }
   try {
-    return extractApplicationMap({
+    return extractApplicationMapWithProvenance({
       program: extracted.program, checker: extracted.checker, symbolToEntity: extracted.symbolToEntity,
       entities: extracted.entities, relations: extracted.relations, files: extracted.files,
-      toProjectPath: extracted.toProjectPath, projectRoot, headSha,
+      toProjectPath: extracted.toProjectPath, projectRoot, headSha, frameworkVersions,
     });
   } catch (error) {
-    return emptyApplicationMap(headSha, `Application map extraction failed: ${error instanceof Error ? error.message : 'unknown error'}`);
+    const failure = `Application map extraction failed: ${error instanceof Error ? error.message : 'unknown error'}`;
+    return { map: emptyApplicationMap(headSha, failure), provenance: new Map(), failure };
   }
 }
 

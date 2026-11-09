@@ -17,9 +17,11 @@ export interface CliOptions {
   maxAffectedEntities?: number;
   maxDepth?: number;
   hubThreshold?: number;
+  /** Evidence schema to emit: '2.1' (default) or '3.0' (extended engine only). */
+  evidenceSchema?: '2.1' | '3.0';
 }
 
-const valueOptions = new Set(['target', 'base', 'head', 'report', 'output', 'engine', 'max-affected-entities', 'max-affected', 'max-depth', 'hub-threshold', 'context-granularity']);
+const valueOptions = new Set(['target', 'base', 'head', 'report', 'output', 'engine', 'max-affected-entities', 'max-affected', 'max-depth', 'hub-threshold', 'context-granularity', 'schema']);
 const flagOptions = new Set(['working-tree', 'help', 'version']);
 
 export function parseCliOptions(args: string[], configuration: { reporting?: boolean } = {}): CliOptions {
@@ -79,6 +81,9 @@ export function parseCliOptions(args: string[], configuration: { reporting?: boo
     if (name === 'context-granularity' && value !== 'files' && value !== 'functions') {
       throw new GraphentraError(`Option --context-granularity must be "files" or "functions", got "${value}".`, 'INVALID_OPTIONS');
     }
+    if (name === 'schema' && value !== '2.1' && value !== '3.0') {
+      throw new GraphentraError(`Option --schema must be "2.1" or "3.0", got "${value}".`, 'INVALID_OPTIONS');
+    }
     if (name === 'max-affected-entities' && !/^[1-9]\d*$/.test(value)) {
       throw new GraphentraError(`Option --max-affected-entities must be a positive integer, got "${value}".`, 'INVALID_OPTIONS');
     }
@@ -128,6 +133,8 @@ export function parseCliOptions(args: string[], configuration: { reporting?: boo
   if (maxDepth !== undefined) result.maxDepth = Number(maxDepth);
   const hubThreshold = values.get('hub-threshold');
   if (hubThreshold !== undefined) result.hubThreshold = Number(hubThreshold);
+  const schema = values.get('schema');
+  if (schema !== undefined) result.evidenceSchema = schema as CliOptions['evidenceSchema'];
 
   if (flags.has('generate-context')) result.generateContext = true;
   if (flags.has('refresh-context')) result.refreshContext = true;

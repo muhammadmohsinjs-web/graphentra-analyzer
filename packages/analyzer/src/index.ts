@@ -19,3 +19,8 @@ export { classifyNonTsFile, nonTsChangeDiagnostics, type NonTsChangeClass } from
 export { DEFAULT_INPUT_LIMITS, MAX_NESTING_DEPTH, inspectContent, bracketNestingDepth, type InputLimits, type SkippedInput } from './input-limits';
 export { isTestPath, routeMatcher } from './application-map-ast';
 export * from './evidence-reader';
+export { buildSurfaceEvidence, type BuildSurfaceEvidenceInput, type SurfaceEvidence } from './surface-evidence';
+export { computeAffectedSurfaces, createSurfaceReach, withAffectedSurfaces, type SurfaceReachInput } from './surface-impact';
+export {
+  CERTIFIED_MAJORS, detectFrameworkVersions, frameworkLabel, nextRouterRules, type FrameworkDetection, type FrameworkPackage,
+} from './framework-version';

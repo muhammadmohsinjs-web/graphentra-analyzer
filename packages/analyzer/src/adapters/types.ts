@@ -1,6 +1,7 @@
 import type * as ts from 'typescript';
 import type { Entity } from '../contracts';
 import type { AccessHint, SurfaceKind, SurfaceSource } from '../application-map';
+import type { FrameworkDetection } from '../framework-version';
 
 /** Result of cheap framework detection; `present: false` lets the host skip `surfaces`. */
 export interface Detection {
@@ -51,6 +52,8 @@ export interface AdapterContext {
   symbolToEntity: Map<ts.Symbol, Entity>;
   entityDeclaration: Map<string, ts.Node>;
   entityForDeclaration: Map<ts.Node, Entity>;
+  /** Framework versions read from package.json and lockfiles (P5-10); empty when unknown. */
+  frameworkVersions: readonly FrameworkDetection[];
   /** Frameworks seen so far; adapters may add the frameworks they recognise. */
   frameworks: Set<string>;
   /** Redirect links discovered in route configuration (merged into navigation by the host). */

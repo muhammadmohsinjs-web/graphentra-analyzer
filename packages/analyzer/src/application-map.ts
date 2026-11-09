@@ -12,6 +12,7 @@ import { ADAPTERS } from './adapters/registry';
 import { isRouteObject, isRouteTag, jsxAttribute, jsxAttributeValue } from './adapters/shared';
 import { compareOrder, type DetectedSurface, type FrameworkAdapter } from './adapters/types';
 import { compareStrings } from './deterministic';
+import type { FrameworkDetection } from './framework-version';
 
 export type { E2EFlow } from './application-map-e2e';
 export { routeMatches } from './application-map-ast';
@@ -108,6 +109,8 @@ export interface ExtractApplicationMapInput {
   toProjectPath: (fileName: string) => string;
   projectRoot: string;
   headSha: string;
+  /** Framework versions (P5-10). Next.js `app/` rules run only when the `next` major is unknown or at least 13. */
+  frameworkVersions?: readonly FrameworkDetection[];
 }
 
 const APPLICATION_MAP_LIMITATIONS = [

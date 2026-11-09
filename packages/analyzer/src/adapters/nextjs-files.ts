@@ -13,7 +13,24 @@ export function matchPagesFile(file: string): string | undefined {
   return /(?:^|\/)pages\/(.+)\.tsx?$/.exec(file)?.[1];
 }
 
+/**
+ * Next.js dynamic segments in the route's common `:param` form: `[id]` → `:id`, and both catch-all
+ * `[...slug]` and optional catch-all `[[...slug]]` → `:slug*`. Other segments are kept as written.
+ */
+export function normalizeNextSegment(segment: string): string {
+  const catchAll = /^\[\[?\.\.\.([^\]]+)\]\]?$/.exec(segment);
+  if (catchAll) return `:${catchAll[1]}*`;
+  const dynamic = /^\[([^\].]+)\]$/.exec(segment);
+  return dynamic ? `:${dynamic[1]}` : segment;
+}
+
 export function segmentsToRoute(value: string): string {
   return joinRoute(...value.split('/')
-    .filter(segment => segment && !/^\(.*\)$/.test(segment) && !segment.startsWith('@') && !segment.startsWith('_')));
+    .filter(segment => segment && !/^\(.*\)$/.test(segment) && !segment.startsWith('@') && !segment.startsWith('_'))
+    .map(normalizeNextSegment));
+}
+
+/** Major version of `next` detected for the project, or undefined when unknown. */
+export function nextMajor(frameworkVersions: ReadonlyArray<{ framework: string; major?: number }> | undefined): number | undefined {
+  return frameworkVersions?.find(detection => detection.framework === 'next')?.major;
 }

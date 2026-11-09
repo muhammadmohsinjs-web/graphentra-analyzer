@@ -175,6 +175,7 @@ export function createAdapterContext(input: ExtractApplicationMapInput): Adapter
 
   return {
     program: input.program, checker, sourceFiles, files, projectRoot: input.projectRoot, entities: input.entities,
+    frameworkVersions: input.frameworkVersions ?? [],
     symbolToEntity, entityDeclaration, entityForDeclaration, frameworks: new Set<string>(), redirectLinks: [] as RedirectLink[],
     toProjectPath, relativeOf, inAnalyzed, resolve, symbolOf, declarationBody, resolveConstant, str, moduleDefault, sourceFileExport,
     memo: <T>(key: string, factory: () => T): T => {
