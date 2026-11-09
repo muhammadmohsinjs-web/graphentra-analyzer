@@ -1,0 +1,50 @@
+[
+  {
+    "id": "api:GET /api/orders",
+    "kind": "api_endpoint",
+    "route": "/api/orders",
+    "method": "GET",
+    "source": "next-route-handler",
+    "file": "app/api/orders/route.ts",
+    "line": 1,
+    "entryEntityIds": [
+      "app/api/orders/route.ts#GET"
+    ]
+  },
+  {
+    "id": "api:POST /api/orders",
+    "kind": "api_endpoint",
+    "route": "/api/orders",
+    "method": "POST",
+    "source": "next-route-handler",
+    "file": "app/api/orders/route.ts",
+    "line": 1,
+    "entryEntityIds": [
+      "app/api/orders/route.ts#POST"
+    ]
+  },
+  {
+    "id": "ui:/",
+    "kind": "ui_route",
+    "route": "/",
+    "method": null,
+    "source": "next-app-router",
+    "file": "app/page.tsx",
+    "line": 1,
+    "entryEntityIds": [
+      "app/page.tsx#HomePage"
+    ]
+  },
+  {
+    "id": "ui:/dashboard",
+    "kind": "ui_route",
+    "route": "/dashboard",
+    "method": null,
+    "source": "next-app-router",
+    "file": "app/dashboard/page.tsx",
+    "line": 1,
+    "entryEntityIds": [
+      "app/dashboard/page.tsx#DashboardPage"
+    ]
+  }
+]

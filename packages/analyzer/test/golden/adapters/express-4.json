@@ -1,0 +1,58 @@
+[
+  {
+    "id": "api:GET /api/orders/:id",
+    "kind": "api_endpoint",
+    "route": "/api/orders/:id",
+    "method": "GET",
+    "source": "http-router",
+    "file": "src/app.ts",
+    "line": 17,
+    "entryEntityIds": [
+      "src/orderHandlers.ts#getOrder"
+    ]
+  },
+  {
+    "id": "api:GET /api/orders/:id/summary",
+    "kind": "api_endpoint",
+    "route": "/api/orders/:id/summary",
+    "method": "GET",
+    "source": "http-router",
+    "file": "src/app.ts",
+    "line": 19,
+    "entryEntityIds": [
+      "src/orderService.ts#findOrder"
+    ]
+  },
+  {
+    "id": "api:GET /health",
+    "kind": "api_endpoint",
+    "route": "/health",
+    "method": "GET",
+    "source": "http-router",
+    "file": "src/app.ts",
+    "line": 9,
+    "entryEntityIds": []
+  },
+  {
+    "id": "api:POST /api/orders",
+    "kind": "api_endpoint",
+    "route": "/api/orders",
+    "method": "POST",
+    "source": "http-router",
+    "file": "src/app.ts",
+    "line": 18,
+    "entryEntityIds": [
+      "src/orderHandlers.ts#createOrderHandler"
+    ]
+  },
+  {
+    "id": "api:POST /login",
+    "kind": "api_endpoint",
+    "route": "/login",
+    "method": "POST",
+    "source": "http-router",
+    "file": "src/app.ts",
+    "line": 13,
+    "entryEntityIds": []
+  }
+]
