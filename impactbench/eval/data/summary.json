@@ -1,0 +1,1293 @@
+{
+ "generatedAt": "2026-11-09T16:45:16.726Z",
+ "reportModel": "openai/gpt-6-luna",
+ "judgeModel": "deepseek/deepseek-v4-pro-0813",
+ "byVariant": {
+  "base": {
+   "reports": 47,
+   "valid": 43,
+   "catch": 14,
+   "explained": 14,
+   "area": 31,
+   "commitsMajorityCatch": 9,
+   "commitsMajorityExplained": 10,
+   "commitsAnyCatch": 11,
+   "commits": 31,
+   "catchBy": {
+    "app": 9,
+    "lib": 5
+   },
+   "reportsBy": {
+    "app": 30,
+    "lib": 17
+   },
+   "failures": {
+    "other": 2,
+    "semantic-other": 2
+   },
+   "judgeErrors": 0,
+   "lookups": {
+    "mean": 0,
+    "reportsUsing": 0,
+    "truthTouched": 0,
+    "outsideTouched": 0
+   },
+   "cost": 0.6706798549999998,
+   "judgeCost": 0.24309388679999996,
+   "meanSeconds": 275.21276595744683
+  },
+  "lookup": {
+   "reports": 40,
+   "valid": 38,
+   "catch": 13,
+   "explained": 13,
+   "area": 31,
+   "commitsMajorityCatch": 7,
+   "commitsMajorityExplained": 8,
+   "commitsAnyCatch": 11,
+   "commits": 25,
+   "catchBy": {
+    "app": 8,
+    "lib": 5
+   },
+   "reportsBy": {
+    "app": 23,
+    "lib": 17
+   },
+   "failures": {
+    "semantic-other": 2
+   },
+   "judgeErrors": 0,
+   "lookups": {
+    "mean": 1.225,
+    "reportsUsing": 24,
+    "truthTouched": 11,
+    "outsideTouched": 1
+   },
+   "cost": 0.6493071800000001,
+   "judgeCost": 0.167089615368,
+   "meanSeconds": 460.775
+  },
+  "lookup-always": {
+   "reports": 21,
+   "valid": 21,
+   "catch": 6,
+   "explained": 5,
+   "area": 11,
+   "commitsMajorityCatch": 2,
+   "commitsMajorityExplained": 2,
+   "commitsAnyCatch": 3,
+   "commits": 7,
+   "catchBy": {
+    "app": 4,
+    "lib": 2
+   },
+   "reportsBy": {
+    "app": 12,
+    "lib": 9
+   },
+   "failures": {},
+   "judgeErrors": 0,
+   "lookups": {
+    "mean": 3.3333333333333335,
+    "reportsUsing": 21,
+    "truthTouched": 11,
+    "outsideTouched": 0
+   },
+   "cost": 0.27516476,
+   "judgeCost": 0.0724345712,
+   "meanSeconds": 504.85714285714283
+  }
+ },
+ "costTime": [
+  {
+   "variant": "base",
+   "payloadKB": "0-50",
+   "reports": 12,
+   "meanSeconds": 145,
+   "medianSeconds": 132,
+   "meanCost": 0.006366847733333333,
+   "totalCost": 0.0764021728
+  },
+  {
+   "variant": "base",
+   "payloadKB": "50-250",
+   "reports": 21,
+   "meanSeconds": 276,
+   "medianSeconds": 251,
+   "meanCost": 0.009231971142857143,
+   "totalCost": 0.193871394
+  },
+  {
+   "variant": "base",
+   "payloadKB": "250-500",
+   "reports": 8,
+   "meanSeconds": 332,
+   "medianSeconds": 273,
+   "meanCost": 0.018302539875000003,
+   "totalCost": 0.14642031900000002
+  },
+  {
+   "variant": "base",
+   "payloadKB": "500-1024",
+   "reports": 2,
+   "meanSeconds": 645,
+   "medianSeconds": 663,
+   "meanCost": 0.074511253,
+   "totalCost": 0.149022506
+  },
+  {
+   "variant": "base",
+   "payloadKB": "1024-2048",
+   "reports": 1,
+   "meanSeconds": 585,
+   "medianSeconds": 585,
+   "meanCost": 0.10259468000000001,
+   "totalCost": 0.10259468000000001
+  },
+  {
+   "variant": "base",
+   "payloadKB": "2048-",
+   "reports": 3,
+   "meanSeconds": 290,
+   "medianSeconds": 238,
+   "meanCost": 0.08182089000000001,
+   "totalCost": 0.24546267000000002
+  },
+  {
+   "variant": "lookup",
+   "payloadKB": "0-50",
+   "reports": 12,
+   "meanSeconds": 297,
+   "medianSeconds": 303,
+   "meanCost": 0.0065892031040000005,
+   "totalCost": 0.079070437248
+  },
+  {
+   "variant": "lookup",
+   "payloadKB": "50-250",
+   "reports": 19,
+   "meanSeconds": 514,
+   "medianSeconds": 452,
+   "meanCost": 0.016822688322105265,
+   "totalCost": 0.31963107812
+  },
+  {
+   "variant": "lookup",
+   "payloadKB": "250-500",
+   "reports": 7,
+   "meanSeconds": 545,
+   "medianSeconds": 550,
+   "meanCost": 0.02919109285714286,
+   "totalCost": 0.20433765
+  },
+  {
+   "variant": "lookup",
+   "payloadKB": "500-1024",
+   "reports": 2,
+   "meanSeconds": 650,
+   "medianSeconds": 789,
+   "meanCost": 0.10667881500000001,
+   "totalCost": 0.21335763000000002
+  },
+  {
+   "variant": "lookup-always",
+   "payloadKB": "0-50",
+   "reports": 6,
+   "meanSeconds": 369,
+   "medianSeconds": 455,
+   "meanCost": 0.0095095,
+   "totalCost": 0.057057000000000004
+  },
+  {
+   "variant": "lookup-always",
+   "payloadKB": "50-250",
+   "reports": 12,
+   "meanSeconds": 543,
+   "medianSeconds": 585,
+   "meanCost": 0.0171793531,
+   "totalCost": 0.2061522372
+  },
+  {
+   "variant": "lookup-always",
+   "payloadKB": "250-500",
+   "reports": 3,
+   "meanSeconds": 623,
+   "medianSeconds": 632,
+   "meanCost": 0.028130031333333333,
+   "totalCost": 0.084390094
+  }
+ ],
+ "perCommit": [
+  {
+   "id": "consola-01",
+   "repo": "consola",
+   "changeClass": "plain-logic",
+   "hasContext": false,
+   "payloadBytes": 31654,
+   "impacts": 2,
+   "truth": [
+    "changed",
+    "changed"
+   ],
+   "base": {
+    "runs": 3,
+    "valid": 3,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 3,
+    "valid": 3,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 3
+   },
+   "lookup-always": {
+    "runs": 3,
+    "valid": 3,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 11
+   }
+  },
+  {
+   "id": "consola-02",
+   "repo": "consola",
+   "changeClass": "plain-logic",
+   "hasContext": false,
+   "payloadBytes": 36095,
+   "impacts": 13,
+   "truth": [
+    "changed"
+   ],
+   "base": {
+    "runs": 3,
+    "valid": 3,
+    "catch": 3,
+    "explained": 3,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 3,
+    "valid": 3,
+    "catch": 3,
+    "explained": 3,
+    "lookups": 0
+   },
+   "lookup-always": {
+    "runs": 3,
+    "valid": 3,
+    "catch": 2,
+    "explained": 2,
+    "lookups": 8
+   }
+  },
+  {
+   "id": "consola-03",
+   "repo": "consola",
+   "changeClass": "same-signature-behavior",
+   "hasContext": false,
+   "payloadBytes": 243856,
+   "impacts": 47,
+   "truth": [
+    "changed"
+   ],
+   "base": {
+    "runs": 3,
+    "valid": 3,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 3,
+    "valid": 3,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup-always": {
+    "runs": 3,
+    "valid": 3,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 7
+   }
+  },
+  {
+   "id": "excalidraw-01",
+   "repo": "excalidraw",
+   "changeClass": "plain-logic",
+   "hasContext": true,
+   "payloadBytes": 321991,
+   "impacts": 50,
+   "truth": [
+    "changed"
+   ],
+   "base": {
+    "runs": 3,
+    "valid": 3,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 3,
+    "valid": 3,
+    "catch": 1,
+    "explained": 0,
+    "lookups": 6
+   },
+   "lookup-always": {
+    "runs": 3,
+    "valid": 3,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 12
+   }
+  },
+  {
+   "id": "excalidraw-02",
+   "repo": "excalidraw",
+   "changeClass": "plain-logic",
+   "hasContext": true,
+   "payloadBytes": 119262,
+   "impacts": 22,
+   "truth": [
+    "changed",
+    "changed"
+   ],
+   "base": {
+    "runs": 3,
+    "valid": 3,
+    "catch": 2,
+    "explained": 2,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 3,
+    "valid": 3,
+    "catch": 1,
+    "explained": 2,
+    "lookups": 5
+   },
+   "lookup-always": {
+    "runs": 3,
+    "valid": 3,
+    "catch": 3,
+    "explained": 2,
+    "lookups": 12
+   }
+  },
+  {
+   "id": "excalidraw-03",
+   "repo": "excalidraw",
+   "changeClass": "plain-logic",
+   "hasContext": true,
+   "payloadBytes": 181390,
+   "impacts": 20,
+   "truth": [
+    "changed",
+    "blast*",
+    "blast*",
+    "blast*"
+   ],
+   "base": {
+    "runs": 3,
+    "valid": 3,
+    "catch": 1,
+    "explained": 2,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 3,
+    "valid": 3,
+    "catch": 1,
+    "explained": 3,
+    "lookups": 10
+   },
+   "lookup-always": {
+    "runs": 3,
+    "valid": 3,
+    "catch": 1,
+    "explained": 1,
+    "lookups": 7
+   }
+  },
+  {
+   "id": "excalidraw-04",
+   "repo": "excalidraw",
+   "changeClass": "plain-logic",
+   "hasContext": true,
+   "payloadBytes": 219219,
+   "impacts": 12,
+   "truth": [
+    "changed"
+   ],
+   "base": {
+    "runs": 3,
+    "valid": 3,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 3,
+    "valid": 3,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 5
+   },
+   "lookup-always": {
+    "runs": 3,
+    "valid": 3,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 13
+   }
+  },
+  {
+   "id": "excalidraw-05",
+   "repo": "excalidraw",
+   "changeClass": "plain-logic",
+   "hasContext": true,
+   "payloadBytes": 479401,
+   "impacts": 26,
+   "truth": [
+    "changed"
+   ],
+   "base": {
+    "runs": 3,
+    "valid": 3,
+    "catch": 1,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 2,
+    "valid": 2,
+    "catch": 1,
+    "explained": 0,
+    "lookups": 2
+   },
+   "lookup-always": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   }
+  },
+  {
+   "id": "excalidraw-06",
+   "repo": "excalidraw",
+   "changeClass": "same-signature-behavior",
+   "hasContext": true,
+   "payloadBytes": 136098,
+   "impacts": 10,
+   "truth": [
+    "changed",
+    "changed",
+    "changed",
+    "changed",
+    "changed"
+   ],
+   "base": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 1
+   },
+   "lookup-always": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   }
+  },
+  {
+   "id": "excalidraw-07",
+   "repo": "excalidraw",
+   "changeClass": "same-signature-behavior",
+   "hasContext": true,
+   "payloadBytes": 13633,
+   "impacts": 5,
+   "truth": [
+    "missed(not in payload)",
+    "changed",
+    "missed(not in payload)*"
+   ],
+   "base": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 1,
+    "explained": 1,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 1,
+    "explained": 1,
+    "lookups": 2
+   },
+   "lookup-always": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   }
+  },
+  {
+   "id": "excalidraw-08",
+   "repo": "excalidraw",
+   "changeClass": "plain-logic",
+   "hasContext": true,
+   "payloadBytes": 94791,
+   "impacts": 10,
+   "truth": [
+    "changed"
+   ],
+   "base": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup-always": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   }
+  },
+  {
+   "id": "excalidraw-09",
+   "repo": "excalidraw",
+   "changeClass": "timing-limit-constant",
+   "hasContext": true,
+   "payloadBytes": 138203,
+   "impacts": 8,
+   "truth": [
+    "changed",
+    "missed(not in payload)*",
+    "changed",
+    "missed(not in payload)*",
+    "missed(not in payload)*"
+   ],
+   "base": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 1
+   },
+   "lookup-always": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   }
+  },
+  {
+   "id": "excalidraw-10",
+   "repo": "excalidraw",
+   "changeClass": "plain-logic",
+   "hasContext": true,
+   "payloadBytes": 576840,
+   "impacts": 38,
+   "truth": [
+    "changed",
+    "changed"
+   ],
+   "base": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup-always": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   }
+  },
+  {
+   "id": "excalidraw-11",
+   "repo": "excalidraw",
+   "changeClass": "same-signature-behavior",
+   "hasContext": true,
+   "payloadBytes": 468203,
+   "impacts": 17,
+   "truth": [
+    "changed",
+    "changed",
+    "receiver*"
+   ],
+   "base": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 1,
+    "explained": 1,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 1,
+    "explained": 1,
+    "lookups": 2
+   },
+   "lookup-always": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   }
+  },
+  {
+   "id": "excalidraw-12",
+   "repo": "excalidraw",
+   "changeClass": "plain-logic",
+   "hasContext": true,
+   "payloadBytes": 899606,
+   "impacts": 23,
+   "truth": [
+    "changed",
+    "blast",
+    "changed"
+   ],
+   "base": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 1,
+    "explained": 1,
+    "lookups": 0
+   },
+   "lookup-always": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   }
+  },
+  {
+   "id": "excalidraw-13",
+   "repo": "excalidraw",
+   "changeClass": "plain-logic",
+   "hasContext": true,
+   "payloadBytes": 2294092,
+   "impacts": 28,
+   "truth": [
+    "changed"
+   ],
+   "base": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup-always": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   }
+  },
+  {
+   "id": "excalidraw-14",
+   "repo": "excalidraw",
+   "changeClass": "same-signature-behavior",
+   "hasContext": true,
+   "payloadBytes": 106923,
+   "impacts": 20,
+   "truth": [
+    "missed(not in payload)",
+    "missed(not in payload)",
+    "receiver*",
+    "receiver*"
+   ],
+   "base": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 3
+   },
+   "lookup-always": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   }
+  },
+  {
+   "id": "excalidraw-15",
+   "repo": "excalidraw",
+   "changeClass": "same-signature-behavior",
+   "hasContext": true,
+   "payloadBytes": 337786,
+   "impacts": 5,
+   "truth": [
+    "blast",
+    "changed",
+    "blast",
+    "blast*",
+    "blast*",
+    "blast*",
+    "blast*",
+    "blast*"
+   ],
+   "base": {
+    "runs": 1,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 1,
+    "explained": 1,
+    "lookups": 2
+   },
+   "lookup-always": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   }
+  },
+  {
+   "id": "excalidraw-16",
+   "repo": "excalidraw",
+   "changeClass": "same-signature-behavior",
+   "hasContext": true,
+   "payloadBytes": 207623,
+   "impacts": 15,
+   "truth": [
+    "changed",
+    "changed",
+    "changed"
+   ],
+   "base": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 1,
+    "explained": 1,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup-always": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   }
+  },
+  {
+   "id": "excalidraw-17",
+   "repo": "excalidraw",
+   "changeClass": "same-signature-behavior",
+   "hasContext": true,
+   "payloadBytes": 1091824,
+   "impacts": 21,
+   "truth": [
+    "changed",
+    "changed"
+   ],
+   "base": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 1,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup-always": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   }
+  },
+  {
+   "id": "excalidraw-18",
+   "repo": "excalidraw",
+   "changeClass": "plain-logic",
+   "hasContext": true,
+   "payloadBytes": 110016,
+   "impacts": 15,
+   "truth": [
+    "changed"
+   ],
+   "base": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 1,
+    "explained": 1,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup-always": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   }
+  },
+  {
+   "id": "excalidraw-19",
+   "repo": "excalidraw",
+   "changeClass": "plain-logic",
+   "hasContext": true,
+   "payloadBytes": 3122686,
+   "impacts": 41,
+   "truth": [
+    "changed",
+    "changed",
+    "changed",
+    "changed"
+   ],
+   "base": {
+    "runs": 1,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup-always": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   }
+  },
+  {
+   "id": "excalidraw-20",
+   "repo": "excalidraw",
+   "changeClass": "same-signature-behavior",
+   "hasContext": true,
+   "payloadBytes": 4973282,
+   "impacts": 38,
+   "truth": [
+    "blast*",
+    "changed",
+    "blast*"
+   ],
+   "base": {
+    "runs": 1,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup-always": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   }
+  },
+  {
+   "id": "excalidraw-21",
+   "repo": "excalidraw",
+   "changeClass": "plain-logic",
+   "hasContext": true,
+   "payloadBytes": 2055735,
+   "impacts": 71,
+   "truth": [
+    "changed",
+    "changed",
+    "changed"
+   ],
+   "base": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup-always": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   }
+  },
+  {
+   "id": "json-server-01",
+   "repo": "json-server",
+   "changeClass": "plain-logic",
+   "hasContext": false,
+   "payloadBytes": 4773,
+   "impacts": 1,
+   "truth": [
+    "changed"
+   ],
+   "base": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 1,
+    "explained": 1,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 1
+   },
+   "lookup-always": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   }
+  },
+  {
+   "id": "json-server-02",
+   "repo": "json-server",
+   "changeClass": "return-shape",
+   "hasContext": false,
+   "payloadBytes": 4375,
+   "impacts": 1,
+   "truth": [
+    "changed"
+   ],
+   "base": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 1,
+    "explained": 1,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 1,
+    "explained": 1,
+    "lookups": 1
+   },
+   "lookup-always": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   }
+  },
+  {
+   "id": "ofetch-01",
+   "repo": "ofetch",
+   "changeClass": "same-signature-behavior",
+   "hasContext": false,
+   "payloadBytes": 19890,
+   "impacts": 3,
+   "truth": [
+    "changed",
+    "changed"
+   ],
+   "base": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup-always": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   }
+  },
+  {
+   "id": "ofetch-02",
+   "repo": "ofetch",
+   "changeClass": "plain-logic",
+   "hasContext": false,
+   "payloadBytes": 29023,
+   "impacts": 4,
+   "truth": [
+    "changed",
+    "changed"
+   ],
+   "base": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup-always": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   }
+  },
+  {
+   "id": "pathe-01",
+   "repo": "pathe",
+   "changeClass": "plain-logic",
+   "hasContext": false,
+   "payloadBytes": 23556,
+   "impacts": 8,
+   "truth": [
+    "changed",
+    "changed"
+   ],
+   "base": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 0,
+    "explained": 1,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 1,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup-always": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   }
+  },
+  {
+   "id": "ufo-01",
+   "repo": "ufo",
+   "changeClass": "plain-logic",
+   "hasContext": false,
+   "payloadBytes": 254480,
+   "impacts": 46,
+   "truth": [
+    "changed",
+    "changed",
+    "changed"
+   ],
+   "base": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 1,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup-always": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   }
+  },
+  {
+   "id": "ufo-02",
+   "repo": "ufo",
+   "changeClass": "plain-logic",
+   "hasContext": false,
+   "payloadBytes": 232516,
+   "impacts": 51,
+   "truth": [
+    "changed",
+    "changed"
+   ],
+   "base": {
+    "runs": 1,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 1,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup-always": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   }
+  },
+  {
+   "id": "ufo-03",
+   "repo": "ufo",
+   "changeClass": "plain-logic",
+   "hasContext": false,
+   "payloadBytes": 58753,
+   "impacts": 8,
+   "truth": [
+    "changed"
+   ],
+   "base": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   },
+   "lookup": {
+    "runs": 1,
+    "valid": 1,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 5
+   },
+   "lookup-always": {
+    "runs": 0,
+    "valid": 0,
+    "catch": 0,
+    "explained": 0,
+    "lookups": 0
+   }
+  }
+ ]
+}

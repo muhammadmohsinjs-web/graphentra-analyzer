@@ -7,3 +7,4 @@ export * from './qa-evidence';
 export * from './application-context';
 export * from './report-generator';
 export * from './surface-evidence';
+export * from './code-lookup';
