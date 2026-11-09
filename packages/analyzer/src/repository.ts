@@ -1,4 +1,4 @@
-import { matchesGlob } from './config';
+import { matchesPathGlob } from './config';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import * as fs from 'node:fs';
@@ -163,7 +163,7 @@ export function createRepositoryContext(
   function includesPath(file: string): boolean {
     return !file.split('/').some(part => IGNORED_DIRECTORIES.has(part)) &&
       !prefixExcludes.some(excluded => excluded === '.' || file === excluded || file.startsWith(`${excluded}/`)) &&
-      !excludeGlobs.some(glob => matchesGlob(file, glob) || matchesGlob(file, `${glob.replace(/\/+$/, '')}/**`));
+      !excludeGlobs.some(glob => matchesPathGlob(file, glob));
   }
   const targetFilter = ['--', projectInsideRepository];
   function listFiles(untracked = false): string[] {

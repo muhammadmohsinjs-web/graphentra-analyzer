@@ -126,6 +126,21 @@ test('graphentra.yml: an invalid file is an error diagnostic and is ignored; a c
   } finally { manual.repo.cleanup(); }
 });
 
+test('graphentra.yml: ignore/tests entries outside the project are CONFIG_INVALID, not a validation failure', () => {
+  for (const [yml, line] of [['ignore:\n  - "../outside"\n', 3], ['ignore:\n  - "/abs/**"\n', 3], ['tests:\n  - "a//b"\n', 3]] as const) {
+    const { repo, base, head } = goalRepository(dir => fs.writeFileSync(path.join(dir, 'graphentra.yml'), `version: 1\n${yml}`));
+    try {
+      const evidence = analyzeRepository({ target: repo.dir, comparison: { mode: 'commit', base, head }, evidenceSchema: '3.0' }).evidence;
+      assert.deepEqual(validateEvidenceEnvelope(evidence).errors, []);
+      const diagnostic = evidence.diagnostics.find(item => item.code === 'CONFIG_INVALID');
+      assert.equal(diagnostic?.severity, 'error');
+      assert.ok(diagnostic?.message.startsWith(`graphentra.yml:${line}:`), diagnostic?.message);
+      assert.equal(evidence.config, undefined);
+      assert.ok(evidence.options.excludePaths.every(value => !value.startsWith('/') && !value.includes('..')));
+    } finally { repo.cleanup(); }
+  }
+});
+
 test('schema 3.0: an unresolvable fetch URL is a dynamic_endpoint_url frontier item of the calling entity', () => {
   const { repo, base, head } = goalRepository(dir => fs.writeFileSync(path.join(dir, 'lib/client.ts'),
     "import { createOrder } from './orders';\n\nexport async function send(url: string) {\n  createOrder(2);\n  return fetch(url, { method: 'POST' });\n}\n"));
@@ -158,11 +173,13 @@ test('D10: surface and test extraction failures never block evidence', () => {
       [['SURFACE_EXTRACTION_FAILED', 'warning'], ['TEST_EXTRACTION_FAILED', 'warning']]);
     assert.ok(both.impacts.every(impact => impact.affectedSurfaces === undefined));
 
-    // A real map failure (mapResult.failure) takes the same surface path; tests still run on what is left.
+    // A real map failure (mapResult.failure) takes the same surface path; tests still run on what is left, but no
+    // testMapping is emitted: `uncoveredSurfaces: []` without surfaces would read as "everything covered".
     const mapFailed = buildPhase5Evidence({ ...input, mapResult: { ...input.mapResult, failure: 'Application map extraction failed: x' },
       stages: { tests: () => ({ tests: [], edges: [] }) } });
     assert.deepEqual(mapFailed.diagnostics.map(item => item.code), ['SURFACE_EXTRACTION_FAILED']);
-    assert.deepEqual(mapFailed.testMapping, { basis: 'static-reach', testsToRun: [], uncoveredSurfaces: [] });
+    assert.equal(mapFailed.testMapping, undefined);
+    assert.equal('testMapping' in mapFailed, false);
 
     const testsOnly = buildPhase5Evidence({ ...input, stages: { surfaces: () => ({ surfaces: evidence.surfaces!,
       surfaceEdges: evidence.surfaceEdges!.filter(edge => edge.type !== 'TEST_COVERS'), adapters: [], frontier: [], diagnostics: [] }), tests: boom } });

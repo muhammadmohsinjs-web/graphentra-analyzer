@@ -31,7 +31,7 @@ import {
 } from './impact';
 import { fingerprint, normalizeNode } from './ast-normalize';
 import { classifyChange, fingerprintsOf, type EntityFingerprints } from './change-taxonomy';
-import { DEFAULT_LIMITATIONS, EXTENDED_LIMITATIONS } from './output';
+import { DEFAULT_LIMITATIONS, EXTENDED_LIMITATIONS, SCHEMA_3_LIMITATIONS } from './output';
 import { createBaselineSnapshot } from './baseline-host';
 import { buildCoverage, mapSnapshotSkipReason } from './coverage';
 import { DEFAULT_INPUT_LIMITS, inspectContent, type SkippedInput } from './input-limits';
@@ -331,7 +331,7 @@ export function analyzeRepository(options: AnalyzeOptions): AnalyzeResult {
       : { excludePaths: repo.excludePaths, sourcePolicy },
     ...(extended ? { toolchain: buildToolchainRecord() } : {}),
     outcome, technicalGraph: extracted.technicalGraph, changedFiles, changedEntities, impacts,
-    diagnostics, limitations: [...(extended ? EXTENDED_LIMITATIONS : DEFAULT_LIMITATIONS)],
+    diagnostics, limitations: [...(schema3 ? SCHEMA_3_LIMITATIONS : extended ? EXTENDED_LIMITATIONS : DEFAULT_LIMITATIONS)],
     ...(baseEntities.length > 0 ? { baseEntities } : {}),
     ...(skippedEntities.length > 0 ? { skippedEntities } : {}),
     ...(frontier ? { frontier } : {}),

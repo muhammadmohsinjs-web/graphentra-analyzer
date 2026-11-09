@@ -26,3 +26,25 @@ test('3.0 evidence adds affected surfaces, tests to run and uncovered surfaces',
   assert.match(markdown, /## Tests to run\n\n- `test:e2e\/home\.cy\.ts#home > loads users` reaches `ui:\/`/);
   assert.match(markdown, /## Uncovered surfaces\n\n- `ui:\/settings`/);
 });
+
+test('3.0 evidence without testMapping says the mapping is unavailable instead of "all covered"', () => {
+  const doc = v30(); delete doc.testMapping;
+  const evidence = readEvidence(doc);
+  assert.equal(evidence.testMappingAvailable, false);
+  const surfaceEvidence = buildSurfaceEvidence(evidence)!;
+  assert.equal(surfaceEvidence.testMappingAvailable, false);
+  assert.deepEqual([surfaceEvidence.testsToRun, surfaceEvidence.uncoveredSurfaces], [[], []]);
+  const markdown = formatSurfaceEvidence(surfaceEvidence);
+  assert.match(markdown, /Test mapping unavailable/);
+  assert.doesNotMatch(markdown, /## Uncovered surfaces/);
+
+  // Surface extraction failed too: no surfaces, still not silent.
+  const empty = { ...v30(), surfaces: [], surfaceEdges: [], tests: [], adapters: [] } as any;
+  delete empty.testMapping;
+  for (const impact of empty.impacts) delete impact.affectedSurfaces;
+  assert.match(formatSurfaceEvidence(buildSurfaceEvidence(readEvidence(empty))), /Test mapping unavailable/);
+});
+
+test('2.1 evidence never mentions test mapping', () => {
+  assert.doesNotMatch(formatSurfaceEvidence(buildSurfaceEvidence(readEvidence(v21()))), /Test mapping/);
+});

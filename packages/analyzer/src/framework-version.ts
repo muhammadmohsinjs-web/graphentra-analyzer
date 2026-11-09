@@ -65,8 +65,60 @@ const fromPackageLock = (text: string, name: string, relProject: string): string
   return undefined;
 };
 
-const fromPnpmLock = (text: string, name: string): string | undefined => {
+/**
+ * The `importers:` block of a pnpm lockfile whose key equals the project path relative to the lockfile dir (`.` for
+ * the lockfile's own dir), reduced to its `dependencies` / `devDependencies` sections. `null` when the lockfile has
+ * an `importers:` section but no matching importer (so another workspace's version is never used); undefined when
+ * there is no `importers:` section (single-project lockfile).
+ */
+const pnpmImporterBlock = (text: string, relProject: string): string | null | undefined => {
+  const lines = text.split(/\r?\n/);
+  const start = lines.findIndex(line => /^importers:\s*$/.test(line));
+  if (start < 0) return undefined;
+  const wanted = relProject === '' ? '.' : relProject;
+  let importerIndent: number | undefined;
+  let inImporter = false;
+  let sectionIndent: number | undefined;
+  let keep = false;
+  const out: string[] = [];
+  for (const line of lines.slice(start + 1)) {
+    if (line.trim() === '' || /^\s*#/.test(line)) continue;
+    const indent = /^ */.exec(line)![0].length;
+    if (indent === 0) break;
+    importerIndent ??= indent;
+    if (indent === importerIndent) {
+      const key = line.trim().replace(/:\s*(\{\}\s*)?$/, '').replace(/^['"]|['"]$/g, '');
+      inImporter = key === wanted;
+      sectionIndent = undefined;
+      keep = false;
+      continue;
+    }
+    if (!inImporter) continue;
+    sectionIndent ??= indent;
+    if (indent === sectionIndent) { keep = /^(dependencies|devDependencies):\s*$/.test(line.trim()); if (keep) out.push(line); continue; }
+    if (keep) out.push(line);
+  }
+  return out.length > 0 ? `${out.join('\n')}\n` : null;
+};
+
+const fromPnpmLock = (text: string, name: string, relProject: string): string | undefined => {
   const n = escapeRegExp(name);
+  const importer = pnpmImporterBlock(text, relProject);
+  const importerForms = [
+    // importer form: name:\n  specifier: ...\n  version: 14.2.3(react@...)
+    new RegExp(`^[ \\t]+['"]?${n}['"]?:[ \\t]*\\r?\\n[ \\t]+specifier:[^\\n]*\\n[ \\t]+version:[ \\t]*['"]?(\\d[^\\s'"(]*)`, 'm'),
+    // pnpm v5 importer form: next: 14.2.3
+    new RegExp(`^[ \\t]+['"]?${n}['"]?:[ \\t]+['"]?(\\d[^\\s'"(]*)`, 'm'),
+  ];
+  if (importer !== undefined) {
+    // Workspace lockfile: only the project's own importer counts (D11: its dependencies / devDependencies).
+    if (importer === null) return undefined;
+    for (const re of importerForms) {
+      const m = re.exec(importer);
+      if (m) return m[1];
+    }
+    return undefined;
+  }
   const forms = [
     // importer form: name:\n  specifier: ...\n  version: 14.2.3(react@...)
     new RegExp(`^[ \\t]+['"]?${n}['"]?:[ \\t]*\\r?\\n[ \\t]+specifier:[^\\n]*\\n[ \\t]+version:[ \\t]*['"]?(\\d[^\\s'"(]*)`, 'm'),
@@ -127,7 +179,8 @@ export const detectFrameworkVersions = (input: {
     const pkg = parseJson(read(path.join(projectRoot, 'package.json')));
     if (!isRecord(pkg)) return [];
     const declaredMap = new Map<string, string>();
-    for (const field of ['peerDependencies', 'devDependencies', 'dependencies']) {
+    // D11: dependencies and devDependencies only (dependencies wins); peerDependencies are not the project's version.
+    for (const field of ['devDependencies', 'dependencies']) {
       const deps = pkg[field];
       if (!isRecord(deps)) continue;
       for (const [k, v] of Object.entries(deps)) if (typeof v === 'string') declaredMap.set(k, v);
@@ -149,7 +202,7 @@ export const detectFrameworkVersions = (input: {
         try {
           const rel = path.relative(lock.dir, projectRoot).split(path.sep).join('/');
           resolved = lock.kind === 'npm' ? fromPackageLock(lock.text, framework, rel)
-            : lock.kind === 'pnpm' ? fromPnpmLock(lock.text, framework)
+            : lock.kind === 'pnpm' ? fromPnpmLock(lock.text, framework, rel)
             : fromYarnLock(lock.text, framework, declared);
         } catch { resolved = undefined; }
         if (resolved) break;

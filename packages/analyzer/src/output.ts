@@ -41,6 +41,11 @@ export const EXTENDED_LIMITATIONS = [
   'Blast radius is limited to depth 6.',
 ];
 
+/** Schema 3.0 limitations: the extended list with the surface line replaced (2.x lists stay unchanged). */
+export const SCHEMA_3_LIMITATIONS = EXTENDED_LIMITATIONS.map(line => (line === 'Application surfaces are not yet discovered.'
+  ? 'Application surfaces are discovered from static TypeScript routing patterns (Next.js, React Router, route configs, Express-style routers, NestJS) and graphentra.yml; dynamically built routes are not discovered, and surface reach is limited to depth 10.'
+  : line));
+
 export function printChangedFile(change: ChangedFile): void {
   console.log('\n----------------------------------------');
   console.log(`📄 ${change.file}`);

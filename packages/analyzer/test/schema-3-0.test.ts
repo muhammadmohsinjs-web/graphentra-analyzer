@@ -117,7 +117,8 @@ test('readEvidence normalizes 2.0, 2.1 and 3.0', () => {
   const read20 = readEvidence(legacy);
   assert.equal(read20.schemaVersion, '2.0');
   assert.deepEqual([read20.surfaces, read20.surfaceEdges, read20.tests], [[], [], []]);
-  assert.deepEqual(read20.testMapping, { basis: 'static-reach', testsToRun: [], uncoveredSurfaces: [] });
+  assert.equal(read20.testMapping, undefined, 'the reader never invents a testMapping');
+  assert.equal(read20.testMappingAvailable, false);
   assert.equal('surfaces' in legacy, false, 'input must not be modified');
 
   const extended = clone(nonWeb()) as any;
@@ -131,7 +132,12 @@ test('readEvidence normalizes 2.0, 2.1 and 3.0', () => {
   const read30 = readEvidence(withTests());
   assert.equal(read30.surfaces.length, 3);
   assert.equal(read30.tests.length, 2);
-  assert.deepEqual(read30.testMapping.uncoveredSurfaces, ['ui:/settings']);
+  assert.deepEqual(read30.testMapping?.uncoveredSurfaces, ['ui:/settings']);
+  assert.equal(read30.testMappingAvailable, true);
+  const noMapping = withTests() as any; delete noMapping.testMapping;
+  const read30NoMapping = readEvidence(noMapping);
+  assert.equal(read30NoMapping.testMapping, undefined);
+  assert.equal(read30NoMapping.testMappingAvailable, false);
 
   assert.throws(() => readEvidence({ schemaVersion: '9.9' }), EvidenceValidationError);
   const broken = web(); broken.surfaces!.reverse();

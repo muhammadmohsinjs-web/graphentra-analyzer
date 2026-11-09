@@ -445,7 +445,7 @@
     "Dynamic calls and calls through interface-typed receivers are not analyzed.",
     "Renamed entities may lack removed-code evidence.",
     "Partially overlapping entity line ranges are skipped rather than sharing ambiguous evidence.",
-    "Application surfaces are not yet discovered.",
+    "Application surfaces are discovered from static TypeScript routing patterns (Next.js, React Router, route configs, Express-style routers, NestJS) and graphentra.yml; dynamically built routes are not discovered, and surface reach is limited to depth 10.",
     "Blast radius is limited to depth 6."
   ],
   "frontier": [],

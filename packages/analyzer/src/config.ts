@@ -32,6 +32,26 @@ class ConfigError extends Error {
   constructor(readonly offset: number | undefined, reason: string) { super(reason); }
 }
 
+/**
+ * Reason a path glob is not a valid project-relative path, or undefined when it is. Same rules as the evidence
+ * schema's `options.excludePaths` items: not empty, no leading `/` or drive letter, no `..` segment, no `//`, no NUL.
+ */
+export function invalidPathGlobReason(value: string): string | undefined {
+  if (value === '') return 'must not be empty';
+  if (value.startsWith('/') || /^[A-Za-z]:/.test(value)) return 'must be relative to the project root (no leading "/" or drive letter)';
+  if (/(?:^|\/)\.\.(?:\/|$)/.test(value)) return 'must not contain a ".." segment';
+  if (value.includes('//')) return 'must not contain "//"';
+  if (value.includes('\0')) return 'must not contain NUL';
+  return undefined;
+}
+
+/** D4 surface id form: `ui:<route>`, `api:<METHOD> <route>` (method defaults to ANY); undefined for other kinds. */
+export function expectedSurfaceId(surface: { kind: string; route: string; method?: string }): string | undefined {
+  if (surface.kind === 'ui_route') return `ui:${surface.route}`;
+  if (surface.kind === 'api_endpoint') return `api:${surface.method ?? 'ANY'} ${surface.route}`;
+  return undefined;
+}
+
 function defaultReadFile(absPath: string): string | undefined {
   try { return fs.readFileSync(absPath, 'utf8'); } catch { return undefined; }
 }
@@ -66,10 +86,13 @@ export function loadGraphentraConfig(
     const root = doc.contents;
     if (!isMap(root)) throw new ConfigError(root?.range?.[0] ?? 0, 'top level must be a mapping');
 
-    const stringList = (node: unknown, key: string): string[] => {
+    const pathGlobList = (node: unknown, key: string): string[] => {
       if (!isSeq(node)) throw new ConfigError((node as Node | null)?.range?.[0], `"${key}" must be a list of strings`);
       return node.items.map(item => {
         if (!isScalar(item) || typeof item.value !== 'string') throw new ConfigError((item as Node | null)?.range?.[0], `"${key}" entries must be strings`);
+        // `ignore` entries become options.excludePaths; both lists must be project-relative paths.
+        const reason = invalidPathGlobReason(item.value);
+        if (reason) throw new ConfigError(item.range?.[0], `"${key}" entry "${item.value}" ${reason}`);
         return item.value;
       }).sort(compareStrings);
     };
@@ -102,11 +125,12 @@ export function loadGraphentraConfig(
           return { pattern: pk.value, level: pv.value as CriticalityLevel };
         }).sort((a, b) => compareStrings(a.pattern, b.pattern));
       } else if (key === 'ignore') {
-        ignore = stringList(value, key);
+        ignore = pathGlobList(value, key);
       } else if (key === 'tests') {
-        tests = stringList(value, key);
+        tests = pathGlobList(value, key);
       } else if (key === 'surfaces') {
         if (!isSeq(value)) throw new ConfigError(value?.range?.[0] ?? keyNode.range?.[0], '"surfaces" must be a list');
+        const seenIds = new Set<string>();
         surfaces = value.items.map(item => {
           if (!isMap(item)) throw new ConfigError((item as Node | null)?.range?.[0], 'each surface must be a mapping');
           const fields: Record<string, string> = {};
@@ -126,7 +150,15 @@ export function loadGraphentraConfig(
           for (const required of ['id', 'kind', 'route', 'handler']) {
             if (fields[required] === undefined) throw new ConfigError(item.range?.[0], `surface is missing required "${required}"`);
           }
-          return fields as GraphentraConfig['surfaces'][number];
+          const surface = fields as GraphentraConfig['surfaces'][number];
+          const idNode = item.items.find(p => isScalar(p.key) && p.key.value === 'id')?.value as Node | null | undefined;
+          const expected = expectedSurfaceId(surface);
+          if (expected !== undefined && surface.id !== expected) {
+            throw new ConfigError(idNode?.range?.[0] ?? item.range?.[0], `surface id "${surface.id}" does not match its kind, method and route; expected "${expected}"`);
+          }
+          if (seenIds.has(surface.id)) throw new ConfigError(idNode?.range?.[0] ?? item.range?.[0], `duplicate surface id "${surface.id}"`);
+          seenIds.add(surface.id);
+          return surface;
         }).sort((a, b) => compareStrings(a.id, b.id) || compareStrings(a.method ?? '', b.method ?? '') || compareStrings(a.route, b.route));
       }
     }
@@ -167,6 +199,14 @@ function globToRegExp(pattern: string): RegExp {
 /** Deterministic glob: `**` crosses `/`, `*` and `?` do not. */
 export function matchesGlob(candidate: string, pattern: string): boolean {
   return globToRegExp(pattern).test(candidate);
+}
+
+/**
+ * A path glob from graphentra.yml (`ignore`, `tests`): the glob itself, or anything under it, so a bare directory
+ * such as `qa` or `qa/` covers `qa/**`.
+ */
+export function matchesPathGlob(file: string, glob: string): boolean {
+  return matchesGlob(file, glob) || matchesGlob(file, `${glob.replace(/\/+$/, '')}/**`);
 }
 
 const isGlob = (pattern: string): boolean => /[*?]/.test(pattern);

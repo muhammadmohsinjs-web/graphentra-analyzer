@@ -5,7 +5,8 @@ import { test } from 'node:test';
 import {
   analyzeRepository, buildSurfaceEvidence, type ApplicationMap, type FrameworkDetection, type Surface, type SurfaceProvenance,
 } from '../src/index';
-import { normalizeNextSegment, segmentsToRoute } from '../src/adapters/nextjs-files';
+import { normalizeNextRoute, normalizeNextSegment, segmentsToRoute } from '../src/adapters/nextjs-files';
+import { routeMatches } from '../src/application-map-ast';
 import { createRepo } from './helpers/git-fixture';
 
 function surface(id: string, entry: string[], extra: Partial<Surface> = {}): Surface {
@@ -62,6 +63,15 @@ test('D11: uncertified or unknown major makes surfaces likely with one diagnosti
   }
 });
 
+test('D11: a dependency-gated adapter with no detected framework version is likely, with one diagnostic', () => {
+  const built = buildSurfaceEvidence({ map: mapOf([surface('ui:/a', ['a#A']), surface('api:GET /b', ['b#B'])]),
+    provenance: provenance({ 'ui:/a': 'nextjs-app-router', 'api:GET /b': 'nextjs-route-handler' }), frameworkVersions: [], entityIds: new Set(['a#A', 'b#B']) });
+  assert.ok(built.surfaces.every(s => s.confidence === 'likely'));
+  assert.ok(built.surfaceEdges.every(e => e.confidence === 'likely'));
+  assert.deepEqual(built.diagnostics.map(d => `${d.code}|${d.severity}`), ['FRAMEWORK_VERSION_NOT_CERTIFIED|info', 'FRAMEWORK_VERSION_NOT_CERTIFIED|info']);
+  assert.ok(built.adapters.every(a => a.certified === false && a.framework === undefined));
+});
+
 test('surfaces of an adapter without a detected framework stay proven and uncertified, without diagnostics', () => {
   const built = buildSurfaceEvidence({ map: mapOf([surface('ui:/a', ['a#A'])]), provenance: provenance({ 'ui:/a': 'route-config' }),
     frameworkVersions: [], entityIds: new Set(['a#A']) });
@@ -78,12 +88,26 @@ test('buildSurfaceEvidence is independent of map order', () => {
   assert.deepEqual(buildSurfaceEvidence(args(surfaces)), buildSurfaceEvidence(args([...surfaces].reverse())));
 });
 
-test('Next.js dynamic segments are normalized to :param, catch-alls to :param*', () => {
+test('Next.js dynamic segments: the map keeps [id]; the 3.0 projection uses :param, catch-alls :param*', () => {
   assert.equal(normalizeNextSegment('[id]'), ':id');
   assert.equal(normalizeNextSegment('[...slug]'), ':slug*');
   assert.equal(normalizeNextSegment('[[...slug]]'), ':slug*');
   assert.equal(normalizeNextSegment('static'), 'static');
-  assert.equal(segmentsToRoute('(shop)/products/[id]/reviews/[[...rest]]/'), '/products/:id/reviews/:rest*');
+  assert.equal(segmentsToRoute('(shop)/products/[id]/reviews/[[...rest]]/'), '/products/[id]/reviews/[[...rest]]');
+  assert.equal(normalizeNextRoute('/products/[id]/reviews/[[...rest]]'), '/products/:id/reviews/:rest*');
+
+  const map = mapOf([surface('ui:/products/[id]', ['p#Page'], { route: '/products/[id]' }),
+    surface('api:GET /api/items/[id]', ['i#GET'], { route: '/api/items/[id]' }),
+    surface('ui:/orders/[id]', ['o#O'], { route: '/orders/[id]', source: 'jsx-route' })]);
+  const built = buildSurfaceEvidence({ map, provenance: provenance({ 'ui:/products/[id]': 'nextjs-app-router',
+    'api:GET /api/items/[id]': 'nextjs-route-handler', 'ui:/orders/[id]': 'react-router' }),
+    frameworkVersions: [next(14, true)], entityIds: new Set(['p#Page', 'i#GET', 'o#O']) });
+  assert.deepEqual(built.surfaces.map(s => [s.id, s.route]), [
+    ['api:GET /api/items/:id', '/api/items/:id'], ['ui:/orders/[id]', '/orders/[id]'], ['ui:/products/:id', '/products/:id']]);
+  assert.ok(built.surfaces.every(s => s.confidence === 'proven'));
+  assert.deepEqual(built.surfaceEdges.map(e => e.from), ['api:GET /api/items/:id', 'ui:/orders/[id]', 'ui:/products/:id']);
+  assert.ok(routeMatches('/products/:id', '/products/42'), 'a concrete URL still matches the 3.0 surface');
+  assert.ok(map.surfaces.some(s => s.id === 'ui:/products/[id]'), 'the map is not modified');
 });
 
 function repositoryWith(files: Record<string, string>) {
@@ -99,7 +123,7 @@ function repositoryWith(files: Record<string, string>) {
 }
 
 for (const [version, appRouter] of [['12.3.4', false], ['13.5.6', true]] as const) {
-  test(`D11: Next.js ${version} ${appRouter ? 'runs' : 'skips'} app/ router rules`, () => {
+  test(`D11: Next.js ${version} ${appRouter ? 'keeps' : 'drops'} app/ surfaces in 3.0; the 2.x map always keeps them`, () => {
     const repo = repositoryWith({
       'package.json': JSON.stringify({ dependencies: { next: version } }),
       'tsconfig.json': JSON.stringify({ compilerOptions: { jsx: 'react-jsx', noEmit: true } }),
@@ -108,10 +132,14 @@ for (const [version, appRouter] of [['12.3.4', false], ['13.5.6', true]] as cons
       'pages/legacy.tsx': 'export default function Legacy() { return <h1>Legacy</h1>; }\n',
     });
     try {
-      const ids = analyzeRepository({ target: repo.dir, comparison: { mode: 'working-tree' } }).applicationMap.surfaces.map(s => s.id);
+      const mapIds = analyzeRepository({ target: repo.dir, comparison: { mode: 'working-tree' } }).applicationMap.surfaces.map(s => s.id);
+      for (const id of ['ui:/legacy', 'ui:/shop', 'api:GET /api/items']) assert.ok(mapIds.includes(id), `map: ${mapIds.join(', ')}`);
+      const evidence = analyzeRepository({ target: repo.dir, comparison: { mode: 'working-tree' }, evidenceSchema: '3.0' }).evidence;
+      const ids = evidence.surfaces!.map(s => s.id);
       assert.ok(ids.includes('ui:/legacy'), ids.join(', '));
       assert.equal(ids.includes('ui:/shop'), appRouter, ids.join(', '));
       assert.equal(ids.includes('api:GET /api/items'), appRouter, ids.join(', '));
+      assert.equal(evidence.diagnostics.some(d => d.code === 'NEXT_APP_ROUTER_UNSUPPORTED' && d.severity === 'info'), !appRouter);
     } finally { repo.cleanup(); }
   });
 }

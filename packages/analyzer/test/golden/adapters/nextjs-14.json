@@ -60,9 +60,9 @@
     ]
   },
   {
-    "id": "ui:/products/:id",
+    "id": "ui:/products/[id]",
     "kind": "ui_route",
-    "route": "/products/:id",
+    "route": "/products/[id]",
     "method": null,
     "source": "next-app-router",
     "file": "app/(shop)/products/[id]/page.tsx",

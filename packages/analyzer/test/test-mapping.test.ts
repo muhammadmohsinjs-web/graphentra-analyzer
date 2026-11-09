@@ -7,7 +7,7 @@ import * as ts from 'typescript';
 import type { Entity } from '../src/contracts';
 import { extractTests } from '../src/test-mapping';
 
-function run(sources: Record<string, string>, extra: { isTestFile?: (p: string) => boolean } = {}) {
+function run(sources: Record<string, string>, extra: { isTestFile?: (p: string) => boolean; testGlobs?: string[] } = {}) {
   const dir = mkdtempSync(path.join(tmpdir(), 'test-mapping-'));
   const files: string[] = [];
   for (const [name, text] of Object.entries(sources)) {
@@ -138,4 +138,12 @@ test('isTestFile option and determinism', () => {
   assert.equal(first.tests.length, 1);
   assert.deepEqual(first, again);
   assert.equal(run(sources).exec().tests.length, 0);
+});
+
+test('tests: globs reuse the ignore semantics, so a bare directory covers everything under it', () => {
+  const sources = { ...SRC, 'qa/flows/checkout.ts': "it('pays', () => {});\n", 'other/x.ts': "it('no', () => {});\n" };
+  for (const glob of ['qa', 'qa/', 'qa/**', 'qa/**/*.ts']) {
+    assert.deepEqual(run(sources, { testGlobs: [glob] }).exec().tests.map(t => t.file), ['qa/flows/checkout.ts'], glob);
+  }
+  assert.deepEqual(run(sources, { testGlobs: ['q'] }).exec().tests, []);
 });

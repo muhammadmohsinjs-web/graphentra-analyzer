@@ -1,12 +1,17 @@
 import type { DeterministicEvidence, SurfaceEdge, SurfaceNode, TestMapping, TestNode } from './contracts';
 import { assertValidEvidenceEnvelope } from './validator';
 
-/** A validated evidence document with the schema 3.0 collections always present (empty for 2.x). */
+/**
+ * A validated evidence document with the schema 3.0 collections always present (empty for 2.x). `testMapping` is
+ * never invented: it is present only when the document has one, and `testMappingAvailable` says so. A 3.0 document
+ * omits it when surface or test extraction failed; 2.x documents never have one.
+ */
 export type NormalizedEvidence = DeterministicEvidence & {
   surfaces: SurfaceNode[];
   surfaceEdges: SurfaceEdge[];
   tests: TestNode[];
-  testMapping: TestMapping;
+  testMapping?: TestMapping;
+  testMappingAvailable: boolean;
 };
 
 /**
@@ -21,6 +26,6 @@ export function readEvidence(doc: unknown): NormalizedEvidence {
     surfaces: doc.surfaces ?? [],
     surfaceEdges: doc.surfaceEdges ?? [],
     tests: doc.tests ?? [],
-    testMapping: doc.testMapping ?? { basis: 'static-reach', testsToRun: [], uncoveredSurfaces: [] },
+    testMappingAvailable: doc.testMapping !== undefined,
   };
 }

@@ -1,6 +1,7 @@
 import * as ts from 'typescript';
 import type { Entity } from './contracts';
 import { isTestPath, lineOf, stringValue, toPath } from './application-map-ast';
+import { matchesPathGlob } from './config';
 import { compareStrings } from './deterministic';
 
 /** Same shape as the contracts `TestNode` (D6). */
@@ -45,21 +46,6 @@ interface Scope {
 
 type CallKind =
   | { kind: 'test' | 'suite' | 'hook' };
-
-function globToRegExp(glob: string): RegExp {
-  let out = '';
-  for (let i = 0; i < glob.length; i += 1) {
-    const c = glob[i]!;
-    if (c === '*') {
-      if (glob[i + 1] === '*') {
-        i += 1;
-        if (glob[i + 1] === '/') { i += 1; out += '(?:.*/)?'; } else out += '.*';
-      } else out += '[^/]*';
-    } else if (c === '?') out += '[^/]';
-    else out += c.replace(/[.+^${}()|[\]\\]/g, '\\$&');
-  }
-  return new RegExp(`^${out}$`);
-}
 
 function parseCallee(expression: ts.Expression): { root: string; members: string[] } | undefined {
   const members: string[] = [];
@@ -130,7 +116,7 @@ function detectFramework(sf: ts.SourceFile, projectPath: string): TestNodeLike['
 
 export function extractTests(input: ExtractTestsInput): ExtractTestsResult {
   const { program, checker, symbolToEntity, files, toProjectPath, isTestFile } = input;
-  const globs = (input.testGlobs ?? []).map(globToRegExp);
+  const globs = input.testGlobs ?? [];
   const tests: TestNodeLike[] = [];
   const edges = new Map<string, string>();
   const routeEdges = new Map<string, string>();
@@ -169,7 +155,7 @@ export function extractTests(input: ExtractTestsInput): ExtractTestsResult {
       const sf = program.getSourceFile(file);
       if (!sf) continue;
       const projectPath = toProjectPath(file);
-      const isTest = isTestPath(projectPath) || isTestFile?.(projectPath) === true || globs.some(g => g.test(projectPath));
+      const isTest = isTestPath(projectPath) || isTestFile?.(projectPath) === true || globs.some(glob => matchesPathGlob(projectPath, glob));
       if (!isTest) continue;
       const framework = detectFramework(sf, projectPath);
       const used = new Map<string, number>();

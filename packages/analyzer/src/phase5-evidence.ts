@@ -60,7 +60,10 @@ export interface Phase5Evidence {
   surfaceEdges: SurfaceEdge[];
   tests: TestNode[];
   adapters: AdapterRecord[];
-  /** Absent when test extraction failed (a mapping without tests would call every surface uncovered). */
+  /**
+   * Absent when surface or test extraction failed: without tests every surface would read as uncovered, and without
+   * surfaces `uncoveredSurfaces: []` would read as "everything covered".
+   */
   testMapping?: TestMapping;
   frontier: FrontierItem[];
   impacts: EntityImpact[];
@@ -196,9 +199,11 @@ export function buildPhase5Evidence(input: Phase5Input): Phase5Evidence {
   const entityIds = new Set(input.extracted.technicalGraph.entities.map(entity => entity.id));
   const diagnostics: DiagnosticItem[] = [];
   let surfaceResult: SurfaceStageResult = { surfaces: [], surfaceEdges: [], adapters: [], frontier: [], diagnostics: [] };
+  let surfacesFailed = false;
   try {
     surfaceResult = stages.surfaces(input, entityIds);
   } catch (error) {
+    surfacesFailed = true;
     diagnostics.push({ code: 'SURFACE_EXTRACTION_FAILED', severity: 'warning',
       message: `Surface extraction failed; evidence has no surfaces: ${message(error)}` });
   }
@@ -217,7 +222,7 @@ export function buildPhase5Evidence(input: Phase5Input): Phase5Evidence {
   const tests = testResult?.tests ?? [];
   return {
     surfaces: surfaceResult.surfaces, surfaceEdges, tests, adapters: surfaceResult.adapters,
-    ...(testResult ? { testMapping: computeTestMapping({ tests, relations: input.extracted.technicalGraph.relations, surfaceEdges, impacts }) } : {}),
+    ...(testResult && !surfacesFailed ? { testMapping: computeTestMapping({ tests, relations: input.extracted.technicalGraph.relations, surfaceEdges, impacts }) } : {}),
     frontier: surfaceResult.frontier, impacts, diagnostics,
   };
 }

@@ -26,11 +26,14 @@ export function normalizeNextSegment(segment: string): string {
 
 export function segmentsToRoute(value: string): string {
   return joinRoute(...value.split('/')
-    .filter(segment => segment && !/^\(.*\)$/.test(segment) && !segment.startsWith('@') && !segment.startsWith('_'))
-    .map(normalizeNextSegment));
+    .filter(segment => segment && !/^\(.*\)$/.test(segment) && !segment.startsWith('@') && !segment.startsWith('_')));
 }
 
-/** Major version of `next` detected for the project, or undefined when unknown. */
-export function nextMajor(frameworkVersions: ReadonlyArray<{ framework: string; major?: number }> | undefined): number | undefined {
-  return frameworkVersions?.find(detection => detection.framework === 'next')?.major;
+/**
+ * The 3.0 projection of a Next.js route (D4): dynamic segments in `:param` form. The application map keeps the
+ * `[id]` form of the 2.x output.
+ */
+export function normalizeNextRoute(route: string): string {
+  return route.split('/').map(normalizeNextSegment).join('/');
 }
+

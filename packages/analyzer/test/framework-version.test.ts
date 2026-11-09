@@ -58,6 +58,27 @@ test('pnpm-lock forms', () => {
   }
 });
 
+test('pnpm workspace lockfile: the importer whose key is the project path wins, never the first importer', () => {
+  const entry = (v: string) => `      next:\n        specifier: ^${v.split('.')[0]}.0.0\n        version: ${v}(react@18.2.0)\n`;
+  const lock = 'lockfileVersion: \'9.0\'\n\nimporters:\n\n  .:\n    devDependencies:\n      typescript:\n        specifier: 5.0.0\n        version: 5.0.0\n\n' +
+    `  apps/admin:\n    dependencies:\n${entry('13.5.6')}\n  apps/web:\n    peerDependencies:\n${entry('12.0.0')}    devDependencies:\n${entry('15.0.1')}\n` +
+    'packages:\n\n  next@13.5.6:\n    resolution: {}\n';
+  const files = { 'pnpm-lock.yaml': lock, 'apps/web/package.json': pkg({ next: '*' }), 'apps/admin/package.json': pkg({ next: '*' }),
+    'apps/none/package.json': pkg({ next: '^14.0.0' }) };
+  assert.equal(detectFrameworkVersions(setup(files, 'apps/web'))[0].resolved, '15.0.1');
+  assert.equal(detectFrameworkVersions(setup(files, 'apps/admin'))[0].resolved, '13.5.6');
+  const none = detectFrameworkVersions(setup(files, 'apps/none'))[0];
+  assert.equal(none.resolved, undefined, 'no importer for the project: no other workspace version is borrowed');
+  assert.equal(none.major, 14);
+});
+
+test('peerDependencies are not read (D11: dependencies and devDependencies only)', () => {
+  const peerOnly = JSON.stringify({ peerDependencies: { next: '^14.0.0' } });
+  assert.deepEqual(detectFrameworkVersions(setup({ 'package.json': peerOnly })), []);
+  const both = JSON.stringify({ peerDependencies: { next: '^12.0.0' }, devDependencies: { next: '^14.0.0' } });
+  assert.equal(detectFrameworkVersions(setup({ 'package.json': both }))[0].major, 14);
+});
+
 test('yarn classic and berry', () => {
   const classic = '# yarn lockfile v1\n\n\n"next@^14.0.0", next@^14.1.0:\n  version "14.2.3"\n  resolved "x"\n';
   const berry = '__metadata:\n  version: 8\n\n"next@npm:^15.0.0":\n  version: 15.1.0\n  resolution: "next@npm:15.1.0"\n';
