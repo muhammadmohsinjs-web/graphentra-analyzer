@@ -1,0 +1,357 @@
+{
+  "artifactKind": "graphentra-evidence",
+  "schemaVersion": "3.0",
+  "analyzerVersion": "0.4.0",
+  "target": {
+    "targetPath": "."
+  },
+  "comparison": {
+    "mode": "commit",
+    "requestedBase": "main~1",
+    "requestedHead": "main",
+    "resolvedBaseSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "resolvedHeadSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "comparedTo": "main~1"
+  },
+  "sourceState": {
+    "checkoutSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "isTrackedDirty": false,
+    "untrackedSourcePolicy": "excluded",
+    "contentIdentity": "f16d05ec6b29248d2c61adb1e9263f78e4f7bace1b955014a2d17872cfe4064d"
+  },
+  "options": {
+    "excludePaths": [],
+    "sourcePolicy": "git-tracked",
+    "engine": "extended"
+  },
+  "toolchain": {
+    "typescript": "5.6.3",
+    "node": "22.x"
+  },
+  "outcome": "completed",
+  "technicalGraph": {
+    "schemaVersion": "1.0",
+    "repository": {
+      "targetPath": ".",
+      "headSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "analyzerVersion": "0.4.0"
+    },
+    "capabilities": {
+      "language": "typescript",
+      "entityKinds": [
+        "function"
+      ],
+      "relationTypes": [
+        "CALLS"
+      ],
+      "maxBlastDepth": 6
+    },
+    "analyzedFiles": [
+      "src/api/users.ts",
+      "src/client/users.ts",
+      "src/lib/db.ts",
+      "src/pages/Home.tsx"
+    ],
+    "entities": [
+      {
+        "id": "src/api/users.ts#listUsers",
+        "kind": "function",
+        "name": "listUsers",
+        "file": "src/api/users.ts",
+        "startLine": 1,
+        "endLine": 5,
+        "language": "typescript"
+      },
+      {
+        "id": "src/client/users.ts#fetchUsers",
+        "kind": "function",
+        "name": "fetchUsers",
+        "file": "src/client/users.ts",
+        "startLine": 1,
+        "endLine": 5,
+        "language": "typescript"
+      },
+      {
+        "id": "src/lib/db.ts#query",
+        "kind": "function",
+        "name": "query",
+        "file": "src/lib/db.ts",
+        "startLine": 1,
+        "endLine": 5,
+        "language": "typescript"
+      },
+      {
+        "id": "src/pages/Home.tsx#Home",
+        "kind": "function",
+        "name": "Home",
+        "file": "src/pages/Home.tsx",
+        "startLine": 1,
+        "endLine": 5,
+        "language": "typescript"
+      }
+    ],
+    "relations": [
+      {
+        "from": "src/api/users.ts#listUsers",
+        "to": "src/lib/db.ts#query",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/pages/Home.tsx#Home",
+        "to": "src/client/users.ts#fetchUsers",
+        "type": "CALLS"
+      }
+    ]
+  },
+  "changedFiles": [
+    {
+      "file": "src/lib/db.ts",
+      "changedLines": [
+        2
+      ],
+      "addedCode": [
+        "  return 2;"
+      ],
+      "removedCode": [
+        "  return 1;"
+      ],
+      "diff": "--- a/src/lib/db.ts\n+++ b/src/lib/db.ts\n@@ -1,3 +1,3 @@\n-  return 1;\n+  return 2;",
+      "oldFile": "src/lib/db.ts",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": "-",
+              "code": "  return 1;",
+              "oldLine": 2,
+              "newLine": 2
+            },
+            {
+              "kind": "+",
+              "code": "  return 2;",
+              "oldLine": 3,
+              "newLine": 2
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "changedEntities": [
+    {
+      "entity": {
+        "id": "src/lib/db.ts#query",
+        "kind": "function",
+        "name": "query",
+        "file": "src/lib/db.ts",
+        "startLine": 1,
+        "endLine": 5,
+        "language": "typescript"
+      },
+      "change": {
+        "file": "src/lib/db.ts",
+        "changedLines": [
+          2
+        ],
+        "addedCode": [
+          "  return 2;"
+        ],
+        "removedCode": [
+          "  return 1;"
+        ],
+        "diff": "--- a/src/lib/db.ts\n+++ b/src/lib/db.ts\n@@ -1,3 +1,3 @@\n-  return 1;\n+  return 2;"
+      }
+    }
+  ],
+  "impacts": [
+    {
+      "changedEntity": {
+        "id": "src/lib/db.ts#query",
+        "kind": "function",
+        "name": "query",
+        "file": "src/lib/db.ts",
+        "startLine": 1,
+        "endLine": 5,
+        "language": "typescript"
+      },
+      "change": {
+        "file": "src/lib/db.ts",
+        "changedLines": [
+          2
+        ],
+        "addedCode": [
+          "  return 2;"
+        ],
+        "removedCode": [
+          "  return 1;"
+        ],
+        "diff": "--- a/src/lib/db.ts\n+++ b/src/lib/db.ts\n@@ -1,3 +1,3 @@\n-  return 1;\n+  return 2;"
+      },
+      "directDependents": [
+        {
+          "id": "src/api/users.ts#listUsers",
+          "kind": "function",
+          "name": "listUsers",
+          "file": "src/api/users.ts",
+          "startLine": 1,
+          "endLine": 5,
+          "language": "typescript"
+        }
+      ],
+      "blastRadius": {
+        "totalAffectedEntities": 1,
+        "entities": [
+          {
+            "id": "src/api/users.ts#listUsers",
+            "kind": "function",
+            "name": "listUsers",
+            "file": "src/api/users.ts",
+            "startLine": 1,
+            "endLine": 5,
+            "language": "typescript"
+          }
+        ],
+        "paths": [
+          {
+            "target": {
+              "id": "src/api/users.ts#listUsers",
+              "kind": "function",
+              "name": "listUsers",
+              "file": "src/api/users.ts",
+              "startLine": 1,
+              "endLine": 5,
+              "language": "typescript"
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/lib/db.ts#query",
+                "kind": "function",
+                "name": "query",
+                "file": "src/lib/db.ts",
+                "startLine": 1,
+                "endLine": 5,
+                "language": "typescript"
+              },
+              {
+                "id": "src/api/users.ts#listUsers",
+                "kind": "function",
+                "name": "listUsers",
+                "file": "src/api/users.ts",
+                "startLine": 1,
+                "endLine": 5,
+                "language": "typescript"
+              }
+            ]
+          }
+        ]
+      },
+      "terminalDependents": [
+        {
+          "id": "src/api/users.ts#listUsers",
+          "kind": "function",
+          "name": "listUsers",
+          "file": "src/api/users.ts",
+          "startLine": 1,
+          "endLine": 5,
+          "language": "typescript"
+        }
+      ],
+      "affectedSurfaces": [
+        {
+          "surfaceId": "api:GET /api/users",
+          "depth": 2,
+          "path": [
+            "src/lib/db.ts#query",
+            "src/api/users.ts#listUsers",
+            "api:GET /api/users"
+          ],
+          "confidence": "proven"
+        },
+        {
+          "surfaceId": "ui:/",
+          "depth": 5,
+          "path": [
+            "src/lib/db.ts#query",
+            "src/api/users.ts#listUsers",
+            "api:GET /api/users",
+            "src/client/users.ts#fetchUsers",
+            "src/pages/Home.tsx#Home",
+            "ui:/"
+          ],
+          "confidence": "proven"
+        }
+      ]
+    }
+  ],
+  "diagnostics": [],
+  "limitations": [
+    "Blast radius is limited to depth 6."
+  ],
+  "surfaces": [
+    {
+      "id": "api:GET /api/users",
+      "kind": "api_endpoint",
+      "route": "/api/users",
+      "file": "src/api/users.ts",
+      "line": 1,
+      "handlerEntityIds": [
+        "src/api/users.ts#listUsers"
+      ],
+      "adapter": {
+        "id": "nextjs-app-router",
+        "version": "1.0.0"
+      },
+      "confidence": "proven",
+      "source": "detected",
+      "method": "GET",
+      "framework": "nextjs@14"
+    },
+    {
+      "id": "ui:/",
+      "kind": "ui_route",
+      "route": "/",
+      "file": "src/pages/Home.tsx",
+      "line": 1,
+      "handlerEntityIds": [
+        "src/pages/Home.tsx#Home"
+      ],
+      "adapter": {
+        "id": "nextjs-app-router",
+        "version": "1.0.0"
+      },
+      "confidence": "proven",
+      "source": "detected",
+      "framework": "nextjs@14"
+    }
+  ],
+  "surfaceEdges": [
+    {
+      "from": "api:GET /api/users",
+      "to": "src/api/users.ts#listUsers",
+      "type": "SURFACE_HANDLED_BY",
+      "confidence": "proven"
+    },
+    {
+      "from": "src/client/users.ts#fetchUsers",
+      "to": "api:GET /api/users",
+      "type": "CALLS_ENDPOINT",
+      "confidence": "proven"
+    },
+    {
+      "from": "ui:/",
+      "to": "src/pages/Home.tsx#Home",
+      "type": "SURFACE_HANDLED_BY",
+      "confidence": "proven"
+    }
+  ],
+  "adapters": [
+    {
+      "id": "nextjs-app-router",
+      "version": "1.0.0",
+      "framework": "next",
+      "detectedVersion": "14.2.3",
+      "certified": true
+    }
+  ]
+}

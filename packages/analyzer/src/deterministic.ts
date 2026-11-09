@@ -31,8 +31,17 @@ export function computeDeterministicEvidenceIdentity(evidence: DeterministicEvid
     changedFiles: ordered(evidence.changedFiles), changedEntities: ordered(evidence.changedEntities),
     impacts: ordered(evidence.impacts.map(impact => ({ ...impact,
       directDependents: ordered(impact.directDependents), terminalDependents: ordered(impact.terminalDependents),
-      blastRadius: { ...impact.blastRadius, entities: ordered(impact.blastRadius.entities), paths: ordered(impact.blastRadius.paths) } }))),
+      blastRadius: { ...impact.blastRadius, entities: ordered(impact.blastRadius.entities), paths: ordered(impact.blastRadius.paths) },
+      ...(impact.affectedSurfaces ? { affectedSurfaces: ordered(impact.affectedSurfaces) } : {}) }))),
     diagnostics: ordered(evidence.diagnostics), limitations: ordered(evidence.limitations),
+    // Schema 3.0 fields: added only when present so 2.x payloads (and identities) are unchanged.
+    ...(evidence.surfaces ? { surfaces: ordered(evidence.surfaces.map(surface => ({ ...surface, handlerEntityIds: ordered(surface.handlerEntityIds) }))) } : {}),
+    ...(evidence.surfaceEdges ? { surfaceEdges: ordered(evidence.surfaceEdges) } : {}),
+    ...(evidence.tests ? { tests: ordered(evidence.tests) } : {}),
+    ...(evidence.adapters ? { adapters: ordered(evidence.adapters) } : {}),
+    ...(evidence.testMapping ? { testMapping: { ...evidence.testMapping,
+      testsToRun: ordered(evidence.testMapping.testsToRun.map(entry => ({ ...entry, reaches: ordered(entry.reaches) }))),
+      uncoveredSurfaces: ordered(evidence.testMapping.uncoveredSurfaces) } } : {}),
   };
   return createHash('sha256').update(JSON.stringify(canonical(payload))).digest('hex');
 }

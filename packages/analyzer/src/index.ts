@@ -18,3 +18,4 @@ export { buildCoverage, renderCoverageMarkdown, mapSnapshotSkipReason, languageO
 export { classifyNonTsFile, nonTsChangeDiagnostics, type NonTsChangeClass } from './non-ts-changes';
 export { DEFAULT_INPUT_LIMITS, MAX_NESTING_DEPTH, inspectContent, bracketNestingDepth, type InputLimits, type SkippedInput } from './input-limits';
 export { isTestPath, routeMatcher } from './application-map-ast';
+export * from './evidence-reader';
