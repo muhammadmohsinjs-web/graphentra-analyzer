@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { config } from 'dotenv';
@@ -69,6 +70,16 @@ async function withLLMLoader<T>(label: string, model: string, operation: (progre
   }
 }
 
+/** Reads a file from the working tree, or from the analyzed commit when one is given. */
+function sourceReader(target: string, sha?: string): (file: string) => string | undefined {
+  return file => {
+    try {
+      return sha ? execFileSync('git', ['-C', target, 'show', `${sha}:${file}`], { encoding: 'utf8', maxBuffer: 1 << 26, stdio: ['ignore', 'pipe', 'ignore'] })
+        : fs.readFileSync(path.join(target, file), 'utf8');
+    } catch { return undefined; }
+  };
+}
+
 export async function runReport(argv: string[] = process.argv.slice(2), dependencies: {
   llmOptions?: LLMClientOptions;
   environment?: NodeJS.ProcessEnv;
@@ -82,7 +93,7 @@ export async function runReport(argv: string[] = process.argv.slice(2), dependen
     return;
   }
   if (options.help) {
-    console.log('Graphentra Local QA Reporting\nUsage: npm run report -- --target <dir> [--base <ref> --head <ref> | --working-tree] [--output <evidence-file>] [--report <QA-Markdown-file>] [--generate-context | --refresh-context] [--context-granularity files|functions]\n--generate-context onboards the repository once: it sends eligible source, documentation excerpts, and derived signals to the configured provider in bounded batches and writes .graphentra/application-context.json.\n--refresh-context re-describes only new or changed functions and new surfaces in an existing context (the previous file is kept as application-context.previous.json).\n--context-granularity files (default) summarizes each file; functions describes every function (much slower).');
+    console.log('Graphentra Local QA Reporting\nUsage: npm run report -- --target <dir> [--base <ref> --head <ref> | --working-tree] [--output <evidence-file>] [--report <QA-Markdown-file>] [--generate-context | --refresh-context] [--context-granularity files|functions] [--lookup]\n--generate-context onboards the repository once: it sends eligible source, documentation excerpts, and derived signals to the configured provider in bounded batches and writes .graphentra/application-context.json.\n--refresh-context re-describes only new or changed functions and new surfaces in an existing context (the previous file is kept as application-context.previous.json).\n--context-granularity files (default) summarizes each file; functions describes every function (much slower).\n--lookup lets the report model read code (an entity, a file outline, or a text search) at the analyzed revision before it writes the report.');
     return;
   }
   if (options.version) { console.log(ANALYZER_VERSION); return; }
@@ -167,7 +178,11 @@ export async function runReport(argv: string[] = process.argv.slice(2), dependen
       return;
     }
     const report = await withLLMLoader('QA impact report', model,
-      () => generateQAReport(result.evidence, lifecycle.context, llmOptions, { applicationMap: result.applicationMap }));
+      () => generateQAReport(result.evidence, lifecycle.context, llmOptions, {
+        applicationMap: result.applicationMap,
+        ...(options.lookup ? { lookup: { read: sourceReader(target, comparison.mode === 'working-tree' ? undefined : result.evidence.sourceState.checkoutSha) } } : {}),
+      }));
+    if (report.lookups) console.log(`Report lookups: ${report.lookups.length} (${report.lookups.filter(entry => entry.hit).length} found code).`);
     const legacy = buildLegacyAnalysisResult({ headSha: result.evidence.sourceState.checkoutSha,
       evidenceIdentity: report.evidenceIdentity, changedFiles: result.changedFiles,
       changedEntities: result.changedEntities, impacts: result.impacts, qaReport: report.qaReport });

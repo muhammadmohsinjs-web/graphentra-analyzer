@@ -14,6 +14,7 @@ import {
   type LLMClientOptions,
 } from './llm-client';
 import { buildLLMPayload, qaInstruction } from './qa-evidence';
+import { createCodeLookup, lookupInstruction, type CodeLookupOptions, type LookupLogEntry, type SourceReader } from './code-lookup';
 import { buildSurfaceEvidence, formatSurfaceEvidence } from './surface-evidence';
 
 export interface GenerateReportResult {
@@ -22,11 +23,15 @@ export interface GenerateReportResult {
   markdownReport: string;
   /** Non-fatal notes about the application context (migration, stale entries). */
   contextWarnings: string[];
+  /** What the model looked up, when lookup was enabled. */
+  lookups?: LookupLogEntry[];
 }
 
 export interface GenerateReportExtras {
   /** Deterministic application map from the same analysis run; enables where/how-to-test guidance. */
   applicationMap?: ApplicationMap;
+  /** Lets the report model read code at the analyzed revision before writing. */
+  lookup?: { read: SourceReader; style?: 'optional' | 'always'; maxRounds?: number } & CodeLookupOptions;
 }
 
 export async function generateQAReport(
@@ -46,11 +51,13 @@ export async function generateQAReport(
     capabilities: evidence.technicalGraph.capabilities,
     surfaceEvidence,
   });
+  const tool = extras.lookup ? createCodeLookup(evidence.technicalGraph, extras.lookup.read, extras.lookup) : undefined;
   const qaReport = await generateImpactReport({
-    instruction: qaInstruction,
+    instruction: tool ? `${qaInstruction}\n\n${lookupInstruction(extras.lookup!.style)}` : qaInstruction,
     evidence: payload,
     options,
     allowedSurfaceIds: payload.applicationContext.allowedSurfaceIds,
+    ...(tool ? { lookup: { tool, maxRounds: extras.lookup!.maxRounds, requireFirst: extras.lookup!.style === 'always' } } : {}),
   });
 
   const markdownReport = `# Graphentra QA Impact Report\n\nEvidence Identity: ${evidenceIdentity}\n\n${formatImpactReport(qaReport)}${formatSurfaceEvidence(surfaceEvidence)}`;
@@ -60,6 +67,7 @@ export async function generateQAReport(
     qaReport,
     markdownReport,
     contextWarnings: warnings,
+    ...(tool ? { lookups: tool.log } : {}),
   };
 }
 
