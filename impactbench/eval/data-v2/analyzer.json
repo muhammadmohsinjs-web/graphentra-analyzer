@@ -1,0 +1,1106 @@
+[
+ {
+  "id": "consola-01",
+  "repo": "consola",
+  "changeClass": "plain-logic",
+  "seconds": 1.1,
+  "outcome": "completed",
+  "impacts": 2,
+  "blastTotal": 16,
+  "receivers": 1,
+  "payloadBytes": 31654,
+  "truth": [
+   {
+    "id": "src/consola.js#Consola._logFn",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/consola.js#Consola.constructor",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 0,
+  "hasContext": false
+ },
+ {
+  "id": "consola-02",
+  "repo": "consola",
+  "changeClass": "plain-logic",
+  "seconds": 1.1,
+  "outcome": "completed",
+  "impacts": 13,
+  "blastTotal": 6,
+  "receivers": 1,
+  "payloadBytes": 36095,
+  "truth": [
+   {
+    "id": "src/index.ts#_createConsola",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 0,
+  "hasContext": false
+ },
+ {
+  "id": "consola-03",
+  "repo": "consola",
+  "changeClass": "same-signature-behavior",
+  "seconds": 1.2,
+  "outcome": "completed",
+  "impacts": 47,
+  "blastTotal": 38,
+  "receivers": 0,
+  "payloadBytes": 243856,
+  "truth": [
+   {
+    "id": "src/prompt.ts#prompt",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 0,
+  "hasContext": false
+ },
+ {
+  "id": "excalidraw-01",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 1.3,
+  "outcome": "completed",
+  "impacts": 50,
+  "blastTotal": 28,
+  "receivers": 10,
+  "payloadBytes": 321991,
+  "truth": [
+   {
+    "id": "src/index.tsx#App.render",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 16,
+  "hasContext": true
+ },
+ {
+  "id": "excalidraw-02",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 1.4,
+  "outcome": "completed",
+  "impacts": 22,
+  "blastTotal": 13,
+  "receivers": 5,
+  "payloadBytes": 119262,
+  "truth": [
+   {
+    "id": "src/actions/actionProperties.tsx#getFormValue",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/actions/actionProperties.tsx#actionChangeOpacity.PanelComponent",
+    "outside": false,
+    "role": "caller",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 28,
+  "hasContext": true
+ },
+ {
+  "id": "excalidraw-03",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 2.3,
+  "outcome": "completed",
+  "impacts": 20,
+  "blastTotal": 44,
+  "receivers": 37,
+  "payloadBytes": 181390,
+  "truth": [
+   {
+    "id": "src/components/ToolButton.tsx#ToolButton",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/actions/actionDeleteSelected.tsx#actionDeleteSelected.PanelComponent",
+    "outside": true,
+    "role": "consumer",
+    "inGraph": true,
+    "as": "blast",
+    "inPayload": true
+   },
+   {
+    "id": "src/actions/actionDuplicateSelection.tsx#actionDuplicateSelection.PanelComponent",
+    "outside": true,
+    "role": "consumer",
+    "inGraph": true,
+    "as": "blast",
+    "inPayload": true
+   },
+   {
+    "id": "src/actions/actionFinalize.tsx#actionFinalize.PanelComponent",
+    "outside": true,
+    "role": "consumer",
+    "inGraph": true,
+    "as": "blast",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 56,
+  "hasContext": true
+ },
+ {
+  "id": "excalidraw-04",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 3,
+  "outcome": "completed",
+  "impacts": 12,
+  "blastTotal": 25,
+  "receivers": 18,
+  "payloadBytes": 219219,
+  "truth": [
+   {
+    "id": "src/charts.ts#renderSpreadsheet",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 83,
+  "hasContext": true
+ },
+ {
+  "id": "excalidraw-05",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 3.1,
+  "outcome": "completed",
+  "impacts": 26,
+  "blastTotal": 119,
+  "receivers": 8,
+  "payloadBytes": 479401,
+  "truth": [
+   {
+    "id": "src/components/Stats.tsx#Stats",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 82,
+  "hasContext": true
+ },
+ {
+  "id": "excalidraw-06",
+  "repo": "excalidraw",
+  "changeClass": "same-signature-behavior",
+  "seconds": 4.1,
+  "outcome": "completed",
+  "impacts": 10,
+  "blastTotal": 40,
+  "receivers": 15,
+  "payloadBytes": 136098,
+  "truth": [
+   {
+    "id": "src/element/textElement.ts#redrawTextBoundingBox",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/actions/actionProperties.tsx#actionChangeFontSize.perform",
+    "outside": false,
+    "role": "caller",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/actions/actionProperties.tsx#actionChangeFontFamily.perform",
+    "outside": false,
+    "role": "caller",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/actions/actionProperties.tsx#actionChangeTextAlign.perform",
+    "outside": false,
+    "role": "caller",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/actions/actionStyles.ts#actionPasteStyles.perform",
+    "outside": false,
+    "role": "caller",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 110,
+  "hasContext": true
+ },
+ {
+  "id": "excalidraw-07",
+  "repo": "excalidraw",
+  "changeClass": "same-signature-behavior",
+  "seconds": 4.3,
+  "outcome": "completed",
+  "impacts": 5,
+  "blastTotal": 0,
+  "receivers": 7,
+  "payloadBytes": 13633,
+  "truth": [
+   {
+    "id": "src/actions/actionFinalize.tsx#actionFinalize.perform",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "missed",
+    "inPayload": false
+   },
+   {
+    "id": "src/actions/actionCanvas.tsx#actionErase.perform",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/data/restore.ts#restoreAppState",
+    "outside": true,
+    "role": "consumer",
+    "inGraph": true,
+    "as": "missed",
+    "inPayload": false
+   }
+  ],
+  "contextFiles": 113,
+  "hasContext": true
+ },
+ {
+  "id": "excalidraw-08",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 4.2,
+  "outcome": "completed",
+  "impacts": 10,
+  "blastTotal": 6,
+  "receivers": 2,
+  "payloadBytes": 94791,
+  "truth": [
+   {
+    "id": "src/components/ColorPicker.tsx#Picker",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 112,
+  "hasContext": true
+ },
+ {
+  "id": "excalidraw-09",
+  "repo": "excalidraw",
+  "changeClass": "timing-limit-constant",
+  "seconds": 4.6,
+  "outcome": "completed",
+  "impacts": 8,
+  "blastTotal": 25,
+  "receivers": 0,
+  "payloadBytes": 138203,
+  "truth": [
+   {
+    "id": "src/components/App.tsx#App.componentDidUpdate",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/components/App.tsx#App.componentDidMount",
+    "outside": true,
+    "role": "caller",
+    "inGraph": true,
+    "as": "missed",
+    "inPayload": false
+   },
+   {
+    "id": "src/renderer/renderScene.ts#renderSceneThrottled",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/renderer/renderScene.ts#renderScene",
+    "outside": true,
+    "role": "fault",
+    "inGraph": true,
+    "as": "missed",
+    "inPayload": false
+   },
+   {
+    "id": "src/excalidraw-app/index.tsx#<module>",
+    "outside": true,
+    "role": "consumer",
+    "inGraph": true,
+    "as": "missed",
+    "inPayload": false
+   }
+  ],
+  "contextFiles": 117,
+  "hasContext": true
+ },
+ {
+  "id": "excalidraw-10",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 4.5,
+  "outcome": "completed",
+  "impacts": 38,
+  "blastTotal": 43,
+  "receivers": 17,
+  "payloadBytes": 576840,
+  "truth": [
+   {
+    "id": "src/data/library.ts#useHandleLibrary>importLibraryFromURL",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/excalidraw-app/index.tsx#ExcalidrawWrapper",
+    "outside": false,
+    "role": "caller",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 115,
+  "hasContext": true
+ },
+ {
+  "id": "excalidraw-11",
+  "repo": "excalidraw",
+  "changeClass": "same-signature-behavior",
+  "seconds": 4.9,
+  "outcome": "completed",
+  "impacts": 17,
+  "blastTotal": 57,
+  "receivers": 39,
+  "payloadBytes": 468203,
+  "truth": [
+   {
+    "id": "src/clipboard.ts#getSystemClipboard",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/clipboard.ts#parseClipboard",
+    "outside": false,
+    "role": "caller",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/charts.ts#tryParseSpreadsheet",
+    "outside": true,
+    "role": "consumer",
+    "inGraph": true,
+    "as": "receiver",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 128,
+  "hasContext": true
+ },
+ {
+  "id": "excalidraw-12",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 5,
+  "outcome": "completed",
+  "impacts": 23,
+  "blastTotal": 55,
+  "receivers": 0,
+  "payloadBytes": 899606,
+  "truth": [
+   {
+    "id": "src/components/ActiveConfirmDialog.tsx#ActiveConfirmDialog",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/components/LibraryMenuHeaderContent.tsx#LibraryMenuHeader",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "blast",
+    "inPayload": true
+   },
+   {
+    "id": "src/components/main-menu/DefaultItems.tsx#ClearCanvas",
+    "outside": false,
+    "role": "caller",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 149,
+  "hasContext": true
+ },
+ {
+  "id": "excalidraw-13",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 5.2,
+  "outcome": "completed",
+  "impacts": 28,
+  "blastTotal": 188,
+  "receivers": 38,
+  "payloadBytes": 2294092,
+  "truth": [
+   {
+    "id": "src/element/textWysiwyg.tsx#textWysiwyg",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 157,
+  "hasContext": true
+ },
+ {
+  "id": "excalidraw-14",
+  "repo": "excalidraw",
+  "changeClass": "same-signature-behavior",
+  "seconds": 7,
+  "outcome": "completed",
+  "impacts": 20,
+  "blastTotal": 14,
+  "receivers": 12,
+  "payloadBytes": 106923,
+  "truth": [
+   {
+    "id": "packages/excalidraw/components/icons.tsx#SendBackwardIcon",
+    "outside": false,
+    "role": "fault",
+    "inGraph": false,
+    "as": "missed",
+    "inPayload": false
+   },
+   {
+    "id": "packages/excalidraw/components/icons.tsx#SendToBackIcon",
+    "outside": false,
+    "role": "fault",
+    "inGraph": false,
+    "as": "missed",
+    "inPayload": false
+   },
+   {
+    "id": "packages/excalidraw/actions/actionZindex.tsx#actionSendBackward.PanelComponent",
+    "outside": true,
+    "role": "consumer",
+    "inGraph": true,
+    "as": "receiver",
+    "inPayload": true
+   },
+   {
+    "id": "packages/excalidraw/actions/actionZindex.tsx#actionSendToBack.PanelComponent",
+    "outside": true,
+    "role": "consumer",
+    "inGraph": true,
+    "as": "receiver",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 253,
+  "hasContext": true
+ },
+ {
+  "id": "excalidraw-15",
+  "repo": "excalidraw",
+  "changeClass": "same-signature-behavior",
+  "seconds": 8.8,
+  "outcome": "completed",
+  "impacts": 5,
+  "blastTotal": 66,
+  "receivers": 0,
+  "payloadBytes": 337786,
+  "truth": [
+   {
+    "id": "packages/excalidraw/data/url.ts#normalizeLink",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "blast",
+    "inPayload": true
+   },
+   {
+    "id": "packages/excalidraw/utils.ts#sanitizeHTMLAttribute",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "packages/excalidraw/element/embeddable.ts#getEmbedLink",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "blast",
+    "inPayload": true
+   },
+   {
+    "id": "packages/excalidraw/components/hyperlink/Hyperlink.tsx#Hyperlink",
+    "outside": true,
+    "role": "caller",
+    "inGraph": true,
+    "as": "blast",
+    "inPayload": true
+   },
+   {
+    "id": "packages/excalidraw/data/restore.ts#restoreElementWithProperties",
+    "outside": true,
+    "role": "consumer",
+    "inGraph": true,
+    "as": "blast",
+    "inPayload": true
+   },
+   {
+    "id": "packages/excalidraw/components/App.tsx#App.pasteFromClipboard",
+    "outside": true,
+    "role": "caller",
+    "inGraph": true,
+    "as": "blast",
+    "inPayload": true
+   },
+   {
+    "id": "packages/excalidraw/components/App.tsx#App.handleAppOnDrop",
+    "outside": true,
+    "role": "caller",
+    "inGraph": true,
+    "as": "blast",
+    "inPayload": true
+   },
+   {
+    "id": "packages/excalidraw/element/elementLink.ts#defaultGetElementLinkFromSelection",
+    "outside": true,
+    "role": "caller",
+    "inGraph": true,
+    "as": "blast",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 317,
+  "hasContext": true
+ },
+ {
+  "id": "excalidraw-16",
+  "repo": "excalidraw",
+  "changeClass": "same-signature-behavior",
+  "seconds": 9.3,
+  "outcome": "completed",
+  "impacts": 15,
+  "blastTotal": 33,
+  "receivers": 1,
+  "payloadBytes": 207623,
+  "truth": [
+   {
+    "id": "packages/excalidraw/eraser/index.ts#EraserTrail.updateElementsToBeErased",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "packages/excalidraw/eraser/index.ts#eraserTest",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "packages/excalidraw/components/App.tsx#App.handleEraser",
+    "outside": false,
+    "role": "caller",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 349,
+  "hasContext": true
+ },
+ {
+  "id": "excalidraw-17",
+  "repo": "excalidraw",
+  "changeClass": "same-signature-behavior",
+  "seconds": 8.6,
+  "outcome": "completed",
+  "impacts": 21,
+  "blastTotal": 132,
+  "receivers": 8,
+  "payloadBytes": 1091824,
+  "truth": [
+   {
+    "id": "packages/excalidraw/actions/actionProperties.tsx#getArrowheadOptions",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "packages/excalidraw/actions/actionProperties.tsx#actionChangeArrowhead.PanelComponent",
+    "outside": false,
+    "role": "caller",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 317,
+  "hasContext": true
+ },
+ {
+  "id": "excalidraw-18",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 9.9,
+  "outcome": "completed",
+  "impacts": 15,
+  "blastTotal": 9,
+  "receivers": 1,
+  "payloadBytes": 110016,
+  "truth": [
+   {
+    "id": "excalidraw-app/components/ExcalidrawPlusPromoBanner.tsx#ExcalidrawPlusPromoBanner",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 364,
+  "hasContext": true
+ },
+ {
+  "id": "excalidraw-19",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 10.6,
+  "outcome": "completed",
+  "impacts": 41,
+  "blastTotal": 394,
+  "receivers": 84,
+  "payloadBytes": 3122686,
+  "truth": [
+   {
+    "id": "packages/element/src/arrows/focus.ts#isFocusPointVisible",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "packages/element/src/arrows/focus.ts#handleFocusPointPointerDown",
+    "outside": false,
+    "role": "caller",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "packages/element/src/arrows/focus.ts#handleFocusPointHover",
+    "outside": false,
+    "role": "caller",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "packages/excalidraw/renderer/interactiveScene.ts#renderFocusPointIndicator",
+    "outside": false,
+    "role": "caller",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 387,
+  "hasContext": true
+ },
+ {
+  "id": "excalidraw-20",
+  "repo": "excalidraw",
+  "changeClass": "same-signature-behavior",
+  "seconds": 11.5,
+  "outcome": "completed",
+  "impacts": 38,
+  "blastTotal": 579,
+  "receivers": 53,
+  "payloadBytes": 4973282,
+  "truth": [
+   {
+    "id": "packages/element/src/frame.ts#isElementContainingFrame",
+    "outside": true,
+    "role": "fault",
+    "inGraph": true,
+    "as": "blast",
+    "inPayload": true
+   },
+   {
+    "id": "packages/element/src/selection.ts#getElementsWithinSelection",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "packages/element/src/frame.ts#elementOverlapsWithFrame",
+    "outside": true,
+    "role": "caller",
+    "inGraph": true,
+    "as": "blast",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 410,
+  "hasContext": true
+ },
+ {
+  "id": "excalidraw-21",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 12.6,
+  "outcome": "completed",
+  "impacts": 71,
+  "blastTotal": 124,
+  "receivers": 49,
+  "payloadBytes": 2055735,
+  "truth": [
+   {
+    "id": "packages/excalidraw/components/App.tsx#App.isActiveToolPointerCapturing",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "packages/excalidraw/components/App.tsx#App.handleCanvasPointerDown",
+    "outside": false,
+    "role": "caller",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "packages/excalidraw/components/App.tsx#App.handleCanvasPanUsingWheelOrSpaceDrag",
+    "outside": false,
+    "role": "caller",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 426,
+  "hasContext": true
+ },
+ {
+  "id": "json-server-01",
+  "repo": "json-server",
+  "changeClass": "plain-logic",
+  "seconds": 1.1,
+  "outcome": "completed",
+  "impacts": 1,
+  "blastTotal": 1,
+  "receivers": 0,
+  "payloadBytes": 4773,
+  "truth": [
+   {
+    "id": "src/router.js#show",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 0,
+  "hasContext": false
+ },
+ {
+  "id": "json-server-02",
+  "repo": "json-server",
+  "changeClass": "return-shape",
+  "seconds": 1.2,
+  "outcome": "completed",
+  "impacts": 1,
+  "blastTotal": 0,
+  "receivers": 12,
+  "payloadBytes": 4375,
+  "truth": [
+   {
+    "id": "src/server/router/index.js#<module>",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 0,
+  "hasContext": false
+ },
+ {
+  "id": "ofetch-01",
+  "repo": "ofetch",
+  "changeClass": "same-signature-behavior",
+  "seconds": 1,
+  "outcome": "completed",
+  "impacts": 3,
+  "blastTotal": 6,
+  "receivers": 4,
+  "payloadBytes": 19890,
+  "truth": [
+   {
+    "id": "src/fetch.ts#createFetch",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/fetch.ts#createFetch>$fetchRaw",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 0,
+  "hasContext": false
+ },
+ {
+  "id": "ofetch-02",
+  "repo": "ofetch",
+  "changeClass": "plain-logic",
+  "seconds": 1,
+  "outcome": "completed",
+  "impacts": 4,
+  "blastTotal": 7,
+  "receivers": 0,
+  "payloadBytes": 29023,
+  "truth": [
+   {
+    "id": "src/utils.ts#detectResponseType",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/fetch.ts#createFetch>$fetchRaw",
+    "outside": false,
+    "role": "caller",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 0,
+  "hasContext": false
+ },
+ {
+  "id": "pathe-01",
+  "repo": "pathe",
+  "changeClass": "plain-logic",
+  "seconds": 1,
+  "outcome": "completed",
+  "impacts": 8,
+  "blastTotal": 2,
+  "receivers": 4,
+  "payloadBytes": 23556,
+  "truth": [
+   {
+    "id": "src/path.ts#extname",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/path.ts#parse",
+    "outside": false,
+    "role": "caller",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 0,
+  "hasContext": false
+ },
+ {
+  "id": "ufo-01",
+  "repo": "ufo",
+  "changeClass": "plain-logic",
+  "seconds": 1.1,
+  "outcome": "completed",
+  "impacts": 46,
+  "blastTotal": 26,
+  "receivers": 0,
+  "payloadBytes": 254480,
+  "truth": [
+   {
+    "id": "src/encoding.ts#<module>",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/encoding.ts#encodePath",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/utils.ts#normalizeURL",
+    "outside": false,
+    "role": "caller",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 0,
+  "hasContext": false
+ },
+ {
+  "id": "ufo-02",
+  "repo": "ufo",
+  "changeClass": "plain-logic",
+  "seconds": 1,
+  "outcome": "completed",
+  "impacts": 51,
+  "blastTotal": 23,
+  "receivers": 5,
+  "payloadBytes": 232516,
+  "truth": [
+   {
+    "id": "src/query.ts#encodeQueryItem",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/utils.ts#withQuery",
+    "outside": false,
+    "role": "caller",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 0,
+  "hasContext": false
+ },
+ {
+  "id": "ufo-03",
+  "repo": "ufo",
+  "changeClass": "plain-logic",
+  "seconds": 1,
+  "outcome": "completed",
+  "impacts": 8,
+  "blastTotal": 15,
+  "receivers": 2,
+  "payloadBytes": 58753,
+  "truth": [
+   {
+    "id": "src/utils.ts#withoutBase",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 0,
+  "hasContext": false
+ }
+]

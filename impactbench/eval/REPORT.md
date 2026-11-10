@@ -236,3 +236,27 @@ node --import tsx tools/impactbench-report-eval.mts summary
 
 `<history-dir>` holds a full-history clone per corpus repo (see `impactbench/corpus/README.md`). `.env` and the excalidraw context are
 read from the main checkout when the worktree has none.
+
+## Re-run after the two quick fixes (2026-11-10, commit d371d5c)
+
+Base variant only, 1 report per commit, 31 commits (excalidraw-21 still skipped). Same model and judge.
+Data: `impactbench/eval/data-v2/`. Compared against run 1 of the base variant in `data/`.
+
+| | Before | After |
+|---|---|---|
+| Reports that catch the bug | 9 of 31 | 9 of 31 |
+| Reports that explain the bug | 9 of 31 | 12 of 31 |
+| Invalid reports | 4 | 3 |
+| Cost (reports + judge) | $0.83 | $0.30 |
+| Median time per report | 251 s | 285 s |
+
+- **`#` fix worked.** excalidraw-15 was rejected before and now passes and catches the bug. No report failed on `#`.
+- **Prompt step: no net gain in catches.** It gained pathe-01 (a dotfile input) and excalidraw-15, and lost consola-02 and
+  excalidraw-03. consola-02 was caught in 3 of 3 earlier runs; the new report spent its checks on export aliases and
+  missed the log-level setting. The commits the step targeted (consola-01, consola-03, ofetch-02, ufo-02) are still missed.
+- **Remaining invalid reports:** excalidraw-19 and excalidraw-20 (payload too large, unchanged), and ufo-02, whose checks
+  quote URLs in backticks. That is the library-mode problem (roadmap item 7), not `#`.
+- One run per commit is noisy: a swing of 2 commits either way is within what repeated runs showed before.
+
+Conclusion: keep the `#` fix. The prompt step alone does not find the breaking input; the model needs the changed code
+in a form it can compare (roadmap item 4), which moves to Phase 6.
