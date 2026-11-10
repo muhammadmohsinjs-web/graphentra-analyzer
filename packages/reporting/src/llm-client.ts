@@ -73,7 +73,7 @@ export function validateImpactReportSemantics(report: ImpactReport, options: { a
   const heading =
     /^(?:qa\s+(?:report|change)\b|what\s+changed\b|(?:summary|change|impact|key\s*changes|qa\s*checks|uncertainty|title|overview|checks|risks?|notes?)\s*(?::|$))/i;
   const markdown =
-    /[\r\n\u2028\u2029`#]|^\s*(?:>|[-+*]\s|\d+[.)]\s)|\*\*|__[^_\s].*?__|~~|\*[^*\s][^*]*\*|(?:^|\s)_[^_\s][^_]*_(?=\s|[.,!?]|$)|!?\[[^\]]*\]\s*\([^)]*\)|<\/?[a-z][^>]*>|^\|.*\|$/i;
+    /[\r\n\u2028\u2029`]|^\s*(?:#{1,6}(?:\s|$)|>|[-+*]\s|\d+[.)]\s)|\*\*|__[^_\s].*?__|~~|\*[^*\s][^*]*\*|(?:^|\s)_[^_\s][^_]*_(?=\s|[.,!?]|$)|!?\[[^\]]*\]\s*\([^)]*\)|<\/?[a-z][^>]*>|^\|.*\|$/i;
   const technicalIdentifier = /\b[a-z]{2,}[A-Z][A-Za-z0-9_$]*\b/;
   const sourceFileName = /\b[^\s]+\.(?:ts|tsx|mts|cts)\b/;
   const implementationTask =

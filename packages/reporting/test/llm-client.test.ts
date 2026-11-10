@@ -282,6 +282,8 @@ test('rejects empty values and heading or Markdown content in every field', () =
     '',
     '   ',
     '# Checkout',
+    '## Checkout',
+    '  ### Checkout',
     '**Checkout**',
     'QA Report',
     'QA Change: Checkout',
@@ -318,6 +320,21 @@ test('rejects empty values and heading or Markdown content in every field', () =
         `${field}: ${JSON.stringify(value)}`,
       );
     }
+  }
+});
+
+test('accepts # inside text such as URL fragments, issue numbers and HTML entities', () => {
+  for (const check of [
+    'Verify opening /docs?x=1#top scrolls to the top section.',
+    'Confirm the label shows don&#39;t without the entity code.',
+    'Check that order #42 appears in the list.',
+    'Validate that the color #ff0000 is shown as red.',
+  ]) {
+    assert.deepEqual(
+      validateImpactReportSemantics({ ...validReport, qaChecks: [check] }),
+      [],
+      check,
+    );
   }
 });
 
@@ -379,7 +396,7 @@ test('rejects an incomplete key change without imposing a character limit', () =
         'keyChanges[0] must be a complete sentence ending with a period, question mark, or exclamation mark.',
     ),
   );
-  assert.ok(errors.some(error => error.startsWith('qaChecks[0] must be plain text')));
+  assert.ok(errors.some(error => error.startsWith('qaChecks[0] must not include source file names')));
   assert.ok(
     errors.some(error => error.startsWith('qaChecks[0] must verify runtime behavior')),
   );
