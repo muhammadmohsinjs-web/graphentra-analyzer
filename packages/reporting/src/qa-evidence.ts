@@ -86,6 +86,20 @@ Using application context:
   user-visible purpose, using input that contains that character the way real users produce it (for example cells copied
   from another application), say what should still happen, and state the risk in uncertainty.
 
+Finding the input that breaks (do this before writing checks):
+- Bugs hide in input that the OLD code handled and the NEW code treats differently. Input that works the same
+  before and after the change cannot expose a regression, however many cases you list.
+- For each behavioural change, compare removedCode with addedCode and find what now handles input differently:
+  a removed or added branch, a narrower or wider condition, a truthiness or falsy check (0, empty string, false,
+  null), a changed regular expression, a prefix or suffix rule, a changed default, an early return, a changed
+  order of steps, or an option that is now ignored or handled in a new way.
+- Name one concrete input that takes the old path but a different new path. Prefer edge values a real user or
+  caller produces: 0, empty, missing, a repeated value with nothing after it, a vendor or suffixed variant (for
+  example a +json content type), a value with a special character, or an option the change stops reading.
+- At least one check in the most critical test area must use that exact input and state what should happen.
+  Do not spend checks on mainstream input that both versions handle the same way.
+- If you cannot find such an input, say so in uncertainty instead of guessing.
+
 Synthesize all supplied changes together. Merge closely related changes into one key point, especially
 when service behavior, its endpoint, and its test coverage describe the same workflow. Prioritize
 runtime behavior and omit implementation-only edits that do not change observable behavior. Do not
@@ -112,7 +126,8 @@ Field requirements:
   appear in unchanged context. Never mention source files, function names, entity IDs, or line numbers.
 - uncertainty: Zero or one material unresolved point relevant to QA. Use [] when none.
 
-Never include Markdown in any field value. Never use #, ##, **, headings, labels, or report titles.
+Never include Markdown in any field value. Never start a value with # or ##, and never use **, headings, labels, or
+report titles. A # inside text, such as a URL fragment or an order number, is allowed.
 Do not put Change:, Impact:, Key Changes:, QA Checks:, Summary:, or similar labels inside field values.
 Return only the content required by each field.
 Before answering, compare every removedCode as BEFORE with its addedCode as AFTER. Never swap old and new behavior.

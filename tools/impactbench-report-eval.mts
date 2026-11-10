@@ -20,7 +20,9 @@ const { readEvidence } = analyzer;
 const { buildLLMPayload, buildSurfaceEvidence, generateQAReport, loadApplicationContext } = reporting;
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const DATA = path.join(ROOT, 'impactbench/eval/data');
+const DATA_ARG = process.argv.indexOf('--data');
+// --data <dir> keeps a run's rows, summary and CSV apart from the default data set.
+const DATA = DATA_ARG > 0 ? path.resolve(process.argv[DATA_ARG + 1]) : path.join(ROOT, 'impactbench/eval/data');
 const RUNS = path.join(DATA, 'runs.jsonl');
 
 // fixtures/large-repos is git-ignored, so a worktree has none: fall back to the main checkout (parent of the shared .git dir).
