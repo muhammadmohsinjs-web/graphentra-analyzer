@@ -1,0 +1,22 @@
+[
+  { "commit": "excalidraw-07", "report": "v2-base-1", "original": "Toggling the eraser off now restores the tool that was active before it, rather than always switching to selection, so users can resume drawing with their prior tool.",
+    "claim": "Toggling the eraser off now always switches to the selection tool, rather than restoring the tool that was active before it.", "why": "swaps old and new behaviour" },
+  { "commit": "excalidraw-13", "report": "v2-base-1", "original": "A word that exactly matches the available text width now stays on one line; previously the equal-width case entered the word-breaking path.",
+    "claim": "A word that exactly matches the available text width is now broken across lines; previously the equal-width case stayed on one line.", "why": "swaps old and new behaviour" },
+  { "commit": "excalidraw-15", "report": "v2-base-1", "original": "Values used in HTML attributes now escape ampersands, apostrophes, angle brackets, and double quotes; previously only double quotes were escaped.",
+    "claim": "Values used in HTML attributes now escape only double quotes; previously ampersands, apostrophes, angle brackets, and double quotes were all escaped.", "why": "swaps old and new behaviour" },
+  { "commit": "consola-02", "report": "v2-base-1", "original": "The package's default export changes from the logger class to an initialized logger instance, while the class is available as a named export.",
+    "claim": "The package's default export changes from an initialized logger instance to the logger class, and the instance is no longer exported.", "why": "swaps old and new, and adds a removal the code does not make" },
+  { "commit": "excalidraw-11", "report": "v2-base-1", "original": "Ctrl/Command+Shift+V now requests plain-text paste, while the same key combination no longer triggers vertical flipping.",
+    "claim": "Ctrl/Command+Shift+V now flips the selection vertically, and it no longer requests plain-text paste.", "why": "swaps old and new behaviour" },
+  { "commit": "excalidraw-12", "report": "v2-base-1", "original": "Selecting \"Clear Reset\" now opens a confirmation dialog outside the menu, so the dialog remains available after the menu closes and clearing occurs only after confirmation.",
+    "claim": "Selecting \"Clear Reset\" now clears the canvas immediately, without asking for confirmation.", "why": "states the opposite of the change (confirmation is added, not removed)" },
+  { "commit": "consola-03", "report": "v2-base-1", "original": "Logger instances can now be created with caller-supplied options, including custom reporters, while retaining environment-based defaults when reporters are omitted.",
+    "claim": "Logger instances now ignore caller-supplied reporters and always use the environment-based defaults.", "why": "states the opposite of the change" },
+  { "commit": "excalidraw-17", "report": "v2-base-1", "original": "Arrowhead pickers now show four choices first and place the remaining choices in a collapsible section that opens automatically when the current style is among those remaining.",
+    "claim": "Arrowhead pickers now show every choice in one flat list; the collapsible section that held the remaining choices is removed.", "why": "swaps old and new layout" },
+  { "commit": "excalidraw-08", "report": "v2-base-1", "original": "Element background and stroke pickers can show up to five distinct custom colors from the most recently updated non-deleted elements, while the canvas background picker does not show this custom-color section.",
+    "claim": "The canvas background picker now shows up to five custom colors from recent elements, while the element background and stroke pickers no longer show custom colors.", "why": "swaps which pickers get the custom-color section" },
+  { "commit": "consola-01", "report": "v2-base-1", "original": "Identical logs suppressed within the throttle interval are now counted, and the previous log is emitted with a \"(repeated N times)\" suffix when the next eligible log arrives.",
+    "claim": "Identical logs within the throttle interval are no longer suppressed; every repeat is now printed on its own line instead of being counted.", "why": "states the opposite of the change (suppression with a count is added)" }
+]
