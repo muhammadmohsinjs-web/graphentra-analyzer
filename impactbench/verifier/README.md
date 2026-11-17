@@ -16,6 +16,7 @@ This folder answers one question before any verifier code is built: **can a Deci
 |---|---|---|---|
 | 2026-11-17 | [Run 1](history/2026-11-17-run-1-draft-labels.md) | 150 drafts, 0 reviewed | Gate FAIL for both candidates. U3 works, U1 likely works after review, U2 fails for both. |
 | 2026-11-17 | [Run 2](history/2026-11-17-run-2-reviewed-labels.md) | 99 reviewed (U1 + U3; U2 excluded) | Gate PASS for both. OpenAI at t=0.7: recall 92 %, precision 92 %. Narrow margin (35/38). |
+| 2026-11-17 | [Run 3](history/2026-11-17-run-3-repeats-and-consola-check.md) | 99 reviewed; consola-02/03 checked in the repo | Two OpenAI repeats are identical to Run 1 (deterministic). The consola labels stay false. Ready for V-3. |
 
 ## Commands
 
