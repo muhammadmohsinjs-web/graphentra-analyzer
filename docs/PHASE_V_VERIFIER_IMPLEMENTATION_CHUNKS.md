@@ -16,7 +16,7 @@
 | Chunk | Tasks | Kind of work | Where | Ends with |
 |---|---|---|---|---|
 | 0 · Decision | V-0 ✅ | ADR | Obsidian vault | ADR-0011 written (Proposed) |
-| 1 · Answer key and spike | V-1, V-2, V-3 (+ V-18) | Eval data and spike script, no product code | `eval/corpus32-lookup-tool` branch: `impactbench/`, `tools/` | **Gate:** vendor and threshold, or stop the phase |
+| 1 · Answer key and spike | V-1 ✅, V-2 ✅, V-3 ✅ (+ V-18) | Eval data and spike script, no product code | `eval/corpus32-lookup-tool` branch: `impactbench/`, `tools/` | **Gate:** vendor and threshold, or stop the phase |
 | 2 · Verifier module | V-4, V-5, V-6, V-7 (+ V-19) | New library code, off by default, offline tests | `packages/reporting` (new files only) | One PR; tests and boundary check pass offline |
 | 3 · Wire into reports | V-8, V-9, V-10 | Changes to existing report generation | `llm-client.ts`, `impactReportSchema`, `tools/report.ts` | One PR; `--verify` works end to end, no change without it |
 | 4 · Measure | V-11, V-12, V-13 | Harness variant, benchmark run, write-up | eval branch, `impactbench/eval/REPORT.md`, ADR-0011 | **Gate:** flip default, keep opt-in, tune, or drop |
@@ -63,7 +63,7 @@ flowchart LR
 | ID | Task | Size | Depends on | Done when |
 |---|---|---|---|---|
 | V-4 | `DecisionClient` interface (`decide(input, questions) → answers`), OpenAI adapter, fake client. Timeouts, same transport retry rules as `llm-client.ts`, batching above 400 questions, shared input prefix for prompt caching. Direct OpenAI key. | M | V-3 | Unit tests with the fake pass; one live call works behind an env flag |
-| V-5 | Question builders: pure functions from evidence impacts + finished report to the three question sets, using the compact input. Test entities excluded from coverage questions. | M | V-4 | Snapshot tests show stable questions for the fixture project; no question exceeds the context |
+| V-5 | Question builders: pure functions from evidence impacts + finished report to the **two** question sets (U1 coverage, U3 faithfulness; U2 was rejected at V-3), with a short BEFORE-state context for U3 "now/new" claims, using the compact input. Test entities excluded from coverage questions. | M | V-4 | Snapshot tests show stable questions for the fixture project; no question exceeds the context |
 | V-6 | Verdict policy: probability → covered / not covered at the V-3 threshold. Refusal, error, timeout and missing answers → not covered. Output: a `verification` block (entity, score, verdict). | S | V-5 | Tests cover every answer type, including refusal and a dropped answer |
 | V-7 | Offline tests and boundary check: reporting tests use the fake client only; analyzer gains no dependency. | S | V-6 | `npm test`, `npm run typecheck`, `npm run verify:boundaries` pass without network |
 | V-19 *(optional, later)* | Google adapter for calls above 400 questions, behind the same interface. | S | V-4 | Adapter passes the same contract tests as the OpenAI adapter |
@@ -117,9 +117,9 @@ flowchart LR
 
 | Chunk | Status |
 |---|---|
-| 0 · Decision | ✅ ADR-0011 written (Proposed, accept at V-3) |
-| 1 · Answer key and spike | ⬜ next: V-1 |
-| 2 · Verifier module | ⬜ blocked by V-3 |
+| 0 · Decision | ✅ ADR-0011 written; **Accepted at V-3 (2026-11-17)** for U1 + U3 |
+| 1 · Answer key and spike | ✅ done 2026-11-17 (PR #20). E5 passes for U1 + U3 with OpenAI Decisions at t=0.7: recall 92 %, precision 92 %, deterministic. U2 rejected. Results in `impactbench/verifier/history/`. |
+| 2 · Verifier module | ⬜ next: V-4. **Scope set by V-3: U1 + U3 only, threshold 0.7.** |
 | 3 · Wire into reports | ⬜ |
 | 4 · Measure | ⬜ |
 | 5 · Rollout | ⬜ blocked by V-13 |
