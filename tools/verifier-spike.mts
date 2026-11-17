@@ -13,6 +13,7 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { config } from 'dotenv';
+import { brier, flagged, GATE, gatePick, prf, reliability, THRESHOLDS } from './verifier-metrics';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIR = path.join(ROOT, 'impactbench/verifier');
@@ -24,8 +25,6 @@ config({ path: process.env.GRAPHENTRA_ENV ?? [ROOT, MAIN_CHECKOUT].map(d => path
 const [command, ...rest] = process.argv.slice(2);
 const flag = (name: string, fallback?: string) => { const i = rest.indexOf(`--${name}`); return i >= 0 ? rest[i + 1] : fallback; };
 
-export const THRESHOLDS = [0.3, 0.4, 0.5, 0.6, 0.7];
-export const GATE = { recall: 0.9, precision: 0.6 };
 const TIMEOUT_MS = 60_000;
 // USD per million tokens [input, cached input, output]. Decisions pricing is not published on the reference page; the OpenAI and
 // Google rows are ESTIMATES from the gpt-6-luna chat price and must be replaced from the invoice. The judge reports its own cost.
@@ -140,33 +139,7 @@ async function run() {
 }
 
 // ---------- scoring ----------
-export type Scored = { label: boolean; p: number | null };
-/** Flag = "not covered / not supported". Recall-first: no answer is a flag. */
-export const flagged = (s: Scored, t: number) => s.p === null || s.p < t;
-export function prf(list: Scored[], t: number) {
-  const tp = list.filter(s => !s.label && flagged(s, t)).length;
-  const flags = list.filter(s => flagged(s, t)).length;
-  const negatives = list.filter(s => !s.label).length;
-  return { t, tp, flags, negatives, recall: negatives ? tp / negatives : NaN, precision: flags ? tp / flags : NaN };
-}
-export function brier(list: Scored[]) {
-  const answered = list.filter(s => s.p !== null);
-  return answered.length ? answered.reduce((sum, s) => sum + (s.p! - Number(s.label)) ** 2, 0) / answered.length : NaN;
-}
-export function reliability(list: Scored[], bins = 5) {
-  return Array.from({ length: bins }, (_, b) => {
-    const lo = b / bins; const hi = (b + 1) / bins;
-    const inBin = list.filter(s => s.p !== null && s.p >= lo && (s.p < hi || (b === bins - 1 && s.p <= hi)));
-    return { lo, hi, n: inBin.length, meanP: inBin.length ? inBin.reduce((a, s) => a + s.p!, 0) / inBin.length : NaN, fracTrue: inBin.length ? inBin.filter(s => s.label).length / inBin.length : NaN };
-  });
-}
 const quantile = (values: number[], q: number) => { if (!values.length) return NaN; const s = [...values].sort((a, b) => a - b); return s[Math.min(s.length - 1, Math.floor(q * s.length))]; };
-/** The V-3 pick: among thresholds that meet the gate, the best precision; ties go to higher recall, then the lower threshold. */
-export function gatePick(list: Scored[]) {
-  const passing = THRESHOLDS.map(t => prf(list, t)).filter(r => r.recall >= GATE.recall && r.precision >= GATE.precision);
-  return passing.sort((a, b) => b.precision - a.precision || b.recall - a.recall || a.t - b.t)[0];
-}
-
 function score() {
   const reviewedOnly = rest.includes('--reviewed-only');
   const items = readJsonl<Item>(LABELS).filter(i => !reviewedOnly || i.reviewed);
