@@ -15,6 +15,7 @@ import { config } from 'dotenv';
 import OpenAI from 'openai';
 import analyzer from '../packages/analyzer/src/index';
 import reporting, { type LookupLogEntry } from '../packages/reporting/src/index';
+import { LARGE_VARIANTS, largePayloadReport, payloadSizes, type LargeVariant } from './impactbench-large-payload.mts';
 
 const { readEvidence } = analyzer;
 const { buildLLMPayload, buildSurfaceEvidence, generateQAReport, loadApplicationContext } = reporting;
@@ -195,11 +196,21 @@ async function oneReport(entry: Entry, variant: string, run: number) {
   const logs: LookupLogEntry[] = [];
   const quiet = console.info; console.info = () => {};
   try {
+    if ((LARGE_VARIANTS as readonly string[]).includes(variant)) {
+      const large = await largePayloadReport(variant as LargeVariant, raw, context, { client, model: REPORT_MODEL, logLevel: 'off' });
+      console.info = quiet;
+      const grade = await judge(entry, large.qaReport, judgeClient);
+      row = { ...row, valid: true, ...grade, report: large.qaReport, large: large.notes,
+        truthSent: entry.affected.entities.filter(t => large.sentText.includes(`"${t.id}"`)).map(t => t.id) };
+      // Recall before the merge: would the analysts' own checks have caught it?
+      if (large.findings?.length) { const g: any = await judge(entry, { summary: '', keyChanges: [], uncertainty: [], testAreas: [{ area: 'findings', checks: large.findings }] }, judgeClient); row.findingsCatch = g.catch; }
+    } else {
     const result = await generateQAReport(raw, context, { client, model: REPORT_MODEL, logLevel: 'off' }, lookup ? { lookup } : {});
     console.info = quiet;
     logs.push(...(result.lookups ?? []));
     const grade = await judge(entry, result.qaReport, judgeClient);
     row = { ...row, valid: true, ...grade, report: result.qaReport };
+    }
   } catch (error) {
     console.info = quiet;
     const message = (error as Error).message ?? String(error);
@@ -269,6 +280,14 @@ if (command === 'evidence') {
     finished += 1; spent += row.usage.report.cost + row.usage.judge.cost;
     console.log(`[${finished}/${jobs.length}] ${entry.id} ${variant}#${run} ${row.valid ? `catch=${row.catch} explained=${row.explained}` : `INVALID ${row.failure}`} lookups=${row.lookups.count} ${row.seconds}s $${spent.toFixed(2)}`);
   });
+} else if (command === 'sizes') {
+  need(flag('work'), 'work');
+  for (const entry of selected.filter(e => fs.existsSync(evidenceFile(e.id)))) {
+    const raw = loadEvidence(entry.id); const ctx = fixContext(contextFor(entry, readEvidence(raw).technicalGraph));
+    const s = payloadSizes(raw, ctx); const kb = (t: string) => Math.round(Buffer.byteLength(t) / 1024);
+    const truth = (t: string) => `${entry.affected.entities.filter(e => t.includes(`"${e.id}"`)).length}/${entry.affected.entities.length}`;
+    console.log(`${entry.id} original ${kb(s.original)} KB truth ${truth(s.original)} | compact ${kb(s.compact)} KB truth ${truth(s.compact)} | budget ${kb(s.budget)} KB truth ${truth(s.budget)} | chunks ${s.chunks.length} max ${Math.round(Math.max(...s.chunks) / 1024)} KB`);
+  }
 } else if (command === 'summary') {
   const rows = fs.readFileSync(RUNS, 'utf8').trim().split('\n').map(line => JSON.parse(line));
   const facts: any[] = JSON.parse(fs.readFileSync(path.join(DATA, 'analyzer.json'), 'utf8'));

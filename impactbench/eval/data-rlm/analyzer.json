@@ -1,0 +1,88 @@
+[
+ {
+  "id": "excalidraw-19",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 10.3,
+  "outcome": "completed",
+  "impacts": 41,
+  "blastTotal": 394,
+  "receivers": 84,
+  "payloadBytes": 3122686,
+  "truth": [
+   {
+    "id": "packages/element/src/arrows/focus.ts#isFocusPointVisible",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "packages/element/src/arrows/focus.ts#handleFocusPointPointerDown",
+    "outside": false,
+    "role": "caller",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "packages/element/src/arrows/focus.ts#handleFocusPointHover",
+    "outside": false,
+    "role": "caller",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "packages/excalidraw/renderer/interactiveScene.ts#renderFocusPointIndicator",
+    "outside": false,
+    "role": "caller",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 387,
+  "hasContext": true
+ },
+ {
+  "id": "excalidraw-20",
+  "repo": "excalidraw",
+  "changeClass": "same-signature-behavior",
+  "seconds": 10.8,
+  "outcome": "completed",
+  "impacts": 38,
+  "blastTotal": 579,
+  "receivers": 53,
+  "payloadBytes": 4973282,
+  "truth": [
+   {
+    "id": "packages/element/src/frame.ts#isElementContainingFrame",
+    "outside": true,
+    "role": "fault",
+    "inGraph": true,
+    "as": "blast",
+    "inPayload": true
+   },
+   {
+    "id": "packages/element/src/selection.ts#getElementsWithinSelection",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "packages/element/src/frame.ts#elementOverlapsWithFrame",
+    "outside": true,
+    "role": "caller",
+    "inGraph": true,
+    "as": "blast",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 410,
+  "hasContext": true
+ }
+]
