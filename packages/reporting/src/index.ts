@@ -8,3 +8,4 @@ export * from './application-context';
 export * from './report-generator';
 export * from './surface-evidence';
 export * from './code-lookup';
+export * from './verifier';
