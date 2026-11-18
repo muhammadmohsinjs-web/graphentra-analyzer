@@ -16,6 +16,7 @@ import {
 import { buildLLMPayload, qaInstruction } from './qa-evidence';
 import { createCodeLookup, lookupInstruction, type CodeLookupOptions, type LookupLogEntry, type SourceReader } from './code-lookup';
 import { buildSurfaceEvidence, formatSurfaceEvidence } from './surface-evidence';
+import { createReportVerifier, type ReportVerification, type ReportVerifierOptions } from './verifier/verified-report';
 
 export interface GenerateReportResult {
   evidenceIdentity: string;
@@ -25,6 +26,8 @@ export interface GenerateReportResult {
   contextWarnings: string[];
   /** What the model looked up, when lookup was enabled. */
   lookups?: LookupLogEntry[];
+  /** Phase V verifier result and usage, only when `extras.verify` was given. */
+  verification?: ReportVerification;
 }
 
 export interface GenerateReportExtras {
@@ -32,6 +35,8 @@ export interface GenerateReportExtras {
   applicationMap?: ApplicationMap;
   /** Lets the report model read code at the analyzed revision before writing. */
   lookup?: { read: SourceReader; style?: 'optional' | 'always'; maxRounds?: number } & CodeLookupOptions;
+  /** Phase V (ADR-0011): verify the finished report, run one repair round on gaps, list what is still not covered. Off when absent. */
+  verify?: ReportVerifierOptions;
 }
 
 export async function generateQAReport(
@@ -52,13 +57,17 @@ export async function generateQAReport(
     surfaceEvidence,
   });
   const tool = extras.lookup ? createCodeLookup(evidence.technicalGraph, extras.lookup.read, extras.lookup) : undefined;
-  const qaReport = await generateImpactReport({
+  const verifier = extras.verify ? createReportVerifier(evidence.impacts, extras.verify) : undefined;
+  const writtenReport = await generateImpactReport({
     instruction: tool ? `${qaInstruction}\n\n${lookupInstruction(extras.lookup!.style)}` : qaInstruction,
     evidence: payload,
     options,
     allowedSurfaceIds: payload.applicationContext.allowedSurfaceIds,
     ...(tool ? { lookup: { tool, maxRounds: extras.lookup!.maxRounds, requireFirst: extras.lookup!.style === 'always' } } : {}),
+    ...(verifier ? { review: verifier.review } : {}),
   });
+  const verified = verifier ? await verifier.finish(writtenReport) : undefined;
+  const qaReport = verified?.report ?? writtenReport;
 
   const markdownReport = `# Graphentra QA Impact Report\n\nEvidence Identity: ${evidenceIdentity}\n\n${formatImpactReport(qaReport)}${formatSurfaceEvidence(surfaceEvidence)}`;
 
@@ -68,6 +77,7 @@ export async function generateQAReport(
     markdownReport,
     contextWarnings: warnings,
     ...(tool ? { lookups: tool.log } : {}),
+    ...(verified ? { verification: verified.verification } : {}),
   };
 }
 

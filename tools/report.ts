@@ -9,7 +9,8 @@ import {
 } from '@graphentra/analyzer';
 import {
   APPLICATION_CONTEXT_BACKUP_FILE, APPLICATION_CONTEXT_FILE, buildLegacyAnalysisResult, generateQAReport,
-  loadOrCreateApplicationContext, DEFAULT_OPENROUTER_MODEL, type LLMClientOptions,
+  loadOrCreateApplicationContext, DEFAULT_OPENROUTER_MODEL, createOpenAIDecisionClient, type DecisionClient,
+  type LLMClientOptions, type ReportVerification,
 } from '@graphentra/reporting';
 
 const loaderFrames = ['✦', '✧', '✦', '✧'];
@@ -80,8 +81,18 @@ function sourceReader(target: string, sha?: string): (file: string) => string | 
   };
 }
 
+export function describeVerification(result: ReportVerification): string {
+  const { verification, usage } = result;
+  const repair = result.repairRequested ? (result.repairAccepted ? 'repair round used' : 'repair round rejected, first report kept') : 'no repair needed';
+  return `Report verifier: ${verification.entries.length} questions, ${result.passes} pass${result.passes === 1 ? '' : 'es'}, ${repair}, `
+    + `${verification.entries.filter(entry => entry.kind === 'coverage' && entry.verdict === 'not_covered').length} changes not covered; `
+    + `tokens ${usage.inputTokens} in (${usage.cachedTokens} cached), ${usage.outputTokens} out; ${(result.durationMs / 1000).toFixed(1)}s.`;
+}
+
 export async function runReport(argv: string[] = process.argv.slice(2), dependencies: {
   llmOptions?: LLMClientOptions;
+  /** Decisions client for --verify (tests pass a fake). Defaults to OpenAI Decisions with OPENAI_API_KEY. */
+  decisionClient?: DecisionClient;
   environment?: NodeJS.ProcessEnv;
   loadEnvironment?: boolean;
 } = {}): Promise<void> {
@@ -93,7 +104,7 @@ export async function runReport(argv: string[] = process.argv.slice(2), dependen
     return;
   }
   if (options.help) {
-    console.log('Graphentra Local QA Reporting\nUsage: npm run report -- --target <dir> [--base <ref> --head <ref> | --working-tree] [--output <evidence-file>] [--report <QA-Markdown-file>] [--generate-context | --refresh-context] [--context-granularity files|functions] [--lookup]\n--generate-context onboards the repository once: it sends eligible source, documentation excerpts, and derived signals to the configured provider in bounded batches and writes .graphentra/application-context.json.\n--refresh-context re-describes only new or changed functions and new surfaces in an existing context (the previous file is kept as application-context.previous.json).\n--context-granularity files (default) summarizes each file; functions describes every function (much slower).\n--lookup lets the report model read code (an entity, a file outline, or a text search) at the analyzed revision before it writes the report.');
+    console.log('Graphentra Local QA Reporting\nUsage: npm run report -- --target <dir> [--base <ref> --head <ref> | --working-tree] [--output <evidence-file>] [--report <QA-Markdown-file>] [--generate-context | --refresh-context] [--context-granularity files|functions] [--lookup] [--verify]\n--generate-context onboards the repository once: it sends eligible source, documentation excerpts, and derived signals to the configured provider in bounded batches and writes .graphentra/application-context.json.\n--refresh-context re-describes only new or changed functions and new surfaces in an existing context (the previous file is kept as application-context.previous.json).\n--context-granularity files (default) summarizes each file; functions describes every function (much slower).\n--lookup lets the report model read code (an entity, a file outline, or a text search) at the analyzed revision before it writes the report.\n--verify checks the finished report with the OpenAI Decisions API (needs OPENAI_API_KEY): gaps get one repair round, and changed code still not covered is listed in the report. Same as GRAPHENTRA_VERIFY_REPORT=1.');
     return;
   }
   if (options.version) { console.log(ANALYZER_VERSION); return; }
@@ -108,6 +119,10 @@ export async function runReport(argv: string[] = process.argv.slice(2), dependen
   try { comparison = resolveCliComparison(options, environment); }
   catch (error) { console.error(error instanceof Error ? error.message : 'Invalid comparison.'); process.exitCode = 2; return; }
   try {
+    // Phase V: opt-in. Without the switch no verifier is created and no Decisions call is made.
+    // Created first, so a missing OPENAI_API_KEY fails before any LLM spend.
+    const verify = Boolean(options.verify) || environment.GRAPHENTRA_VERIFY_REPORT === '1';
+    const decisionClient = verify ? dependencies.decisionClient ?? createOpenAIDecisionClient({ apiKey: environment.OPENAI_API_KEY }) : undefined;
     const target = fs.realpathSync(path.resolve(options.target));
     const directory = path.join(target, '.graphentra');
     const evidencePath = path.resolve(options.output ?? path.join(directory, 'evidence.json'));
@@ -177,11 +192,13 @@ export async function runReport(argv: string[] = process.argv.slice(2), dependen
       console.log(result.summaryMessage);
       return;
     }
-    const report = await withLLMLoader('QA impact report', model,
+    const report = await withLLMLoader(verify ? 'QA impact report (verified)' : 'QA impact report', model,
       () => generateQAReport(result.evidence, lifecycle.context, llmOptions, {
         applicationMap: result.applicationMap,
         ...(options.lookup ? { lookup: { read: sourceReader(target, comparison.mode === 'working-tree' ? undefined : result.evidence.sourceState.checkoutSha) } } : {}),
+        ...(decisionClient ? { verify: { client: decisionClient } } : {}),
       }));
+    if (report.verification) console.log(describeVerification(report.verification));
     if (report.lookups) console.log(`Report lookups: ${report.lookups.length} (${report.lookups.filter(entry => entry.hit).length} found code).`);
     const legacy = buildLegacyAnalysisResult({ headSha: result.evidence.sourceState.checkoutSha,
       evidenceIdentity: report.evidenceIdentity, changedFiles: result.changedFiles,

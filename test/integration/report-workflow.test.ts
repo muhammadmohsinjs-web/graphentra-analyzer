@@ -7,6 +7,7 @@ import { test } from 'node:test';
 import { validateEvidenceEnvelope } from '@graphentra/analyzer';
 import { runReport } from '../../tools/report';
 import { createFakeLlm } from '../../packages/reporting/test/helpers/fake-llm';
+import { createFakeDecisionClient } from '../../packages/reporting/src/verifier';
 import { applyPaymentThresholdChange, createWebAppRepository } from '../../packages/reporting/test/helpers/web-app';
 test('local report preserves current evidence on missing context and injected provider failure', async () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'report-workflow-'));
@@ -105,5 +106,46 @@ test('extended engine: writes valid 2.1 evidence, generates a context without mo
     assert.ok(listed.every((entity: { id: string }) => !entity.id.endsWith('#<module>')));
     const analysis = JSON.parse(fs.readFileSync(path.join(graphentra, 'analysis.json'), 'utf8'));
     assert.ok(analysis.qaReport);
+  } finally { process.exitCode = previousExit; repo.cleanup(); }
+});
+
+test('--verify: verifier gaps get one repair round and the final report lists what is still not covered; off means no calls', async t => {
+  const logs: string[] = [];
+  t.mock.method(console, 'info', () => {});
+  t.mock.method(console, 'log', (line: string) => logs.push(String(line)));
+  t.mock.method(console, 'warn', () => {});
+  const repo = createWebAppRepository();
+  const previousExit = process.exitCode;
+  try {
+    process.exitCode = undefined;
+    applyPaymentThresholdChange(repo.edit);
+    const fake = createFakeLlm();
+    const decisions = createFakeDecisionClient(question => (question.id.startsWith('coverage:') ? 0.1 : 0.95));
+    const reportFile = path.join(repo.dir, 'qa-report.md');
+    const args = ['--target', repo.dir, '--working-tree', '--report', reportFile];
+    const deps = { environment: {}, loadEnvironment: false, llmOptions: { client: fake.client, model: 'offline' }, decisionClient: decisions };
+    await runReport([...args, '--generate-context'], deps);
+    assert.equal(process.exitCode, undefined);
+    assert.equal(decisions.calls.length, 0, 'no verifier without the switch');
+    const graphentra = path.join(repo.dir, '.graphentra');
+    const plain = JSON.parse(fs.readFileSync(path.join(graphentra, 'analysis.json'), 'utf8'));
+    assert.equal(plain.qaReport.notCovered, undefined);
+    assert.doesNotMatch(fs.readFileSync(reportFile, 'utf8'), /Not covered/);
+
+    const qaCalls = () => fake.calls.filter(call => call.schema === 'qa_change_impact_report').length;
+    const before = qaCalls();
+    await runReport([...args, '--verify'], deps);
+    assert.equal(process.exitCode, undefined);
+    assert.equal(qaCalls() - before, 2, 'first answer plus exactly one repair');
+    const analysis = JSON.parse(fs.readFileSync(path.join(graphentra, 'analysis.json'), 'utf8'));
+    assert.ok(analysis.qaReport.notCovered.length > 0);
+    assert.deepEqual(analysis.qaReport.keyChanges, plain.qaReport.keyChanges, 'the written report is kept');
+    assert.match(fs.readFileSync(reportFile, 'utf8'), /Not covered by this report/);
+    assert.ok(logs.some(line => /^Report verifier: \d+ questions, 2 passes, repair round used/.test(line)));
+
+    // GRAPHENTRA_VERIFY_REPORT=1 is the same switch.
+    const calls = decisions.calls.length;
+    await runReport(args, { ...deps, environment: { GRAPHENTRA_VERIFY_REPORT: '1' } });
+    assert.ok(decisions.calls.length > calls);
   } finally { process.exitCode = previousExit; repo.cleanup(); }
 });
