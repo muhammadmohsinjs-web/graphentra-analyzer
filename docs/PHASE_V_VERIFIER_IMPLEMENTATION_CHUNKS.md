@@ -119,7 +119,7 @@ flowchart LR
 |---|---|
 | 0 · Decision | ✅ ADR-0011 written; **Accepted at V-3 (2026-11-17)** for U1 + U3 |
 | 1 · Answer key and spike | ✅ done 2026-11-17 (PR #20). E5 passes for U1 + U3 with OpenAI Decisions at t=0.7: recall 92 %, precision 92 %, deterministic. U2 rejected. Results in `impactbench/verifier/history/`. |
-| 2 · Verifier module | ⬜ next: V-4. **Scope set by V-3: U1 + U3 only, threshold 0.7.** |
-| 3 · Wire into reports | ⬜ |
+| 2 · Verifier module | ✅ V-4 to V-7 on `feat/phase-v-verifier-module` (U1 + U3, threshold 0.7). |
+| 3 · Wire into reports | ✅ V-8 to V-10 on `feat/phase-v-wire-reports` (stacked on Chunk 2). `review` hook in `generateImpactReport` (repair shares the 2-attempt cap; an unusable repair keeps the first report), `createReportVerifier` in `verifier/verified-report.ts`, optional `notCovered` on the report (owns the field for N-5), `--verify` / `GRAPHENTRA_VERIFY_REPORT=1`, `verifier.completed` / `verifier.finished` traces. Next: V-11. |
 | 4 · Measure | ⬜ |
 | 5 · Rollout | ⬜ blocked by V-13 |

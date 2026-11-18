@@ -15,6 +15,8 @@ export interface CliOptions {
   contextGranularity?: 'files' | 'functions';
   /** Reporting only: let the report model read code at the analyzed revision before writing. */
   lookup?: boolean;
+  /** Reporting only: verify the report with the Decisions API (Phase V). Same switch as GRAPHENTRA_VERIFY_REPORT=1. */
+  verify?: boolean;
   engine?: EngineProfile;
   maxAffectedEntities?: number;
   maxDepth?: number;
@@ -51,7 +53,7 @@ export function parseCliOptions(args: string[], configuration: { reporting?: boo
     if ((name === 'report' || name === 'context-granularity') && !configuration.reporting) {
       throw new Error(`--${name} is a QA reporting option. Use npm run report.`);
     }
-    if (flagOptions.has(name) || (configuration.reporting && (name === 'generate-context' || name === 'refresh-context' || name === 'lookup'))) {
+    if (flagOptions.has(name) || (configuration.reporting && (name === 'generate-context' || name === 'refresh-context' || name === 'lookup' || name === 'verify'))) {
       if (separator !== -1) {
         throw new Error(`Option --${name} does not take a value.`);
       }
@@ -141,6 +143,7 @@ export function parseCliOptions(args: string[], configuration: { reporting?: boo
   if (flags.has('generate-context')) result.generateContext = true;
   if (flags.has('refresh-context')) result.refreshContext = true;
   if (flags.has('lookup')) result.lookup = true;
+  if (flags.has('verify')) result.verify = true;
   const granularity = values.get('context-granularity');
   if (granularity !== undefined) result.contextGranularity = granularity as CliOptions['contextGranularity'];
   return result;
