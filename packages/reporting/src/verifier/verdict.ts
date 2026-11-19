@@ -4,24 +4,30 @@ import type { VerificationItem, VerificationKind } from './questions';
 // Phase V (ADR-0011), V-6. Chosen at V-3 on the labelled set: flag when p < 0.7 (recall 92 %, precision 92 %).
 export const DEFAULT_THRESHOLD = 0.7;
 
-export type VerdictReason = 'ok' | 'low_score' | 'refusal' | 'error' | 'missing';
+/** `no_behaviour_change` (V-13b): skipped by the deterministic filter, never asked. */
+export type VerdictReason = 'ok' | 'low_score' | 'refusal' | 'error' | 'missing' | 'no_behaviour_change';
 
 export interface VerificationEntry {
   id: string;
   kind: VerificationKind;
   /** Coverage: the changed entity. */
   entity?: string;
+  /** Coverage (V-13b): this inner function was folded into the question for this entity and takes its verdict. */
+  foldedInto?: string;
   /** Faithfulness: the claim. */
   claim?: string;
   /** Probability that the answer is "yes". Null when there is no usable answer. */
   score: number | null;
-  verdict: 'covered' | 'not_covered';
+  /** `skipped` (V-13b): the change has no runtime effect, so there was nothing to cover. */
+  verdict: 'covered' | 'not_covered' | 'skipped';
   reason: VerdictReason;
 }
 
 export interface VerificationBlock {
   threshold: number;
+  /** Every changed production entity appears once (asked, folded or skipped), then every claim. */
   entries: VerificationEntry[];
+  /** Questions answered "not covered" (folded inner functions are not counted again). */
   notCovered: number;
 }
 
@@ -39,7 +45,22 @@ export function judgeAnswer(item: VerificationItem, answer: DecisionAnswer | und
   return score >= threshold ? { ...base, score, verdict: 'covered', reason: 'ok' } : { ...base, score, verdict: 'not_covered', reason: 'low_score' };
 }
 
-export function buildVerificationBlock(items: VerificationItem[], answers: Map<string, DecisionAnswer>, threshold = DEFAULT_THRESHOLD): VerificationBlock {
-  const entries = items.map(item => judgeAnswer(item, answers.get(item.id), threshold));
-  return { threshold, entries, notCovered: entries.filter(entry => entry.verdict === 'not_covered').length };
+export function buildVerificationBlock(
+  items: VerificationItem[],
+  answers: Map<string, DecisionAnswer>,
+  threshold = DEFAULT_THRESHOLD,
+  skipped: string[] = [],
+): VerificationBlock {
+  const asked = items.map(item => judgeAnswer(item, answers.get(item.id), threshold));
+  const entries: VerificationEntry[] = [];
+  asked.forEach((entry, index) => {
+    entries.push(entry);
+    for (const child of items[index].covers ?? [])
+      entries.push({ id: `coverage:${child}`, kind: 'coverage', entity: child, foldedInto: entry.entity, score: entry.score, verdict: entry.verdict, reason: entry.reason });
+  });
+  // Skipped entities go after the asked coverage entries and before the claims, so the order stays stable.
+  const firstClaim = entries.findIndex(entry => entry.kind === 'faithfulness');
+  const skippedEntries = skipped.map(entity => ({ id: `coverage:${entity}`, kind: 'coverage' as const, entity, score: null, verdict: 'skipped' as const, reason: 'no_behaviour_change' as const }));
+  entries.splice(firstClaim < 0 ? entries.length : firstClaim, 0, ...skippedEntries);
+  return { threshold, entries, notCovered: asked.filter(entry => entry.verdict === 'not_covered').length };
 }

@@ -27,11 +27,11 @@ export interface ReportVerification {
 
 const gaps = (block: VerificationBlock) => block.entries.filter(entry => entry.verdict === 'not_covered');
 
-/** V-9: coverage entries flagged, as report items. Built by code from the verdicts, in evidence order. */
+/** V-9: coverage entries flagged, as report items. Built by code from the verdicts, in evidence order. A folded inner function is listed through its enclosing entity only. */
 export function buildNotCovered(block: VerificationBlock, impacts: EntityImpact[]): NotCoveredItem[] {
   const flagged = new Map(
     gaps(block)
-      .filter((entry): entry is VerificationEntry & { entity: string } => entry.kind === 'coverage' && Boolean(entry.entity))
+      .filter((entry): entry is VerificationEntry & { entity: string } => entry.kind === 'coverage' && Boolean(entry.entity) && !entry.foldedInto)
       .map(entry => [entry.entity, entry]),
   );
   return impacts
@@ -78,8 +78,10 @@ export function createReportVerifier(impacts: EntityImpact[], options: ReportVer
         verifyId,
         questions: result.verification.entries.length,
         threshold: result.verification.threshold,
-        coverageGaps: flagged.filter(entry => entry.kind === 'coverage').length,
+        coverageGaps: flagged.filter(entry => entry.kind === 'coverage' && !entry.foldedInto).length,
         faithfulnessFlags: flagged.filter(entry => entry.kind === 'faithfulness').length,
+        skipped: result.verification.entries.filter(entry => entry.verdict === 'skipped').length,
+        folded: result.verification.entries.filter(entry => entry.foldedInto).length,
         notCovered: notCovered.length,
         durationMs,
         usage: result.usage,

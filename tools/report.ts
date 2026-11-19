@@ -83,8 +83,10 @@ function sourceReader(target: string, sha?: string): (file: string) => string | 
 
 export function describeVerification(result: ReportVerification): string {
   const { verification, usage } = result;
-  return `Report verifier: ${verification.entries.length} questions, `
-    + `${verification.entries.filter(entry => entry.kind === 'coverage' && entry.verdict === 'not_covered').length} changes not covered; `
+  const count = (keep: (entry: (typeof verification.entries)[number]) => boolean) => verification.entries.filter(keep).length;
+  return `Report verifier: ${count(entry => entry.verdict !== 'skipped' && !entry.foldedInto)} questions, `
+    + `${count(entry => entry.verdict === 'skipped')} changes skipped (no behaviour change), `
+    + `${count(entry => entry.kind === 'coverage' && entry.verdict === 'not_covered' && !entry.foldedInto)} changes not covered; `
     + `tokens ${usage.inputTokens} in (${usage.cachedTokens} cached), ${usage.outputTokens} out; ${(result.durationMs / 1000).toFixed(1)}s.`;
 }
 

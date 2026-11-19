@@ -161,24 +161,30 @@ function meteredDecisionClient(inner: DecisionClient) {
 }
 
 /**
- * M3 silent-drop audit. Every changed production entity must land in exactly one bucket: covered on the first check, fixed by the
- * repair round, or listed under "Not covered". Anything else is a silent drop (E3 target: zero).
+ * M3 silent-drop audit. Every changed production entity must land in exactly one bucket: covered, fixed by the repair round
+ * (data-v3 only), listed under "Not covered" (itself or through the parent it was folded into), or skipped as having no
+ * behaviour change (V-13b). Anything else is a silent drop (E3 target: zero).
  */
 function silentDropAudit(raw: unknown, report: any, verification: ReportVerification | undefined, answers: Map<string, DecisionAnswer[]>) {
   const production = readEvidence(raw).impacts.filter((i: any) => getSourceRole(i.changedEntity.file) === 'production').map((i: any) => i.changedEntity.id as string);
   const final = new Map((verification?.verification.entries ?? []).filter(e => e.kind === 'coverage' && e.entity).map(e => [e.entity!, e]));
   const listed = new Set((report?.notCovered ?? []).map((n: any) => n.entity));
-  const buckets = { covered: [] as string[], fixedByRepair: [] as string[], notCovered: [] as string[], silent: [] as string[] };
+  const buckets = { covered: [] as string[], fixedByRepair: [] as string[], notCovered: [] as string[], skipped: [] as string[], folded: [] as string[], silent: [] as string[] };
   let lostInRepair = 0;
   for (const id of production) {
-    const first = judgeAnswer({ id: `coverage:${id}`, kind: 'coverage', entity: id } as any, answers.get(`coverage:${id}`)?.[0], verification?.verification.threshold ?? DEFAULT_THRESHOLD);
     const last = final.get(id);
+    // V-13b: skipped (no behaviour change) and folded inner functions are accounted for; a folded one is listed through its parent.
+    if (last?.verdict === 'skipped') { buckets.skipped.push(id); continue; }
+    const asked = last?.foldedInto ?? id;
+    if (last?.foldedInto) buckets.folded.push(id);
+    const first = judgeAnswer({ id: `coverage:${asked}`, kind: 'coverage', entity: asked } as any, answers.get(`coverage:${asked}`)?.[0], verification?.verification.threshold ?? DEFAULT_THRESHOLD);
     if (last?.verdict === 'covered') (first.verdict === 'covered' ? buckets.covered : buckets.fixedByRepair).push(id);
-    else if (last && listed.has(id)) { buckets.notCovered.push(id); if (first.verdict === 'covered') lostInRepair += 1; }
+    else if (last && listed.has(asked)) { buckets.notCovered.push(id); if (first.verdict === 'covered') lostInRepair += 1; }
     else buckets.silent.push(id);
   }
   return {
     production: production.length, covered: buckets.covered.length, fixedByRepair: buckets.fixedByRepair.length, notCovered: buckets.notCovered.length,
+    skipped: buckets.skipped.length, folded: buckets.folded.length,
     silentDrops: buckets.silent.length, silentDropIds: buckets.silent, lostInRepair,
     // A "Not covered" line for an entity that is not a changed production entity would mean the list is built from the wrong set.
     strayNotCovered: [...listed].filter(id => !production.includes(id as string)).length,
@@ -313,7 +319,9 @@ async function oneReport(entry: Entry, variant: string, run: number) {
       const flagged = verification.verification.entries.filter(e => e.verdict === 'not_covered');
       // No repair round since V-13; data-v3 rows still carry passes/repairRequested/repairAccepted, and the summary reads them optionally.
       row.verification = { threshold: verification.verification.threshold, questions: verification.verification.entries.length,
-        coverageGaps: flagged.filter(e => e.kind === 'coverage').length, faithfulnessFlags: flagged.filter(e => e.kind === 'faithfulness').length,
+        coverageGaps: flagged.filter(e => e.kind === 'coverage' && !e.foldedInto).length, faithfulnessFlags: flagged.filter(e => e.kind === 'faithfulness').length,
+        skipped: verification.verification.entries.filter(e => e.verdict === 'skipped').length,
+        folded: verification.verification.entries.filter(e => e.foldedInto).length,
         reasons: flagged.reduce((acc: any, e) => ({ ...acc, [e.reason]: (acc[e.reason] ?? 0) + 1 }), {}) };
     }
     // An invalid report has no final report to audit; E4 counts it, E3 does not.
@@ -415,7 +423,10 @@ if (command === 'evidence') {
           fixedByRepair: audited.reduce((s, r) => s + r.audit.fixedByRepair, 0), notCovered: audited.reduce((s, r) => s + r.audit.notCovered, 0),
           silentDrops: audited.reduce((s, r) => s + r.audit.silentDrops, 0), lostInRepair: audited.reduce((s, r) => s + r.audit.lostInRepair, 0),
           strayNotCovered: audited.reduce((s, r) => s + r.audit.strayNotCovered, 0),
-          reportsNotCoveredAtMost3: audited.filter(r => r.audit.notCovered <= 3).length },
+          // V-13b buckets (absent in data-v3 rows, so 0 there).
+          skipped: audited.reduce((s, r) => s + (r.audit.skipped ?? 0), 0), folded: audited.reduce((s, r) => s + (r.audit.folded ?? 0), 0),
+          // E7 counts the lines a reader sees: the report's list (a folded inner function adds no line).
+          reportsNotCoveredAtMost3: audited.filter(r => (r.report?.notCovered?.length ?? r.audit.notCovered) <= 3).length },
       };
     }
     const b = byVariant[v];
