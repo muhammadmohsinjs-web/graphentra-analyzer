@@ -20,7 +20,7 @@ export const testAreaSchema = z
 export type TestArea = z.infer<typeof testAreaSchema>;
 
 /**
- * Phase V (ADR-0011), V-9: a changed production entity the verifier still found uncovered after the repair round.
+ * Phase V (ADR-0011), V-9: a changed production entity the verifier found uncovered in the finished report.
  * Added by code, never by the LLM. Optional and additive (ADR-0005): readers that do not know it keep working.
  */
 export const notCoveredItemSchema = z
@@ -213,12 +213,6 @@ export interface GenerateImpactReportInput {
    * with the lookups passed back as data. The caller keeps `tool.log` for what was looked up.
    */
   lookup?: { tool: CodeLookup; maxRounds?: number; /** First round must call the tool (the "always look up" policy). */ requireFirst?: boolean };
-  /**
-   * Phase V, V-8: called with a valid report while an attempt is still left (it shares the 2-attempt cap with the
-   * semantic retry). Return a repair message to spend that attempt on a targeted repair, or undefined to accept the
-   * report. If the repaired answer is unusable, the reviewed report is returned instead, so a repair never loses a report.
-   */
-  review?: (report: ImpactReport) => Promise<string | undefined>;
 }
 
 /** Runs tool rounds until the model stops calling lookup; returns the lookups as one data message (or undefined). */
@@ -456,18 +450,11 @@ export async function generateImpactReport({
   options,
   allowedSurfaceIds,
   lookup,
-  review,
 }: GenerateImpactReportInput): Promise<ImpactReport> {
   const traceId = randomUUID();
   const startedAt = Date.now();
   const serializedEvidence = JSON.stringify(evidence, null, 2);
   let attempt = 1;
-  /** The reviewed report a repair round started from. Returned if the repaired answer is unusable. */
-  let beforeRepair: ImpactReport | undefined;
-  const keepBeforeRepair = (why: string, details: Record<string, unknown> = {}) => {
-    logLLMTrace('request.repair_rejected', { traceId, attempt, why, durationMs: Date.now() - startedAt, ...details });
-    return beforeRepair!;
-  };
   const targetModel = options?.model ?? DEFAULT_OPENROUTER_MODEL;
 
   logLLMTrace('request.started', {
@@ -577,7 +564,6 @@ export async function generateImpactReport({
       const content = completion.choices[0]?.message.content;
 
       if (!content) {
-        if (beforeRepair) return keepBeforeRepair('empty');
         throw new Error('The LLM returned an empty impact report.');
       }
 
@@ -586,7 +572,6 @@ export async function generateImpactReport({
       try {
         validatedReport = impactReportSchema.parse(impactReportResponseSchema.parse(JSON.parse(content)));
       } catch (error) {
-        if (beforeRepair) return keepBeforeRepair('parse');
         // Truncated or malformed JSON is usually a one-off; ask again with the same messages.
         if (attempt < 2) {
           logLLMTrace('request.parse_retry', { traceId, completionId: completion.id, attempt, finishReason: completion.choices[0]?.finish_reason });
@@ -601,7 +586,6 @@ export async function generateImpactReport({
       const errors = validateImpactReportSemantics(validatedReport, { allowedSurfaceIds });
 
       if (errors.length > 0) {
-        if (beforeRepair) return keepBeforeRepair('semantic', { errors });
         if (attempt >= 2) {
           throw new Error(
             `The LLM returned a semantically invalid impact report after ${attempt} attempts: ${errors.join(' ')}`,
@@ -628,16 +612,6 @@ export async function generateImpactReport({
         continue;
       }
 
-      if (review && attempt < 2) {
-        const repair = await review(validatedReport);
-        if (repair) {
-          logLLMTrace('request.repair_round', { traceId, requestId, completionId: completion.id, attempt, nextAttempt: attempt + 1 });
-          beforeRepair = validatedReport;
-          request.messages.push({ role: 'assistant', content }, { role: 'user', content: repair });
-          continue;
-        }
-      }
-
       logLLMTrace('request.completed', {
         traceId,
         requestId,
@@ -654,8 +628,6 @@ export async function generateImpactReport({
     }
     throw new Error('The impact report correction limit was reached.');
   } catch (error) {
-    // A failed repair request must not cost the report the writer already produced.
-    if (beforeRepair) return keepBeforeRepair('request_failed', describeError(error));
     logLLMTrace('request.failed', {
       traceId,
       provider: 'openrouter',

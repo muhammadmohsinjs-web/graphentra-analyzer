@@ -95,7 +95,8 @@ function contextFor(entry: Entry, graph: any) {
 function fixContext(ctx: any) { if ('unassignedFiles' in ctx && !('unassignedFiles' in ctx.meta)) { ctx.meta.unassignedFiles = ctx.unassignedFiles; delete ctx.unassignedFiles; } return ctx; }
 
 // ---------- metered client ----------
-// The verifier's repair round (V-8) is a writer call whose messages carry this opening line (buildRepairMessage).
+// The verifier's repair round (V-8, removed at V-13) was a writer call whose messages carried this opening line.
+// Kept so the meter stays comparable with data-v3; usage.repair is now always zero.
 const REPAIR_MARKER = 'A coverage check of your report found the gaps below.';
 function meteredClient(model: string) {
   const meter = { calls: 0, prompt: 0, completion: 0, cached: 0, cost: 0, last: undefined as string | undefined,
@@ -263,7 +264,7 @@ async function oneReport(entry: Entry, variant: string, run: number) {
   const { client: judgeClient, meter: judgeMeter } = meteredClient(JUDGE_MODEL);
   const read = (file: string) => { try { return execFileSync('git', ['-C', path.join(history!, entry.repo), 'show', `${entry.introducer.sha}:${file}`], { encoding: 'utf8', maxBuffer: 1 << 26, stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return undefined; } };
   const lookup = variant === 'base' || variant === 'verify' ? undefined : { read, style: variant === 'lookup-always' ? 'always' as const : 'optional' as const };
-  // verify = base + the Phase V verifier (repair round and "Not covered" list). Same report model and judge as base.
+  // verify = base + the Phase V verifier ("Not covered" list; no repair round since V-13). Same report model and judge as base.
   const decisions = variant === 'verify' ? meteredDecisionClient(createOpenAIDecisionClient({ apiKey: process.env.OPENAI_API_KEY })) : undefined;
   let verification: ReportVerification | undefined;
   let row: any = { id: entry.id, repo: entry.repo, changeClass: entry.changeClass, variant, run, model: REPORT_MODEL };
@@ -310,8 +311,8 @@ async function oneReport(entry: Entry, variant: string, run: number) {
     row.usage.verifier = { ...decisions.meter, seconds: Math.round(decisions.meter.seconds * 10) / 10 };
     if (verification) {
       const flagged = verification.verification.entries.filter(e => e.verdict === 'not_covered');
-      row.verification = { passes: verification.passes, repairRequested: verification.repairRequested, repairAccepted: verification.repairAccepted,
-        threshold: verification.verification.threshold, questions: verification.verification.entries.length,
+      // No repair round since V-13; data-v3 rows still carry passes/repairRequested/repairAccepted, and the summary reads them optionally.
+      row.verification = { threshold: verification.verification.threshold, questions: verification.verification.entries.length,
         coverageGaps: flagged.filter(e => e.kind === 'coverage').length, faithfulnessFlags: flagged.filter(e => e.kind === 'faithfulness').length,
         reasons: flagged.reduce((acc: any, e) => ({ ...acc, [e.reason]: (acc[e.reason] ?? 0) + 1 }), {}) };
     }
