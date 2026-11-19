@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
 import { test } from 'node:test';
 import type { Entity, EntityImpact } from '@graphentra/analyzer';
 import type { ImpactReport } from '../src/llm-client';
@@ -12,7 +13,9 @@ import {
   DEFAULT_THRESHOLD,
   EVIDENCE_CAP,
   judgeAnswer,
+  MAX_PROMPT_CACHE_KEY,
   MAX_QUESTIONS_PER_CALL,
+  promptCacheKey,
   verifyReport,
 } from '../src/verifier';
 
@@ -98,7 +101,25 @@ test('buildVerificationBlock uses a custom threshold', () => {
 test('verifyReport shares one cache key per question group', async () => {
   const fake = createFakeDecisionClient();
   await verifyReport({ client: fake, impacts, report, cacheKey: 'abc' });
-  assert.deepEqual([...new Set(fake.calls.map(c => c.options.cacheKey))].sort(), ['graphentra-verify-abc-coverage', 'graphentra-verify-abc-faithfulness']);
+  assert.deepEqual([...new Set(fake.calls.map(c => c.options.cacheKey))].sort(), ['gv-abc-coverage', 'gv-abc-faithfulness']);
+});
+
+test('verifyReport cache keys fit the 64-character API limit with a UUID run key', async () => {
+  // Regression: `graphentra-verify-<uuid>-faithfulness` was 67 characters, so every faithfulness question got HTTP 400.
+  const fake = createFakeDecisionClient();
+  await verifyReport({ client: fake, impacts, report, cacheKey: randomUUID() });
+  for (const call of fake.calls) assert.ok(call.options.cacheKey!.length <= MAX_PROMPT_CACHE_KEY, call.options.cacheKey);
+});
+
+test('openai adapter: a cache key over 64 characters is hashed to a stable 64-character key', async () => {
+  const sent: string[] = [];
+  const client = createOpenAIDecisionClient({ apiKey: 'k', fetch: async (_url, init) => (sent.push(JSON.parse(String(init!.body)).prompt_cache_key), new Response(okBody(1))) });
+  const long = `x${'y'.repeat(80)}`;
+  await client.decide('input', questions(1), { cacheKey: long });
+  await client.decide('input', questions(1), { cacheKey: long });
+  assert.equal(sent[0]!.length, MAX_PROMPT_CACHE_KEY);
+  assert.equal(sent[0], sent[1]);
+  assert.equal(promptCacheKey('short'), 'short');
 });
 
 // ---- OpenAI adapter, with a stubbed fetch (no network) ----

@@ -260,3 +260,82 @@ Data: `impactbench/eval/data-v2/`. Compared against run 1 of the base variant in
 
 Conclusion: keep the `#` fix. The prompt step alone does not find the breaking input; the model needs the changed code
 in a form it can compare (roadmap item 4), which moves to Phase 6.
+
+## Phase V verifier: base vs verify (V-12, 2026-11-19, commit 79eb655)
+
+Does the Decisions API verifier (ADR-0011) make QA reports better? 31 commits × 3 runs for each variant, run fresh on the
+same code, same report model (`openai/gpt-6-luna`) and judge (`deepseek/deepseek-v4-pro-0813`). excalidraw-21 is skipped as
+before. `verify` = `base` + verifier (coverage and faithfulness questions, threshold 0.7) + one repair round + a "Not covered"
+list built by code. Data: `impactbench/eval/data-v3/` (186 rows, `summary.json`, `cost-time.csv`, M5 review in `m5-review.md`).
+
+The first smoke run found a bug in the shipped verifier: its prompt cache key was 67 characters, so OpenAI rejected every
+faithfulness question with HTTP 400, and every report got a needless repair round. Fixed in 734d5fd before this run.
+The run had no verifier errors and no refusals.
+
+### Expectations
+
+| | Target | Base | Verify | Met? |
+|---|---|---|---|---|
+| E1 catch (commits, majority of 3) | ≥ 13/31 | 10/31 | 11/31 | **No** (+1 is within noise) |
+| E2 explain (commits, majority of 3) | ≥ 15/31 | 12/31 | 11/31 | **No** |
+| E3 silent drops | 0 | – | 0 of 1,578 changed production entities | **Yes** |
+| E4 invalid (commits, majority) | ≤ 3/31 | 2/31 | 2/31 | **Yes**, but verify adds 2 single-run semantic failures after repair (json-server-01, pathe-01) |
+| E5 verifier recall / precision | ≥ 0.90 / ≥ 0.60 | – | 0.92 / 0.92 at V-3; on live flags (M5) only 13 of 47 flags (28 %) are real gaps | **No** for flag precision in use |
+| E6 cost | ≤ +35 % | – | writer prompt tokens +82 %, completion +55 %, plus 3.8 M verifier input tokens | **No** |
+| E6 median time | ≤ +50 % | 236 s | 339 s (+44 %) | **Yes** |
+| E7 QA checks per report | ≤ +1 | 3.6 | 5.0 (+1.4) | **No** |
+| E7 "Not covered" ≤ 3 items | 90 % of reports | – | 58/85 (68 %); median 2, max 49 | **No** |
+
+Report-level rates are flat as well: catch 31/93 vs 30/93, explained 34/93 vs 36/93, area 66/93 vs 64/93.
+
+**Billed cost understates verify.** Each commit's base jobs ran just before its verify jobs and warmed the provider's prompt cache,
+so 99.8 % of verify writer prompt tokens were billed as cached, against 71 % for base. The billed totals ($0.81 base writer,
+$0.47 verify writer + $0.38 verifier) are not a fair comparison, so E6 is judged on tokens. The verifier's own cost is an
+estimate: Decisions pricing is not published.
+
+### What the verifier did (M3 audit, 85 valid verify reports)
+
+| Changed production entities | Covered on first check | Added by the repair round | Listed "Not covered" | Silent drops |
+|---|---|---|---|---|
+| 1,578 | 829 (53 %) | 358 (23 %) | 391 (25 %) | 0 |
+
+- The repair round ran on 62 of 93 reports, and 61 repairs were accepted.
+- In 31 cases an entity was covered before the repair and not after. Each one still landed on the "Not covered" list.
+- The "Not covered" list is long on large or restructuring commits: ufo-02 (12, 49, 23), ufo-01 (5, 1, 33),
+  excalidraw-01 (26, 9, 45), consola-03 (13, 14, 4).
+
+### M5 noise review (10 verify reports, 47 flagged items, at most 5 per report)
+
+- **Flags:** 13 are real gaps (28 %), 15 are false flags, and 19 are trivial (type-only, import, comment or formatting changes).
+  - Trivial example: a `defaults.level as number` cast scored 0.
+  - False-flag pattern: a helper in a new file is flagged on its own although a key change already covers the capability.
+  - Real gaps are untested sub-behaviours: prompt cancel, intro and outro; undo and redo; URL encoders; default logger level and env.
+- **Checks:** of about 50 verify checks, 12 are too technical for manual QA, 4 are untestable and 2 are redundant.
+- **Compared with base for a QA tester:** verify is better in 2 reports, the same in 5 and worse in 3. The worse cases replace
+  concrete checks with vague "remains usable" ones, or lose a check the base report had.
+- **One flag pointed at a real bug.** In ufo-02 (score 0.61), the new `parseHost` regex `(:0-9+)?` is not a character class,
+  so the port is never split off the host. No report mentions it, and it is not the commit's known bug.
+
+### Conclusion
+
+The verifier does what it was built for: every changed entity is covered, repaired, or listed, with no silent drops. It does not
+raise catch or explain rates, it adds about 1.4 QA checks per report and many more tokens, and 72 % of its live flags are noise.
+The catch rate is limited elsewhere: the analyzer's evidence holds the regression in every commit, but the writer rarely writes
+the check that uses the triggering input. The triggering-input question (U2) was dropped at V-3.
+
+Input for V-13: E1, E2, E5 (in use), E6 cost and E7 fail, so the default stays off. Options:
+1. Keep it opt-in as is.
+2. Drop the repair round and keep a "Not covered" list. This keeps E3 at verifier cost only, about 13 s per report.
+3. Before any list ships, stop asking about trivial changes (type-only, import, formatting) and count a capability as covered once
+   (new-file helpers). Together these are 34 of the 47 reviewed flags.
+
+**V-13 decision (2026-11-19, recorded in ADR-0011):** options 2 and 3 together. The default stays off; the repair round is removed
+and only the "Not covered" list stays, after the noise filter. This run (`data-v3/`) is the baseline for the follow-up re-run
+(V-13c): compare E3 (must stay 0 silent drops), E6 and E7 against `data-v3/summary.json`.
+
+Reproduce:
+
+```
+node --import tsx tools/impactbench-report-eval.mts run --history <history-dir> --work <work-dir> --data impactbench/eval/data-v3 --variants base,verify --runs 3 --concurrency 6 <31 ids>
+node --import tsx tools/impactbench-report-eval.mts summary --data impactbench/eval/data-v3
+```
