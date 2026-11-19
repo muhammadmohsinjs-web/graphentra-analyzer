@@ -30,7 +30,8 @@ export async function verifyReport(input: VerifyReportInput): Promise<VerifyRepo
     while (next < items.length) {
       const item = items[next++];
       const result = await input.client.decide(item.input, [{ id: item.id, instructions: item.instructions }], {
-        cacheKey: `graphentra-verify-${input.cacheKey ?? 'run'}-${item.cacheGroup}`,
+        // Short prefix: with a UUID run key the longest group stays at 52 characters, under OpenAI's 64-character limit.
+        cacheKey: `gv-${input.cacheKey ?? 'run'}-${item.cacheGroup}`,
       });
       usage = addUsage(usage, result.usage);
       for (const answer of result.answers) answers.set(answer.id, answer);

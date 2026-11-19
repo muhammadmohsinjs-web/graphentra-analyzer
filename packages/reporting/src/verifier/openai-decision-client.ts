@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import {
   addUsage,
   EMPTY_USAGE,
@@ -34,6 +35,12 @@ class HttpError extends Error {
 
 const isRetryable = (error: unknown) => (error instanceof HttpError ? error.status === 429 || error.status >= 500 : !(error instanceof Error && error.name === 'AbortError'));
 
+/** OpenAI rejects a `prompt_cache_key` over 64 characters with HTTP 400. A longer key is replaced by its SHA-256 hex (64), so it stays stable. */
+export const MAX_PROMPT_CACHE_KEY = 64;
+export function promptCacheKey(key: string): string {
+  return key.length <= MAX_PROMPT_CACHE_KEY ? key : createHash('sha256').update(key).digest('hex');
+}
+
 export function createOpenAIDecisionClient(options: OpenAIDecisionClientOptions = {}): DecisionClient {
   const apiKey = options.apiKey ?? process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error('OPENAI_API_KEY is not set. The verifier needs its own OpenAI key (OpenRouter does not proxy /v1/decisions).');
@@ -48,7 +55,7 @@ export function createOpenAIDecisionClient(options: OpenAIDecisionClientOptions 
       input,
       // `name` is an index, so the caller's ids never have to satisfy the API's naming rules.
       questions: questions.map((question, index) => ({ type: 'predicate', name: `q${index}`, instructions: question.instructions })),
-      ...(decideOptions.cacheKey ? { prompt_cache_key: decideOptions.cacheKey } : {}),
+      ...(decideOptions.cacheKey ? { prompt_cache_key: promptCacheKey(decideOptions.cacheKey) } : {}),
     });
     for (let attempt = 0; ; attempt += 1) {
       try {
