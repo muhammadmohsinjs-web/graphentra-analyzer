@@ -1,0 +1,770 @@
+[
+ {
+  "id": "consola-03",
+  "run": 1,
+  "notCoveredTotal": 13,
+  "repair": true,
+  "verifyReport": {
+   "summary": "Interactive prompting and logger creation are expanded across terminal and browser environments, with terminal-specific prompt and output utilities added.",
+   "keyChanges": [
+    "Logger instances now support interactive text, confirmation, single-choice, and multiple-choice prompts, and the example starts these questions automatically when run.",
+    "Browser prompts use native dialogs: confirmations use a yes-or-no dialog, while text, single-choice, and multiple-choice prompts use a text dialog and do not present supplied choices.",
+    "Logger creation now has platform-specific defaults and accepts caller-supplied reporters; the browser entry point also reuses an existing global logger, and the shared export surface no longer provides logger creation.",
+    "Terminal prompt output now includes text, password, confirmation, single-choice, multiple-choice, grouped-choice, status-symbol, and display helpers; multiple-choice selection can allow an empty result, and symbols have a non-Unicode fallback."
+   ],
+   "testAreas": [
+    {
+     "area": "Terminal interactive prompt example",
+     "checks": [
+      "Verify the example begins asking questions automatically and the text question shows the initial value java and placeholder Not sure.",
+      "Confirm the confirmation question accepts either yes or no and then proceeds to the next question.",
+      "Check the single-choice question shows both TypeScript entries and the CoffeeScript entry, including its supplied hint, and allows choosing an entry.",
+      "Verify the optional multiple-choice question can be submitted with no tools selected and completes with an empty selection."
+     ]
+    },
+    {
+     "area": "Browser interactive prompts",
+     "checks": [
+      "Verify a confirmation prompt opens a native confirmation dialog and returns the chosen yes-or-no result.",
+      "Check a text prompt opens a native text dialog and a select or multiple-choice prompt also opens a native text dialog rather than showing its supplied choices."
+     ]
+    },
+    {
+     "area": "Logger creation and reporter configuration",
+     "checks": [
+      "Confirm logger creation is available from platform-specific package entry points and is not available through the shared export surface.",
+      "Verify default logging uses the regular-runtime reporter outside CI and test environments, and the basic reporter in CI or test environments.",
+      "Check that creating a logger with an explicitly empty reporter list does not fall back to a default reporter when a message is logged.",
+      "Confirm the browser entry point reuses an existing global logger rather than replacing it."
+     ]
+    },
+    {
+     "area": "Terminal prompt and output helpers",
+     "checks": [
+      "Verify a password question masks entered characters, and a terminal without Unicode support uses fallback symbols for prompt states.",
+      "Check a grouped multiple-choice question keeps group labels and entries distinguishable, and pressing Enter with no selection when selection is required displays the message Please select at least one option.",
+      "Confirm a note containing multiline text with ANSI-colored characters still renders its text within an aligned box.",
+      "Verify multiline status messages show subsequent lines separately and a spinner started with Loading... displays Loading without the trailing dots while active."
+     ]
+    }
+   ],
+   "uncertainty": [
+    "No application navigation or account context was supplied, so these checks must be reached through the supplied example or package capabilities rather than an identified application screen."
+   ]
+  },
+  "baseChecks": [
+   "Verify a text prompt configured with initial value java and placeholder Not sure shows those values and accepts a typed response.",
+   "Confirm a confirmation prompt initialized to true starts on the affirmative choice and returns the user's chosen true or false value.",
+   "Check a single-select prompt with string choices and a labeled choice with a hint displays the choices and hint and returns the selected value.",
+   "Ensure a multi-select prompt configured with required false accepts Enter with no options selected and returns an empty selection.",
+   "Verify logger creation in CI or test mode uses basic console reporting, while a regular non-CI runtime uses fancy console reporting.",
+   "Check logger creation with reporters set to [] does not substitute the default reporter, and confirm subsequent log calls produce no reporter output."
+  ],
+  "flagged": [
+   {
+    "item": 1,
+    "entity": "src/consola.ts#Consola._logFn",
+    "score": 0,
+    "before": "    if ((defaults.level || 0) > this.level) {",
+    "after": "    if (((defaults.level as number) || 0) > this.level) {"
+   },
+   {
+    "item": 2,
+    "entity": "src/utils/prompt.ts#selectKey>opt",
+    "score": 0.57,
+    "before": "",
+    "after": "  const opt = (\n    option: Option<Value>,\n    state: \"inactive\" | \"active\" | \"selected\" | \"cancelled\" = \"inactive\"\n  ) => {\n    const label = option.label ?? String(option.value);\n    switch (state) {\n      case \"selected\": {\n        return `${color.dim(label)}`;\n      }\n      case \"cancelled\": {\n        return `${color.strikethrough(color.dim(label))}`;\n      }\n      case \"active\": {\n        return `${color.bgCyan(color.gray(` ${option.value} `))} ${label} ${\n          option.hint ? color.dim(`(${option.hint})`) : \"\"\n        }`;\n      }\n      // No default\n    }\n    return `${color.gray(\n      color.bgWhite(color.inverse(` ${option.value} `))\n    )} ${label} ${option.hint ? color.dim(`(${option.hint})`) : \"\"}`;\n  };"
+   },
+   {
+    "item": 3,
+    "entity": "src/utils/prompt.ts#cancel",
+    "score": 0.04,
+    "before": "",
+    "after": "export const cancel = (message = \"\") => {\n  process.stdout.write(`${color.gray(S_BAR_END)} ${color.red(message)}\\n\\n`);\n};"
+   },
+   {
+    "item": 4,
+    "entity": "src/utils/prompt.ts#intro",
+    "score": 0.4,
+    "before": "",
+    "after": "export const intro = (title = \"\") => {\n  process.stdout.write(`${color.gray(S_BAR_START)} ${title}\\n`);\n};"
+   },
+   {
+    "item": 5,
+    "entity": "src/utils/prompt.ts#outro",
+    "score": 0.06,
+    "before": "",
+    "after": "export const outro = (message = \"\") => {\n  process.stdout.write(\n    `${color.gray(S_BAR)}\\n${color.gray(S_BAR_END)} ${message}\\n\\n`\n  );\n};"
+   }
+  ]
+ },
+ {
+  "id": "excalidraw-01",
+  "run": 3,
+  "notCoveredTotal": 45,
+  "repair": false,
+  "verifyReport": {
+   "summary": "This release changes how drawings are restored and how selection and pasted elements are handled, with the greatest QA focus on loading saved scenes safely.",
+   "keyChanges": [
+    "Loading invalid JSON now catches the parsing error and returns an empty scene, whereas previously parsing was not caught and the existing drawing was not replaced through this load path.",
+    "Shift-clicking blank canvas now retains the existing selection, whereas previously clicking blank canvas cleared it regardless of Shift.",
+    "Pasting elements no longer subtracts the source group's minimum x and y coordinates from their placement, so a group whose minimum coordinates are nonzero is positioned by that additional offset."
+   ],
+   "testAreas": [
+    {
+     "area": "Scene file loading",
+     "checks": [
+      "Verify loading the invalid JSON file results in an empty canvas, rather than leaving the existing drawing in place."
+     ]
+    },
+    {
+     "area": "Canvas selection",
+     "checks": [
+      "Confirm that Shift-clicking the blank area retains the element selection, while clicking the same area without Shift clears it."
+     ]
+    },
+    {
+     "area": "Clipboard paste placement",
+     "checks": [
+      "Check that the pasted element appears 100 units farther horizontally and 50 units farther vertically than it would with the previous source-origin adjustment."
+     ]
+    }
+   ],
+   "uncertainty": [
+    "Whether replacing the current drawing with an empty canvas after loading invalid JSON is intended remains unclear."
+   ]
+  },
+  "baseChecks": [
+   "Verify loading the JSON file without an elements field replaces the visible drawing with a blank scene.",
+   "Check that Shift-clicking blank canvas leaves the existing element selected.",
+   "Verify that pasting the copied group applies the same calculated x and y offset to its elements without first subtracting the group’s minimum x and y coordinates."
+  ],
+  "flagged": [
+   {
+    "item": 6,
+    "entity": "src/element/resizeTest.ts#getElementWithResizeHandler",
+    "score": 0,
+    "before": "  elements: ExcalidrawElement[],",
+    "after": "  elements: readonly ExcalidrawElement[],"
+   },
+   {
+    "item": 7,
+    "entity": "src/history.ts#SceneHistory.generateCurrentEntry",
+    "score": 0,
+    "before": "  generateCurrentEntry(elements: ExcalidrawElement[]) {",
+    "after": "  generateCurrentEntry(elements: readonly ExcalidrawElement[]) {"
+   },
+   {
+    "item": 8,
+    "entity": "src/history.ts#SceneHistory.redoOnce",
+    "score": 0,
+    "before": "  redoOnce(elements: ExcalidrawElement[]) {\n      this.restoreEntry(elements, entryToRestore);",
+    "after": "  redoOnce(elements: readonly ExcalidrawElement[]) {\n      return this.restoreEntry(entryToRestore);\n\n    return null;"
+   },
+   {
+    "item": 9,
+    "entity": "src/history.ts#SceneHistory.undoOnce",
+    "score": 0,
+    "before": "  undoOnce(elements: ExcalidrawElement[]) {\n      this.restoreEntry(elements, entryToRestore);",
+    "after": "  undoOnce(elements: readonly ExcalidrawElement[]) {\n      return this.restoreEntry(entryToRestore);\n\n    return null;"
+   },
+   {
+    "item": 10,
+    "entity": "src/index.tsx#<module>",
+    "score": 0,
+    "before": "const { elements } = createScene();",
+    "after": "let { elements } = createScene();"
+   }
+  ]
+ },
+ {
+  "id": "ufo-02",
+  "run": 1,
+  "notCoveredTotal": 12,
+  "repair": true,
+  "verifyReport": {
+   "summary": "The release reorganizes URL and query handling, replacing the previous URL interface and changing how some URL and query inputs are parsed and serialized.",
+   "keyChanges": [
+    "The new URL capability separates protocol, host, authentication, path, query, and fragment handling, and provides URL details such as hostname, port, username, password, origin, full path, and href.",
+    "Protocol recognition now requires a scheme matching letters, digits, or underscores before ://; a URL beginning web+demo:// is handled as a path by the new parser.",
+    "Query parsing ignores entries with an empty key and combines repeated non-empty keys into multiple values; query updates and serialization use the new query representation.",
+    "The old URL interface and parameter helpers are removed from the public exports, while the new URL and query capabilities are exported; query encoding emits a bare key for a missing or empty value and repeated key-value pairs for arrays."
+   ],
+   "testAreas": [
+    {
+     "area": "URL parsing, details, and serialization",
+     "checks": [
+      "Verify that web+demo://example.com/a is handled as a path rather than as a URL with a protocol.",
+      "Check that https://user:pass@example.com/path?x=1#part exposes the host, username, password, path, query, fragment, origin, full path, and href consistently, and that string and JSON serialization return the href.",
+      "Confirm that a relative URL remains a relative href, and that appending a relative URL combines its path, adds its query values, and applies its fragment."
+     ]
+    },
+    {
+     "area": "Query parsing, updates, and encoding",
+     "checks": [
+      "Verify that parsing ?=value&item=one&item=two ignores the empty key and returns both values for item.",
+      "Check that updating a URL preserves existing query entries not replaced by the update, omits the equals sign for missing and empty values, and serializes array values as repeated key-value pairs.",
+      "Confirm that the public entry point exposes the new URL and query capabilities and parse and utility exports, without relying on the removed URL interface or parameter helpers."
+     ]
+    }
+   ],
+   "uncertainty": [
+    "The removed-code evidence does not show the prior protocol-detection rule, so it cannot establish whether web+demo:// was treated differently before this release."
+   ]
+  },
+  "baseChecks": [
+   "Verify that parsing and serializing ?=x omits the empty-key parameter from the resulting URL.",
+   "Check that parsing guide?x=1 without a protocol returns pathname guide and search x=1.",
+   "Confirm that the package entry point exposes the URL, query, and encoding utility exports in place of the previous UFO module export."
+  ],
+  "flagged": [
+   {
+    "item": 11,
+    "entity": "src/encoding.ts#<module>",
+    "score": 0,
+    "before": "",
+    "after": ""
+   },
+   {
+    "item": 12,
+    "entity": "src/parse.ts#parseAuth",
+    "score": 0.08,
+    "before": "",
+    "after": "export function parseAuth (input: string = ''): ParsedAuth {\n  const [username, password] = input.split(':')\n  return {\n    username: decode(username),\n    password: decode(password)\n  }"
+   },
+   {
+    "item": 13,
+    "entity": "src/parse.ts#parseHost",
+    "score": 0.61,
+    "before": "",
+    "after": "export function parseHost (input: string = ''): ParsedHost {\n  const [hostname, port] = (input.match(/([^/]*)(:0-9+)?/) || []).splice(1)\n  return {\n    hostname: decode(hostname),\n    port\n  }"
+   },
+   {
+    "item": 14,
+    "entity": "src/url.ts#$URL.get port",
+    "score": 0.36,
+    "before": "",
+    "after": "  get port (): string {\n    return parseHost(this.host).port || ''\n  }"
+   },
+   {
+    "item": 15,
+    "entity": "src/url.ts#$URL.get hasProtocol",
+    "score": 0.55,
+    "before": "",
+    "after": "  get hasProtocol () {\n    return this.protocol.length\n  }"
+   }
+  ]
+ },
+ {
+  "id": "excalidraw-10",
+  "run": 2,
+  "notCoveredTotal": 12,
+  "repair": true,
+  "verifyReport": {
+   "summary": "Library handling is being separated from scene updates and centralized across imports, shared links, and the embeddable editor.",
+   "keyChanges": [
+    "Library items supplied with scene data are now handled separately: startup data and refreshed stored items update the library directly, while scene updates continue to update the drawing.",
+    "Library file selection now uses a different chooser path, and cancellation is handled quietly; dropped library files merge with existing items and open the library, while shared-library links merge published items and open the library.",
+    "The embeddable editor exposes library handling through its public integration API, and its example now distinguishes drawing files from library files and displays pointer coordinates."
+   ],
+   "testAreas": [
+    {
+     "area": "Library startup, file import, and drop",
+     "checks": [
+      "Verify startup with initial drawing data containing a library item preserves that item alongside the existing library rather than replacing existing items.",
+      "Check that choosing a valid library file through the library file chooser adds its item to the library, and that cancelling the chooser leaves the library unchanged without an import error.",
+      "Confirm dropping a valid library file merges its item with the existing library item and opens the library."
+     ]
+    },
+    {
+     "area": "Shared-library link import",
+     "checks": [
+      "Confirm opening a shared-library link adds linked items without removing existing items, opens the library, and restores the prior address after import.",
+      "Verify a link with no matching editor token prompts for confirmation before adding its items, while a link with a matching token adds them without that prompt."
+     ]
+    },
+    {
+     "area": "Embeddable editor integration example",
+     "checks": [
+      "Verify loading a drawing file updates the drawing, while loading a library file adds its items to the library and opens the library rather than replacing the drawing.",
+      "Check that an integration update containing library items is handled through the separate library-update capability, and that the items appear in the library; use a legacy-format library item list as input if available.",
+      "Confirm the example's scene updates, image loading, clipboard copy, and export still operate, and that pointer movement updates the displayed x and y coordinates and comment interactions remain usable."
+     ]
+    }
+   ],
+   "uncertainty": [
+    "The supplied chooser change shows the file-opening call and cancellation handling but does not show the selected file being passed to library import; verify that choosing a valid library file still adds its items."
+   ]
+  },
+  "baseChecks": [
+   "Verify that opening a shared-library link in the legacy query-string form with a matching editor token imports the items without a confirmation prompt, preserves existing items, opens the Library, and removes the import link from the address.",
+   "Check that selecting a valid library file through the Library load control adds its items while preserving an existing item.",
+   "Confirm that a Library update requested to merge valid items adds them without replacing existing items.",
+   "Verify that a Library update requested to open the Library makes it visible."
+  ],
+  "flagged": [
+   {
+    "item": 16,
+    "entity": "src/components/App.tsx#<module>",
+    "score": 0.53,
+    "before": "  URL_HASH_KEYS,\n  URL_QUERY_KEYS,\nimport { restore, restoreElements, restoreLibraryItems } from \"../data/restore\";\n  loadLibraryFromBlob,\nimport { AbortError } from \"../errors\";\n",
+    "after": "import { restore, restoreElements } from \"../data/restore\";"
+   },
+   {
+    "item": 17,
+    "entity": "src/data/json.ts#<module>",
+    "score": 0.27,
+    "before": "import Library from \"./library\";\n",
+    "after": ""
+   },
+   {
+    "item": 18,
+    "entity": "src/packages/excalidraw/example/App.js#App>renderFooter",
+    "score": 0.39,
+    "before": "            excalidrawRef.current.setActiveTool({",
+    "after": "            excalidrawAPI.setActiveTool({"
+   },
+   {
+    "item": 19,
+    "entity": "src/packages/excalidraw/example/App.js#App>updateScene",
+    "score": 0.51,
+    "before": "    excalidrawRef.current.updateScene(sceneData);",
+    "after": "    excalidrawAPI.updateScene(sceneData);"
+   },
+   {
+    "item": 20,
+    "entity": "src/packages/excalidraw/example/App.js#App>onCopy",
+    "score": 0.67,
+    "before": "      elements: excalidrawRef.current.getSceneElements(),\n      appState: excalidrawRef.current.getAppState(),\n      files: excalidrawRef.current.getFiles(),",
+    "after": "      elements: excalidrawAPI.getSceneElements(),\n      appState: excalidrawAPI.getAppState(),\n      files: excalidrawAPI.getFiles(),"
+   }
+  ]
+ },
+ {
+  "id": "ufo-01",
+  "run": 3,
+  "notCoveredTotal": 33,
+  "repair": false,
+  "verifyReport": {
+   "summary": "URL parsing and formatting behavior has been replaced, changing how URL inputs and query parameters are handled.",
+   "keyChanges": [
+    "Repeated query keys are now retained as ordered values instead of only keeping the last value, allowing URL formatting to preserve repetitions.",
+    "URL parameter values now encode slashes as %2F, and URL construction rejects non-string inputs that the previous parser accepted as parsed URL objects."
+   ],
+   "testAreas": [
+    {
+     "area": "URL parsing, formatting, and joining capability",
+     "checks": [
+      "Verify parsing ?tag=first&tag=second retains both values in order and formatting the result emits both tag parameters rather than only the last one.",
+      "Check formatting a URL with parameter value a/b encodes the slash as %2F and preserves the value when parsed again.",
+      "Confirm passing a parsed URL object with a url property to URL construction produces a TypeError rather than accepting the object as parsed input."
+     ]
+    }
+   ],
+   "uncertainty": [
+    "Whether rejecting parsed URL objects is an intended compatibility change is not documented in the supplied context."
+   ]
+  },
+  "baseChecks": [
+   "Verify parsing https://example.test/?tag=red&tag=blue preserves both values, red and blue, for the tag parameter.",
+   "Test supplying a parsed URL object with URL, hasProtocol, and isRelative fields; confirm it is rejected with a TypeError."
+  ],
+  "flagged": [
+   {
+    "item": 21,
+    "entity": "src/encoding.ts#encodeHash",
+    "score": 0,
+    "before": "",
+    "after": "export function encodeHash (text: string): string {\n  return encode(text)\n    .replace(ENC_CURLY_OPEN_RE, '{')\n    .replace(ENC_CURLY_CLOSE_RE, '}')\n    .replace(ENC_CARET_RE, '^')\n}"
+   },
+   {
+    "item": 22,
+    "entity": "src/encoding.ts#encodeQueryValue",
+    "score": 0.54,
+    "before": "",
+    "after": "export function encodeQueryValue (text: string | number): string {\n  return (\n    encode(text)\n      // Encode the space as +, encode the + to differentiate it from the space\n      .replace(PLUS_RE, '%2B')\n      .replace(ENC_SPACE_RE, '+')\n      .replace(HASH_RE, '%23')\n      .replace(AMPERSAND_RE, '%26')\n      .replace(ENC_BACKTICK_RE, '`')\n      .replace(ENC_CURLY_OPEN_RE, '{')\n      .replace(ENC_CURLY_CLOSE_RE, '}')\n      .replace(ENC_CARET_RE, '^')\n  )\n}"
+   },
+   {
+    "item": 23,
+    "entity": "src/encoding.ts#encodeQueryKey",
+    "score": 0.16,
+    "before": "",
+    "after": "export function encodeQueryKey (text: string | number): string {\n  return encodeQueryValue(text).replace(EQUAL_RE, '%3D')\n}"
+   },
+   {
+    "item": 24,
+    "entity": "src/encoding.ts#decode",
+    "score": 0.07,
+    "before": "",
+    "after": "export function decode (text: string | number): string {\n  try {\n    return decodeURIComponent('' + text)\n  } catch (_err) {\n    return '' + text\n  }\n}"
+   },
+   {
+    "item": 25,
+    "entity": "src/parse.ts#<module>",
+    "score": 0.45,
+    "before": "",
+    "after": "export type ParamsObject = Record<string, string | string[]>\n\nexport interface ParsedURL {\n  protocol: string\n  hostname: string\n  port: string\n  username: string\n  password: string\n  pathname: string\n  hash: string\n  params: ParamsObject\n}\n\n\n"
+   }
+  ]
+ },
+ {
+  "id": "excalidraw-05",
+  "run": 1,
+  "notCoveredTotal": 6,
+  "repair": true,
+  "verifyReport": {
+   "summary": "The release adds an on-demand statistics panel for drawings and selected elements, with supporting selection and storage updates.",
+   "keyChanges": [
+    "A new stats panel opens from the canvas context menu, displays scene and selected-element information, and can be closed from the panel.",
+    "Storage figures are collected after a 500 ms debounce; the total includes stored app state, collaboration data, library data, and scene elements, and closing the panel cancels its pending refresh.",
+    "Selected-shape controls and the stats panel now use plural target resolution, so property changes and displayed selected-element details can account for multiple targets.",
+    "Clearing a drawing now preserves whether the stats panel is open or closed.",
+    "The existing selection-membership and filtered-selection calculations have no evidenced change in behavior."
+   ],
+   "testAreas": [
+    {
+     "area": "Drawing statistics panel",
+     "checks": [
+      "Verify the canvas context menu provides a stats entry; choose it and confirm the panel appears, then use its close control and confirm it hides.",
+      "Check that a scene containing exactly two elements displays an element count of 2 and scene dimensions; with both elements selected, confirm the panel shows a selected-element count of 2 and the combined position and dimensions.",
+      "Confirm the panel shows scene and total storage figures after the delayed refresh, and that the total reflects stored app state, collaboration data, library data, and scene elements.",
+      "Test opening and immediately closing the panel before 500 ms elapses; confirm it stays closed, then reopen it and confirm storage figures appear."
+     ]
+    },
+    {
+     "area": "Selected-element properties",
+     "checks": [
+      "Test changing sharpness with exactly two elements selected and confirm both selected elements receive the change."
+     ]
+    },
+    {
+     "area": "Selection-dependent editor controls",
+     "checks": [
+      "Confirm selecting and deselecting an element continues to update which elements are selected, without changing the existing selection-membership behavior."
+     ]
+    }
+   ],
+   "uncertainty": []
+  },
+  "baseChecks": [
+   "Verify the statistics entry opens the panel and its close control dismisses it.",
+   "Check that with two elements in the scene and both selected, the panel shows the scene count, rounded scene dimensions, selected-element count of 2, and rounded position and dimensions for the combined selection.",
+   "Confirm that selecting exactly one rotated element shows its position, rounded dimensions, and angle in degrees, while the multiple-selection section is absent.",
+   "Validate that scene and total storage sizes appear as compact values after they load.",
+   "Test changing sharpness with exactly two selected elements and confirm the selection-based control remains available and applies the chosen value to both elements."
+  ],
+  "flagged": [
+   {
+    "item": 26,
+    "entity": "src/excalidraw-app/data/localStorage.ts#<module>",
+    "score": 0,
+    "before": "",
+    "after": ""
+   },
+   {
+    "item": 27,
+    "entity": "src/scene/selection.ts#isSomeElementSelected",
+    "score": 0.17,
+    "before": "): boolean => {\n  return elements.some((element) => appState.selectedElementIds[element.id]);\n};",
+    "after": "): boolean =>\n  elements.some((element) => appState.selectedElementIds[element.id]);"
+   },
+   {
+    "item": 28,
+    "entity": "src/scene/selection.ts#getSelectedElements",
+    "score": 0.45,
+    "before": ") => {\n  return elements.filter((element) => appState.selectedElementIds[element.id]);\n};",
+    "after": ") => elements.filter((element) => appState.selectedElementIds[element.id]);"
+   },
+   {
+    "item": 29,
+    "entity": "src/utils.ts#<module>",
+    "score": 0,
+    "before": "",
+    "after": "\n//https://stackoverflow.com/a/9462382/8418"
+   },
+   {
+    "item": 30,
+    "entity": "src/utils.ts#nFormatter",
+    "score": 0.17,
+    "before": "",
+    "after": "export const nFormatter = (num: number, digits: number): string => {\n  const si = [\n    { value: 1, symbol: \"b\" },\n    { value: 1e3, symbol: \"k\" },\n    { value: 1e6, symbol: \"M\" },\n    { value: 1e9, symbol: \"G\" },\n  ];\n  const rx = /\\.0+$|(\\.[0-9]*[1-9])0+$/;\n  let index;\n  for (index = si.length - 1; index > 0; index--) {\n    if (num >= si[index].value) {\n      break;\n    }\n  }\n  return (\n    (num / si[index].value).toFixed(digits).replace(rx, \"$1\") + si[index].symbol\n  );\n};"
+   }
+  ]
+ },
+ {
+  "id": "excalidraw-12",
+  "run": 2,
+  "notCoveredTotal": 6,
+  "repair": true,
+  "verifyReport": {
+   "summary": "Editor menus now share coordinated selection behavior, including a clear-canvas confirmation that remains available after its menu closes.",
+   "keyChanges": [
+    "The clear-canvas confirmation is hosted separately from the menu, so selecting the clear action can close the menu without dismissing the confirmation; confirming clears the drawing and canceling preserves it.",
+    "Menu choices now run their existing click behavior and notify the containing menu of selection; the menu closes after selection unless that selection is prevented, allowing theme changes to keep the menu open.",
+    "Library-menu selection also closes the library menu, and menu choices retain their shared base styling."
+   ],
+   "testAreas": [
+    {
+     "area": "Clear-canvas confirmation and editor menu",
+     "checks": [
+      "Verify that selecting the clear-canvas action displays a confirmation dialog that remains visible after the menu closes, without clearing the drawing before confirmation.",
+      "Verify that canceling the confirmation closes the dialog and leaves the drawing unchanged.",
+      "Confirm that accepting the confirmation clears the drawing and closes the dialog.",
+      "Check that changing the theme updates the editor appearance while leaving the menu open."
+     ]
+    },
+    {
+     "area": "Reusable drawing library menu",
+     "checks": [
+      "Verify that selecting an available library-menu item closes the library menu."
+     ]
+    }
+   ],
+   "uncertainty": [
+    "The supplied application context has no navigation labels or routes, so the exact steps to reach these menus are not established."
+   ]
+  },
+  "baseChecks": [
+   "Verify selecting the clear-canvas menu item closes the menu but leaves the confirmation visible.",
+   "Confirm canceling the confirmation closes it and leaves the drawing content intact.",
+   "Check confirming the clear action clears the drawing and closes the confirmation.",
+   "Verify selecting an ordinary dropdown item closes its menu after the item action runs.",
+   "Check selecting the theme option changes the theme while leaving the main menu open.",
+   "Verify selecting a library menu item closes the library menu."
+  ],
+  "flagged": [
+   {
+    "item": 31,
+    "entity": "src/components/dropdownMenu/DropdownMenuContent.tsx#<module>",
+    "score": 0,
+    "before": "export default MenuContent;",
+    "after": "import React from \"react\";\nimport { DropdownMenuContentPropsContext } from \"./common\";\n\nexport default MenuContent;"
+   },
+   {
+    "item": 32,
+    "entity": "src/components/dropdownMenu/DropdownMenuItemLink.tsx#DropdownMenuItemLink",
+    "score": 0.65,
+    "before": "  href: string;",
+    "after": "  onSelect,\n  href: string;\n  onSelect?: (event: Event) => void;\n  const handleClick = useHandleDropdownMenuItemClick(rest.onClick, onSelect);\n\n      onClick={handleClick}"
+   },
+   {
+    "item": 33,
+    "entity": "src/components/dropdownMenu/common.ts#<module>",
+    "score": 0.05,
+    "before": "",
+    "after": "import React, { useContext } from \"react\";\nimport { EVENT } from \"../../constants\";\nimport { composeEventHandlers } from \"../../utils\";\n\nexport const DropdownMenuContentPropsContext = React.createContext<{\n  onSelect?: (event: Event) => void;\n}>({});\n\n"
+   },
+   {
+    "item": 34,
+    "entity": "src/components/dropdownMenu/common.ts#getDrodownMenuItemClassName",
+    "score": 0.67,
+    "before": "",
+    "after": "export const getDrodownMenuItemClassName = (className = \"\") => {\n  return `dropdown-menu-item dropdown-menu-item-base ${className}`.trim();\n};"
+   },
+   {
+    "item": 35,
+    "entity": "src/utils.ts#<module>",
+    "score": 0,
+    "before": "",
+    "after": "\n// taken from Radix UI\n// https://github.com/radix-ui/primitives/blob/main/packages/core/primitive/src/primitive.tsx"
+   }
+  ]
+ },
+ {
+  "id": "excalidraw-03",
+  "run": 3,
+  "notCoveredTotal": 4,
+  "repair": true,
+  "verifyReport": {
+   "summary": "The release adds a keyboard-toggleable Zen mode and updates how editor controls and edge panels are presented.",
+   "keyChanges": [
+    "Zen mode starts off and can be toggled with Alt+Z or exited from a new footer control; editor panels and the lock control also receive Zen-mode-specific presentation changes.",
+    "Edge-anchored editor panels now support additional styling, and floating tool surfaces use the updated styling bundle, affecting their presentation in the editor and mobile menu.",
+    "Tool controls now use a changed visibility-class mapping, so their displayed state needs verification when controls are available or unavailable."
+   ],
+   "testAreas": [
+    {
+     "area": "Excalidraw editor and canvas controls",
+     "checks": [
+      "Verify that pressing Alt+Z with no Ctrl or Command modifier turns Zen mode on, and pressing Alt+Z again turns it off; confirm the shortcut is listed in the shortcuts dialog.",
+      "Confirm that Zen mode shows an exit control, hides the lock control, and that using the exit control returns the interface to its standard layout.",
+      "Check that canvas-action and selected-shape panels, floating tool surfaces, and other edge-anchored panels remain usable and are presented appropriately as Zen mode is turned on and off.",
+      "Check that selection-dependent action controls appear when applicable and available, and are hidden when not applicable or unavailable."
+     ]
+    },
+    {
+     "area": "Mobile editor menu",
+     "checks": [
+      "Confirm that edge-anchored menu content and floating tool controls remain usable and properly presented in the mobile menu."
+     ]
+    }
+   ],
+   "uncertainty": [
+    "The changed visibility-class mapping assigns a hide class when a control is marked visible and a show class otherwise, unlike the previous explicit visibility behavior; the supplied evidence does not include the styling rules, so the actual displayed result is uncertain."
+   ]
+  },
+  "baseChecks": [
+   "Verify that pressing Alt+Z with no Ctrl or Cmd enters zen mode, transitions the editor controls away, and shows the footer exit control.",
+   "Confirm that pressing Alt+Z again leaves zen mode and restores the normal editor presentation.",
+   "Check that a button with visibility set to true remains visible, one set to false remains hidden, and one with no visibility setting remains visible."
+  ],
+  "flagged": [
+   {
+    "item": 36,
+    "entity": "src/components/App.tsx#<module>",
+    "score": 0,
+    "before": "",
+    "after": ""
+   },
+   {
+    "item": 37,
+    "entity": "src/components/FixedSideContainer.tsx#<module>",
+    "score": 0,
+    "before": "",
+    "after": "  className?: string;"
+   },
+   {
+    "item": 38,
+    "entity": "src/components/Island.tsx#<module>",
+    "score": 0.59,
+    "before": "import \"./Island.css\";\n  className?: string;",
+    "after": "import \"./Island.scss\";\n  className?: string | boolean;"
+   },
+   {
+    "item": 39,
+    "entity": "src/components/LayerUI.tsx#LayerUI",
+    "score": 0.58,
+    "before": "      <aside>\n        <GitHubCorner />\n      </aside>",
+    "after": "  zenModeEnabled,\n  toggleZenMode,\n      {\n        <aside\n          className={`layer-ui__wrapper__github-corner zen-mode-transition ${\n            zenModeEnabled && \"transition-right\"\n          }`}\n        >\n          <GitHubCorner />\n        </aside>\n      }"
+   }
+  ]
+ },
+ {
+  "id": "consola-02",
+  "run": 1,
+  "notCoveredTotal": 10,
+  "repair": false,
+  "verifyReport": {
+   "summary": "The release changes how consumers receive the logger and makes legacy compatibility operations available.",
+   "keyChanges": [
+    "The default package export changes from the logger class to an initialized logger instance, while the class and factory are available as named exports.",
+    "Previously inactive compatibility operations for reporter management, scoping, mocking, and pausing or resuming logs are now available at runtime."
+   ],
+   "testAreas": [
+    {
+     "area": "Package logger entry point and compatibility operations",
+     "checks": [
+      "Verify that the default package export is a ready-to-use logger instance and that the named class can be constructed and the named factory can create a logger.",
+      "Check that the legacy reporter-add compatibility call registers the prepared reporter so it receives a log message; previously that compatibility call was inactive."
+     ]
+    }
+   ],
+   "uncertainty": []
+  },
+  "baseChecks": [
+   "Verify a consumer using the package default export receives the shared logger instance and can still construct a logger through the named Consola export.",
+   "Check that a logger instance’s legacy add alias accepts a reporter and adds it, rather than being unavailable.",
+   "Confirm that Types remains available as a named export and that reporter constructors are not forwarded through the main package entry point."
+  ],
+  "flagged": [
+   {
+    "item": 40,
+    "entity": "src/consola.ts#createConsola",
+    "score": 0.5,
+    "before": "",
+    "after": "export function createConsola(options: Partial<ConsolaOptions>) {\n  return new Consola(options);\n}"
+   },
+   {
+    "item": 41,
+    "entity": "src/index.browser.ts#_createConsola",
+    "score": 0,
+    "before": "",
+    "after": "function _createConsola() {\n  const consola = createConsola({\n    reporters: [new BrowserReporter({})],\n  });\n  return consola;\n}"
+   },
+   {
+    "item": 42,
+    "entity": "src/index.shared.ts#<module>",
+    "score": 0.12,
+    "before": "",
+    "after": "export { Consola, createConsola } from \"./consola\";\nexport { Types } from \"./log.types\";\nexport { LogLevels } from \"./log.levels\";\nexport { isLogObj } from \"./utils\";\nexport { assignGlobalConsola } from \"./utils/global\";"
+   },
+   {
+    "item": 43,
+    "entity": "src/index.ts#_createConsola",
+    "score": 0.01,
+    "before": "",
+    "after": "function _createConsola() {\n  // Log level\n  let level = _getDefaultLogLevel();\n  if (process.env.CONSOLA_LEVEL) {\n    level = Number.parseInt(process.env.CONSOLA_LEVEL) || level;\n  }\n\n  // Create new consola instance\n  const consola = createConsola({\n    level: level as LogLevel,\n    reporters: [isCI || isTest ? new BasicReporter({}) : new FancyReporter({})],\n  });\n\n  return consola;\n}"
+   },
+   {
+    "item": 44,
+    "entity": "src/index.ts#_getDefaultLogLevel",
+    "score": 0,
+    "before": "",
+    "after": "function _getDefaultLogLevel() {\n  if (isDebug) {\n    return LogLevels.Debug;\n  }\n  if (isTest) {\n    return LogLevels.Warn;\n  }\n  return LogLevels.Info;\n}"
+   }
+  ]
+ },
+ {
+  "id": "excalidraw-02",
+  "run": 3,
+  "notCoveredTotal": 3,
+  "repair": true,
+  "verifyReport": {
+   "summary": "The release updates text creation and drawing-property controls, including how edited and selected elements supply displayed values.",
+   "keyChanges": [
+    "Drawing-property controls now prefer the actively edited element’s value, otherwise using a shared selected-element value or a default; mixed values have no single shared value, and opacity 0 falls through to the 100 default.",
+    "When no color is set, the color chooser now receives an explicit null value instead of an undefined value; the chooser continues to serve canvas background, element background, and stroke color controls.",
+    "Text elements are measured and positioned when created or submitted, and submitting empty text no longer adds an element to the drawing."
+   ],
+   "testAreas": [
+    {
+     "area": "Drawing appearance controls and color chooser",
+     "checks": [
+      "Verify that an element with stored opacity 0 displays 100 in the opacity control under the new default behavior.",
+      "Check that while editing a text element whose appearance differs from other selected elements, the controls show the edited element’s values; for multiple selected elements with different stroke widths, confirm the control does not present a single shared width.",
+      "Confirm that with no color set, opening a canvas background or element color chooser and selecting a palette color visibly applies that color to the corresponding background or stroke."
+     ]
+    },
+    {
+     "area": "Text creation and editing",
+     "checks": [
+      "Verify that submitting empty text creates no text element in the drawing.",
+      "Confirm that submitting non-empty text creates a text element with the entered text visible and its size fitted to that text."
+     ]
+    }
+   ],
+   "uncertainty": [
+    "A stored opacity of 0 now falls through to the default of 100 in the control; whether fully transparent elements should continue to display 0 is unclear."
+   ]
+  },
+  "baseChecks": [
+   "Verify an element with opacity 0 is selected and the opacity control displays 100 under the new fallback.",
+   "Check that while editing a text element with different appearance settings from another selected element, the controls show the edited text element’s values.",
+   "Verify that submitting an empty string does not add a new empty text item.",
+   "Check that submitting non-empty text updates or creates the text item with bounds matching the entered text and font."
+  ],
+  "flagged": [
+   {
+    "item": 45,
+    "entity": "src/element/newElement.ts#<module>",
+    "score": 0.37,
+    "before": "",
+    "after": "import { ExcalidrawElement, ExcalidrawTextElement } from \"../element/types\";\nimport { measureText } from \"../utils\";\n\n"
+   },
+   {
+    "item": 46,
+    "entity": "src/index.tsx#<module>",
+    "score": 0.34,
+    "before": "import { ExcalidrawElement, ExcalidrawTextElement } from \"./element/types\";\nimport { isInputLike, measureText, debounce, capitalizeString } from \"./utils\";\n",
+    "after": "  newTextElement,\nimport { ExcalidrawElement } from \"./element/types\";\nimport { isInputLike, debounce, capitalizeString } from \"./utils\";"
+   },
+   {
+    "item": 47,
+    "entity": "src/index.tsx#addTextElement",
+    "score": 0.17,
+    "before": "function addTextElement(\n  element: ExcalidrawTextElement,\n  text: string,\n  font: string\n) {\n  resetCursor();\n  if (text === null || text === \"\") {\n    return false;\n  }\n\n  const metrics = measureText(text, font);\n  element.text = text;\n  element.font = font;\n  // Center the text\n  element.x -= metrics.width / 2;\n  element.y -= metrics.height / 2;\n  element.width = metrics.width;\n  element.height = metrics.height;\n  element.baseline = metrics.baseline;\n\n  return true;\n}",
+    "after": ""
+   }
+  ]
+ }
+]
