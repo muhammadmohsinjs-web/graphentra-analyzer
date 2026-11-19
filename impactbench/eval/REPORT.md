@@ -339,3 +339,57 @@ Reproduce:
 node --import tsx tools/impactbench-report-eval.mts run --history <history-dir> --work <work-dir> --data impactbench/eval/data-v3 --variants base,verify --runs 3 --concurrency 6 <31 ids>
 node --import tsx tools/impactbench-report-eval.mts summary --data impactbench/eval/data-v3
 ```
+
+## Phase V verifier after V-13a/b: 12-commit check (V-13c, 2026-11-19, commit e1f6141)
+
+What changed since V-12: no repair round (V-13a), and a deterministic noise filter before any question (V-13b: skip changes
+with no runtime effect, fold `A>b` inner functions into their parent). Only the `verify` arm was run, on 12 of the 31 commits
+picked to test those changes: the six with the longest "Not covered" lists (ufo-02, excalidraw-01, ufo-01, consola-03,
+excalidraw-10, consola-02), the two the repair round broke (json-server-01, pathe-01), three where it changed the catch
+(excalidraw-02, -03, -12) and the slowest (excalidraw-05). All 10 commits of the V-12 M5 review are in it. 3 runs each,
+same writer and judge as V-12; compared with the V-12 rows of the same 12 commits. 36 reports, 28 minutes, $0.63 with judge.
+Data: `data-v4/`.
+
+| Same 12 commits, 36 reports each | base (V-12) | verify (V-12) | verify now |
+|---|---|---|---|
+| Invalid reports | 1 (ufo-01) | 2 (json-server-01, pathe-01) | 1 (json-server-01 run 2) |
+| Reports that catch / explain the bug | 13 / 13 | 9 / 13 | 9 / 12 |
+| Commits caught / explained by majority | 4 / 4 | 4 / 4 | 4 / 3 |
+| Median seconds per report | 269 | 448 | **245** |
+| QA checks per report | 4.0 | 6.7 | **3.8** |
+| Writer prompt tokens | 4.65 M | 7.94 M | **4.55 M** |
+| Verifier input tokens | – | 2.32 M | **0.91 M** (−61 %) |
+| Verifier time per report (mean) | – | 27 s | 17 s |
+| Verifier errors / refusals | – | 0 / 0 | 0 / 0 |
+| Changed production entities: covered / repaired / listed | – | 415 / 291 / 320 | 448 / – / 418 |
+| Skipped (no behaviour change) / folded into parent | – | – | 168 / 87 |
+| Silent drops (E3) | – | 0 | **0** of 1,034 |
+| "Not covered" lines (sum / max) | – | 320 / 49 | 411 / 39 |
+| Reports with ≤ 3 "Not covered" lines | – | 11 of 34 | 14 of 35 |
+
+Reading the table:
+- **The verify path now writes exactly what base writes.** The verifier only appends the list, and the judge never sees the list
+  (it grades summary, key changes and checks). So catch 13 vs 9 is run-to-run noise of the same writer, not an effect of the
+  verifier; on 36 reports a swing of ±4 is normal. The json-server-01 invalid report is the same writer failing once.
+- **E4:** pathe-01 is valid again (3/3) and catches the bug in 2 of 3 runs, as base did. **E6:** time and writer tokens are
+  back to base; the only extra is the verifier, about 0.9 M tokens and 17 s per report on these (large) commits. Its dollar
+  cost ($0.09 here, against $0.30 for the writer) rests on an estimated price. **E7 checks:** met (3.8 vs base 4.0).
+- **E7 list length: still not met.** Without the repair round, everything the first draft misses is listed, so lists are
+  longer in sum than V-12's post-repair lists, but the longest is shorter (39 vs 49). The long lists are the big refactors
+  (ufo-01/02, consola-03, excalidraw-01): 24 to 39 lines spread over only 5 to 7 files. The report is capped at 5 key
+  changes and 5 areas of up to 4 checks, so on a 50-entity change most entities cannot be named in it. A ≤ 3 target does not
+  fit those commits; showing the list grouped per file (5 to 7 lines) would.
+- **Noise (against the V-12 M5 review of the same 10 commits):** 18 of the 19 trivial flags are gone. 11 of 15 false flags
+  still appear in at least one run: they are judgement errors of the verifier, which the filter does not touch. 12 of the 13
+  real gaps are listed in at least one run; where one is not listed, that run's report covered it (none was skipped or folded).
+
+Conclusion for V-13: the rework did what it was meant to. The verifier is now cheap and fast, leaves the report itself as base
+writes it, keeps zero silent drops and almost no trivial noise. It still does not raise catch, and on large commits its list is
+long and partly wrong (false flags). Next options: group the list per file for large commits, and keep it opt-in.
+
+Reproduce:
+
+```
+node --import tsx tools/impactbench-report-eval.mts run --history <history-dir> --work <work-dir> --data impactbench/eval/data-v4 --variants verify --runs 3 --concurrency 6 ufo-02 excalidraw-01 ufo-01 consola-03 excalidraw-10 consola-02 json-server-01 pathe-01 excalidraw-02 excalidraw-03 excalidraw-12 excalidraw-05
+node --import tsx tools/impactbench-report-eval.mts summary --data impactbench/eval/data-v4
+```
