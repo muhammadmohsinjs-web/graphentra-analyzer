@@ -2,7 +2,8 @@
 // Corpus-32 evaluation: analyzer recall, QA report catch/explain rates, and the lookup tool. Plan: impactbench/eval/PLAN.md.
 //
 //   node --import tsx tools/impactbench-report-eval.mts evidence --history <dir> --work <dir> [ids...]
-//   node --import tsx tools/impactbench-report-eval.mts run --history <dir> --work <dir> [--variants base,lookup,lookup-always] [--runs 3] [--concurrency 6] [ids...]
+//   node --import tsx tools/impactbench-report-eval.mts run --history <dir> --work <dir> [--variants base,lookup,lookup-always,verify] [--runs 3] [--concurrency 6] [ids...]
+//   (verify = base plus the Phase V verifier; needs OPENAI_API_KEY for the Decisions API. Rows gain usage.verifier, usage.repair, verification, audit.)
 //   node --import tsx tools/impactbench-report-eval.mts summary
 //
 // <history> holds one full-history clone per corpus repo. <work> receives checkouts and evidence (large; keep it outside the repo).
@@ -14,11 +15,11 @@ import { fileURLToPath } from 'node:url';
 import { config } from 'dotenv';
 import OpenAI from 'openai';
 import analyzer from '../packages/analyzer/src/index';
-import reporting, { type LookupLogEntry } from '../packages/reporting/src/index';
+import reporting, { type DecisionAnswer, type DecisionClient, type LookupLogEntry, type ReportVerification } from '../packages/reporting/src/index';
 import { LARGE_VARIANTS, largePayloadReport, payloadSizes, type LargeVariant } from './impactbench-large-payload.mts';
 
 const { readEvidence } = analyzer;
-const { buildLLMPayload, buildSurfaceEvidence, generateQAReport, loadApplicationContext } = reporting;
+const { buildLLMPayload, buildSurfaceEvidence, createOpenAIDecisionClient, DEFAULT_THRESHOLD, generateQAReport, getSourceRole, judgeAnswer, loadApplicationContext } = reporting;
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DATA_ARG = process.argv.indexOf('--data');
@@ -94,8 +95,12 @@ function contextFor(entry: Entry, graph: any) {
 function fixContext(ctx: any) { if ('unassignedFiles' in ctx && !('unassignedFiles' in ctx.meta)) { ctx.meta.unassignedFiles = ctx.unassignedFiles; delete ctx.unassignedFiles; } return ctx; }
 
 // ---------- metered client ----------
+// The verifier's repair round (V-8) is a writer call whose messages carry this opening line (buildRepairMessage).
+const REPAIR_MARKER = 'A coverage check of your report found the gaps below.';
 function meteredClient(model: string) {
-  const meter = { calls: 0, prompt: 0, completion: 0, cached: 0, cost: 0, last: undefined as string | undefined };
+  const meter = { calls: 0, prompt: 0, completion: 0, cached: 0, cost: 0, last: undefined as string | undefined,
+    // Subset of the above: calls sent after a repair round started (the repair call and any retry after it). M4.
+    repair: { calls: 0, prompt: 0, completion: 0, cached: 0, cost: 0 } };
   const client = new OpenAI({ apiKey: process.env.OPENROUTER_API_KEY, baseURL: 'https://openrouter.ai/api/v1', maxRetries: 2, timeout: 240_000 });
   const create = client.chat.completions.create.bind(client.chat.completions);
   (client.chat.completions as any).create = (body: any, opts: any) => {
@@ -103,14 +108,80 @@ function meteredClient(model: string) {
     promise.then((completion: any) => {
       if (body.response_format?.type === 'json_schema') meter.last = completion?.choices?.[0]?.message?.content ?? meter.last;
       const usage = completion?.usage; if (!usage) return;
-      meter.calls += 1; meter.prompt += usage.prompt_tokens ?? 0; meter.completion += usage.completion_tokens ?? 0;
-      meter.cached += usage.prompt_tokens_details?.cached_tokens ?? 0;
       const [pin, pout] = PRICE[model] ?? [0, 0];
-      meter.cost += typeof usage.cost === 'number' ? usage.cost : ((usage.prompt_tokens ?? 0) * pin + (usage.completion_tokens ?? 0) * pout) / 1e6;
+      const cost = typeof usage.cost === 'number' ? usage.cost : ((usage.prompt_tokens ?? 0) * pin + (usage.completion_tokens ?? 0) * pout) / 1e6;
+      const repair = (body.messages ?? []).some((m: any) => typeof m.content === 'string' && m.content.startsWith(REPAIR_MARKER));
+      for (const m of repair ? [meter, meter.repair] : [meter]) {
+        m.calls += 1; m.prompt += usage.prompt_tokens ?? 0; m.completion += usage.completion_tokens ?? 0;
+        m.cached += usage.prompt_tokens_details?.cached_tokens ?? 0; m.cost += cost;
+      }
     }, () => {});
     return promise;
   };
   return { client, meter };
+}
+
+// ---------- verifier (Phase V, V-11) ----------
+// USD per million tokens [input, cached input, output]. Decisions pricing is not published; same ESTIMATE as tools/verifier-spike.mts.
+const DECISIONS_PRICE: [number, number, number] = [0.1, 0.01, 0.5];
+
+/** Wraps the Decisions client: meters tokens, cost and wall time, and records every answer in arrival order (pass 1, then pass 2). */
+function meteredDecisionClient(inner: DecisionClient) {
+  const meter = { calls: 0, questions: 0, input: 0, cached: 0, output: 0, cost: 0, seconds: 0, refusals: 0, errors: 0, errorSamples: [] as string[] };
+  const answers = new Map<string, DecisionAnswer[]>();
+  let active = 0; let since = 0;
+  const client: DecisionClient = {
+    async decide(input, questions, options) {
+      if (active++ === 0) since = Date.now();
+      try {
+        const result = await inner.decide(input, questions, options);
+        meter.calls += 1; meter.questions += questions.length;
+        meter.input += result.usage.inputTokens; meter.cached += result.usage.cachedTokens; meter.output += result.usage.outputTokens;
+        const [pin, pcached, pout] = DECISIONS_PRICE;
+        meter.cost += ((result.usage.inputTokens - result.usage.cachedTokens) * pin + result.usage.cachedTokens * pcached + result.usage.outputTokens * pout) / 1e6;
+        for (const answer of result.answers) {
+          if (answer.outcome === 'refusal') meter.refusals += 1;
+          if (answer.outcome === 'error') {
+            meter.errors += 1;
+            // Errors count as "not covered" and can trigger a repair, so keep a few distinct messages to tell provider faults from real gaps.
+            const sample = `${answer.id.split(':')[0]}: ${answer.message.slice(0, 200)}`;
+            if (meter.errorSamples.length < 3 && !meter.errorSamples.includes(sample)) meter.errorSamples.push(sample);
+          }
+          answers.set(answer.id, [...(answers.get(answer.id) ?? []), answer]);
+        }
+        return result;
+      } finally {
+        // Wall time while at least one call is in flight (calls run in parallel inside a pass).
+        if (--active === 0) meter.seconds += (Date.now() - since) / 1000;
+      }
+    },
+  };
+  return { client, meter, answers };
+}
+
+/**
+ * M3 silent-drop audit. Every changed production entity must land in exactly one bucket: covered on the first check, fixed by the
+ * repair round, or listed under "Not covered". Anything else is a silent drop (E3 target: zero).
+ */
+function silentDropAudit(raw: unknown, report: any, verification: ReportVerification | undefined, answers: Map<string, DecisionAnswer[]>) {
+  const production = readEvidence(raw).impacts.filter((i: any) => getSourceRole(i.changedEntity.file) === 'production').map((i: any) => i.changedEntity.id as string);
+  const final = new Map((verification?.verification.entries ?? []).filter(e => e.kind === 'coverage' && e.entity).map(e => [e.entity!, e]));
+  const listed = new Set((report?.notCovered ?? []).map((n: any) => n.entity));
+  const buckets = { covered: [] as string[], fixedByRepair: [] as string[], notCovered: [] as string[], silent: [] as string[] };
+  let lostInRepair = 0;
+  for (const id of production) {
+    const first = judgeAnswer({ id: `coverage:${id}`, kind: 'coverage', entity: id } as any, answers.get(`coverage:${id}`)?.[0], verification?.verification.threshold ?? DEFAULT_THRESHOLD);
+    const last = final.get(id);
+    if (last?.verdict === 'covered') (first.verdict === 'covered' ? buckets.covered : buckets.fixedByRepair).push(id);
+    else if (last && listed.has(id)) { buckets.notCovered.push(id); if (first.verdict === 'covered') lostInRepair += 1; }
+    else buckets.silent.push(id);
+  }
+  return {
+    production: production.length, covered: buckets.covered.length, fixedByRepair: buckets.fixedByRepair.length, notCovered: buckets.notCovered.length,
+    silentDrops: buckets.silent.length, silentDropIds: buckets.silent, lostInRepair,
+    // A "Not covered" line for an entity that is not a changed production entity would mean the list is built from the wrong set.
+    strayNotCovered: [...listed].filter(id => !production.includes(id as string)).length,
+  };
 }
 
 // ---------- judge ----------
@@ -191,7 +262,10 @@ async function oneReport(entry: Entry, variant: string, run: number) {
   const { client, meter } = meteredClient(REPORT_MODEL);
   const { client: judgeClient, meter: judgeMeter } = meteredClient(JUDGE_MODEL);
   const read = (file: string) => { try { return execFileSync('git', ['-C', path.join(history!, entry.repo), 'show', `${entry.introducer.sha}:${file}`], { encoding: 'utf8', maxBuffer: 1 << 26, stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return undefined; } };
-  const lookup = variant === 'base' ? undefined : { read, style: variant === 'lookup-always' ? 'always' as const : 'optional' as const };
+  const lookup = variant === 'base' || variant === 'verify' ? undefined : { read, style: variant === 'lookup-always' ? 'always' as const : 'optional' as const };
+  // verify = base + the Phase V verifier (repair round and "Not covered" list). Same report model and judge as base.
+  const decisions = variant === 'verify' ? meteredDecisionClient(createOpenAIDecisionClient({ apiKey: process.env.OPENAI_API_KEY })) : undefined;
+  let verification: ReportVerification | undefined;
   let row: any = { id: entry.id, repo: entry.repo, changeClass: entry.changeClass, variant, run, model: REPORT_MODEL };
   const logs: LookupLogEntry[] = [];
   const quiet = console.info; console.info = () => {};
@@ -205,9 +279,11 @@ async function oneReport(entry: Entry, variant: string, run: number) {
       // Recall before the merge: would the analysts' own checks have caught it?
       if (large.findings?.length) { const g: any = await judge(entry, { summary: '', keyChanges: [], uncertainty: [], testAreas: [{ area: 'findings', checks: large.findings }] }, judgeClient); row.findingsCatch = g.catch; }
     } else {
-    const result = await generateQAReport(raw, context, { client, model: REPORT_MODEL, logLevel: 'off' }, lookup ? { lookup } : {});
+    const result = await generateQAReport(raw, context, { client, model: REPORT_MODEL, logLevel: 'off' },
+      lookup ? { lookup } : decisions ? { verify: { client: decisions.client } } : {});
     console.info = quiet;
     logs.push(...(result.lookups ?? []));
+    verification = result.verification;
     const grade = await judge(entry, result.qaReport, judgeClient);
     row = { ...row, valid: true, ...grade, report: result.qaReport };
     }
@@ -226,8 +302,23 @@ async function oneReport(entry: Entry, variant: string, run: number) {
   const looked = new Set(logs.flatMap(l => l.entityIds));
   row.lookups = { count: logs.length, hits: logs.filter(l => l.hit).length, truth: [...looked].filter(id => truthIds.has(id)).length,
     outside: [...looked].filter(id => outsideIds.has(id)).length, log: logs.map(({ mode, query, hit, entityIds, refused }) => ({ mode, query, hit, n: entityIds.length, ...(refused ? { refused } : {}) })) };
-  const strip = ({ last, ...rest }: any) => rest;
+  const strip = ({ last, repair, ...rest }: any) => rest;
   row.usage = { report: strip(meter), judge: strip(judgeMeter) };
+  if (decisions) {
+    // M4: repair calls stay inside usage.report (writer cost); usage.repair is that subset, usage.verifier is the Decisions cost.
+    row.usage.repair = meter.repair;
+    row.usage.verifier = { ...decisions.meter, seconds: Math.round(decisions.meter.seconds * 10) / 10 };
+    if (verification) {
+      const flagged = verification.verification.entries.filter(e => e.verdict === 'not_covered');
+      row.verification = { passes: verification.passes, repairRequested: verification.repairRequested, repairAccepted: verification.repairAccepted,
+        threshold: verification.verification.threshold, questions: verification.verification.entries.length,
+        coverageGaps: flagged.filter(e => e.kind === 'coverage').length, faithfulnessFlags: flagged.filter(e => e.kind === 'faithfulness').length,
+        reasons: flagged.reduce((acc: any, e) => ({ ...acc, [e.reason]: (acc[e.reason] ?? 0) + 1 }), {}) };
+    }
+    // An invalid report has no final report to audit; E4 counts it, E3 does not.
+    row.audit = row.valid ? silentDropAudit(raw, row.report, verification, decisions.answers) : { skipped: 'invalid' };
+  }
+  row.checks = (row.report?.testAreas ?? []).reduce((n: number, a: any) => n + (a.checks?.length ?? 0), 0);
   row.seconds = Math.round((Date.now() - started) / 1000);
   row.payloadBytes = payloadKb(entry.id) * 1024;
   return row;
@@ -263,11 +354,12 @@ if (command === 'evidence') {
   fs.mkdirSync(DATA, { recursive: true });
   const done = new Set(fs.existsSync(RUNS) ? fs.readFileSync(RUNS, 'utf8').trim().split('\n').filter(Boolean).map(line => { const r = JSON.parse(line); return `${r.id}|${r.variant}|${r.run}`; }) : []);
   const variants = flag('variants', 'base,lookup,lookup-always')!.split(',');
+  if (variants.includes('verify') && !process.env.OPENAI_API_KEY) throw new Error(`OPENAI_API_KEY not found (looked in ${MAIN_ENV}); the verify variant calls OpenAI Decisions directly.`);
   const runs = Number(flag('runs', '3'));
   const jobs = selected.flatMap(entry => variants.flatMap(variant => Array.from({ length: runs }, (_, i) => ({ entry, variant, run: i + 1 }))))
     .filter(job => !done.has(`${job.entry.id}|${job.variant}|${job.run}`) && fs.existsSync(evidenceFile(job.entry.id)))
     // --lookup-max-kb: skip tool variants on payloads above this size (each lookup round resends the payload).
-    .filter(job => job.variant === 'base' || !flag('lookup-max-kb') || payloadKb(job.entry.id) <= Number(flag('lookup-max-kb')))
+    .filter(job => job.variant === 'base' || job.variant === 'verify' || !flag('lookup-max-kb') || payloadKb(job.entry.id) <= Number(flag('lookup-max-kb')))
     // --skip-started: leave commits that already have rows alone (budget runs cover only untouched commits).
     .filter(job => !rest.includes('--skip-started') || ![...done].some(key => key.startsWith(`${job.entry.id}|`)));
   console.log(`${jobs.length} reports to run with ${REPORT_MODEL}, judged by ${JUDGE_MODEL}`);
@@ -277,8 +369,9 @@ if (command === 'evidence') {
     try { row = await oneReport(entry, variant, run); }
     catch (error) { console.log(`HARNESS ERROR ${entry.id} ${variant}#${run}: ${(error as Error).message}`); return; }
     fs.appendFileSync(RUNS, `${JSON.stringify(row)}\n`);
-    finished += 1; spent += row.usage.report.cost + row.usage.judge.cost;
-    console.log(`[${finished}/${jobs.length}] ${entry.id} ${variant}#${run} ${row.valid ? `catch=${row.catch} explained=${row.explained}` : `INVALID ${row.failure}`} lookups=${row.lookups.count} ${row.seconds}s $${spent.toFixed(2)}`);
+    finished += 1; spent += row.usage.report.cost + row.usage.judge.cost + (row.usage.verifier?.cost ?? 0);
+    const verified = row.audit ? ` repair=${row.verification?.repairRequested ?? '-'} notCovered=${row.audit.notCovered ?? '-'} silent=${row.audit.silentDrops ?? '-'}` : '';
+    console.log(`[${finished}/${jobs.length}] ${entry.id} ${variant}#${run} ${row.valid ? `catch=${row.catch} explained=${row.explained}` : `INVALID ${row.failure}`} lookups=${row.lookups.count}${verified} ${row.seconds}s $${spent.toFixed(2)}`);
   });
 } else if (command === 'sizes') {
   need(flag('work'), 'work');
@@ -307,9 +400,26 @@ if (command === 'evidence') {
       judgeErrors: rs.filter(r => r.judgeError).length,
       lookups: { mean: rs.reduce((s, r) => s + r.lookups.count, 0) / (rs.length || 1), reportsUsing: rs.filter(r => r.lookups.count > 0).length, truthTouched: rs.filter(r => r.lookups.truth > 0).length, outsideTouched: rs.filter(r => r.lookups.outside > 0).length },
       cost: rs.reduce((s, r) => s + r.usage.report.cost, 0), judgeCost: rs.reduce((s, r) => s + r.usage.judge.cost, 0), meanSeconds: rs.reduce((s, r) => s + r.seconds, 0) / (rs.length || 1),
+      meanChecks: rs.reduce((s, r) => s + (r.checks ?? (r.report?.testAreas ?? []).reduce((n: number, a: any) => n + (a.checks?.length ?? 0), 0)), 0) / (rs.length || 1),
     };
+    const audited = rs.filter(r => r.audit && !r.audit.skipped);
+    if (rs.some(r => r.usage.verifier)) {
+      // Phase V: E3 silent drops (M3), E6 cost (M4), E7 "Not covered" size.
+      byVariant[v].verifier = {
+        cost: rs.reduce((s, r) => s + (r.usage.verifier?.cost ?? 0), 0), repairCost: rs.reduce((s, r) => s + (r.usage.repair?.cost ?? 0), 0),
+        meanSeconds: rs.reduce((s, r) => s + (r.usage.verifier?.seconds ?? 0), 0) / (rs.length || 1),
+        repairs: rs.filter(r => r.verification?.repairRequested).length, repairsAccepted: rs.filter(r => r.verification?.repairAccepted).length,
+        refusals: rs.reduce((s, r) => s + (r.usage.verifier?.refusals ?? 0), 0), errors: rs.reduce((s, r) => s + (r.usage.verifier?.errors ?? 0), 0),
+        audit: { reports: audited.length, production: audited.reduce((s, r) => s + r.audit.production, 0), covered: audited.reduce((s, r) => s + r.audit.covered, 0),
+          fixedByRepair: audited.reduce((s, r) => s + r.audit.fixedByRepair, 0), notCovered: audited.reduce((s, r) => s + r.audit.notCovered, 0),
+          silentDrops: audited.reduce((s, r) => s + r.audit.silentDrops, 0), lostInRepair: audited.reduce((s, r) => s + r.audit.lostInRepair, 0),
+          strayNotCovered: audited.reduce((s, r) => s + r.audit.strayNotCovered, 0),
+          reportsNotCoveredAtMost3: audited.filter(r => r.audit.notCovered <= 3).length },
+      };
+    }
     const b = byVariant[v];
-    console.log(`${v.padEnd(14)} valid ${pct(b.valid, b.reports)} catch ${pct(b.catch, b.reports)} explained ${pct(b.explained, b.reports)} | commits(majority) catch ${b.commitsMajorityCatch}/${b.commits} | lookups ${b.lookups.mean.toFixed(1)} | $${b.cost.toFixed(2)}`);
+    const vb = b.verifier ? ` | verifier $${b.verifier.cost.toFixed(3)} repairs ${b.verifier.repairs}/${b.reports} silent ${b.verifier.audit.silentDrops} notCovered ${b.verifier.audit.notCovered}` : '';
+    console.log(`${v.padEnd(14)} valid ${pct(b.valid, b.reports)} catch ${pct(b.catch, b.reports)} explained ${pct(b.explained, b.reports)} | commits(majority) catch ${b.commitsMajorityCatch}/${b.commits} | lookups ${b.lookups.mean.toFixed(1)} | checks ${b.meanChecks.toFixed(1)} | $${b.cost.toFixed(2)}${vb}`);
   }
   const perCommit = facts.map(f => ({ id: f.id, repo: f.repo, changeClass: f.changeClass, hasContext: f.hasContext, payloadBytes: f.payloadBytes, impacts: f.impacts,
     truth: f.truth.map((t: any) => `${t.as}${t.inPayload ? '' : '(not in payload)'}${t.outside ? '*' : ''}`),
@@ -317,10 +427,14 @@ if (command === 'evidence') {
       return [v, { runs: rs.length, valid: rs.filter(r => r.valid).length, catch: rs.filter(r => r.catch).length, explained: rs.filter(r => r.explained).length, lookups: rs.reduce((s, r) => s + r.lookups.count, 0) }]; })) }));
   // Time and cost per report against payload size: one CSV row per report, and a table by size bucket.
   const sizeOf = (r: any) => r.payloadBytes ?? facts.find(f => f.id === r.id)?.payloadBytes ?? 0;
-  const costOf = (r: any) => r.usage.report.cost + r.usage.judge.cost;
-  const csv = ['id,variant,run,payloadKB,seconds,reportCostUSD,judgeCostUSD,totalCostUSD,promptTokens,cachedTokens,completionTokens,llmCalls,lookups,valid,catch,explained',
+  const costOf = (r: any) => r.usage.report.cost + r.usage.judge.cost + (r.usage.verifier?.cost ?? 0);
+  // M4 columns (empty for variants without the verifier): verifier tokens, cached tokens, seconds, cost; repair triggered and its writer cost.
+  const csv = ['id,variant,run,payloadKB,seconds,reportCostUSD,judgeCostUSD,totalCostUSD,promptTokens,cachedTokens,completionTokens,llmCalls,lookups,valid,catch,explained,'
+    + 'verifierInputTokens,verifierCachedTokens,verifierOutputTokens,verifierSeconds,verifierCostUSD,repair,repairCostUSD,notCovered,silentDrops',
     ...rows.map(r => [r.id, r.variant, r.run, Math.round(sizeOf(r) / 1024), r.seconds, r.usage.report.cost.toFixed(5), r.usage.judge.cost.toFixed(5), costOf(r).toFixed(5),
-      r.usage.report.prompt, r.usage.report.cached, r.usage.report.completion, r.usage.report.calls, r.lookups.count, r.valid, Boolean(r.catch || r.draft?.catch), Boolean(r.explained)].join(','))];
+      r.usage.report.prompt, r.usage.report.cached, r.usage.report.completion, r.usage.report.calls, r.lookups.count, r.valid, Boolean(r.catch || r.draft?.catch), Boolean(r.explained),
+      r.usage.verifier?.input ?? '', r.usage.verifier?.cached ?? '', r.usage.verifier?.output ?? '', r.usage.verifier?.seconds ?? '', r.usage.verifier?.cost.toFixed(5) ?? '',
+      r.verification ? r.verification.repairRequested : '', r.usage.repair?.cost.toFixed(5) ?? '', r.audit?.notCovered ?? '', r.audit?.silentDrops ?? ''].join(','))];
   fs.writeFileSync(path.join(DATA, 'cost-time.csv'), `${csv.join('\n')}\n`);
   const buckets: [number, number][] = [[0, 50], [50, 250], [250, 500], [500, 1024], [1024, 2048], [2048, Infinity]];
   const costTime = variants.flatMap(v => buckets.map(([lo, hi]) => {
