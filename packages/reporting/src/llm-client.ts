@@ -35,6 +35,25 @@ export const notCoveredItemSchema = z
 
 export type NotCoveredItem = z.infer<typeof notCoveredItemSchema>;
 
+/** V-13d: up to this many "Not covered" items are shown one per line; a longer list is grouped by file. */
+export const NOT_COVERED_LINES = 3;
+
+/**
+ * V-13d: the lines a reader sees for the "Not covered" list. A short list keeps one line per change. A longer one (a big
+ * refactor) gets one line per file, in first-seen order, naming every change in it: grouping shortens the list, it never
+ * drops a name. The data in `report.notCovered` is unchanged.
+ */
+export function notCoveredLines(items: NotCoveredItem[] = []): string[] {
+  if (items.length <= NOT_COVERED_LINES) return items.map(item => `${item.name} in ${item.file}`);
+  const byFile = new Map<string, string[]>();
+  for (const item of items) {
+    const names = byFile.get(item.file) ?? [];
+    if (!names.includes(item.name)) names.push(item.name);
+    byFile.set(item.file, names);
+  }
+  return [...byFile].map(([file, names]) => (names.length === 1 ? `${names[0]} in ${file}` : `${file}: ${names.length} changes (${names.join(', ')})`));
+}
+
 /** Normalized report: `qaChecks` is always present (derived from testAreas when needed). */
 export const impactReportSchema = z
   .object({
@@ -186,7 +205,7 @@ export function formatImpactReport(report: ImpactReport): string {
     lines.push(
       '',
       'Not covered by this report (changed code the checks above may not test; check these directly):',
-      ...report.notCovered.map(item => `- ${item.name} in ${item.file}`),
+      ...notCoveredLines(report.notCovered).map(line => `- ${line}`),
     );
   }
 

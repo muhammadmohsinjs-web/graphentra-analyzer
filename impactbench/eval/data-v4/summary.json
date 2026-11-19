@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-19T12:36:44.477Z",
+ "generatedAt": "2026-11-19T15:58:13.373Z",
  "reportModel": "openai/gpt-6-luna",
  "judgeModel": "deepseek/deepseek-v4-pro-0813",
  "byVariant": {
@@ -44,17 +44,19 @@
     "refusals": 0,
     "errors": 0,
     "audit": {
-     "reports": 5,
-     "production": 41,
-     "covered": 23,
+     "reports": 35,
+     "production": 1034,
+     "covered": 448,
      "fixedByRepair": 0,
-     "notCovered": 18,
+     "notCovered": 418,
      "silentDrops": 0,
      "lostInRepair": 0,
      "strayNotCovered": 0,
-     "skipped": 0,
-     "folded": 0,
-     "reportsNotCoveredAtMost3": 3
+     "skipped": 168,
+     "folded": 87,
+     "reportsNotCoveredAtMost3": 16,
+     "reportsNotCoveredItemsAtMost3": 14,
+     "maxNotCoveredLines": 7
     }
    }
   }

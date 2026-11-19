@@ -393,3 +393,29 @@ Reproduce:
 node --import tsx tools/impactbench-report-eval.mts run --history <history-dir> --work <work-dir> --data impactbench/eval/data-v4 --variants verify --runs 3 --concurrency 6 ufo-02 excalidraw-01 ufo-01 consola-03 excalidraw-10 consola-02 json-server-01 pathe-01 excalidraw-02 excalidraw-03 excalidraw-12 excalidraw-05
 node --import tsx tools/impactbench-report-eval.mts summary --data impactbench/eval/data-v4
 ```
+
+### V-13d: "Not covered" grouped per file (offline, no new LLM run)
+
+`notCoveredLines` (packages/reporting/src/llm-client.ts) decides what the reader sees. A list of up to 3 items keeps one line per
+change. A longer list gets one line per file (`src/a.ts: 3 changes (x, y, Cls.m)`), and a file with a single change keeps
+the plain line. Every name is still printed, and `report.notCovered` (the data) is unchanged, so E3 and the silent-drop audit
+are not affected. E7 in `summary` now counts these lines (`reportsNotCoveredAtMost3`). The item count is kept as
+`reportsNotCoveredItemsAtMost3`.
+
+Re-scored on the saved `data-v4` reports (35 valid):
+
+| | before V-13d | after V-13d |
+|---|---|---|
+| "Not covered" lines, max | 39 | **7** |
+| Reports with ≤ 3 lines | 14 of 35 (40 %) | 16 of 35 (46 %) |
+| Lines per report (histogram 0/1/2/3/4/5/6/7) | – | 2/2/6/6/5/7/5/2 |
+
+E7 (90 % of reports at ≤ 3 lines) is still not met. Grouping fixes the big refactors (24 to 39 items now take 5 to 7 lines).
+The rest of the 4- to 6-line lists are changes genuinely spread over 4 to 6 files, which grouping cannot shorten. What is left
+is a target question, not a format one: either accept "≤ 7 lines in every report" as E7 for this list, or cut false flags
+(the other open E7 cause).
+
+Fix found on the way: the `summary` audit filter `!r.audit.skipped` dropped every report with a skip count above 0 (a number
+since V-13b). It now tests for the `'invalid'` marker. `data-v4/summary.json` was regenerated: its audit now covers 35 reports
+(1,034 entities, 0 silent drops), matching the table above. The V-13c table was computed by a separate script, so it was not
+affected.

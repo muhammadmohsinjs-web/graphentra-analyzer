@@ -19,7 +19,7 @@ import reporting, { type DecisionAnswer, type DecisionClient, type LookupLogEntr
 import { LARGE_VARIANTS, largePayloadReport, payloadSizes, type LargeVariant } from './impactbench-large-payload.mts';
 
 const { readEvidence } = analyzer;
-const { buildLLMPayload, buildSurfaceEvidence, createOpenAIDecisionClient, DEFAULT_THRESHOLD, generateQAReport, getSourceRole, judgeAnswer, loadApplicationContext } = reporting;
+const { buildLLMPayload, buildSurfaceEvidence, createOpenAIDecisionClient, DEFAULT_THRESHOLD, generateQAReport, getSourceRole, judgeAnswer, loadApplicationContext, notCoveredLines } = reporting;
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DATA_ARG = process.argv.indexOf('--data');
@@ -411,7 +411,8 @@ if (command === 'evidence') {
       cost: rs.reduce((s, r) => s + r.usage.report.cost, 0), judgeCost: rs.reduce((s, r) => s + r.usage.judge.cost, 0), meanSeconds: rs.reduce((s, r) => s + r.seconds, 0) / (rs.length || 1),
       meanChecks: rs.reduce((s, r) => s + (r.checks ?? (r.report?.testAreas ?? []).reduce((n: number, a: any) => n + (a.checks?.length ?? 0), 0)), 0) / (rs.length || 1),
     };
-    const audited = rs.filter(r => r.audit && !r.audit.skipped);
+    // `audit.skipped` is 'invalid' for an unaudited report and, since V-13b, a count otherwise (so test the marker, not truthiness).
+    const audited = rs.filter(r => r.audit && r.audit.skipped !== 'invalid');
     if (rs.some(r => r.usage.verifier)) {
       // Phase V: E3 silent drops (M3), E6 cost (M4), E7 "Not covered" size.
       byVariant[v].verifier = {
@@ -425,8 +426,10 @@ if (command === 'evidence') {
           strayNotCovered: audited.reduce((s, r) => s + r.audit.strayNotCovered, 0),
           // V-13b buckets (absent in data-v3 rows, so 0 there).
           skipped: audited.reduce((s, r) => s + (r.audit.skipped ?? 0), 0), folded: audited.reduce((s, r) => s + (r.audit.folded ?? 0), 0),
-          // E7 counts the lines a reader sees: the report's list (a folded inner function adds no line).
-          reportsNotCoveredAtMost3: audited.filter(r => (r.report?.notCovered?.length ?? r.audit.notCovered) <= 3).length },
+          // E7 counts the lines a reader sees (a folded inner function adds no line; V-13d groups a long list by file).
+          reportsNotCoveredAtMost3: audited.filter(r => (r.report?.notCovered ? notCoveredLines(r.report.notCovered).length : r.audit.notCovered) <= 3).length,
+          reportsNotCoveredItemsAtMost3: audited.filter(r => (r.report?.notCovered?.length ?? r.audit.notCovered) <= 3).length,
+          maxNotCoveredLines: Math.max(0, ...audited.map(r => notCoveredLines(r.report?.notCovered).length)) },
       };
     }
     const b = byVariant[v];
