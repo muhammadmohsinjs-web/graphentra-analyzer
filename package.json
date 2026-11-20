@@ -17,7 +17,7 @@
     "build:root": "node tools/build-root.mjs",
     "build": "npm run build:analyzer && npm run build:reporting && npm run build:ci-runner && npm run build:visualizer && npm run build:root",
     "typecheck": "npm run typecheck --workspaces --if-present && tsc --noEmit -p tsconfig.root.json",
-    "test": "npm test --workspaces --if-present && tsx --test test/integration/*.test.ts",
+    "test": "npm test --workspaces --if-present && node tools/run-tests.mjs test/integration/*.test.ts",
     "analyze": "tsx tools/report.ts",
     "analyze:core": "tsx packages/analyzer/src/cli.ts",
     "analyze:modern-app": "tsx packages/analyzer/src/cli.ts --target fixtures/modern-app --working-tree --output fixtures/modern-app/output/evidence.json",
