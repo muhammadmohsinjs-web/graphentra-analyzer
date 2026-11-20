@@ -35,6 +35,14 @@ export const notCoveredItemSchema = z
 
 export type NotCoveredItem = z.infer<typeof notCoveredItemSchema>;
 
+/**
+ * V-13e: a "Not covered" gap rewritten as a check a manual tester can run. `entities` are the `notCovered` entity ids it
+ * stands for. Written by one LLM call after the verifier; a listed entity no valid check names stays listed by its code name.
+ */
+export const notCoveredCheckSchema = z.object({ text: z.string().trim(), entities: z.array(z.string()).min(1) }).strict();
+
+export type NotCoveredCheck = z.infer<typeof notCoveredCheckSchema>;
+
 /** V-13d: up to this many "Not covered" items are shown one per line; a longer list is grouped by file. */
 export const NOT_COVERED_LINES = 3;
 
@@ -54,6 +62,18 @@ export function notCoveredLines(items: NotCoveredItem[] = []): string[] {
   return [...byFile].map(([file, names]) => (names.length === 1 ? `${names[0]} in ${file}` : `${file}: ${names.length} changes (${names.join(', ')})`));
 }
 
+/**
+ * V-13e: what the reader sees for the gaps. `checks` are the plain-language checks (QA); `developer` lists, by code name, the
+ * gaps no check stands for (none could be written, or the call failed). Every `notCovered` entity is in one or the other.
+ */
+export function notCoveredDisplay(report: Pick<ImpactReport, 'notCovered' | 'notCoveredChecks'>): { checks: string[]; developer: string[] } {
+  const items = report.notCovered ?? [];
+  const ids = new Set(items.map(item => item.entity));
+  const checks = (report.notCoveredChecks ?? []).filter(check => check.entities.some(id => ids.has(id)));
+  const named = new Set(checks.flatMap(check => check.entities));
+  return { checks: checks.map(check => check.text), developer: notCoveredLines(items.filter(item => !named.has(item.entity))) };
+}
+
 /** Normalized report: `qaChecks` is always present (derived from testAreas when needed). */
 export const impactReportSchema = z
   .object({
@@ -63,6 +83,7 @@ export const impactReportSchema = z
     uncertainty: z.array(z.string().trim()).max(1),
     testAreas: z.array(testAreaSchema).min(1).max(5).optional(),
     notCovered: z.array(notCoveredItemSchema).optional(),
+    notCoveredChecks: z.array(notCoveredCheckSchema).optional(),
   })
   .strict();
 
@@ -202,11 +223,17 @@ export function formatImpactReport(report: ImpactReport): string {
   }
 
   if (report.notCovered?.length) {
-    lines.push(
-      '',
-      'Not covered by this report (changed code the checks above may not test; check these directly):',
-      ...notCoveredLines(report.notCovered).map(line => `- ${line}`),
-    );
+    const { checks, developer } = notCoveredDisplay(report);
+    if (checks.length) lines.push('', 'Also check (changed behaviour the checks above do not test):', ...checks.map(check => `- ${check}`));
+    if (developer.length) {
+      lines.push(
+        '',
+        checks.length
+          ? 'Also not covered, for a developer to look at (no QA check could be written for these):'
+          : 'Not covered by this report (changed code the checks above may not test; check these directly):',
+        ...developer.map(line => `- ${line}`),
+      );
+    }
   }
 
   return lines.join('\n');
@@ -414,7 +441,8 @@ export interface GenerateStructuredInput<T> {
 }
 
 /** Strict-JSON-schema completion with transport retries, one semantic correction, and tracing. */
-export async function generateStructured<T>(input: GenerateStructuredInput<T>): Promise<{ value: T; errors: string[] }> {
+export async function generateStructured<T>(input: GenerateStructuredInput<T>): Promise<{ value: T; errors: string[]; usage: { promptTokens: number; completionTokens: number; calls: number } }> {
+  const usage = { promptTokens: 0, completionTokens: 0, calls: 0 };
   const traceId = randomUUID();
   const startedAt = Date.now();
   const model = input.options?.model ?? DEFAULT_OPENROUTER_MODEL;
@@ -432,6 +460,9 @@ export async function generateStructured<T>(input: GenerateStructuredInput<T>): 
       // OpenRouter extension, not in the OpenAI request type.
       ...(input.reasoningEffort ? { reasoning: { effort: input.reasoningEffort } } as Record<string, unknown> : {}),
     }, { headers: { 'X-Client-Request-Id': traceId }, signal: input.signal }));
+    usage.calls += 1;
+    usage.promptTokens += completion.usage?.prompt_tokens ?? 0;
+    usage.completionTokens += completion.usage?.completion_tokens ?? 0;
     const content = completion.choices[0]?.message.content;
     if (!content) throw new Error(`The LLM returned no content for ${input.task}.`);
     let value: T;
@@ -451,7 +482,7 @@ export async function generateStructured<T>(input: GenerateStructuredInput<T>): 
       if (lastErrors.length && !input.acceptRemainingErrors) {
         throw new Error(`The LLM output for ${input.task} failed validation: ${lastErrors.slice(0, 5).join(' ')}`);
       }
-      return { value, errors: lastErrors };
+      return { value, errors: lastErrors, usage };
     }
     logLLMTrace('structured.semantic_retry', { traceId, task: input.task, attempt, errors: lastErrors.slice(0, 20) });
     messages.push(

@@ -87,7 +87,10 @@ export function describeVerification(result: ReportVerification): string {
   return `Report verifier: ${count(entry => entry.verdict !== 'skipped' && !entry.foldedInto)} questions, `
     + `${count(entry => entry.verdict === 'skipped')} changes skipped (no behaviour change), `
     + `${count(entry => entry.kind === 'coverage' && entry.verdict === 'not_covered' && !entry.foldedInto)} changes not covered; `
-    + `tokens ${usage.inputTokens} in (${usage.cachedTokens} cached), ${usage.outputTokens} out; ${(result.durationMs / 1000).toFixed(1)}s.`;
+    + `tokens ${usage.inputTokens} in (${usage.cachedTokens} cached), ${usage.outputTokens} out; ${(result.durationMs / 1000).toFixed(1)}s.`
+    + (result.plainChecks
+      ? ` Plain QA checks: ${result.plainChecks.checks.length} written, ${result.plainChecks.untestable.length + result.plainChecks.fallback.length} changes left for a developer; ${(result.plainChecks.durationMs / 1000).toFixed(1)}s.`
+      : '');
 }
 
 export async function runReport(argv: string[] = process.argv.slice(2), dependencies: {

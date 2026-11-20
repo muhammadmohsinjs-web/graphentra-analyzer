@@ -57,7 +57,10 @@ export async function generateQAReport(
     surfaceEvidence,
   });
   const tool = extras.lookup ? createCodeLookup(evidence.technicalGraph, extras.lookup.read, extras.lookup) : undefined;
-  const verifier = extras.verify ? createReportVerifier(evidence.impacts, extras.verify) : undefined;
+  // V-13e: the gaps are rewritten as plain QA checks by the writer's own model, unless the caller turned it off.
+  const verifier = extras.verify
+    ? createReportVerifier(evidence.impacts, { ...extras.verify, plainChecks: extras.verify.plainChecks ?? options ?? false })
+    : undefined;
   const writtenReport = await generateImpactReport({
     instruction: tool ? `${qaInstruction}\n\n${lookupInstruction(extras.lookup!.style)}` : qaInstruction,
     evidence: payload,

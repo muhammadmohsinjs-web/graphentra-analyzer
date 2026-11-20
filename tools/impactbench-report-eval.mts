@@ -19,8 +19,10 @@ import reporting, { type DecisionAnswer, type DecisionClient, type LookupLogEntr
 import { LARGE_VARIANTS, largePayloadReport, payloadSizes, type LargeVariant } from './impactbench-large-payload.mts';
 
 const { readEvidence } = analyzer;
-const { buildLLMPayload, buildSurfaceEvidence, createOpenAIDecisionClient, DEFAULT_THRESHOLD, generateQAReport, getSourceRole, judgeAnswer, loadApplicationContext, notCoveredLines } = reporting;
+const { buildLLMPayload, buildSurfaceEvidence, createOpenAIDecisionClient, DEFAULT_THRESHOLD, generateQAReport, getSourceRole, judgeAnswer, loadApplicationContext, notCoveredDisplay } = reporting;
 
+/** E7: lines a reader sees for the gaps (V-13d grouping, V-13e plain checks). */
+const shownLines = (report: any) => { const d = notCoveredDisplay(report); return d.checks.length + d.developer.length; };
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DATA_ARG = process.argv.indexOf('--data');
 // --data <dir> keeps a run's rows, summary and CSV apart from the default data set.
@@ -427,9 +429,10 @@ if (command === 'evidence') {
           // V-13b buckets (absent in data-v3 rows, so 0 there).
           skipped: audited.reduce((s, r) => s + (r.audit.skipped ?? 0), 0), folded: audited.reduce((s, r) => s + (r.audit.folded ?? 0), 0),
           // E7 counts the lines a reader sees (a folded inner function adds no line; V-13d groups a long list by file).
-          reportsNotCoveredAtMost3: audited.filter(r => (r.report?.notCovered ? notCoveredLines(r.report.notCovered).length : r.audit.notCovered) <= 3).length,
+          // V-13e: plain checks plus any gap left by code name.
+          reportsNotCoveredAtMost3: audited.filter(r => (r.report?.notCovered ? shownLines(r.report) : r.audit.notCovered) <= 3).length,
           reportsNotCoveredItemsAtMost3: audited.filter(r => (r.report?.notCovered?.length ?? r.audit.notCovered) <= 3).length,
-          maxNotCoveredLines: Math.max(0, ...audited.map(r => notCoveredLines(r.report?.notCovered).length)) },
+          maxNotCoveredLines: Math.max(0, ...audited.map(r => shownLines(r.report ?? {}))) },
       };
     }
     const b = byVariant[v];

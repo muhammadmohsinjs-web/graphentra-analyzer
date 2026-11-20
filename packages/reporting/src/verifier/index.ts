@@ -6,3 +6,4 @@ export * from './questions';
 export * from './verdict';
 export * from './verify-report';
 export * from './verified-report';
+export * from './plain-checks';

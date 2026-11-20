@@ -419,3 +419,42 @@ Fix found on the way: the `summary` audit filter `!r.audit.skipped` dropped ever
 since V-13b). It now tests for the `'invalid'` marker. `data-v4/summary.json` was regenerated: its audit now covers 35 reports
 (1,034 entities, 0 silent drops), matching the table above. The V-13c table was computed by a separate script, so it was not
 affected.
+
+### V-13e: gaps written as plain QA checks (offline on data-v4, 2026-11-20)
+
+QA found the code-name list (`createConsola in src/consola.ts`) useless. After the verifier, one LLM call
+(`verifier/plain-checks.ts`, writer model, low reasoning) sees the finished report and the code of each gap and writes at
+most one check per gap and no more checks than the grouped list has lines. Each check follows the report's own rules: it
+starts with a verb, is plain text, and has no file or code names. The call can merge gaps and must place every gap key either
+in a check or in `untestable` (no effect a tester could observe). Recall first: a gap that no valid check names (untestable,
+check text broken after one correction, over the limit, or a failed call) stays listed by code name under "for a developer".
+`report.notCovered` is unchanged; the checks are added as `notCoveredChecks`. On by default with `--verify`
+(`plainChecks: false` turns it off). Option B (writing checks for every change in parallel with the writer) was rejected:
+it saves about 40 s, but it cannot merge or skip what the report already checks, and it would bring the long lists back.
+
+Replayed on the 33 saved `data-v4` reports that have gaps (`tools/impactbench-plain-checks.mts`). Side-by-side lists are in
+`data-v4/plain-checks.md`.
+
+| | |
+|---|---|
+| Gaps → QA checks | 411 → **103** checks |
+| Gaps left for a developer | 52 (40 marked untestable, 12 with no valid check) |
+| Reports with QA checks only (no developer list) | 14 of 33 |
+| QA check lines per report | max 7; ≤ 3 in 20 of 33 |
+| Calls / corrections / errors | 40 / 7 / 0 |
+| Cost, all 33 | $0.02 (≈ 83 k prompt + 24 k output tokens) |
+| Time per report | median 41 s, max 97 s (6 in parallel through OpenRouter; added after the verifier) |
+
+Example (consola-02 run 1). Before: `createConsola in src/consola.ts`, `<module> in src/log.types.ts`,
+`createConsola in src/consola.node.ts`. After:
+- Verify that the Node logger uses the basic reporter in CI or test mode and the fancy reporter otherwise, and that its log
+  level follows the configured environment value when one is provided.
+- Check that the logging types module exposes Types as a named export rather than as a default export.
+- Confirm that calling the logger factory with options returns a new logger instance that can be used to log.
+
+Spot check against the code: the first check describes the Node setup that this commit moved out of `consola.node.ts`, so it
+works as a regression check. The second matches the `export default` → `export const Types` change. ufo-01 (29 gaps) becomes
+5 checks covering decoding, serialising, joining, normalising and the entry-point exports.
+
+Open: the extra time (median 41 s, about +17 % on a ~245 s report) is the main cost, and the checks have not yet been graded
+for accuracy beyond spot checks. No catch effect is expected, because the judge does not see the list.

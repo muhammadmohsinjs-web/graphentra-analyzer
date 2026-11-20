@@ -1,7 +1,8 @@
 import { randomUUID } from 'crypto';
 import type { EntityImpact } from '@graphentra/analyzer';
-import { logLLMTrace, type ImpactReport, type NotCoveredItem } from '../llm-client';
+import { logLLMTrace, type ImpactReport, type LLMClientOptions, type NotCoveredItem } from '../llm-client';
 import type { DecisionClient, DecisionUsage } from './decision-client';
+import { writePlainChecks, type PlainChecksResult } from './plain-checks';
 import type { BuildQuestionsOptions } from './questions';
 import type { VerificationBlock, VerificationEntry } from './verdict';
 import { verifyReport } from './verify-report';
@@ -15,6 +16,11 @@ export interface ReportVerifierOptions extends BuildQuestionsOptions {
   /** Flag below this probability. Defaults to the V-3 threshold (0.7). */
   threshold?: number;
   concurrency?: number;
+  /**
+   * V-13e: the LLM that rewrites the gaps as plain QA checks (one call, after the verifier). Absent or false: the list keeps
+   * code names only. `generateQAReport` passes the writer's own options.
+   */
+  plainChecks?: LLMClientOptions | false;
 }
 
 export interface ReportVerification {
@@ -23,6 +29,8 @@ export interface ReportVerification {
   /** Verifier tokens. */
   usage: DecisionUsage;
   durationMs: number;
+  /** V-13e plain-check call, when it ran (only when there were gaps). Its time is not in `durationMs`. */
+  plainChecks?: PlainChecksResult;
 }
 
 const gaps = (block: VerificationBlock) => block.entries.filter(entry => entry.verdict === 'not_covered');
@@ -59,7 +67,7 @@ export function createReportVerifier(impacts: EntityImpact[], options: ReportVer
 
   return {
     verifyId,
-    /** Checks the report and adds the deterministic "Not covered" list (V-9). */
+    /** Checks the report, adds the deterministic "Not covered" list (V-9) and, when configured, plain QA checks for it (V-13e). */
     async finish(report: ImpactReport): Promise<{ report: ImpactReport; verification: ReportVerification }> {
       const startedAt = Date.now();
       const result = await verifyReport({
@@ -87,9 +95,11 @@ export function createReportVerifier(impacts: EntityImpact[], options: ReportVer
         usage: result.usage,
         scores: result.verification.entries.map(entry => ({ id: entry.id, score: entry.score, verdict: entry.verdict, reason: entry.reason })),
       });
+      const plain = notCovered.length && options.plainChecks ? await writePlainChecks(report, notCovered, impacts, options.plainChecks) : undefined;
+      const listed = withNotCovered(report, notCovered);
       return {
-        report: withNotCovered(report, notCovered),
-        verification: { verification: result.verification, usage: result.usage, durationMs },
+        report: plain?.checks.length ? { ...listed, notCoveredChecks: plain.checks } : listed,
+        verification: { verification: result.verification, usage: result.usage, durationMs, ...(plain ? { plainChecks: plain } : {}) },
       };
     },
   };

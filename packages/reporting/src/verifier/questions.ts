@@ -69,12 +69,12 @@ export function renderReport(report: ImpactReport): string {
   );
 }
 
-export function renderChange(impact: EntityImpact, label = 'CHANGE'): string {
+export function renderChange(impact: EntityImpact, label = 'CHANGE', codeCap = CODE_CAP): string {
   const paths = impact.blastRadius.paths.slice(0, USED_BY_PATHS).map(p => p.path.map(e => e.name).join(' -> '));
   return [
     `${label} ${impact.changedEntity.id} (${impact.change.file})`,
-    `BEFORE (removed code):\n${cap(lines(impact.change.removedCode), CODE_CAP) || '(nothing removed)'}`,
-    `AFTER (added code):\n${cap(lines(impact.change.addedCode), CODE_CAP) || '(nothing added)'}`,
+    `BEFORE (removed code):\n${cap(lines(impact.change.removedCode), codeCap) || '(nothing removed)'}`,
+    `AFTER (added code):\n${cap(lines(impact.change.addedCode), codeCap) || '(nothing added)'}`,
     paths.length ? `Used by:\n${paths.map(p => `- ${p}`).join('\n')}` : '',
   ]
     .filter(Boolean)
