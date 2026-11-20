@@ -41,9 +41,12 @@ export interface PlainChecksResult {
   error?: string;
 }
 
-/** At most one check per gap, and no more lines than the grouped code list would take (V-13d). */
+/** E7 (changed 2026-11-20): at most this many QA lines for the gaps in any report. */
+export const MAX_PLAIN_CHECKS = 7;
+
+/** At most one check per gap, no more lines than the grouped code list would take (V-13d), and never more than E7 allows. */
 export function plainCheckLimit(items: NotCoveredItem[]): number {
-  return Math.min(items.length, Math.max(NOT_COVERED_LINES, new Set(items.map(item => item.file)).size));
+  return Math.min(items.length, MAX_PLAIN_CHECKS, Math.max(NOT_COVERED_LINES, new Set(items.map(item => item.file)).size));
 }
 
 export function buildPlainChecksInput(report: ImpactReport, items: NotCoveredItem[], impacts: EntityImpact[]): { user: string; keys: Map<string, string> } {

@@ -45,6 +45,8 @@ test('the limit is one check per gap, at most the grouped line count', () => {
   const many = ['a', 'b', 'c', 'd', 'e', 'f'].map(name => item('src/one.ts', name));
   assert.equal(plainCheckLimit(many), 3);
   assert.equal(plainCheckLimit([...many, item('src/b.ts', 'x'), item('src/c.ts', 'y'), item('src/d.ts', 'z')]), 4);
+  // E7: never more than 7 QA lines, however many files the gaps touch.
+  assert.equal(plainCheckLimit(Array.from({ length: 12 }, (_, i) => item(`src/f${i}.ts`, 'x'))), 7);
 });
 
 test('validation asks for every gap key and only known keys', () => {

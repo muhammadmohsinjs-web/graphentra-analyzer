@@ -432,7 +432,10 @@ if (command === 'evidence') {
           // V-13e: plain checks plus any gap left by code name.
           reportsNotCoveredAtMost3: audited.filter(r => (r.report?.notCovered ? shownLines(r.report) : r.audit.notCovered) <= 3).length,
           reportsNotCoveredItemsAtMost3: audited.filter(r => (r.report?.notCovered?.length ?? r.audit.notCovered) <= 3).length,
-          maxNotCoveredLines: Math.max(0, ...audited.map(r => shownLines(r.report ?? {}))) },
+          maxNotCoveredLines: Math.max(0, ...audited.map(r => shownLines(r.report ?? {}))),
+          // E7 since 2026-11-20: at most 7 QA lines for the gaps in every report.
+          reportsQaLinesAtMost7: audited.filter(r => shownLines(r.report ?? {}) <= 7).length,
+          e7ListMet: audited.every(r => shownLines(r.report ?? {}) <= 7) },
       };
     }
     const b = byVariant[v];
