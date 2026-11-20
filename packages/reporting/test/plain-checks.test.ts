@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { EntityImpact } from '@graphentra/analyzer';
 import { formatImpactReport, impactReportSchema, notCoveredDisplay, type ImpactReport, type NotCoveredItem } from '../src/llm-client';
-import { buildPlainChecksInput, checkTextErrors, plainCheckLimit, validatePlainChecks, writePlainChecks } from '../src/verifier';
+import { buildPlainChecksInput, checkTextErrors, PLAIN_CHECKS_SYSTEM, plainCheckLimit, validatePlainChecks, writePlainChecks } from '../src/verifier';
 
 // Phase V (ADR-0011), V-13e: gaps rewritten as plain QA checks; nothing is ever dropped.
 
@@ -55,7 +55,7 @@ test('validation asks for every gap key and only known keys', () => {
   assert.deepEqual(validatePlainChecks({ checks: [{ text: 'Verify that it works.', changes: ['G1'] }], untestable: ['G2'] }, keys, 2), []);
 });
 
-test('a valid answer becomes checks; an untestable gap stays for a developer', async () => {
+test('a valid answer becomes checks; the developer list still names every gap', async () => {
   const fake = fakeClient({ checks: [{ text: 'Check that in Node the log level follows the level setting.', changes: ['G1'] }], untestable: ['G2'] });
   const result = await writePlainChecks(report, gaps, impacts, fake.options);
   assert.equal(fake.requests.length, 1);
@@ -66,11 +66,13 @@ test('a valid answer becomes checks; an untestable gap stays for a developer', a
 
   const final = { ...report, notCovered: gaps, notCoveredChecks: result.checks };
   assert.doesNotThrow(() => impactReportSchema.parse(final));
-  assert.deepEqual(notCoveredDisplay(final), { checks: ['Check that in Node the log level follows the level setting.'], developer: ['<module> in src/log.types.ts'] });
+  // V-13f: the developer list keeps every gap, including the one the check claims.
+  assert.deepEqual(notCoveredDisplay(final), {
+    checks: ['Check that in Node the log level follows the level setting.'],
+    developer: ['createConsola in src/consola.node.ts', '<module> in src/log.types.ts'],
+  });
   const markdown = formatImpactReport(final);
-  assert.match(markdown, /Also check \(changed behaviour the checks above do not test\):\n- Check that in Node the log level follows the level setting\./);
-  assert.match(markdown, /for a developer to look at[^\n]*\n- <module> in src\/log\.types\.ts$/);
-  assert.doesNotMatch(markdown, /createConsola/, 'a gap with a QA check is not repeated by code name');
+  assert.match(markdown, /Also check \(changed behaviour the checks above do not test\):\n- Check that in Node the log level follows the level setting\.\n\nFor developers, all changed code[^\n]*\n- createConsola in src\/consola\.node\.ts\n- <module> in src\/log\.types\.ts$/);
 });
 
 test('a bad first answer gets one correction; a check that still breaks the rules is dropped and its gap kept', async () => {
@@ -89,6 +91,12 @@ test('a failed call never loses a gap and never throws', async () => {
   assert.deepEqual(result.fallback, gaps.map(g => g.entity));
   const final = { ...report, notCovered: gaps };
   assert.match(formatImpactReport(final), /Not covered by this report[^\n]*\n- createConsola in src\/consola\.node\.ts\n- <module> in src\/log\.types\.ts$/);
+});
+
+test('the prompt carries the removed-code, export and honest-merge rules', () => {
+  assert.match(PLAIN_CHECKS_SYSTEM, /REMOVES code[^\n]*never ask to verify that the removed behaviour still works/);
+  assert.match(PLAIN_CHECKS_SYSTEM, /library exports[^\n]*IS observable/);
+  assert.match(PLAIN_CHECKS_SYSTEM, /Never add a gap to a check just to place it/);
 });
 
 test('no gaps means no call', async () => {

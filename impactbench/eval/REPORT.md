@@ -486,3 +486,36 @@ Fixes proposed (V-13f), all cheap:
 2. Prompt: removed code means checking that the replacement works, or that the old behaviour is gone, never that removed
    behaviour still works. Adding or removing an export of a library is observable.
 3. Re-run the replay ($0.02) and the grading ($0.85).
+
+### V-13f: a check never hides a gap; prompt rules (offline on data-v4, 2026-11-20)
+
+Changes:
+1. The developer list under the QA checks now always names every gap, grouped by file. A check can no longer hide a gap,
+   so the zero-silent-drop guarantee holds whatever the checks say. E7 in `summary` now counts the QA lines only: the
+   checks, or the code list when there are none.
+2. Prompt rules:
+   - When code was removed, never verify that the removed behaviour still works.
+   - A gap goes into a check only if the check exercises it; no merging just to place a gap.
+   - Adding or removing a library export, or a prop that changes rendering, counts as observable.
+
+The V-13e files are kept as `data-v4/plain-checks-v13e*`. The V-13f replay and grading use the same 33 reports and the
+same judge.
+
+| | V-13e | V-13f |
+|---|---|---|
+| Checks | 103 | 112 |
+| Accurate / minor issue / wrong (judge) | 76 / 14 / 13 | 76 / 23 / 13 |
+| Claimed gaps the check exercises (judge) | 291 of 359 (81 %) | 260 of 366 (71 %; 27 not answered) |
+| Untestable gaps the judge calls observable | 27 of 40 | 22 of 32 |
+| **Gaps hidden from the reader** | **up to 64** | **0** (developer list keeps all 411) |
+| QA lines per report | max 7, ≤ 3 in 20 | max 7, ≤ 3 in 18 |
+| Replay cost / median time | $0.02 / 41 s | $0.03 / 44 s |
+
+Reading:
+- **The recall fix works by construction.** Every gap is listed whatever the checks claim. This is the change that matters.
+- **The prompt rules show no measurable gain.** Wrong stays at 13, and the claimed-gap rate and minor issues got worse.
+  With one run per version and a judge that was wrong in 4 of 6 hand-checked verdicts, this is within noise. The
+  removed-code mistake still appears: the judge flags ufo-01 run 1 (joinURL) and ufo-02 run 3 (getParams and withParams).
+  The rules are kept because they say what we want, but they are not shown to help.
+- **What limits further work is the judge,** not the checks. A grade we can trust needs a hand-labelled sample (for
+  example 30 checks), the same way the verifier was gated at V-3.

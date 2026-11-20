@@ -63,15 +63,15 @@ export function notCoveredLines(items: NotCoveredItem[] = []): string[] {
 }
 
 /**
- * V-13e: what the reader sees for the gaps. `checks` are the plain-language checks (QA); `developer` lists, by code name, the
- * gaps no check stands for (none could be written, or the call failed). Every `notCovered` entity is in one or the other.
+ * V-13e/f: what the reader sees for the gaps. `checks` are the plain-language checks (QA). `developer` always lists every gap
+ * by code name, grouped as in V-13d: a check may claim a gap it does not really test (V-13e grading: 64 of 359), so a check
+ * never hides a gap.
  */
 export function notCoveredDisplay(report: Pick<ImpactReport, 'notCovered' | 'notCoveredChecks'>): { checks: string[]; developer: string[] } {
   const items = report.notCovered ?? [];
   const ids = new Set(items.map(item => item.entity));
   const checks = (report.notCoveredChecks ?? []).filter(check => check.entities.some(id => ids.has(id)));
-  const named = new Set(checks.flatMap(check => check.entities));
-  return { checks: checks.map(check => check.text), developer: notCoveredLines(items.filter(item => !named.has(item.entity))) };
+  return { checks: checks.map(check => check.text), developer: notCoveredLines(items) };
 }
 
 /** Normalized report: `qaChecks` is always present (derived from testAreas when needed). */
@@ -229,7 +229,7 @@ export function formatImpactReport(report: ImpactReport): string {
       lines.push(
         '',
         checks.length
-          ? 'Also not covered, for a developer to look at (no QA check could be written for these):'
+          ? 'For developers, all changed code the report does not cover (the checks above may not test all of it):'
           : 'Not covered by this report (changed code the checks above may not test; check these directly):',
         ...developer.map(line => `- ${line}`),
       );

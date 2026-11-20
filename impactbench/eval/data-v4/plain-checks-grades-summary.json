@@ -1,21 +1,21 @@
 {
  "judge": "deepseek/deepseek-v4-pro-0813",
  "errors": 0,
- "checks": 103,
+ "checks": 112,
  "accurate": 76,
- "minorIssue": 14,
+ "minorIssue": 23,
  "wrong": 13,
- "testable": 103,
+ "testable": 110,
  "duplicate": 1,
- "gapPairs": 359,
- "gapsAddressed": 291,
- "gapsNotAddressed": 64,
- "gapsUnknown": 4,
- "untestable": 40,
- "untestableButObservable": 27,
- "costUSD": 0.8451639900000001,
+ "gapPairs": 366,
+ "gapsAddressed": 260,
+ "gapsNotAddressed": 79,
+ "gapsUnknown": 27,
+ "untestable": 32,
+ "untestableButObservable": 22,
+ "costUSD": 0.8362390350000001,
  "tokens": {
-  "prompt": 135050,
-  "completion": 186976
+  "prompt": 136485,
+  "completion": 184930
  }
 }

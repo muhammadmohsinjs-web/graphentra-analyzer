@@ -13,7 +13,7 @@ import { CODE_CAP, EVIDENCE_CAP, renderChange, renderReport } from './questions'
 
 // Phase V (ADR-0011), V-13e. After the verifier lists the gaps, one LLM call rewrites them as checks a manual tester can run
 // (QA found code names useless). It sees the finished report, so it can merge related gaps and avoid repeating a check.
-// Recall first: a gap that no valid check names stays listed by its code name for a developer; nothing is dropped.
+// Recall first: every gap also stays listed by its code name for a developer (V-13f), so a check never hides one.
 
 export const PLAIN_CHECKS_SYSTEM = [
   'You help a manual QA tester. A QA report was written for a code change, and an automatic check found changed code that the report does not test.',
@@ -24,8 +24,10 @@ export const PLAIN_CHECKS_SYSTEM = [
   '- No file names, no function, class or variable names, no code, no Markdown, one line.',
   '- Use only what the BEFORE and AFTER code shows. Do not invent behaviour, settings or values that are not in the code.',
   '- Do not repeat a check the QA REPORT already has; check what it misses.',
-  'Merge gaps that a single check tests into one check. Every gap key must be in exactly one place: the `changes` of a check, or `untestable`.',
-  'Put a gap in `untestable` only when its change has no effect a tester could observe (for example only types or internal wiring).',
+  '- If the gap REMOVES code (AFTER is empty or drops behaviour), never ask to verify that the removed behaviour still works. Check that the replacement works, or that the old behaviour is gone, as the code shows.',
+  'A check names a gap in `changes` only if carrying out the check exercises the behaviour that changed in that gap. Never add a gap to a check just to place it; write another check instead, within the limit.',
+  'Merge gaps into one check only when that one check really tests each of them. Every gap key must be in exactly one place: the `changes` of a check, or `untestable`.',
+  'Put a gap in `untestable` only when its change has no effect a tester or a caller could observe (for example only types, comments or internal wiring with the same behaviour). Adding, removing or renaming something a library exports, or changing a component property that changes what is rendered, IS observable.',
 ].join('\n');
 
 export interface PlainChecksResult {

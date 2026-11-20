@@ -21,8 +21,8 @@ import { LARGE_VARIANTS, largePayloadReport, payloadSizes, type LargeVariant } f
 const { readEvidence } = analyzer;
 const { buildLLMPayload, buildSurfaceEvidence, createOpenAIDecisionClient, DEFAULT_THRESHOLD, generateQAReport, getSourceRole, judgeAnswer, loadApplicationContext, notCoveredDisplay } = reporting;
 
-/** E7: lines a reader sees for the gaps (V-13d grouping, V-13e plain checks). */
-const shownLines = (report: any) => { const d = notCoveredDisplay(report); return d.checks.length + d.developer.length; };
+/** E7: lines QA reads for the gaps: the plain checks (V-13e) or, without them, the grouped code list (V-13d). The developer list under the checks is not counted (V-13f). */
+const shownLines = (report: any) => { const d = notCoveredDisplay(report); return d.checks.length || d.developer.length; };
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DATA_ARG = process.argv.indexOf('--data');
 // --data <dir> keeps a run's rows, summary and CSV apart from the default data set.
