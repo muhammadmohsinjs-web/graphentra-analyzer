@@ -1,0 +1,21 @@
+{
+ "judge": "deepseek/deepseek-v4-pro-0813",
+ "errors": 0,
+ "checks": 112,
+ "accurate": 76,
+ "minorIssue": 23,
+ "wrong": 13,
+ "testable": 110,
+ "duplicate": 1,
+ "gapPairs": 366,
+ "gapsAddressed": 260,
+ "gapsNotAddressed": 79,
+ "gapsUnknown": 27,
+ "untestable": 32,
+ "untestableButObservable": 22,
+ "costUSD": 0.8362390350000001,
+ "tokens": {
+  "prompt": 136485,
+  "completion": 184930
+ }
+}

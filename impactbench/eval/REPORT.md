@@ -339,3 +339,196 @@ Reproduce:
 node --import tsx tools/impactbench-report-eval.mts run --history <history-dir> --work <work-dir> --data impactbench/eval/data-v3 --variants base,verify --runs 3 --concurrency 6 <31 ids>
 node --import tsx tools/impactbench-report-eval.mts summary --data impactbench/eval/data-v3
 ```
+
+## Phase V verifier after V-13a/b: 12-commit check (V-13c, 2026-11-19, commit e1f6141)
+
+What changed since V-12: no repair round (V-13a), and a deterministic noise filter before any question (V-13b: skip changes
+with no runtime effect, fold `A>b` inner functions into their parent). Only the `verify` arm was run, on 12 of the 31 commits
+picked to test those changes: the six with the longest "Not covered" lists (ufo-02, excalidraw-01, ufo-01, consola-03,
+excalidraw-10, consola-02), the two the repair round broke (json-server-01, pathe-01), three where it changed the catch
+(excalidraw-02, -03, -12) and the slowest (excalidraw-05). All 10 commits of the V-12 M5 review are in it. 3 runs each,
+same writer and judge as V-12; compared with the V-12 rows of the same 12 commits. 36 reports, 28 minutes, $0.63 with judge.
+Data: `data-v4/`.
+
+| Same 12 commits, 36 reports each | base (V-12) | verify (V-12) | verify now |
+|---|---|---|---|
+| Invalid reports | 1 (ufo-01) | 2 (json-server-01, pathe-01) | 1 (json-server-01 run 2) |
+| Reports that catch / explain the bug | 13 / 13 | 9 / 13 | 9 / 12 |
+| Commits caught / explained by majority | 4 / 4 | 4 / 4 | 4 / 3 |
+| Median seconds per report | 269 | 448 | **245** |
+| QA checks per report | 4.0 | 6.7 | **3.8** |
+| Writer prompt tokens | 4.65 M | 7.94 M | **4.55 M** |
+| Verifier input tokens | – | 2.32 M | **0.91 M** (−61 %) |
+| Verifier time per report (mean) | – | 27 s | 17 s |
+| Verifier errors / refusals | – | 0 / 0 | 0 / 0 |
+| Changed production entities: covered / repaired / listed | – | 415 / 291 / 320 | 448 / – / 418 |
+| Skipped (no behaviour change) / folded into parent | – | – | 168 / 87 |
+| Silent drops (E3) | – | 0 | **0** of 1,034 |
+| "Not covered" lines (sum / max) | – | 320 / 49 | 411 / 39 |
+| Reports with ≤ 3 "Not covered" lines | – | 11 of 34 | 14 of 35 |
+
+Reading the table:
+- **The verify path now writes exactly what base writes.** The verifier only appends the list, and the judge never sees the list
+  (it grades summary, key changes and checks). So catch 13 vs 9 is run-to-run noise of the same writer, not an effect of the
+  verifier; on 36 reports a swing of ±4 is normal. The json-server-01 invalid report is the same writer failing once.
+- **E4:** pathe-01 is valid again (3/3) and catches the bug in 2 of 3 runs, as base did. **E6:** time and writer tokens are
+  back to base; the only extra is the verifier, about 0.9 M tokens and 17 s per report on these (large) commits. Its dollar
+  cost ($0.09 here, against $0.30 for the writer) rests on an estimated price. **E7 checks:** met (3.8 vs base 4.0).
+- **E7 list length: still not met.** Without the repair round, everything the first draft misses is listed, so lists are
+  longer in sum than V-12's post-repair lists, but the longest is shorter (39 vs 49). The long lists are the big refactors
+  (ufo-01/02, consola-03, excalidraw-01): 24 to 39 lines spread over only 5 to 7 files. The report is capped at 5 key
+  changes and 5 areas of up to 4 checks, so on a 50-entity change most entities cannot be named in it. A ≤ 3 target does not
+  fit those commits; showing the list grouped per file (5 to 7 lines) would.
+- **Noise (against the V-12 M5 review of the same 10 commits):** 18 of the 19 trivial flags are gone. 11 of 15 false flags
+  still appear in at least one run: they are judgement errors of the verifier, which the filter does not touch. 12 of the 13
+  real gaps are listed in at least one run; where one is not listed, that run's report covered it (none was skipped or folded).
+
+Conclusion for V-13: the rework did what it was meant to. The verifier is now cheap and fast, leaves the report itself as base
+writes it, keeps zero silent drops and almost no trivial noise. It still does not raise catch, and on large commits its list is
+long and partly wrong (false flags). Next options: group the list per file for large commits, and keep it opt-in.
+
+Reproduce:
+
+```
+node --import tsx tools/impactbench-report-eval.mts run --history <history-dir> --work <work-dir> --data impactbench/eval/data-v4 --variants verify --runs 3 --concurrency 6 ufo-02 excalidraw-01 ufo-01 consola-03 excalidraw-10 consola-02 json-server-01 pathe-01 excalidraw-02 excalidraw-03 excalidraw-12 excalidraw-05
+node --import tsx tools/impactbench-report-eval.mts summary --data impactbench/eval/data-v4
+```
+
+### V-13d: "Not covered" grouped per file (offline, no new LLM run)
+
+`notCoveredLines` (packages/reporting/src/llm-client.ts) decides what the reader sees. A list of up to 3 items keeps one line per
+change. A longer list gets one line per file (`src/a.ts: 3 changes (x, y, Cls.m)`), and a file with a single change keeps
+the plain line. Every name is still printed, and `report.notCovered` (the data) is unchanged, so E3 and the silent-drop audit
+are not affected. E7 in `summary` now counts these lines (`reportsNotCoveredAtMost3`). The item count is kept as
+`reportsNotCoveredItemsAtMost3`.
+
+Re-scored on the saved `data-v4` reports (35 valid):
+
+| | before V-13d | after V-13d |
+|---|---|---|
+| "Not covered" lines, max | 39 | **7** |
+| Reports with ≤ 3 lines | 14 of 35 (40 %) | 16 of 35 (46 %) |
+| Lines per report (histogram 0/1/2/3/4/5/6/7) | – | 2/2/6/6/5/7/5/2 |
+
+E7 (90 % of reports at ≤ 3 lines) is still not met. Grouping fixes the big refactors (24 to 39 items now take 5 to 7 lines).
+The rest of the 4- to 6-line lists are changes genuinely spread over 4 to 6 files, which grouping cannot shorten. What is left
+is a target question, not a format one: either accept "≤ 7 lines in every report" as E7 for this list, or cut false flags
+(the other open E7 cause).
+
+Fix found on the way: the `summary` audit filter `!r.audit.skipped` dropped every report with a skip count above 0 (a number
+since V-13b). It now tests for the `'invalid'` marker. `data-v4/summary.json` was regenerated: its audit now covers 35 reports
+(1,034 entities, 0 silent drops), matching the table above. The V-13c table was computed by a separate script, so it was not
+affected.
+
+### V-13e: gaps written as plain QA checks (offline on data-v4, 2026-11-20)
+
+QA found the code-name list (`createConsola in src/consola.ts`) useless. After the verifier, one LLM call
+(`verifier/plain-checks.ts`, writer model, low reasoning) sees the finished report and the code of each gap and writes at
+most one check per gap and no more checks than the grouped list has lines. Each check follows the report's own rules: it
+starts with a verb, is plain text, and has no file or code names. The call can merge gaps and must place every gap key either
+in a check or in `untestable` (no effect a tester could observe). Recall first: a gap that no valid check names (untestable,
+check text broken after one correction, over the limit, or a failed call) stays listed by code name under "for a developer".
+`report.notCovered` is unchanged; the checks are added as `notCoveredChecks`. On by default with `--verify`
+(`plainChecks: false` turns it off). Option B (writing checks for every change in parallel with the writer) was rejected:
+it saves about 40 s, but it cannot merge or skip what the report already checks, and it would bring the long lists back.
+
+Replayed on the 33 saved `data-v4` reports that have gaps (`tools/impactbench-plain-checks.mts`). Side-by-side lists are in
+`data-v4/plain-checks.md`.
+
+| | |
+|---|---|
+| Gaps → QA checks | 411 → **103** checks |
+| Gaps left for a developer | 52 (40 marked untestable, 12 with no valid check) |
+| Reports with QA checks only (no developer list) | 14 of 33 |
+| QA check lines per report | max 7; ≤ 3 in 20 of 33 |
+| Calls / corrections / errors | 40 / 7 / 0 |
+| Cost, all 33 | $0.02 (≈ 83 k prompt + 24 k output tokens) |
+| Time per report | median 41 s, max 97 s (6 in parallel through OpenRouter; added after the verifier) |
+
+Example (consola-02 run 1). Before: `createConsola in src/consola.ts`, `<module> in src/log.types.ts`,
+`createConsola in src/consola.node.ts`. After:
+- Verify that the Node logger uses the basic reporter in CI or test mode and the fancy reporter otherwise, and that its log
+  level follows the configured environment value when one is provided.
+- Check that the logging types module exposes Types as a named export rather than as a default export.
+- Confirm that calling the logger factory with options returns a new logger instance that can be used to log.
+
+Spot check against the code: the first check describes the Node setup that this commit moved out of `consola.node.ts`, so it
+works as a regression check. The second matches the `export default` → `export const Types` change. ufo-01 (29 gaps) becomes
+5 checks covering decoding, serialising, joining, normalising and the entry-point exports.
+
+Open: the extra time (median 41 s, about +17 % on a ~245 s report) is the main cost, and the checks have not yet been graded
+for accuracy beyond spot checks. No catch effect is expected, because the judge does not see the list.
+
+#### V-13e grading (2026-11-20)
+
+An independent judge (`deepseek/deepseek-v4-pro-0813`, `tools/impactbench-plain-checks-grade.mts`, $0.85) graded the 103
+checks against the code of the gaps each one claims. It also graded the 40 gaps marked untestable. Data:
+`data-v4/plain-checks-grades.jsonl` and `-summary.json`.
+
+| | Judge | Notes |
+|---|---|---|
+| Accurate / minor issue / wrong | 76 / 14 / 13 | Hand check of 6 "wrong" verdicts: **2 real** (excalidraw-10 runs 2 and 3: "update the scene with library items", which the commit removed), 4 judge mistakes (the code moved or was misread). The other 7 are not hand-checked |
+| Testable by a tester | 103 / 103 | |
+| Repeats a report check | 1 | |
+| Claimed gaps the check really exercises | 291 of 359 (81 %) | **64 gaps are named by a check that does not test them.** Under V-13e they are hidden from the developer list: a recall risk |
+| Gaps marked untestable that are observable | 27 of 40 | Mostly added or removed exports of a library, plus prop and `debounce.cancel` changes. They stay in the developer list, so they are not lost, but they get no QA check |
+
+Reading:
+- **Accuracy is good.** The judge alone gives 74 % accurate. After the hand check, real errors look rare, and the one
+  pattern seen is testing **removed** behaviour as if it still works. The judge itself over-calls "wrong" because it sees
+  only the claimed gap, not the code it moved to.
+- **The real problem is recall.** Merging lets one check name gaps it does not test, and the V-13e display then drops those
+  gaps from the developer list. That breaks the zero-silent-drop guarantee in practice: 64 of 359 claimed gaps, if the
+  judge is right on those.
+
+Fixes proposed (V-13f), all cheap:
+1. Keep every gap in the developer list, grouped by file, under the QA checks. A check never hides a gap.
+2. Prompt: removed code means checking that the replacement works, or that the old behaviour is gone, never that removed
+   behaviour still works. Adding or removing an export of a library is observable.
+3. Re-run the replay ($0.02) and the grading ($0.85).
+
+### V-13f: a check never hides a gap; prompt rules (offline on data-v4, 2026-11-20)
+
+Changes:
+1. The developer list under the QA checks now always names every gap, grouped by file. A check can no longer hide a gap,
+   so the zero-silent-drop guarantee holds whatever the checks say. E7 in `summary` now counts the QA lines only: the
+   checks, or the code list when there are none.
+2. Prompt rules:
+   - When code was removed, never verify that the removed behaviour still works.
+   - A gap goes into a check only if the check exercises it; no merging just to place a gap.
+   - Adding or removing a library export, or a prop that changes rendering, counts as observable.
+
+The V-13e files are kept as `data-v4/plain-checks-v13e*`. The V-13f replay and grading use the same 33 reports and the
+same judge.
+
+| | V-13e | V-13f |
+|---|---|---|
+| Checks | 103 | 112 |
+| Accurate / minor issue / wrong (judge) | 76 / 14 / 13 | 76 / 23 / 13 |
+| Claimed gaps the check exercises (judge) | 291 of 359 (81 %) | 260 of 366 (71 %; 27 not answered) |
+| Untestable gaps the judge calls observable | 27 of 40 | 22 of 32 |
+| **Gaps hidden from the reader** | **up to 64** | **0** (developer list keeps all 411) |
+| QA lines per report | max 7, ≤ 3 in 20 | max 7, ≤ 3 in 18 |
+| Replay cost / median time | $0.02 / 41 s | $0.03 / 44 s |
+
+Reading:
+- **The recall fix works by construction.** Every gap is listed whatever the checks claim. This is the change that matters.
+- **The prompt rules show no measurable gain.** Wrong stays at 13, and the claimed-gap rate and minor issues got worse.
+  With one run per version and a judge that was wrong in 4 of 6 hand-checked verdicts, this is within noise. The
+  removed-code mistake still appears: the judge flags ufo-01 run 1 (joinURL) and ufo-02 run 3 (getParams and withParams).
+  The rules are kept because they say what we want, but they are not shown to help.
+- **What limits further work is the judge,** not the checks. A grade we can trust needs a hand-labelled sample (for
+  example 30 checks), the same way the verifier was gated at V-3.
+
+### E7 target changed (2026-11-20)
+
+Old: "Not covered" ≤ 3 items in 90 % of reports. New: **at most 7 QA lines for the gaps in every report**, where the QA
+lines are the plain checks, or the grouped code list when no check could be written. The developer code list under the
+checks does not count. Reason: on large changes the gaps are spread over more files than 3 lines can hold, so the old target
+measured format rather than quality. The part of E7 that limits extra checks in the report body (≤ +1 QA check per report)
+is unchanged and met (3.8 vs base 4.0).
+
+The code now caps the checks at 7 (`MAX_PLAIN_CHECKS` in `verifier/plain-checks.ts`), so E7 holds by construction whenever
+the plain-check call succeeds. If the call fails, the grouped code list is shown, which could exceed 7 lines on a commit
+touching more than 7 files. `summary` reports `reportsQaLinesAtMost7` and `e7ListMet`. On `data-v4` with V-13f checks, E7 is
+**met**: all 35 valid reports have at most 7 QA lines (33 with gaps, each with at least one check; max 7).

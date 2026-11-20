@@ -35,7 +35,7 @@ export interface GenerateReportExtras {
   applicationMap?: ApplicationMap;
   /** Lets the report model read code at the analyzed revision before writing. */
   lookup?: { read: SourceReader; style?: 'optional' | 'always'; maxRounds?: number } & CodeLookupOptions;
-  /** Phase V (ADR-0011): verify the finished report, run one repair round on gaps, list what is still not covered. Off when absent. */
+  /** Phase V (ADR-0011): verify the finished report and list what it does not cover. No repair round (V-13). Off when absent. */
   verify?: ReportVerifierOptions;
 }
 
@@ -57,14 +57,16 @@ export async function generateQAReport(
     surfaceEvidence,
   });
   const tool = extras.lookup ? createCodeLookup(evidence.technicalGraph, extras.lookup.read, extras.lookup) : undefined;
-  const verifier = extras.verify ? createReportVerifier(evidence.impacts, extras.verify) : undefined;
+  // V-13e: the gaps are rewritten as plain QA checks by the writer's own model, unless the caller turned it off.
+  const verifier = extras.verify
+    ? createReportVerifier(evidence.impacts, { ...extras.verify, plainChecks: extras.verify.plainChecks ?? options ?? false })
+    : undefined;
   const writtenReport = await generateImpactReport({
     instruction: tool ? `${qaInstruction}\n\n${lookupInstruction(extras.lookup!.style)}` : qaInstruction,
     evidence: payload,
     options,
     allowedSurfaceIds: payload.applicationContext.allowedSurfaceIds,
     ...(tool ? { lookup: { tool, maxRounds: extras.lookup!.maxRounds, requireFirst: extras.lookup!.style === 'always' } } : {}),
-    ...(verifier ? { review: verifier.review } : {}),
   });
   const verified = verifier ? await verifier.finish(writtenReport) : undefined;
   const qaReport = verified?.report ?? writtenReport;

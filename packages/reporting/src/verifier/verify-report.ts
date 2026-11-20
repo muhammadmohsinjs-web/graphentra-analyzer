@@ -1,6 +1,6 @@
 import type { EntityImpact } from '@graphentra/analyzer';
 import { addUsage, EMPTY_USAGE, type DecisionAnswer, type DecisionClient, type DecisionUsage } from './decision-client';
-import { buildVerificationItems, type BuildQuestionsOptions } from './questions';
+import { buildVerificationItems, planCoverage, type BuildQuestionsOptions } from './questions';
 import { buildVerificationBlock, DEFAULT_THRESHOLD, type VerificationBlock } from './verdict';
 import type { ImpactReport } from '../llm-client';
 
@@ -38,5 +38,5 @@ export async function verifyReport(input: VerifyReportInput): Promise<VerifyRepo
     }
   };
   await Promise.all(Array.from({ length: Math.max(1, Math.min(input.concurrency ?? 4, items.length)) }, worker));
-  return { verification: buildVerificationBlock(items, answers, input.threshold ?? DEFAULT_THRESHOLD), usage };
+  return { verification: buildVerificationBlock(items, answers, input.threshold ?? DEFAULT_THRESHOLD, planCoverage(input.impacts).skipped), usage };
 }

@@ -83,10 +83,14 @@ function sourceReader(target: string, sha?: string): (file: string) => string | 
 
 export function describeVerification(result: ReportVerification): string {
   const { verification, usage } = result;
-  const repair = result.repairRequested ? (result.repairAccepted ? 'repair round used' : 'repair round rejected, first report kept') : 'no repair needed';
-  return `Report verifier: ${verification.entries.length} questions, ${result.passes} pass${result.passes === 1 ? '' : 'es'}, ${repair}, `
-    + `${verification.entries.filter(entry => entry.kind === 'coverage' && entry.verdict === 'not_covered').length} changes not covered; `
-    + `tokens ${usage.inputTokens} in (${usage.cachedTokens} cached), ${usage.outputTokens} out; ${(result.durationMs / 1000).toFixed(1)}s.`;
+  const count = (keep: (entry: (typeof verification.entries)[number]) => boolean) => verification.entries.filter(keep).length;
+  return `Report verifier: ${count(entry => entry.verdict !== 'skipped' && !entry.foldedInto)} questions, `
+    + `${count(entry => entry.verdict === 'skipped')} changes skipped (no behaviour change), `
+    + `${count(entry => entry.kind === 'coverage' && entry.verdict === 'not_covered' && !entry.foldedInto)} changes not covered; `
+    + `tokens ${usage.inputTokens} in (${usage.cachedTokens} cached), ${usage.outputTokens} out; ${(result.durationMs / 1000).toFixed(1)}s.`
+    + (result.plainChecks
+      ? ` Plain QA checks: ${result.plainChecks.checks.length} written, ${result.plainChecks.untestable.length + result.plainChecks.fallback.length} changes left for a developer; ${(result.plainChecks.durationMs / 1000).toFixed(1)}s.`
+      : '');
 }
 
 export async function runReport(argv: string[] = process.argv.slice(2), dependencies: {
@@ -104,7 +108,7 @@ export async function runReport(argv: string[] = process.argv.slice(2), dependen
     return;
   }
   if (options.help) {
-    console.log('Graphentra Local QA Reporting\nUsage: npm run report -- --target <dir> [--base <ref> --head <ref> | --working-tree] [--output <evidence-file>] [--report <QA-Markdown-file>] [--generate-context | --refresh-context] [--context-granularity files|functions] [--lookup] [--verify]\n--generate-context onboards the repository once: it sends eligible source, documentation excerpts, and derived signals to the configured provider in bounded batches and writes .graphentra/application-context.json.\n--refresh-context re-describes only new or changed functions and new surfaces in an existing context (the previous file is kept as application-context.previous.json).\n--context-granularity files (default) summarizes each file; functions describes every function (much slower).\n--lookup lets the report model read code (an entity, a file outline, or a text search) at the analyzed revision before it writes the report.\n--verify checks the finished report with the OpenAI Decisions API (needs OPENAI_API_KEY): gaps get one repair round, and changed code still not covered is listed in the report. Same as GRAPHENTRA_VERIFY_REPORT=1.');
+    console.log('Graphentra Local QA Reporting\nUsage: npm run report -- --target <dir> [--base <ref> --head <ref> | --working-tree] [--output <evidence-file>] [--report <QA-Markdown-file>] [--generate-context | --refresh-context] [--context-granularity files|functions] [--lookup] [--verify]\n--generate-context onboards the repository once: it sends eligible source, documentation excerpts, and derived signals to the configured provider in bounded batches and writes .graphentra/application-context.json.\n--refresh-context re-describes only new or changed functions and new surfaces in an existing context (the previous file is kept as application-context.previous.json).\n--context-granularity files (default) summarizes each file; functions describes every function (much slower).\n--lookup lets the report model read code (an entity, a file outline, or a text search) at the analyzed revision before it writes the report.\n--verify checks the finished report with the OpenAI Decisions API (needs OPENAI_API_KEY) and lists changed code the report does not cover (grouped by file when long). Same as GRAPHENTRA_VERIFY_REPORT=1.');
     return;
   }
   if (options.version) { console.log(ANALYZER_VERSION); return; }

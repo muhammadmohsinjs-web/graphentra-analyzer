@@ -109,7 +109,7 @@ test('extended engine: writes valid 2.1 evidence, generates a context without mo
   } finally { process.exitCode = previousExit; repo.cleanup(); }
 });
 
-test('--verify: verifier gaps get one repair round and the final report lists what is still not covered; off means no calls', async t => {
+test('--verify: the written report is kept and lists what it does not cover; off means no calls', async t => {
   const logs: string[] = [];
   t.mock.method(console, 'info', () => {});
   t.mock.method(console, 'log', (line: string) => logs.push(String(line)));
@@ -136,12 +136,12 @@ test('--verify: verifier gaps get one repair round and the final report lists wh
     const before = qaCalls();
     await runReport([...args, '--verify'], deps);
     assert.equal(process.exitCode, undefined);
-    assert.equal(qaCalls() - before, 2, 'first answer plus exactly one repair');
+    assert.equal(qaCalls() - before, 1, 'one writer call: no repair round (V-13a)');
     const analysis = JSON.parse(fs.readFileSync(path.join(graphentra, 'analysis.json'), 'utf8'));
     assert.ok(analysis.qaReport.notCovered.length > 0);
     assert.deepEqual(analysis.qaReport.keyChanges, plain.qaReport.keyChanges, 'the written report is kept');
     assert.match(fs.readFileSync(reportFile, 'utf8'), /Not covered by this report/);
-    assert.ok(logs.some(line => /^Report verifier: \d+ questions, 2 passes, repair round used/.test(line)));
+    assert.ok(logs.some(line => /^Report verifier: \d+ questions, \d+ changes skipped \(no behaviour change\), [1-9]\d* changes not covered;/.test(line)));
 
     // GRAPHENTRA_VERIFY_REPORT=1 is the same switch.
     const calls = decisions.calls.length;

@@ -1,6 +1,7 @@
 import type { EntityImpact } from '@graphentra/analyzer';
 import type { ImpactReport } from '../llm-client';
 import { getSourceRole } from '../qa-evidence';
+import { hasNoBehaviourChange, innerParentId } from './behaviour';
 
 // Phase V (ADR-0011), V-5. Pure functions from finished evidence and report to the two yes/no question sets.
 // U1 coverage and U3 faithfulness only: U2 (triggering input) failed the V-3 gate and was dropped.
@@ -27,6 +28,8 @@ export interface VerificationItem {
   kind: VerificationKind;
   /** Coverage: the changed entity. */
   entity?: string;
+  /** Coverage (V-13b): inner functions folded into this question; they take its verdict. */
+  covers?: string[];
   /** Faithfulness: the key-change claim. */
   claim?: string;
   /** The yes/no question text. */
@@ -66,32 +69,65 @@ export function renderReport(report: ImpactReport): string {
   );
 }
 
-export function renderChange(impact: EntityImpact, label = 'CHANGE'): string {
+export function renderChange(impact: EntityImpact, label = 'CHANGE', codeCap = CODE_CAP): string {
   const paths = impact.blastRadius.paths.slice(0, USED_BY_PATHS).map(p => p.path.map(e => e.name).join(' -> '));
   return [
     `${label} ${impact.changedEntity.id} (${impact.change.file})`,
-    `BEFORE (removed code):\n${cap(lines(impact.change.removedCode), CODE_CAP) || '(nothing removed)'}`,
-    `AFTER (added code):\n${cap(lines(impact.change.addedCode), CODE_CAP) || '(nothing added)'}`,
+    `BEFORE (removed code):\n${cap(lines(impact.change.removedCode), codeCap) || '(nothing removed)'}`,
+    `AFTER (added code):\n${cap(lines(impact.change.addedCode), codeCap) || '(nothing added)'}`,
     paths.length ? `Used by:\n${paths.map(p => `- ${p}`).join('\n')}` : '',
   ]
     .filter(Boolean)
     .join('\n');
 }
 
-/** U1: one question per changed production entity. Changed test files are not asked about. */
+export interface CoveragePlan {
+  /** Entities asked about, each with the inner functions folded into it (in evidence order). */
+  ask: Array<{ impact: EntityImpact; inner: EntityImpact[] }>;
+  /** V-13b: entities whose change cannot alter behaviour. Recorded as skipped, never asked and never listed. */
+  skipped: string[];
+}
+
+/**
+ * V-13b noise filter, deterministic. Changed test files are left out (as before). A change with no runtime effect is
+ * skipped. An inner function (`A>b`) whose enclosing function `A` is also asked about is folded into the question of its
+ * outermost asked ancestor:
+ * one question, A's verdict for both, one "Not covered" line at most. Class members (`A.m`) are never folded.
+ */
+export function planCoverage(impacts: EntityImpact[]): CoveragePlan {
+  const production = impacts.filter(impact => getSourceRole(impact.changedEntity.file) === 'production');
+  const skipped = new Set(production.filter(hasNoBehaviourChange).map(impact => impact.changedEntity.id));
+  const asked = new Map(production.filter(impact => !skipped.has(impact.changedEntity.id)).map(impact => [impact.changedEntity.id, impact]));
+  // The outermost asked ancestor, so `A>b>c` lands in A's question with b (never in b's, which is itself folded).
+  const host = (id: string): string | undefined => {
+    let found: string | undefined;
+    for (let parent = innerParentId(id); parent; parent = innerParentId(parent)) if (asked.has(parent)) found = parent;
+    return found;
+  };
+  const inner = new Map<string, EntityImpact[]>();
+  for (const [id, impact] of asked) {
+    const into = host(id);
+    if (into) inner.set(into, [...(inner.get(into) ?? []), impact]);
+  }
+  return {
+    ask: [...asked.values()].filter(impact => !host(impact.changedEntity.id)).map(impact => ({ impact, inner: inner.get(impact.changedEntity.id) ?? [] })),
+    skipped: [...skipped],
+  };
+}
+
+/** U1: one question per changed production entity left by `planCoverage`. */
 export function buildCoverageItems(impacts: EntityImpact[], report: ImpactReport): VerificationItem[] {
   const reportText = renderReport(report);
-  return impacts
-    .filter(impact => getSourceRole(impact.changedEntity.file) === 'production')
-    .map(impact => ({
-      id: `coverage:${impact.changedEntity.id}`,
-      kind: 'coverage' as const,
-      entity: impact.changedEntity.id,
-      instructions: COVERAGE_QUESTION,
-      cacheGroup: 'coverage',
-      // The report comes first and is identical for every entity, so the provider can cache that prefix.
-      input: `${reportText}\n\n${renderChange(impact)}`,
-    }));
+  return planCoverage(impacts).ask.map(({ impact, inner }) => ({
+    id: `coverage:${impact.changedEntity.id}`,
+    kind: 'coverage' as const,
+    entity: impact.changedEntity.id,
+    ...(inner.length ? { covers: inner.map(child => child.changedEntity.id) } : {}),
+    instructions: COVERAGE_QUESTION,
+    cacheGroup: 'coverage',
+    // The report comes first and is identical for every entity, so the provider can cache that prefix.
+    input: cap(`${reportText}\n\n${[renderChange(impact), ...inner.map(child => renderChange(child, 'INNER FUNCTION, PART OF THIS CHANGE'))].join('\n\n')}`, REPORT_CAP + EVIDENCE_CAP),
+  }));
 }
 
 /** U3: one question per key-change claim, asked against the evidence for the whole change set. */

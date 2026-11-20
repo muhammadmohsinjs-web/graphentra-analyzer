@@ -20,7 +20,7 @@ export const testAreaSchema = z
 export type TestArea = z.infer<typeof testAreaSchema>;
 
 /**
- * Phase V (ADR-0011), V-9: a changed production entity the verifier still found uncovered after the repair round.
+ * Phase V (ADR-0011), V-9: a changed production entity the verifier found uncovered in the finished report.
  * Added by code, never by the LLM. Optional and additive (ADR-0005): readers that do not know it keep working.
  */
 export const notCoveredItemSchema = z
@@ -35,6 +35,45 @@ export const notCoveredItemSchema = z
 
 export type NotCoveredItem = z.infer<typeof notCoveredItemSchema>;
 
+/**
+ * V-13e: a "Not covered" gap rewritten as a check a manual tester can run. `entities` are the `notCovered` entity ids it
+ * stands for. Written by one LLM call after the verifier; a listed entity no valid check names stays listed by its code name.
+ */
+export const notCoveredCheckSchema = z.object({ text: z.string().trim(), entities: z.array(z.string()).min(1) }).strict();
+
+export type NotCoveredCheck = z.infer<typeof notCoveredCheckSchema>;
+
+/** V-13d: up to this many "Not covered" items are shown one per line; a longer list is grouped by file. */
+export const NOT_COVERED_LINES = 3;
+
+/**
+ * V-13d: the lines a reader sees for the "Not covered" list. A short list keeps one line per change. A longer one (a big
+ * refactor) gets one line per file, in first-seen order, naming every change in it: grouping shortens the list, it never
+ * drops a name. The data in `report.notCovered` is unchanged.
+ */
+export function notCoveredLines(items: NotCoveredItem[] = []): string[] {
+  if (items.length <= NOT_COVERED_LINES) return items.map(item => `${item.name} in ${item.file}`);
+  const byFile = new Map<string, string[]>();
+  for (const item of items) {
+    const names = byFile.get(item.file) ?? [];
+    if (!names.includes(item.name)) names.push(item.name);
+    byFile.set(item.file, names);
+  }
+  return [...byFile].map(([file, names]) => (names.length === 1 ? `${names[0]} in ${file}` : `${file}: ${names.length} changes (${names.join(', ')})`));
+}
+
+/**
+ * V-13e/f: what the reader sees for the gaps. `checks` are the plain-language checks (QA). `developer` always lists every gap
+ * by code name, grouped as in V-13d: a check may claim a gap it does not really test (V-13e grading: 64 of 359), so a check
+ * never hides a gap.
+ */
+export function notCoveredDisplay(report: Pick<ImpactReport, 'notCovered' | 'notCoveredChecks'>): { checks: string[]; developer: string[] } {
+  const items = report.notCovered ?? [];
+  const ids = new Set(items.map(item => item.entity));
+  const checks = (report.notCoveredChecks ?? []).filter(check => check.entities.some(id => ids.has(id)));
+  return { checks: checks.map(check => check.text), developer: notCoveredLines(items) };
+}
+
 /** Normalized report: `qaChecks` is always present (derived from testAreas when needed). */
 export const impactReportSchema = z
   .object({
@@ -44,6 +83,7 @@ export const impactReportSchema = z
     uncertainty: z.array(z.string().trim()).max(1),
     testAreas: z.array(testAreaSchema).min(1).max(5).optional(),
     notCovered: z.array(notCoveredItemSchema).optional(),
+    notCoveredChecks: z.array(notCoveredCheckSchema).optional(),
   })
   .strict();
 
@@ -183,11 +223,17 @@ export function formatImpactReport(report: ImpactReport): string {
   }
 
   if (report.notCovered?.length) {
-    lines.push(
-      '',
-      'Not covered by this report (changed code the checks above may not test; check these directly):',
-      ...report.notCovered.map(item => `- ${item.name} in ${item.file}`),
-    );
+    const { checks, developer } = notCoveredDisplay(report);
+    if (checks.length) lines.push('', 'Also check (changed behaviour the checks above do not test):', ...checks.map(check => `- ${check}`));
+    if (developer.length) {
+      lines.push(
+        '',
+        checks.length
+          ? 'For developers, all changed code the report does not cover (the checks above may not test all of it):'
+          : 'Not covered by this report (changed code the checks above may not test; check these directly):',
+        ...developer.map(line => `- ${line}`),
+      );
+    }
   }
 
   return lines.join('\n');
@@ -213,12 +259,6 @@ export interface GenerateImpactReportInput {
    * with the lookups passed back as data. The caller keeps `tool.log` for what was looked up.
    */
   lookup?: { tool: CodeLookup; maxRounds?: number; /** First round must call the tool (the "always look up" policy). */ requireFirst?: boolean };
-  /**
-   * Phase V, V-8: called with a valid report while an attempt is still left (it shares the 2-attempt cap with the
-   * semantic retry). Return a repair message to spend that attempt on a targeted repair, or undefined to accept the
-   * report. If the repaired answer is unusable, the reviewed report is returned instead, so a repair never loses a report.
-   */
-  review?: (report: ImpactReport) => Promise<string | undefined>;
 }
 
 /** Runs tool rounds until the model stops calling lookup; returns the lookups as one data message (or undefined). */
@@ -401,7 +441,8 @@ export interface GenerateStructuredInput<T> {
 }
 
 /** Strict-JSON-schema completion with transport retries, one semantic correction, and tracing. */
-export async function generateStructured<T>(input: GenerateStructuredInput<T>): Promise<{ value: T; errors: string[] }> {
+export async function generateStructured<T>(input: GenerateStructuredInput<T>): Promise<{ value: T; errors: string[]; usage: { promptTokens: number; completionTokens: number; calls: number } }> {
+  const usage = { promptTokens: 0, completionTokens: 0, calls: 0 };
   const traceId = randomUUID();
   const startedAt = Date.now();
   const model = input.options?.model ?? DEFAULT_OPENROUTER_MODEL;
@@ -419,6 +460,9 @@ export async function generateStructured<T>(input: GenerateStructuredInput<T>): 
       // OpenRouter extension, not in the OpenAI request type.
       ...(input.reasoningEffort ? { reasoning: { effort: input.reasoningEffort } } as Record<string, unknown> : {}),
     }, { headers: { 'X-Client-Request-Id': traceId }, signal: input.signal }));
+    usage.calls += 1;
+    usage.promptTokens += completion.usage?.prompt_tokens ?? 0;
+    usage.completionTokens += completion.usage?.completion_tokens ?? 0;
     const content = completion.choices[0]?.message.content;
     if (!content) throw new Error(`The LLM returned no content for ${input.task}.`);
     let value: T;
@@ -438,7 +482,7 @@ export async function generateStructured<T>(input: GenerateStructuredInput<T>): 
       if (lastErrors.length && !input.acceptRemainingErrors) {
         throw new Error(`The LLM output for ${input.task} failed validation: ${lastErrors.slice(0, 5).join(' ')}`);
       }
-      return { value, errors: lastErrors };
+      return { value, errors: lastErrors, usage };
     }
     logLLMTrace('structured.semantic_retry', { traceId, task: input.task, attempt, errors: lastErrors.slice(0, 20) });
     messages.push(
@@ -456,18 +500,11 @@ export async function generateImpactReport({
   options,
   allowedSurfaceIds,
   lookup,
-  review,
 }: GenerateImpactReportInput): Promise<ImpactReport> {
   const traceId = randomUUID();
   const startedAt = Date.now();
   const serializedEvidence = JSON.stringify(evidence, null, 2);
   let attempt = 1;
-  /** The reviewed report a repair round started from. Returned if the repaired answer is unusable. */
-  let beforeRepair: ImpactReport | undefined;
-  const keepBeforeRepair = (why: string, details: Record<string, unknown> = {}) => {
-    logLLMTrace('request.repair_rejected', { traceId, attempt, why, durationMs: Date.now() - startedAt, ...details });
-    return beforeRepair!;
-  };
   const targetModel = options?.model ?? DEFAULT_OPENROUTER_MODEL;
 
   logLLMTrace('request.started', {
@@ -577,7 +614,6 @@ export async function generateImpactReport({
       const content = completion.choices[0]?.message.content;
 
       if (!content) {
-        if (beforeRepair) return keepBeforeRepair('empty');
         throw new Error('The LLM returned an empty impact report.');
       }
 
@@ -586,7 +622,6 @@ export async function generateImpactReport({
       try {
         validatedReport = impactReportSchema.parse(impactReportResponseSchema.parse(JSON.parse(content)));
       } catch (error) {
-        if (beforeRepair) return keepBeforeRepair('parse');
         // Truncated or malformed JSON is usually a one-off; ask again with the same messages.
         if (attempt < 2) {
           logLLMTrace('request.parse_retry', { traceId, completionId: completion.id, attempt, finishReason: completion.choices[0]?.finish_reason });
@@ -601,7 +636,6 @@ export async function generateImpactReport({
       const errors = validateImpactReportSemantics(validatedReport, { allowedSurfaceIds });
 
       if (errors.length > 0) {
-        if (beforeRepair) return keepBeforeRepair('semantic', { errors });
         if (attempt >= 2) {
           throw new Error(
             `The LLM returned a semantically invalid impact report after ${attempt} attempts: ${errors.join(' ')}`,
@@ -628,16 +662,6 @@ export async function generateImpactReport({
         continue;
       }
 
-      if (review && attempt < 2) {
-        const repair = await review(validatedReport);
-        if (repair) {
-          logLLMTrace('request.repair_round', { traceId, requestId, completionId: completion.id, attempt, nextAttempt: attempt + 1 });
-          beforeRepair = validatedReport;
-          request.messages.push({ role: 'assistant', content }, { role: 'user', content: repair });
-          continue;
-        }
-      }
-
       logLLMTrace('request.completed', {
         traceId,
         requestId,
@@ -654,8 +678,6 @@ export async function generateImpactReport({
     }
     throw new Error('The impact report correction limit was reached.');
   } catch (error) {
-    // A failed repair request must not cost the report the writer already produced.
-    if (beforeRepair) return keepBeforeRepair('request_failed', describeError(error));
     logLLMTrace('request.failed', {
       traceId,
       provider: 'openrouter',

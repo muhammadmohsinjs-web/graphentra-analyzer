@@ -19,8 +19,10 @@ import reporting, { type DecisionAnswer, type DecisionClient, type LookupLogEntr
 import { LARGE_VARIANTS, largePayloadReport, payloadSizes, type LargeVariant } from './impactbench-large-payload.mts';
 
 const { readEvidence } = analyzer;
-const { buildLLMPayload, buildSurfaceEvidence, createOpenAIDecisionClient, DEFAULT_THRESHOLD, generateQAReport, getSourceRole, judgeAnswer, loadApplicationContext } = reporting;
+const { buildLLMPayload, buildSurfaceEvidence, createOpenAIDecisionClient, DEFAULT_THRESHOLD, generateQAReport, getSourceRole, judgeAnswer, loadApplicationContext, notCoveredDisplay } = reporting;
 
+/** E7: lines QA reads for the gaps: the plain checks (V-13e) or, without them, the grouped code list (V-13d). The developer list under the checks is not counted (V-13f). */
+const shownLines = (report: any) => { const d = notCoveredDisplay(report); return d.checks.length || d.developer.length; };
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DATA_ARG = process.argv.indexOf('--data');
 // --data <dir> keeps a run's rows, summary and CSV apart from the default data set.
@@ -95,7 +97,8 @@ function contextFor(entry: Entry, graph: any) {
 function fixContext(ctx: any) { if ('unassignedFiles' in ctx && !('unassignedFiles' in ctx.meta)) { ctx.meta.unassignedFiles = ctx.unassignedFiles; delete ctx.unassignedFiles; } return ctx; }
 
 // ---------- metered client ----------
-// The verifier's repair round (V-8) is a writer call whose messages carry this opening line (buildRepairMessage).
+// The verifier's repair round (V-8, removed at V-13) was a writer call whose messages carried this opening line.
+// Kept so the meter stays comparable with data-v3; usage.repair is now always zero.
 const REPAIR_MARKER = 'A coverage check of your report found the gaps below.';
 function meteredClient(model: string) {
   const meter = { calls: 0, prompt: 0, completion: 0, cached: 0, cost: 0, last: undefined as string | undefined,
@@ -160,24 +163,30 @@ function meteredDecisionClient(inner: DecisionClient) {
 }
 
 /**
- * M3 silent-drop audit. Every changed production entity must land in exactly one bucket: covered on the first check, fixed by the
- * repair round, or listed under "Not covered". Anything else is a silent drop (E3 target: zero).
+ * M3 silent-drop audit. Every changed production entity must land in exactly one bucket: covered, fixed by the repair round
+ * (data-v3 only), listed under "Not covered" (itself or through the parent it was folded into), or skipped as having no
+ * behaviour change (V-13b). Anything else is a silent drop (E3 target: zero).
  */
 function silentDropAudit(raw: unknown, report: any, verification: ReportVerification | undefined, answers: Map<string, DecisionAnswer[]>) {
   const production = readEvidence(raw).impacts.filter((i: any) => getSourceRole(i.changedEntity.file) === 'production').map((i: any) => i.changedEntity.id as string);
   const final = new Map((verification?.verification.entries ?? []).filter(e => e.kind === 'coverage' && e.entity).map(e => [e.entity!, e]));
   const listed = new Set((report?.notCovered ?? []).map((n: any) => n.entity));
-  const buckets = { covered: [] as string[], fixedByRepair: [] as string[], notCovered: [] as string[], silent: [] as string[] };
+  const buckets = { covered: [] as string[], fixedByRepair: [] as string[], notCovered: [] as string[], skipped: [] as string[], folded: [] as string[], silent: [] as string[] };
   let lostInRepair = 0;
   for (const id of production) {
-    const first = judgeAnswer({ id: `coverage:${id}`, kind: 'coverage', entity: id } as any, answers.get(`coverage:${id}`)?.[0], verification?.verification.threshold ?? DEFAULT_THRESHOLD);
     const last = final.get(id);
+    // V-13b: skipped (no behaviour change) and folded inner functions are accounted for; a folded one is listed through its parent.
+    if (last?.verdict === 'skipped') { buckets.skipped.push(id); continue; }
+    const asked = last?.foldedInto ?? id;
+    if (last?.foldedInto) buckets.folded.push(id);
+    const first = judgeAnswer({ id: `coverage:${asked}`, kind: 'coverage', entity: asked } as any, answers.get(`coverage:${asked}`)?.[0], verification?.verification.threshold ?? DEFAULT_THRESHOLD);
     if (last?.verdict === 'covered') (first.verdict === 'covered' ? buckets.covered : buckets.fixedByRepair).push(id);
-    else if (last && listed.has(id)) { buckets.notCovered.push(id); if (first.verdict === 'covered') lostInRepair += 1; }
+    else if (last && listed.has(asked)) { buckets.notCovered.push(id); if (first.verdict === 'covered') lostInRepair += 1; }
     else buckets.silent.push(id);
   }
   return {
     production: production.length, covered: buckets.covered.length, fixedByRepair: buckets.fixedByRepair.length, notCovered: buckets.notCovered.length,
+    skipped: buckets.skipped.length, folded: buckets.folded.length,
     silentDrops: buckets.silent.length, silentDropIds: buckets.silent, lostInRepair,
     // A "Not covered" line for an entity that is not a changed production entity would mean the list is built from the wrong set.
     strayNotCovered: [...listed].filter(id => !production.includes(id as string)).length,
@@ -263,7 +272,7 @@ async function oneReport(entry: Entry, variant: string, run: number) {
   const { client: judgeClient, meter: judgeMeter } = meteredClient(JUDGE_MODEL);
   const read = (file: string) => { try { return execFileSync('git', ['-C', path.join(history!, entry.repo), 'show', `${entry.introducer.sha}:${file}`], { encoding: 'utf8', maxBuffer: 1 << 26, stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return undefined; } };
   const lookup = variant === 'base' || variant === 'verify' ? undefined : { read, style: variant === 'lookup-always' ? 'always' as const : 'optional' as const };
-  // verify = base + the Phase V verifier (repair round and "Not covered" list). Same report model and judge as base.
+  // verify = base + the Phase V verifier ("Not covered" list; no repair round since V-13). Same report model and judge as base.
   const decisions = variant === 'verify' ? meteredDecisionClient(createOpenAIDecisionClient({ apiKey: process.env.OPENAI_API_KEY })) : undefined;
   let verification: ReportVerification | undefined;
   let row: any = { id: entry.id, repo: entry.repo, changeClass: entry.changeClass, variant, run, model: REPORT_MODEL };
@@ -310,9 +319,11 @@ async function oneReport(entry: Entry, variant: string, run: number) {
     row.usage.verifier = { ...decisions.meter, seconds: Math.round(decisions.meter.seconds * 10) / 10 };
     if (verification) {
       const flagged = verification.verification.entries.filter(e => e.verdict === 'not_covered');
-      row.verification = { passes: verification.passes, repairRequested: verification.repairRequested, repairAccepted: verification.repairAccepted,
-        threshold: verification.verification.threshold, questions: verification.verification.entries.length,
-        coverageGaps: flagged.filter(e => e.kind === 'coverage').length, faithfulnessFlags: flagged.filter(e => e.kind === 'faithfulness').length,
+      // No repair round since V-13; data-v3 rows still carry passes/repairRequested/repairAccepted, and the summary reads them optionally.
+      row.verification = { threshold: verification.verification.threshold, questions: verification.verification.entries.length,
+        coverageGaps: flagged.filter(e => e.kind === 'coverage' && !e.foldedInto).length, faithfulnessFlags: flagged.filter(e => e.kind === 'faithfulness').length,
+        skipped: verification.verification.entries.filter(e => e.verdict === 'skipped').length,
+        folded: verification.verification.entries.filter(e => e.foldedInto).length,
         reasons: flagged.reduce((acc: any, e) => ({ ...acc, [e.reason]: (acc[e.reason] ?? 0) + 1 }), {}) };
     }
     // An invalid report has no final report to audit; E4 counts it, E3 does not.
@@ -402,7 +413,8 @@ if (command === 'evidence') {
       cost: rs.reduce((s, r) => s + r.usage.report.cost, 0), judgeCost: rs.reduce((s, r) => s + r.usage.judge.cost, 0), meanSeconds: rs.reduce((s, r) => s + r.seconds, 0) / (rs.length || 1),
       meanChecks: rs.reduce((s, r) => s + (r.checks ?? (r.report?.testAreas ?? []).reduce((n: number, a: any) => n + (a.checks?.length ?? 0), 0)), 0) / (rs.length || 1),
     };
-    const audited = rs.filter(r => r.audit && !r.audit.skipped);
+    // `audit.skipped` is 'invalid' for an unaudited report and, since V-13b, a count otherwise (so test the marker, not truthiness).
+    const audited = rs.filter(r => r.audit && r.audit.skipped !== 'invalid');
     if (rs.some(r => r.usage.verifier)) {
       // Phase V: E3 silent drops (M3), E6 cost (M4), E7 "Not covered" size.
       byVariant[v].verifier = {
@@ -414,7 +426,16 @@ if (command === 'evidence') {
           fixedByRepair: audited.reduce((s, r) => s + r.audit.fixedByRepair, 0), notCovered: audited.reduce((s, r) => s + r.audit.notCovered, 0),
           silentDrops: audited.reduce((s, r) => s + r.audit.silentDrops, 0), lostInRepair: audited.reduce((s, r) => s + r.audit.lostInRepair, 0),
           strayNotCovered: audited.reduce((s, r) => s + r.audit.strayNotCovered, 0),
-          reportsNotCoveredAtMost3: audited.filter(r => r.audit.notCovered <= 3).length },
+          // V-13b buckets (absent in data-v3 rows, so 0 there).
+          skipped: audited.reduce((s, r) => s + (r.audit.skipped ?? 0), 0), folded: audited.reduce((s, r) => s + (r.audit.folded ?? 0), 0),
+          // E7 counts the lines a reader sees (a folded inner function adds no line; V-13d groups a long list by file).
+          // V-13e: plain checks plus any gap left by code name.
+          reportsNotCoveredAtMost3: audited.filter(r => (r.report?.notCovered ? shownLines(r.report) : r.audit.notCovered) <= 3).length,
+          reportsNotCoveredItemsAtMost3: audited.filter(r => (r.report?.notCovered?.length ?? r.audit.notCovered) <= 3).length,
+          maxNotCoveredLines: Math.max(0, ...audited.map(r => shownLines(r.report ?? {}))),
+          // E7 since 2026-11-20: at most 7 QA lines for the gaps in every report.
+          reportsQaLinesAtMost7: audited.filter(r => shownLines(r.report ?? {}) <= 7).length,
+          e7ListMet: audited.every(r => shownLines(r.report ?? {}) <= 7) },
       };
     }
     const b = byVariant[v];
