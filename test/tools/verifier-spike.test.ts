@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { brier, flagged, gatePick, prf, reliability } from '../../tools/verifier-spike.mts';
+import { brier, flagged, gatePick, prf, reliability } from '../../tools/verifier-spike-scoring';
 
 test('no answer is a flag (recall-first)', () => {
   assert.equal(flagged({ label: true, p: null }, 0.5), true);

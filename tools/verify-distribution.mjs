@@ -201,6 +201,15 @@ try {
   for (const fixture of ['dynamic-patterns', 'mixed-changes', 'hub']) {
     fs.cpSync(path.join(rootDir, 'fixtures', fixture), path.join(standaloneRootDir, 'fixtures', fixture), { recursive: true });
   }
+  // The package test script runs ../../tools/run-tests.mjs (cross-platform glob expansion for Windows + Node 20).
+  fs.mkdirSync(path.join(standaloneRootDir, 'tools'), { recursive: true });
+  fs.cpSync(path.join(rootDir, 'tools/run-tests.mjs'), path.join(standaloneRootDir, 'tools/run-tests.mjs'));
+  // The evidence-identity test checks a table shared with the visualizer, including files outside packages/analyzer.
+  const identityTable = JSON.parse(fs.readFileSync(path.join(rootDir, 'packages/analyzer/test/fixtures/evidence-identities.json'), 'utf8'));
+  for (const file of Object.keys(identityTable).filter(file => !file.startsWith('packages/analyzer/'))) {
+    fs.mkdirSync(path.dirname(path.join(standaloneRootDir, file)), { recursive: true });
+    fs.cpSync(path.join(rootDir, file), path.join(standaloneRootDir, file));
+  }
   const analyzerSrcDir = path.join(rootDir, 'packages/analyzer');
 
   // Copy analyzer source files
