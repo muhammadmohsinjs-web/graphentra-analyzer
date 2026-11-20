@@ -13,7 +13,7 @@ test('local report preserves current evidence on missing context and injected pr
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'report-workflow-'));
   const previousExit = process.exitCode;
   try {
-    const git = (args: string[]) => execFileSync('git', ['-c', 'commit.gpgsign=false', '-c', 'core.hooksPath=/dev/null', ...args], { cwd: directory, stdio: 'pipe' });
+    const git = (args: string[]) => execFileSync('git', ['-c', 'commit.gpgsign=false', '-c', `core.hooksPath=${path.join(directory, '.no-hooks')}`, ...args], { cwd: directory, stdio: 'pipe' });
     git(['init']); git(['config', 'user.name', 'Test']); git(['config', 'user.email', 'test@example.com']);
     fs.writeFileSync(path.join(directory, 'a.ts'), 'export function a() { return 1; }');
     git(['add', '.']); git(['commit', '-m', 'initial']);

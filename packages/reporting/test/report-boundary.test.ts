@@ -9,7 +9,7 @@ import { generateQAReport } from '../src/report-generator';
 test('report boundary validates context before provider calls and binds JSON and Markdown identity', async () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'report-boundary-'));
   try {
-    const git = (args: string[]) => execFileSync('git', ['-c', 'commit.gpgsign=false', '-c', 'core.hooksPath=/dev/null', ...args], { cwd: directory, stdio: 'pipe' });
+    const git = (args: string[]) => execFileSync('git', ['-c', 'commit.gpgsign=false', '-c', `core.hooksPath=${path.join(directory, '.no-hooks')}`, ...args], { cwd: directory, stdio: 'pipe' });
     git(['init']); git(['config', 'user.name', 'Test']); git(['config', 'user.email', 'test@example.com']);
     fs.writeFileSync(path.join(directory, 'a.ts'), 'export function a() { return 1; }');
     git(['add', '.']); git(['commit', '-m', 'initial']);

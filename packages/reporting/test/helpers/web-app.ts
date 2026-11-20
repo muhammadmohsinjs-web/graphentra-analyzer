@@ -18,9 +18,9 @@ function copy(source: string, target: string): void {
 /** Disposable Git copy of fixtures/web-app with one committed baseline. */
 export function createWebAppRepository() {
   const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'graphentra-webapp-')));
-  const env: NodeJS.ProcessEnv = { ...process.env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' };
+  const env: NodeJS.ProcessEnv = { ...process.env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: path.join(dir, '.no-gitconfig') };
   for (const key of Object.keys(env)) if (key.startsWith('GIT_') && !['GIT_CONFIG_NOSYSTEM', 'GIT_CONFIG_GLOBAL'].includes(key)) delete env[key];
-  const git = (args: string[]) => execFileSync('git', ['-c', 'commit.gpgsign=false', '-c', 'core.hooksPath=/dev/null', ...args],
+  const git = (args: string[]) => execFileSync('git', ['-c', 'commit.gpgsign=false', '-c', `core.hooksPath=${path.join(dir, '.no-hooks')}`, ...args],
     { cwd: dir, env, stdio: 'pipe', encoding: 'utf8' });
   git(['init', '-b', 'main']);
   git(['config', 'user.name', 'Test']);
