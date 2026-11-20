@@ -458,3 +458,31 @@ works as a regression check. The second matches the `export default` → `export
 
 Open: the extra time (median 41 s, about +17 % on a ~245 s report) is the main cost, and the checks have not yet been graded
 for accuracy beyond spot checks. No catch effect is expected, because the judge does not see the list.
+
+#### V-13e grading (2026-11-20)
+
+An independent judge (`deepseek/deepseek-v4-pro-0813`, `tools/impactbench-plain-checks-grade.mts`, $0.85) graded the 103
+checks against the code of the gaps each one claims. It also graded the 40 gaps marked untestable. Data:
+`data-v4/plain-checks-grades.jsonl` and `-summary.json`.
+
+| | Judge | Notes |
+|---|---|---|
+| Accurate / minor issue / wrong | 76 / 14 / 13 | Hand check of 6 "wrong" verdicts: **2 real** (excalidraw-10 runs 2 and 3: "update the scene with library items", which the commit removed), 4 judge mistakes (the code moved or was misread). The other 7 are not hand-checked |
+| Testable by a tester | 103 / 103 | |
+| Repeats a report check | 1 | |
+| Claimed gaps the check really exercises | 291 of 359 (81 %) | **64 gaps are named by a check that does not test them.** Under V-13e they are hidden from the developer list: a recall risk |
+| Gaps marked untestable that are observable | 27 of 40 | Mostly added or removed exports of a library, plus prop and `debounce.cancel` changes. They stay in the developer list, so they are not lost, but they get no QA check |
+
+Reading:
+- **Accuracy is good.** The judge alone gives 74 % accurate. After the hand check, real errors look rare, and the one
+  pattern seen is testing **removed** behaviour as if it still works. The judge itself over-calls "wrong" because it sees
+  only the claimed gap, not the code it moved to.
+- **The real problem is recall.** Merging lets one check name gaps it does not test, and the V-13e display then drops those
+  gaps from the developer list. That breaks the zero-silent-drop guarantee in practice: 64 of 359 claimed gaps, if the
+  judge is right on those.
+
+Fixes proposed (V-13f), all cheap:
+1. Keep every gap in the developer list, grouped by file, under the QA checks. A check never hides a gap.
+2. Prompt: removed code means checking that the replacement works, or that the old behaviour is gone, never that removed
+   behaviour still works. Adding or removing an export of a library is observable.
+3. Re-run the replay ($0.02) and the grading ($0.85).
