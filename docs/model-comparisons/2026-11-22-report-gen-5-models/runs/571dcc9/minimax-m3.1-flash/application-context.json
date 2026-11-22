@@ -1,0 +1,234 @@
+{
+  "schemaVersion": "1.0",
+  "application": {
+    "name": "ofetch",
+    "summary": "A thin, isomorphic HTTP client wrapper around the WHATWG Fetch API (unjs/ofetch) that adds automatic JSON handling, retries, timeouts, hooks, baseURL/query management, and normalized errors.",
+    "purpose": "Provide a developer-friendly, type-safe `fetch` wrapper for browsers, Node.js, workers, and edge runtimes, so applications can make HTTP calls with sensible defaults and less boilerplate than using raw `fetch`."
+  },
+  "domains": [
+    {
+      "id": "http-client",
+      "name": "HTTP Client",
+      "description": "The core domain: issuing HTTP requests, composing URLs, and normalizing response handling and errors."
+    },
+    {
+      "id": "serialization-and-content-negotiation",
+      "name": "Request/Response Serialization",
+      "description": "Deciding how to serialize request bodies, how to detect the response parser from Content-Type, and how to parse responses into typed data."
+    },
+    {
+      "id": "resilience",
+      "name": "Resilience (Retry, Timeout, Abort)",
+      "description": "Retry policy on transient failures and retryable status codes, retry delays, request timeouts, and abort-signal handling."
+    },
+    {
+      "id": "observability",
+      "name": "Hooks / Interceptors",
+      "description": "Lifecycle hooks (onRequest, onRequestError, onResponse, onResponseError) that let consumers observe and mutate the request/response lifecycle."
+    },
+    {
+      "id": "error-handling",
+      "name": "Error Normalization",
+      "description": "A unified FetchError model carrying request, options, response, parsed data, and status information."
+    },
+    {
+      "id": "runtime-portability",
+      "name": "Runtime Portability",
+      "description": "Selecting the underlying fetch/Headers/AbortController implementation per runtime (global fetch, node-fetch-native polyfill, keep-alive agents) and building distributable bundles."
+    }
+  ],
+  "terminology": [
+    {
+      "term": "$fetch / ofetch",
+      "meaning": "The public client function; calling it returns the parsed response body (`_data`), while `$fetch.raw` returns the full FetchResponse."
+    },
+    {
+      "term": "FetchContext",
+      "meaning": "The shared object passed to every hook, holding the request, resolved options, and (depending on phase) the response or error."
+    },
+    {
+      "term": "ResolvedFetchOptions",
+      "meaning": "Per-request options after merging call-site options with global defaults, including a normalized `Headers` instance and merged query params."
+    },
+    {
+      "term": "FetchResponse",
+      "meaning": "The standard `Response` augmented with `_data`, the parsed payload produced by the client."
+    },
+    {
+      "term": "FetchError / IFetchError",
+      "meaning": "The normalized error thrown on network failure or 4xx/5xx status, exposing `request`, `options`, `response`, `data`, `status`/`statusCode`, and `statusText`/`statusMessage`."
+    },
+    {
+      "term": "ResponseType",
+      "meaning": "How the response body should be interpreted: `json`, `text`, `blob`, `arrayBuffer`, or `stream`."
+    },
+    {
+      "term": "payload method",
+      "meaning": "HTTP methods that carry a request body (PATCH, POST, PUT, DELETE); used to gate body serialization and to avoid unsafe automatic retries."
+    },
+    {
+      "term": "retryStatusCodes",
+      "meaning": "HTTP statuses considered transient and therefore retryable (default 408, 409, 425, 429, 500, 502, 503, 504)."
+    },
+    {
+      "term": "baseURL / query / params",
+      "meaning": "URL composition inputs: a base URL prefix and query-string parameters (`params` is the deprecated alias of `query`)."
+    },
+    {
+      "term": "parseResponse",
+      "meaning": "Custom response-text parser; when provided it forces JSON-style parsing and replaces the default `destr` parser."
+    },
+    {
+      "term": "create / $fetch.create",
+      "meaning": "Factory that derives a new client instance with merged defaults and optional custom global options (fetch, Headers, AbortController)."
+    },
+    {
+      "term": "ignoreResponseError",
+      "meaning": "Flag that suppresses throwing on 4xx/5xx statuses, returning the response instead."
+    },
+    {
+      "term": "duplex: half",
+      "meaning": "Opt-in required for streaming request bodies (ReadableStream/Node Readable) when sending them over fetch."
+    }
+  ],
+  "entityAnnotations": [
+    {
+      "entityId": "src/fetch.ts#createFetch",
+      "businessMeaning": "Factory for the HTTP client: binds a fetch implementation and defaults, then returns a callable `$fetch` with `.raw`, `.native`, and `.create` members.",
+      "domainIds": [
+        "http-client",
+        "runtime-portability"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/fetch.ts#onError",
+      "businessMeaning": "Central failure handler: decides whether to retry (respecting retry count, retryable status codes, retry delay, and abort semantics) or to throw a normalized FetchError.",
+      "domainIds": [
+        "resilience",
+        "error-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/error.ts#createFetchError",
+      "businessMeaning": "Builds the standardized error object from a failed request, formatting a `[METHOD] \"url\": status statusText message` message and exposing request/options/response/data/status as lazy getters.",
+      "domainIds": [
+        "error-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#resolveFetchOptions",
+      "businessMeaning": "Merges per-call options with global defaults, producing resolved options with a unified headers collection and combined query parameters.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#mergeHeaders",
+      "businessMeaning": "Combines default headers with request-specific headers, with request-specific values winning, normalizing all supported header input shapes into a `Headers` object.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#callHooks",
+      "businessMeaning": "Invokes one or more lifecycle hooks in order, awaiting each so asynchronous hooks (e.g. token refresh) complete before the request continues.",
+      "domainIds": [
+        "observability"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#isPayloadMethod",
+      "businessMeaning": "Determines whether an HTTP method carries a body, used to gate body serialization and to disable automatic retries for unsafe methods.",
+      "domainIds": [
+        "serialization-and-content-negotiation",
+        "resilience"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#isJSONSerializable",
+      "businessMeaning": "Decides if a request body can be automatically JSON-stringified, excluding streams, buffers, FormData, and URLSearchParams which must be passed through untouched.",
+      "domainIds": [
+        "serialization-and-content-negotiation"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#detectResponseType",
+      "businessMeaning": "Infers the correct response parser from the response Content-Type, mapping JSON to `json`, SSE to `stream`, XML/HTML/text to `text`, and anything else to `blob`.",
+      "domainIds": [
+        "serialization-and-content-negotiation"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/node.ts#createNodeFetch",
+      "businessMeaning": "Node-specific fetch provider: returns the native/polyfilled fetch, optionally wrapping it with keep-alive HTTP/HTTPS agents when the `FETCH_KEEP_ALIVE` environment flag is enabled.",
+      "domainIds": [
+        "runtime-portability"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "playground/index.ts#main",
+      "businessMeaning": "Manual smoke script that calls the client against a server-error endpoint and logs the outcome, exiting non-zero on failure.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "entityId": "examples/type-safety.ts#main",
+      "businessMeaning": "Demonstrates the type-safety benefit of the client: a generic type parameter gives typed access to a nested response property from a public API.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "entityId": "test/index.test.ts#abortHandle",
+      "businessMeaning": "Test helper that aborts an in-flight request via AbortController to verify that aborted calls are not retried and reject with an abort error.",
+      "domainIds": [
+        "resilience"
+      ],
+      "confidence": "medium"
+    }
+  ],
+  "applicationFacts": [
+    "The project is the unjs/ofetch library; it is published as a library package rather than an end-user application.",
+    "Two entry points are shipped: `src/index` (isomorphic, uses global fetch) and `src/node` (Node.js-specific, may use node-fetch-native polyfill and keep-alive agents).",
+    "Public exports include `$fetch`/`ofetch`, `FetchError`, `createFetch`, `createNodeFetch`, and all type definitions.",
+    "Request bodies are auto-stringified for JSON-serializable payloads on POST/PUT/PATCH/DELETE, with `content-type` and `accept` defaulted to `application/json`.",
+    "`application/x-www-form-urlencoded` bodies are encoded via `URLSearchParams` instead of JSON.",
+    "Streaming request bodies (ReadableStream or Node Readable) are supported and automatically set `duplex: \"half\"`.",
+    "Responses are parsed with `destr` by default for tolerant JSON parsing; `parseResponse` allows a custom parser.",
+    "Response bodies are skipped for 101/204/205/304 statuses and for HEAD requests, yielding `undefined` data.",
+    "Automatic retries default to 1 attempt for non-payload methods and 0 for payload methods; retryable statuses are 408, 409, 425, 429, 500, 502, 503, 504 and can be overridden.",
+    "Retry delay supports a fixed millisecond value or a callback receiving the fetch context.",
+    "A `timeout` option is implemented with an AbortController and a `TimeoutError` (DOMException code 23) abort reason; an explicit user-supplied signal takes precedence.",
+    "Aborted requests are not retried automatically.",
+    "Errors of status 400–599 throw a `FetchError` unless `ignoreResponseError` is set; transport-level failures also throw a `FetchError`.",
+    "The `FetchError` message format is `[METHOD] \"url\": <status> <statusText> <message>`, and it lazily exposes `request`, `options`, `response`, `data`, `status`/`statusCode`, `statusText`/`statusMessage`.",
+    "Four lifecycle hooks are supported and may each be a single function or an array: onRequest, onRequestError, onResponse, onResponseError.",
+    "`baseURL` prefixes relative request URLs and `query`/`params` are merged with defaults and appended to the URL.",
+    "`$fetch.create(defaults, globalOptions)` produces a new client with deeply merged defaults for headers, query, and params.",
+    "`$fetch.native` exposes the underlying fetch implementation without any ofetch behavior.",
+    "The Node entry point keeps HTTP connections alive when the `FETCH_KEEP_ALIVE` environment variable parses to true.",
+    "Build uses unbuild with declaration output, dual CJS/ESM emission, and `undici` kept external.",
+    "Tests run on Vitest against a locally started h3 application (listhen) with endpoints for ok/params/url/echo/post/binary/403/408/204/timeout.",
+    "A dispatcher option (undici) is supported on Node 18+, with `agent` as the legacy alternative for older Node versions."
+  ],
+  "unknowns": [
+    "The package name, version, license, and repository metadata are not present in the analyzed source files.",
+    "No README or documentation files were analyzed, so the officially documented usage contract and roadmap are unknown.",
+    "The runtime support matrix (exact minimum browser/Node versions) is not declared in the provided files.",
+    "Whether a dedicated `stream`/SSE consumer API exists beyond the `responseType: \"stream\"` option is not visible here.",
+    "The CI pipeline, release process, and contribution workflow are not represented in the analyzed files."
+  ]
+}

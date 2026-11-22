@@ -1,0 +1,201 @@
+{
+  "schemaVersion": "1.0",
+  "application": {
+    "name": "ofetch / $fetch HTTP client",
+    "summary": "The repository appears to be the TypeScript `ofetch` library: a typed, JSON-first wrapper around platform `fetch`. It provides request option merging, automatic body serialization, content-type-based response parsing, lifecycle hooks, timeout/abort handling, retries, normalized errors, and runtime-specific entrypoints for global/browser-like environments and Node.js.",
+    "purpose": "Give application code a single ergonomic HTTP client callable, `$fetch`/`ofetch`, with safer defaults and typed responses while remaining injectable and runtime-compatible."
+  },
+  "domains": [
+    {
+      "id": "http-client",
+      "name": "HTTP client abstraction",
+      "description": "Wraps native `fetch` and exposes `$fetch`, `$fetch.raw`, `$fetch.native`, and `$fetch.create`."
+    },
+    {
+      "id": "request-lifecycle",
+      "name": "Request/response lifecycle",
+      "description": "Resolves defaults and per-call options, merges headers/query, serializes bodies, applies base URLs, parses responses, and invokes hooks."
+    },
+    {
+      "id": "resilience",
+      "name": "Retry, timeout, and abort behavior",
+      "description": "Handles timeout via AbortController, retryable status codes, retry delays, and abort-aware error paths."
+    },
+    {
+      "id": "errors",
+      "name": "Error normalization",
+      "description": "Converts request/response failures into `FetchError` instances carrying request, options, response, status, and data metadata."
+    },
+    {
+      "id": "runtime-adapters",
+      "name": "Runtime adaptation",
+      "description": "Provides global entrypoint exports and a Node-specific adapter with optional keep-alive agents."
+    },
+    {
+      "id": "extensibility",
+      "name": "Extensibility",
+      "description": "Supports lifecycle hooks and configurable `create()` instances with merged defaults."
+    }
+  ],
+  "terminology": [
+    {
+      "term": "$fetch / ofetch",
+      "meaning": "Main callable HTTP client. `$fetch` returns parsed response data; `.raw` returns the full response object; `.native` delegates to native fetch; `.create` creates a configured client instance."
+    },
+    {
+      "term": "FetchContext",
+      "meaning": "Per-request state containing request, resolved options, optional response, and optional error."
+    },
+    {
+      "term": "FetchOptions",
+      "meaning": "Request configuration including baseURL, query/params, body, responseType, parseResponse, retry settings, timeout, and hooks."
+    },
+    {
+      "term": "Hooks",
+      "meaning": "Lifecycle extension points: onRequest, onRequestError, onResponse, onResponseError. They may be single functions or arrays."
+    },
+    {
+      "term": "Payload method",
+      "meaning": "HTTP methods treated as capable of carrying a request body: PATCH, POST, PUT, DELETE."
+    },
+    {
+      "term": "Response type",
+      "meaning": "Parser selection such as json, text, blob, arrayBuffer, or stream."
+    },
+    {
+      "term": "Retry status codes",
+      "meaning": "Default HTTP statuses considered retryable: 408, 409, 425, 429, 500, 502, 503, 504."
+    },
+    {
+      "term": "FetchError",
+      "meaning": "Normalized application-facing error type with request, response, status, statusText, data, and related aliases attached."
+    }
+  ],
+  "entityAnnotations": [
+    {
+      "entityId": "src/fetch.ts#createFetch",
+      "businessMeaning": "Core factory and orchestrator for the `$fetch` client. It defines the request lifecycle, injects runtime fetch/Headers/AbortController, applies defaults, serializes request bodies, parses responses, invokes hooks, and delegates failures to retry/error handling.",
+      "domainIds": [
+        "http-client",
+        "request-lifecycle",
+        "extensibility"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/fetch.ts#onError",
+      "businessMeaning": "Internal resilience policy for failed requests. It determines whether a request should be retried, applies retry delay, and otherwise throws a normalized FetchError. The graph shows it depends on payload-method detection and error creation.",
+      "domainIds": [
+        "resilience",
+        "errors"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/error.ts#createFetchError",
+      "businessMeaning": "Translates a FetchContext into a user-facing FetchError. It builds an error message from method, URL, status, and underlying error, and attaches request/response/status/data fields for debugging and handling.",
+      "domainIds": [
+        "errors"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#isPayloadMethod",
+      "businessMeaning": "Encodes HTTP body semantics: identifies PATCH/POST/PUT/DELETE as methods that can carry request payloads. This affects retry defaults and whether JSON body serialization/header handling applies.",
+      "domainIds": [
+        "request-lifecycle",
+        "resilience"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#isJSONSerializable",
+      "businessMeaning": "Decides whether a request body should be treated as JSON-serializable. It excludes non-JSON bodies such as streams, buffers, FormData, and URLSearchParams, separating automatic JSON handling from native body passthrough.",
+      "domainIds": [
+        "request-lifecycle"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#detectResponseType",
+      "businessMeaning": "Infers the correct response parser from the response Content-Type header, defaulting to JSON and distinguishing event streams, text-like content, and binary/blob-like content.",
+      "domainIds": [
+        "request-lifecycle"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#resolveFetchOptions",
+      "businessMeaning": "Central option-merging step for each request. It combines defaults and per-call input, merges query/params aliases, and produces resolved headers suitable for the fetch lifecycle.",
+      "domainIds": [
+        "request-lifecycle"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#mergeHeaders",
+      "businessMeaning": "Combines default headers and request-specific headers into a Headers object so per-request headers can override defaults. The graph shows resolveFetchOptions calling it.",
+      "domainIds": [
+        "request-lifecycle"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#callHooks",
+      "businessMeaning": "Dispatches lifecycle hooks, supporting both single hook functions and arrays, awaited sequentially.",
+      "domainIds": [
+        "extensibility"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/node.ts#createNodeFetch",
+      "businessMeaning": "Node.js runtime adapter. It chooses native or polyfilled fetch behavior and optionally configures HTTP(S) keep-alive agents based on the FETCH_KEEP_ALIVE environment variable.",
+      "domainIds": [
+        "runtime-adapters"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "examples/type-safety.ts#main",
+      "businessMeaning": "Non-production example showing typed JSON response usage: fetch a repository record from ungh.cc and log its fields with generic typing.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "entityId": "playground/index.ts#main",
+      "businessMeaning": "Manual playground usage of the Node `$fetch` entrypoint against an HTTP error endpoint, demonstrating error logging/exit behavior. It is exploratory code, not core library behavior.",
+      "domainIds": [
+        "http-client",
+        "errors"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "entityId": "test/index.test.ts#abortHandle",
+      "businessMeaning": "Test-only helper exercising abort behavior during a request configured with retries. It validates that aborted requests are rejected rather than retried in that scenario.",
+      "domainIds": [
+        "resilience"
+      ],
+      "confidence": "medium"
+    }
+  ],
+  "applicationFacts": [
+    "`createFetch` is the central technical entity: the deterministic graph shows it calling `resolveFetchOptions`, `callHooks`, `isPayloadMethod`, `isJSONSerializable`, `onError`, and `detectResponseType`.",
+    "`resolveFetchOptions` calls `mergeHeaders`, indicating header merging is part of option resolution.",
+    "`onError` calls `isPayloadMethod` and `createFetchError`, showing retry policy is tied to HTTP body-method semantics and failures are normalized into FetchError objects.",
+    "Requests support automatic JSON body stringification and default JSON content-type/accept headers when the body is JSON-serializable.",
+    "Response parsing is driven by explicit `responseType`/`parseResponse` settings or inferred from Content-Type.",
+    "Retry defaults differ by method: the source treats payload methods as non-retryable by default and non-payload methods as retryable once unless configured.",
+    "Timeouts are implemented with an AbortController, and the code distinguishes active aborts from timeout-related aborts in retry logic.",
+    "The Node entrypoint can enable HTTP/HTTPS keep-alive agents via `FETCH_KEEP_ALIVE`.",
+    "Tests cover parsing, custom parsers, baseURL, query merging, body serialization, FormData/URLSearchParams passthrough, retries, timeouts, hooks, and error metadata."
+  ],
+  "unknowns": [
+    "Exact package version, release metadata, and publishing configuration are not established by the provided graph alone.",
+    "External consumers, production deployment context, and API compatibility guarantees are not known.",
+    "Detailed behavior across all runtime/browser versions is inferred only from source code and tests provided."
+  ]
+}

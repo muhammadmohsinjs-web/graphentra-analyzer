@@ -1,0 +1,178 @@
+{
+  "schemaVersion": "1.0",
+  "application": {
+    "name": "ofetch",
+    "summary": "A TypeScript HTTP client built on Fetch that simplifies request configuration, response parsing, retries, hooks, and error handling.",
+    "purpose": "Provide a convenient, typed API for making HTTP requests across browser and Node.js environments."
+  },
+  "domains": [
+    {
+      "id": "http-requests",
+      "name": "HTTP request execution",
+      "description": "Builds and sends requests with URL, query, body, header, timeout, and abort options."
+    },
+    {
+      "id": "response-handling",
+      "name": "Response handling",
+      "description": "Parses response bodies according to explicit options or the response Content-Type."
+    },
+    {
+      "id": "errors-and-retries",
+      "name": "Errors and retries",
+      "description": "Retries selected failures and exposes request, response, and status details in normalized errors."
+    },
+    {
+      "id": "configuration-and-hooks",
+      "name": "Configuration and hooks",
+      "description": "Supports shared defaults, customized client instances, and lifecycle hooks."
+    },
+    {
+      "id": "runtime-support",
+      "name": "Runtime support",
+      "description": "Provides Fetch implementations and related primitives for global and Node.js environments."
+    }
+  ],
+  "terminology": [
+    {
+      "term": "$fetch / ofetch",
+      "meaning": "The convenience request function that returns parsed response data."
+    },
+    {
+      "term": "raw response",
+      "meaning": "The Fetch response augmented with parsed data in its _data property, returned by $fetch.raw."
+    },
+    {
+      "term": "Fetch hooks",
+      "meaning": "Callbacks for request, request-error, response, and response-error lifecycle events."
+    },
+    {
+      "term": "FetchError",
+      "meaning": "A normalized error with access to request options, response, parsed data, and status information when available."
+    },
+    {
+      "term": "retry status codes",
+      "meaning": "HTTP status codes eligible for another attempt when retries are enabled."
+    },
+    {
+      "term": "response type",
+      "meaning": "The selected representation used to read a response, such as JSON, text, blob, array buffer, or stream."
+    }
+  ],
+  "entityAnnotations": [
+    {
+      "entityId": "examples/type-safety.ts#main",
+      "businessMeaning": "Demonstrates using a typed request result to access fields on a repository response.",
+      "domainIds": [
+        "http-requests",
+        "response-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/error.ts#createFetchError",
+      "businessMeaning": "Creates a FetchError containing a readable request and response summary plus available response details.",
+      "domainIds": [
+        "errors-and-retries"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#isPayloadMethod",
+      "businessMeaning": "Identifies HTTP methods treated as payload methods, including POST, PUT, PATCH, and DELETE.",
+      "domainIds": [
+        "http-requests",
+        "errors-and-retries"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#isJSONSerializable",
+      "businessMeaning": "Determines whether a request body can be automatically serialized as JSON.",
+      "domainIds": [
+        "http-requests"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#detectResponseType",
+      "businessMeaning": "Chooses a default response parser based on the Content-Type header.",
+      "domainIds": [
+        "response-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#mergeFetchOptions",
+      "businessMeaning": "Combines per-request options with client defaults, including nested query, parameter, and header values.",
+      "domainIds": [
+        "configuration-and-hooks",
+        "http-requests"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#callHooks",
+      "businessMeaning": "Runs one or more asynchronous lifecycle hooks with the current request context.",
+      "domainIds": [
+        "configuration-and-hooks"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/fetch.ts#createFetch",
+      "businessMeaning": "Creates the configured fetch client, including parsed-data and raw-response methods, request processing, and response handling.",
+      "domainIds": [
+        "http-requests",
+        "response-handling",
+        "errors-and-retries",
+        "configuration-and-hooks"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/fetch.ts#onError",
+      "businessMeaning": "Determines whether a failed request should be retried and otherwise throws a normalized FetchError.",
+      "domainIds": [
+        "errors-and-retries"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/node.ts#createNodeFetch",
+      "businessMeaning": "Provides the Node.js fetch implementation and optionally configures HTTP keep-alive agents.",
+      "domainIds": [
+        "runtime-support"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "playground/index.ts#main",
+      "businessMeaning": "Demonstrates making a request with the Node.js client and handling a rejected request.",
+      "domainIds": [
+        "http-requests",
+        "runtime-support"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "test/index.test.ts#abortHandle",
+      "businessMeaning": "Exercises the behavior of a request using an already-aborted signal, including rejection despite retries being configured.",
+      "domainIds": [
+        "http-requests",
+        "errors-and-retries"
+      ],
+      "confidence": "high"
+    }
+  ],
+  "applicationFacts": [
+    "The client exposes $fetch/ofetch for parsed response data, $fetch.raw for the Fetch response with parsed data attached, and $fetch.native for the underlying fetch function.",
+    "Request options support base URLs, query and parameter values, headers, JSON body serialization, timeouts, abort signals, retries, and lifecycle hooks.",
+    "When no response type is specified, the client selects JSON, text, or blob parsing based on the response Content-Type; callers can also choose a response type or custom parser.",
+    "Retries can be disabled, set to a number, delayed by a number or callback, and limited to selected status codes.",
+    "The Node.js entry point uses global fetch when available and otherwise falls back to node-fetch-native; keep-alive can be enabled with FETCH_KEEP_ALIVE.",
+    "The type-safety example demonstrates that callers can specify a response type for the returned data."
+  ],
+  "unknowns": [
+    "The source does not specify the intended audience, licensing terms, or product roadmap."
+  ]
+}

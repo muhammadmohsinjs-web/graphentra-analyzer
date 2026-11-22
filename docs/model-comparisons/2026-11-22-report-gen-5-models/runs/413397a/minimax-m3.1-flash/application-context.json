@@ -1,0 +1,193 @@
+{
+  "schemaVersion": "1.0",
+  "application": {
+    "name": "ofetch",
+    "summary": "A TypeScript HTTP client library that wraps the Fetch API with automatic request handling, response parsing, retries, timeouts, error normalization, and lifecycle hooks.",
+    "purpose": "Provides a developer-friendly fetch interface for making HTTP requests in browser, edge, and Node.js environments while reducing repetitive request setup and error-handling code."
+  },
+  "domains": [
+    {
+      "id": "http-client",
+      "name": "HTTP Client",
+      "description": "Primary domain. Handles outbound HTTP requests, request configuration, URL and header construction, payload serialization, response parsing, and response-type selection."
+    },
+    {
+      "id": "resilience",
+      "name": "Request Resilience",
+      "description": "Adds retry handling for transient failures, configurable retry delays, status-code policies, and timeout-based request cancellation."
+    },
+    {
+      "id": "error-handling",
+      "name": "Error Handling",
+      "description": "Normalizes HTTP and transport failures into a FetchError containing request, response, and parsed error data."
+    },
+    {
+      "id": "observability",
+      "name": "Lifecycle Observability",
+      "description": "Provides hooks around request, response, and error phases for custom middleware, logging, tracing, and instrumentation."
+    },
+    {
+      "id": "cross-runtime",
+      "name": "Cross-Runtime Compatibility",
+      "description": "Supports global Fetch API implementations while providing Node.js-specific transport and optional keep-alive behavior."
+    }
+  ],
+  "terminology": [
+    {
+      "term": "Payload method",
+      "meaning": "An HTTP method whose requests normally carry a body, such as POST, PUT, PATCH, or DELETE."
+    },
+    {
+      "term": "Raw response",
+      "meaning": "The full Fetch Response together with parsed response data, status information, and headers."
+    },
+    {
+      "term": "Response type",
+      "meaning": "The representation used to parse a response body, including JSON, text, blob, array buffer, or stream."
+    },
+    {
+      "term": "Retry status code",
+      "meaning": "An HTTP response status considered eligible for automatic retry under the configured retry policy."
+    },
+    {
+      "term": "Lifecycle hook",
+      "meaning": "A callback invoked at a request or response lifecycle boundary, optionally with access to the shared request context."
+    },
+    {
+      "term": "Request context",
+      "meaning": "The mutable state associated with a request, including its request, resolved options, response, and error."
+    },
+    {
+      "term": "FetchError",
+      "meaning": "The library's normalized error type for HTTP and transport failures, exposing request and response context."
+    }
+  ],
+  "entityAnnotations": [
+    {
+      "entityId": "src/fetch.ts#createFetch",
+      "businessMeaning": "Core request orchestrator. Creates the enhanced fetch client, resolves defaults, applies URL and header rules, prepares payloads, invokes lifecycle hooks, parses responses, and delegates failures to retry or error-normalization logic.",
+      "domainIds": [
+        "http-client",
+        "resilience",
+        "error-handling",
+        "observability"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/fetch.ts#onError",
+      "businessMeaning": "Central failure policy. Decides whether a failed request should be retried, applies retry delays and status eligibility, and otherwise converts the failure into a normalized client error.",
+      "domainIds": [
+        "resilience",
+        "error-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/error.ts#createFetchError",
+      "businessMeaning": "Builds a normalized error from request context, preserving the HTTP method, URL, response status, response data, and underlying cause for diagnosis.",
+      "domainIds": [
+        "error-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#resolveFetchOptions",
+      "businessMeaning": "Produces the effective request configuration by combining global defaults with per-call options and merging headers and query parameters.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#mergeHeaders",
+      "businessMeaning": "Combines default and request-specific headers, with request-specific values taking precedence.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#isPayloadMethod",
+      "businessMeaning": "Identifies HTTP methods that are treated as carrying request payloads, such as POST, PUT, PATCH, and DELETE.",
+      "domainIds": [
+        "http-client",
+        "resilience"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#isJSONSerializable",
+      "businessMeaning": "Determines whether a request body can be automatically serialized as JSON, excluding values such as streams, form data, and binary buffers.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#detectResponseType",
+      "businessMeaning": "Chooses an appropriate response representation from the response content type, with special handling for JSON, server-sent events, text, and binary content.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#callHooks",
+      "businessMeaning": "Executes lifecycle callbacks in order, awaiting asynchronous callbacks so instrumentation or middleware can complete before the request proceeds.",
+      "domainIds": [
+        "observability"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/node.ts#createNodeFetch",
+      "businessMeaning": "Creates the Node.js transport used by the client. It uses the platform's global fetch when available and otherwise falls back to a compatible implementation with optional HTTP keep-alive agents.",
+      "domainIds": [
+        "cross-runtime"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "examples/type-safety.ts#main",
+      "businessMeaning": "Demonstrates that callers can specify the expected response shape so repository results are consumed with compile-time type safety.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "playground/index.ts#main",
+      "businessMeaning": "Demonstrates using the client to request a server error response and observe the resulting failure behavior.",
+      "domainIds": [
+        "error-handling",
+        "resilience"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "test/index.test.ts#abortHandle",
+      "businessMeaning": "Test helper that aborts an in-flight request and verifies that cancellation is surfaced promptly to the caller.",
+      "domainIds": [
+        "resilience"
+      ],
+      "confidence": "high"
+    }
+  ],
+  "applicationFacts": [
+    "The library exposes both a normal response-data interface and a raw response interface.",
+    "Requests support base URLs, query parameters, custom headers, JSON and form-style bodies, streams, timeouts, and caller-provided abort signals.",
+    "JSON-like request bodies are serialized automatically and receive default JSON content negotiation headers.",
+    "Response parsing is content-type aware and supports JSON, text, blob, array buffer, and stream representations.",
+    "Transport and HTTP failures are normalized into a FetchError with request, response, and parsed data context.",
+    "Retry behavior can be configured by count, delay, and eligible status codes; payload methods receive a more conservative default retry policy.",
+    "Request, transport-error, response, and response-error lifecycle hooks support instrumentation and custom middleware.",
+    "The Node.js entry point supports global fetch, a compatible fallback transport, and optional keep-alive behavior.",
+    "The package builds browser-oriented and Node.js-oriented entry points with generated type declarations.",
+    "Automated tests cover request handling, response parsing, retries, cancellation, error normalization, hooks, headers, query parameters, and payload formats."
+  ],
+  "unknowns": [
+    "The repository's intended product positioning, supported runtime matrix, and release-management process are not established by the analyzed source.",
+    "No persistent data model, domain-specific entities, authentication workflow, or business lifecycle is evident; the repository appears to be a reusable HTTP client library rather than a business application."
+  ]
+}

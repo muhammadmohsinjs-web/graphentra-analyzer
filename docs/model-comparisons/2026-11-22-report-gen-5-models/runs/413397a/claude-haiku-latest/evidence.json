@@ -1,0 +1,2173 @@
+{
+  "artifactKind": "graphentra-evidence",
+  "schemaVersion": "2.0",
+  "analyzerVersion": "0.4.0",
+  "target": {
+    "targetPath": "."
+  },
+  "comparison": {
+    "mode": "commit",
+    "requestedBase": "413397a^",
+    "requestedHead": "413397a",
+    "resolvedBaseSha": "16bf0b844e51416c5965b5abdaad921e67527232",
+    "resolvedHeadSha": "413397a9c541b0a98e1b70277783c41b72c24bb8",
+    "comparedTo": "`413397a`"
+  },
+  "sourceState": {
+    "checkoutSha": "413397a9c541b0a98e1b70277783c41b72c24bb8",
+    "isTrackedDirty": false,
+    "untrackedSourcePolicy": "excluded",
+    "contentIdentity": "b9bf414ea1d089ca4d343d6905fb8ceb55b0b6f7185c7da351177d31380829f1"
+  },
+  "options": {
+    "excludePaths": [],
+    "sourcePolicy": "git-tracked"
+  },
+  "outcome": "completed",
+  "technicalGraph": {
+    "schemaVersion": "1.0",
+    "repository": {
+      "targetPath": ".",
+      "headSha": "413397a9c541b0a98e1b70277783c41b72c24bb8",
+      "generatedAt": "2026-11-22T17:37:30.856Z",
+      "analyzerVersion": "0.4.0"
+    },
+    "capabilities": {
+      "language": "typescript",
+      "entityKinds": [
+        "function"
+      ],
+      "relationTypes": [
+        "CALLS"
+      ],
+      "maxBlastDepth": 6
+    },
+    "analyzedFiles": [
+      "build.config.ts",
+      "examples/type-safety.ts",
+      "playground/index.ts",
+      "src/base.ts",
+      "src/error.ts",
+      "src/fetch.ts",
+      "src/index.ts",
+      "src/node.ts",
+      "src/types.ts",
+      "src/utils.ts",
+      "test/index.test.ts",
+      "vitest.config.ts"
+    ],
+    "entities": [
+      {
+        "id": "examples/type-safety.ts#main",
+        "kind": "function",
+        "name": "main",
+        "file": "examples/type-safety.ts",
+        "startLine": 12,
+        "endLine": 18
+      },
+      {
+        "id": "playground/index.ts#main",
+        "kind": "function",
+        "name": "main",
+        "file": "playground/index.ts",
+        "startLine": 3,
+        "endLine": 9
+      },
+      {
+        "id": "src/error.ts#createFetchError",
+        "kind": "function",
+        "name": "createFetchError",
+        "file": "src/error.ts",
+        "startLine": 21,
+        "endLine": 67
+      },
+      {
+        "id": "src/utils.ts#isPayloadMethod",
+        "kind": "function",
+        "name": "isPayloadMethod",
+        "file": "src/utils.ts",
+        "startLine": 13,
+        "endLine": 15
+      },
+      {
+        "id": "src/utils.ts#isJSONSerializable",
+        "kind": "function",
+        "name": "isJSONSerializable",
+        "file": "src/utils.ts",
+        "startLine": 17,
+        "endLine": 43
+      },
+      {
+        "id": "src/utils.ts#detectResponseType",
+        "kind": "function",
+        "name": "detectResponseType",
+        "file": "src/utils.ts",
+        "startLine": 55,
+        "endLine": 83
+      },
+      {
+        "id": "src/utils.ts#resolveFetchOptions",
+        "kind": "function",
+        "name": "resolveFetchOptions",
+        "file": "src/utils.ts",
+        "startLine": 85,
+        "endLine": 119
+      },
+      {
+        "id": "src/utils.ts#mergeHeaders",
+        "kind": "function",
+        "name": "mergeHeaders",
+        "file": "src/utils.ts",
+        "startLine": 121,
+        "endLine": 138
+      },
+      {
+        "id": "src/utils.ts#callHooks",
+        "kind": "function",
+        "name": "callHooks",
+        "file": "src/utils.ts",
+        "startLine": 140,
+        "endLine": 153
+      },
+      {
+        "id": "src/fetch.ts#createFetch",
+        "kind": "function",
+        "name": "createFetch",
+        "file": "src/fetch.ts",
+        "startLine": 37,
+        "endLine": 289
+      },
+      {
+        "id": "src/fetch.ts#onError",
+        "kind": "function",
+        "name": "onError",
+        "file": "src/fetch.ts",
+        "startLine": 44,
+        "endLine": 92
+      },
+      {
+        "id": "src/node.ts#createNodeFetch",
+        "kind": "function",
+        "name": "createNodeFetch",
+        "file": "src/node.ts",
+        "startLine": 14,
+        "endLine": 36
+      },
+      {
+        "id": "test/index.test.ts#abortHandle",
+        "kind": "function",
+        "name": "abortHandle",
+        "file": "test/index.test.ts",
+        "startLine": 305,
+        "endLine": 313
+      }
+    ],
+    "relations": [
+      {
+        "from": "src/utils.ts#resolveFetchOptions",
+        "to": "src/utils.ts#mergeHeaders",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#onError",
+        "to": "src/utils.ts#isPayloadMethod",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#onError",
+        "to": "src/error.ts#createFetchError",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/utils.ts#resolveFetchOptions",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/utils.ts#callHooks",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/utils.ts#isPayloadMethod",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/utils.ts#isJSONSerializable",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/fetch.ts#onError",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/utils.ts#detectResponseType",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/fetch.ts#createFetch",
+        "type": "CALLS"
+      }
+    ]
+  },
+  "changedFiles": [
+    {
+      "file": ".gitignore",
+      "oldFile": ".gitignore",
+      "changedLines": [
+        9
+      ],
+      "addedCode": [
+        "tsconfig.tsbuildinfo"
+      ],
+      "removedCode": [],
+      "diff": "diff --git a/.gitignore b/.gitignore\nindex 9653754..dc7d1e4 100644\n--- a/.gitignore\n+++ b/.gitignore\n@@ -6,3 +6,4 @@ coverage\n dist\n types\n .conf*\n+tsconfig.tsbuildinfo",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "dist",
+              "oldLine": 6,
+              "newLine": 6
+            },
+            {
+              "kind": " ",
+              "code": "types",
+              "oldLine": 7,
+              "newLine": 7
+            },
+            {
+              "kind": " ",
+              "code": ".conf*",
+              "oldLine": 8,
+              "newLine": 8
+            },
+            {
+              "kind": "+",
+              "code": "tsconfig.tsbuildinfo",
+              "oldLine": 9,
+              "newLine": 9
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/base.ts",
+      "oldFile": "src/base.ts",
+      "changedLines": [
+        1,
+        2
+      ],
+      "addedCode": [
+        "export * from \"./fetch.ts\";",
+        "export * from \"./error.ts\";"
+      ],
+      "removedCode": [
+        "export * from \"./fetch\";",
+        "export * from \"./error\";"
+      ],
+      "diff": "diff --git a/src/base.ts b/src/base.ts\nindex 0d7ec62..0196c68 100644\n--- a/src/base.ts\n+++ b/src/base.ts\n@@ -1,2 +1,2 @@\n-export * from \"./fetch\";\n-export * from \"./error\";\n+export * from \"./fetch.ts\";\n+export * from \"./error.ts\";",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": "-",
+              "code": "export * from \"./fetch\";",
+              "oldLine": 1,
+              "newLine": 1
+            },
+            {
+              "kind": "-",
+              "code": "export * from \"./error\";",
+              "oldLine": 2,
+              "newLine": 1
+            },
+            {
+              "kind": "+",
+              "code": "export * from \"./fetch.ts\";",
+              "oldLine": 3,
+              "newLine": 1
+            },
+            {
+              "kind": "+",
+              "code": "export * from \"./error.ts\";",
+              "oldLine": 3,
+              "newLine": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/error.ts",
+      "oldFile": "src/error.ts",
+      "changedLines": [
+        1
+      ],
+      "addedCode": [
+        "import type { FetchContext, IFetchError } from \"./types.ts\";"
+      ],
+      "removedCode": [
+        "import type { FetchContext, IFetchError } from \"./types\";"
+      ],
+      "diff": "diff --git a/src/error.ts b/src/error.ts\nindex ccba9be..f1625f6 100644\n--- a/src/error.ts\n+++ b/src/error.ts\n@@ -1,4 +1,4 @@\n-import type { FetchContext, IFetchError } from \"./types\";\n+import type { FetchContext, IFetchError } from \"./types.ts\";\n \n // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging\n export class FetchError<T = any> extends Error implements IFetchError<T> {",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": "-",
+              "code": "import type { FetchContext, IFetchError } from \"./types\";",
+              "oldLine": 1,
+              "newLine": 1
+            },
+            {
+              "kind": "+",
+              "code": "import type { FetchContext, IFetchError } from \"./types.ts\";",
+              "oldLine": 2,
+              "newLine": 1
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 2,
+              "newLine": 2
+            },
+            {
+              "kind": " ",
+              "code": "// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging",
+              "oldLine": 3,
+              "newLine": 3
+            },
+            {
+              "kind": " ",
+              "code": "export class FetchError<T = any> extends Error implements IFetchError<T> {",
+              "oldLine": 4,
+              "newLine": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/fetch.ts",
+      "oldFile": "src/fetch.ts",
+      "changedLines": [
+        4,
+        11,
+        20
+      ],
+      "addedCode": [
+        "import { createFetchError } from \"./error.ts\";",
+        "} from \"./utils.ts\";",
+        "} from \"./types.ts\";"
+      ],
+      "removedCode": [
+        "import { createFetchError } from \"./error\";",
+        "} from \"./utils\";",
+        "} from \"./types\";"
+      ],
+      "diff": "diff --git a/src/fetch.ts b/src/fetch.ts\nindex 42487a6..265775b 100644\n--- a/src/fetch.ts\n+++ b/src/fetch.ts\n@@ -1,14 +1,14 @@\n import type { Readable } from \"node:stream\";\n import destr from \"destr\";\n import { withBase, withQuery } from \"ufo\";\n-import { createFetchError } from \"./error\";\n+import { createFetchError } from \"./error.ts\";\n import {\n   isPayloadMethod,\n   isJSONSerializable,\n   detectResponseType,\n   resolveFetchOptions,\n   callHooks,\n-} from \"./utils\";\n+} from \"./utils.ts\";\n import type {\n   CreateFetchOptions,\n   FetchResponse,\n@@ -17,7 +17,7 @@ import type {\n   $Fetch,\n   FetchRequest,\n   FetchOptions,\n-} from \"./types\";\n+} from \"./types.ts\";\n \n // https://developer.mozilla.org/en-US/docs/Web/HTTP/Status\n const retryStatusCodes = new Set([",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "import type { Readable } from \"node:stream\";",
+              "oldLine": 1,
+              "newLine": 1
+            },
+            {
+              "kind": " ",
+              "code": "import destr from \"destr\";",
+              "oldLine": 2,
+              "newLine": 2
+            },
+            {
+              "kind": " ",
+              "code": "import { withBase, withQuery } from \"ufo\";",
+              "oldLine": 3,
+              "newLine": 3
+            },
+            {
+              "kind": "-",
+              "code": "import { createFetchError } from \"./error\";",
+              "oldLine": 4,
+              "newLine": 4
+            },
+            {
+              "kind": "+",
+              "code": "import { createFetchError } from \"./error.ts\";",
+              "oldLine": 5,
+              "newLine": 4
+            },
+            {
+              "kind": " ",
+              "code": "import {",
+              "oldLine": 5,
+              "newLine": 5
+            },
+            {
+              "kind": " ",
+              "code": "  isPayloadMethod,",
+              "oldLine": 6,
+              "newLine": 6
+            },
+            {
+              "kind": " ",
+              "code": "  isJSONSerializable,",
+              "oldLine": 7,
+              "newLine": 7
+            },
+            {
+              "kind": " ",
+              "code": "  detectResponseType,",
+              "oldLine": 8,
+              "newLine": 8
+            },
+            {
+              "kind": " ",
+              "code": "  resolveFetchOptions,",
+              "oldLine": 9,
+              "newLine": 9
+            },
+            {
+              "kind": " ",
+              "code": "  callHooks,",
+              "oldLine": 10,
+              "newLine": 10
+            },
+            {
+              "kind": "-",
+              "code": "} from \"./utils\";",
+              "oldLine": 11,
+              "newLine": 11
+            },
+            {
+              "kind": "+",
+              "code": "} from \"./utils.ts\";",
+              "oldLine": 12,
+              "newLine": 11
+            },
+            {
+              "kind": " ",
+              "code": "import type {",
+              "oldLine": 12,
+              "newLine": 12
+            },
+            {
+              "kind": " ",
+              "code": "  CreateFetchOptions,",
+              "oldLine": 13,
+              "newLine": 13
+            },
+            {
+              "kind": " ",
+              "code": "  FetchResponse,",
+              "oldLine": 14,
+              "newLine": 14
+            }
+          ]
+        },
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "  $Fetch,",
+              "oldLine": 17,
+              "newLine": 17
+            },
+            {
+              "kind": " ",
+              "code": "  FetchRequest,",
+              "oldLine": 18,
+              "newLine": 18
+            },
+            {
+              "kind": " ",
+              "code": "  FetchOptions,",
+              "oldLine": 19,
+              "newLine": 19
+            },
+            {
+              "kind": "-",
+              "code": "} from \"./types\";",
+              "oldLine": 20,
+              "newLine": 20
+            },
+            {
+              "kind": "+",
+              "code": "} from \"./types.ts\";",
+              "oldLine": 21,
+              "newLine": 20
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 21,
+              "newLine": 21
+            },
+            {
+              "kind": " ",
+              "code": "// https://developer.mozilla.org/en-US/docs/Web/HTTP/Status",
+              "oldLine": 22,
+              "newLine": 22
+            },
+            {
+              "kind": " ",
+              "code": "const retryStatusCodes = new Set([",
+              "oldLine": 23,
+              "newLine": 23
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/index.ts",
+      "oldFile": "src/index.ts",
+      "changedLines": [
+        1,
+        2,
+        4,
+        6,
+        28,
+        32,
+        33,
+        34,
+        36,
+        37
+      ],
+      "addedCode": [
+        "import { createFetch } from \"./base.ts\";",
+        "import type { $Fetch } from \"./types.ts\";",
+        "export * from \"./base.ts\";",
+        "export type * from \"./types.ts\";",
+        "export const fetch: typeof globalThis.fetch = _globalThis.fetch",
+        "export const Headers: typeof globalThis.Headers = _globalThis.Headers;",
+        "export const AbortController: typeof globalThis.AbortController =",
+        "  _globalThis.AbortController;",
+        "export const ofetch: $Fetch = createFetch({ fetch, Headers, AbortController });",
+        "export const $fetch: $Fetch = ofetch;"
+      ],
+      "removedCode": [
+        "import { createFetch } from \"./base\";",
+        "export * from \"./base\";",
+        "export type * from \"./types\";",
+        "export const fetch = _globalThis.fetch",
+        "export const Headers = _globalThis.Headers;",
+        "export const AbortController = _globalThis.AbortController;",
+        "export const ofetch = createFetch({ fetch, Headers, AbortController });",
+        "export const $fetch = ofetch;"
+      ],
+      "diff": "diff --git a/src/index.ts b/src/index.ts\nindex 4f7d3e1..a015c35 100644\n--- a/src/index.ts\n+++ b/src/index.ts\n@@ -1,8 +1,9 @@\n-import { createFetch } from \"./base\";\n+import { createFetch } from \"./base.ts\";\n+import type { $Fetch } from \"./types.ts\";\n \n-export * from \"./base\";\n+export * from \"./base.ts\";\n \n-export type * from \"./types\";\n+export type * from \"./types.ts\";\n \n // ref: https://github.com/tc39/proposal-global\n const _globalThis = (function () {\n@@ -24,12 +25,13 @@ const _globalThis = (function () {\n })();\n \n // ref: https://github.com/unjs/ofetch/issues/295\n-export const fetch = _globalThis.fetch\n+export const fetch: typeof globalThis.fetch = _globalThis.fetch\n   ? (...args: Parameters<typeof globalThis.fetch>) => _globalThis.fetch(...args)\n   : () => Promise.reject(new Error(\"[ofetch] global.fetch is not supported!\"));\n \n-export const Headers = _globalThis.Headers;\n-export const AbortController = _globalThis.AbortController;\n+export const Headers: typeof globalThis.Headers = _globalThis.Headers;\n+export const AbortController: typeof globalThis.AbortController =\n+  _globalThis.AbortController;\n \n-export const ofetch = createFetch({ fetch, Headers, AbortController });\n-export const $fetch = ofetch;\n+export const ofetch: $Fetch = createFetch({ fetch, Headers, AbortController });\n+export const $fetch: $Fetch = ofetch;",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": "-",
+              "code": "import { createFetch } from \"./base\";",
+              "oldLine": 1,
+              "newLine": 1
+            },
+            {
+              "kind": "+",
+              "code": "import { createFetch } from \"./base.ts\";",
+              "oldLine": 2,
+              "newLine": 1
+            },
+            {
+              "kind": "+",
+              "code": "import type { $Fetch } from \"./types.ts\";",
+              "oldLine": 2,
+              "newLine": 2
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 2,
+              "newLine": 3
+            },
+            {
+              "kind": "-",
+              "code": "export * from \"./base\";",
+              "oldLine": 3,
+              "newLine": 4
+            },
+            {
+              "kind": "+",
+              "code": "export * from \"./base.ts\";",
+              "oldLine": 4,
+              "newLine": 4
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 4,
+              "newLine": 5
+            },
+            {
+              "kind": "-",
+              "code": "export type * from \"./types\";",
+              "oldLine": 5,
+              "newLine": 6
+            },
+            {
+              "kind": "+",
+              "code": "export type * from \"./types.ts\";",
+              "oldLine": 6,
+              "newLine": 6
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 6,
+              "newLine": 7
+            },
+            {
+              "kind": " ",
+              "code": "// ref: https://github.com/tc39/proposal-global",
+              "oldLine": 7,
+              "newLine": 8
+            },
+            {
+              "kind": " ",
+              "code": "const _globalThis = (function () {",
+              "oldLine": 8,
+              "newLine": 9
+            }
+          ]
+        },
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "})();",
+              "oldLine": 24,
+              "newLine": 25
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 25,
+              "newLine": 26
+            },
+            {
+              "kind": " ",
+              "code": "// ref: https://github.com/unjs/ofetch/issues/295",
+              "oldLine": 26,
+              "newLine": 27
+            },
+            {
+              "kind": "-",
+              "code": "export const fetch = _globalThis.fetch",
+              "oldLine": 27,
+              "newLine": 28
+            },
+            {
+              "kind": "+",
+              "code": "export const fetch: typeof globalThis.fetch = _globalThis.fetch",
+              "oldLine": 28,
+              "newLine": 28
+            },
+            {
+              "kind": " ",
+              "code": "  ? (...args: Parameters<typeof globalThis.fetch>) => _globalThis.fetch(...args)",
+              "oldLine": 28,
+              "newLine": 29
+            },
+            {
+              "kind": " ",
+              "code": "  : () => Promise.reject(new Error(\"[ofetch] global.fetch is not supported!\"));",
+              "oldLine": 29,
+              "newLine": 30
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 30,
+              "newLine": 31
+            },
+            {
+              "kind": "-",
+              "code": "export const Headers = _globalThis.Headers;",
+              "oldLine": 31,
+              "newLine": 32
+            },
+            {
+              "kind": "-",
+              "code": "export const AbortController = _globalThis.AbortController;",
+              "oldLine": 32,
+              "newLine": 32
+            },
+            {
+              "kind": "+",
+              "code": "export const Headers: typeof globalThis.Headers = _globalThis.Headers;",
+              "oldLine": 33,
+              "newLine": 32
+            },
+            {
+              "kind": "+",
+              "code": "export const AbortController: typeof globalThis.AbortController =",
+              "oldLine": 33,
+              "newLine": 33
+            },
+            {
+              "kind": "+",
+              "code": "  _globalThis.AbortController;",
+              "oldLine": 33,
+              "newLine": 34
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 33,
+              "newLine": 35
+            },
+            {
+              "kind": "-",
+              "code": "export const ofetch = createFetch({ fetch, Headers, AbortController });",
+              "oldLine": 34,
+              "newLine": 36
+            },
+            {
+              "kind": "-",
+              "code": "export const $fetch = ofetch;",
+              "oldLine": 35,
+              "newLine": 36
+            },
+            {
+              "kind": "+",
+              "code": "export const ofetch: $Fetch = createFetch({ fetch, Headers, AbortController });",
+              "oldLine": 36,
+              "newLine": 36
+            },
+            {
+              "kind": "+",
+              "code": "export const $fetch: $Fetch = ofetch;",
+              "oldLine": 36,
+              "newLine": 37
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/node.ts",
+      "oldFile": "src/node.ts",
+      "changedLines": [
+        2,
+        8,
+        9,
+        11,
+        12,
+        14,
+        35,
+        38,
+        42,
+        43,
+        44,
+        45,
+        47,
+        48
+      ],
+      "addedCode": [
+        "import https, { type AgentOptions } from \"node:https\";",
+        "import { createFetch } from \"./base.ts\";",
+        "import type { $Fetch } from \"./types.ts\";",
+        "export * from \"./base.ts\";",
+        "export type * from \"./types.ts\";",
+        "export function createNodeFetch(): typeof globalThis.fetch {",
+        "  } as any;",
+        "export const fetch: typeof globalThis.fetch = globalThis.fetch",
+        "export const Headers: typeof globalThis.Headers =",
+        "  globalThis.Headers || _Headers;",
+        "export const AbortController: typeof globalThis.AbortController =",
+        "  globalThis.AbortController || _AbortController;",
+        "export const ofetch: $Fetch = createFetch({ fetch, Headers, AbortController });",
+        "export const $fetch: $Fetch = ofetch;"
+      ],
+      "removedCode": [
+        "import https, { AgentOptions } from \"node:https\";",
+        "import { createFetch } from \"./base\";",
+        "export * from \"./base\";",
+        "export type * from \"./types\";",
+        "export function createNodeFetch() {",
+        "  };",
+        "export const fetch = globalThis.fetch",
+        "export const Headers = globalThis.Headers || _Headers;",
+        "export const AbortController = globalThis.AbortController || _AbortController;",
+        "export const ofetch = createFetch({ fetch, Headers, AbortController });",
+        "export const $fetch = ofetch;"
+      ],
+      "diff": "diff --git a/src/node.ts b/src/node.ts\nindex d5584ad..8d25603 100644\n--- a/src/node.ts\n+++ b/src/node.ts\n@@ -1,16 +1,17 @@\n import http from \"node:http\";\n-import https, { AgentOptions } from \"node:https\";\n+import https, { type AgentOptions } from \"node:https\";\n import nodeFetch, {\n   Headers as _Headers,\n   AbortController as _AbortController,\n } from \"node-fetch-native\";\n \n-import { createFetch } from \"./base\";\n+import { createFetch } from \"./base.ts\";\n+import type { $Fetch } from \"./types.ts\";\n \n-export * from \"./base\";\n-export type * from \"./types\";\n+export * from \"./base.ts\";\n+export type * from \"./types.ts\";\n \n-export function createNodeFetch() {\n+export function createNodeFetch(): typeof globalThis.fetch {\n   const useKeepAlive = JSON.parse(process.env.FETCH_KEEP_ALIVE || \"false\");\n   if (!useKeepAlive) {\n     return nodeFetch;\n@@ -31,15 +32,17 @@ export function createNodeFetch() {\n     init?: RequestInit\n   ) {\n     return (nodeFetch as any)(input, { ...nodeFetchOptions, ...init });\n-  };\n+  } as any;\n }\n \n-export const fetch = globalThis.fetch\n+export const fetch: typeof globalThis.fetch = globalThis.fetch\n   ? (...args: Parameters<typeof globalThis.fetch>) => globalThis.fetch(...args)\n   : (createNodeFetch() as typeof globalThis.fetch);\n \n-export const Headers = globalThis.Headers || _Headers;\n-export const AbortController = globalThis.AbortController || _AbortController;\n+export const Headers: typeof globalThis.Headers =\n+  globalThis.Headers || _Headers;\n+export const AbortController: typeof globalThis.AbortController =\n+  globalThis.AbortController || _AbortController;\n \n-export const ofetch = createFetch({ fetch, Headers, AbortController });\n-export const $fetch = ofetch;\n+export const ofetch: $Fetch = createFetch({ fetch, Headers, AbortController });\n+export const $fetch: $Fetch = ofetch;",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "import http from \"node:http\";",
+              "oldLine": 1,
+              "newLine": 1
+            },
+            {
+              "kind": "-",
+              "code": "import https, { AgentOptions } from \"node:https\";",
+              "oldLine": 2,
+              "newLine": 2
+            },
+            {
+              "kind": "+",
+              "code": "import https, { type AgentOptions } from \"node:https\";",
+              "oldLine": 3,
+              "newLine": 2
+            },
+            {
+              "kind": " ",
+              "code": "import nodeFetch, {",
+              "oldLine": 3,
+              "newLine": 3
+            },
+            {
+              "kind": " ",
+              "code": "  Headers as _Headers,",
+              "oldLine": 4,
+              "newLine": 4
+            },
+            {
+              "kind": " ",
+              "code": "  AbortController as _AbortController,",
+              "oldLine": 5,
+              "newLine": 5
+            },
+            {
+              "kind": " ",
+              "code": "} from \"node-fetch-native\";",
+              "oldLine": 6,
+              "newLine": 6
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 7,
+              "newLine": 7
+            },
+            {
+              "kind": "-",
+              "code": "import { createFetch } from \"./base\";",
+              "oldLine": 8,
+              "newLine": 8
+            },
+            {
+              "kind": "+",
+              "code": "import { createFetch } from \"./base.ts\";",
+              "oldLine": 9,
+              "newLine": 8
+            },
+            {
+              "kind": "+",
+              "code": "import type { $Fetch } from \"./types.ts\";",
+              "oldLine": 9,
+              "newLine": 9
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 9,
+              "newLine": 10
+            },
+            {
+              "kind": "-",
+              "code": "export * from \"./base\";",
+              "oldLine": 10,
+              "newLine": 11
+            },
+            {
+              "kind": "-",
+              "code": "export type * from \"./types\";",
+              "oldLine": 11,
+              "newLine": 11
+            },
+            {
+              "kind": "+",
+              "code": "export * from \"./base.ts\";",
+              "oldLine": 12,
+              "newLine": 11
+            },
+            {
+              "kind": "+",
+              "code": "export type * from \"./types.ts\";",
+              "oldLine": 12,
+              "newLine": 12
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 12,
+              "newLine": 13
+            },
+            {
+              "kind": "-",
+              "code": "export function createNodeFetch() {",
+              "oldLine": 13,
+              "newLine": 14
+            },
+            {
+              "kind": "+",
+              "code": "export function createNodeFetch(): typeof globalThis.fetch {",
+              "oldLine": 14,
+              "newLine": 14
+            },
+            {
+              "kind": " ",
+              "code": "  const useKeepAlive = JSON.parse(process.env.FETCH_KEEP_ALIVE || \"false\");",
+              "oldLine": 14,
+              "newLine": 15
+            },
+            {
+              "kind": " ",
+              "code": "  if (!useKeepAlive) {",
+              "oldLine": 15,
+              "newLine": 16
+            },
+            {
+              "kind": " ",
+              "code": "    return nodeFetch;",
+              "oldLine": 16,
+              "newLine": 17
+            }
+          ]
+        },
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "    init?: RequestInit",
+              "oldLine": 31,
+              "newLine": 32
+            },
+            {
+              "kind": " ",
+              "code": "  ) {",
+              "oldLine": 32,
+              "newLine": 33
+            },
+            {
+              "kind": " ",
+              "code": "    return (nodeFetch as any)(input, { ...nodeFetchOptions, ...init });",
+              "oldLine": 33,
+              "newLine": 34
+            },
+            {
+              "kind": "-",
+              "code": "  };",
+              "oldLine": 34,
+              "newLine": 35
+            },
+            {
+              "kind": "+",
+              "code": "  } as any;",
+              "oldLine": 35,
+              "newLine": 35
+            },
+            {
+              "kind": " ",
+              "code": "}",
+              "oldLine": 35,
+              "newLine": 36
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 36,
+              "newLine": 37
+            },
+            {
+              "kind": "-",
+              "code": "export const fetch = globalThis.fetch",
+              "oldLine": 37,
+              "newLine": 38
+            },
+            {
+              "kind": "+",
+              "code": "export const fetch: typeof globalThis.fetch = globalThis.fetch",
+              "oldLine": 38,
+              "newLine": 38
+            },
+            {
+              "kind": " ",
+              "code": "  ? (...args: Parameters<typeof globalThis.fetch>) => globalThis.fetch(...args)",
+              "oldLine": 38,
+              "newLine": 39
+            },
+            {
+              "kind": " ",
+              "code": "  : (createNodeFetch() as typeof globalThis.fetch);",
+              "oldLine": 39,
+              "newLine": 40
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 40,
+              "newLine": 41
+            },
+            {
+              "kind": "-",
+              "code": "export const Headers = globalThis.Headers || _Headers;",
+              "oldLine": 41,
+              "newLine": 42
+            },
+            {
+              "kind": "-",
+              "code": "export const AbortController = globalThis.AbortController || _AbortController;",
+              "oldLine": 42,
+              "newLine": 42
+            },
+            {
+              "kind": "+",
+              "code": "export const Headers: typeof globalThis.Headers =",
+              "oldLine": 43,
+              "newLine": 42
+            },
+            {
+              "kind": "+",
+              "code": "  globalThis.Headers || _Headers;",
+              "oldLine": 43,
+              "newLine": 43
+            },
+            {
+              "kind": "+",
+              "code": "export const AbortController: typeof globalThis.AbortController =",
+              "oldLine": 43,
+              "newLine": 44
+            },
+            {
+              "kind": "+",
+              "code": "  globalThis.AbortController || _AbortController;",
+              "oldLine": 43,
+              "newLine": 45
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 43,
+              "newLine": 46
+            },
+            {
+              "kind": "-",
+              "code": "export const ofetch = createFetch({ fetch, Headers, AbortController });",
+              "oldLine": 44,
+              "newLine": 47
+            },
+            {
+              "kind": "-",
+              "code": "export const $fetch = ofetch;",
+              "oldLine": 45,
+              "newLine": 47
+            },
+            {
+              "kind": "+",
+              "code": "export const ofetch: $Fetch = createFetch({ fetch, Headers, AbortController });",
+              "oldLine": 46,
+              "newLine": 47
+            },
+            {
+              "kind": "+",
+              "code": "export const $fetch: $Fetch = ofetch;",
+              "oldLine": 46,
+              "newLine": 48
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/utils.ts",
+      "oldFile": "src/utils.ts",
+      "changedLines": [
+        8,
+        13,
+        17
+      ],
+      "addedCode": [
+        "} from \"./types.ts\";",
+        "export function isPayloadMethod(method = \"GET\"): boolean {",
+        "export function isJSONSerializable(value: any): boolean {"
+      ],
+      "removedCode": [
+        "} from \"./types\";",
+        "export function isPayloadMethod(method = \"GET\") {",
+        "export function isJSONSerializable(value: any) {"
+      ],
+      "diff": "diff --git a/src/utils.ts b/src/utils.ts\nindex 15a6d84..a773431 100644\n--- a/src/utils.ts\n+++ b/src/utils.ts\n@@ -5,16 +5,16 @@ import type {\n   FetchRequest,\n   ResolvedFetchOptions,\n   ResponseType,\n-} from \"./types\";\n+} from \"./types.ts\";\n \n const payloadMethods = new Set(\n   Object.freeze([\"PATCH\", \"POST\", \"PUT\", \"DELETE\"])\n );\n-export function isPayloadMethod(method = \"GET\") {\n+export function isPayloadMethod(method = \"GET\"): boolean {\n   return payloadMethods.has(method.toUpperCase());\n }\n \n-export function isJSONSerializable(value: any) {\n+export function isJSONSerializable(value: any): boolean {\n   if (value === undefined) {\n     return false;\n   }",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "  FetchRequest,",
+              "oldLine": 5,
+              "newLine": 5
+            },
+            {
+              "kind": " ",
+              "code": "  ResolvedFetchOptions,",
+              "oldLine": 6,
+              "newLine": 6
+            },
+            {
+              "kind": " ",
+              "code": "  ResponseType,",
+              "oldLine": 7,
+              "newLine": 7
+            },
+            {
+              "kind": "-",
+              "code": "} from \"./types\";",
+              "oldLine": 8,
+              "newLine": 8
+            },
+            {
+              "kind": "+",
+              "code": "} from \"./types.ts\";",
+              "oldLine": 9,
+              "newLine": 8
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 9,
+              "newLine": 9
+            },
+            {
+              "kind": " ",
+              "code": "const payloadMethods = new Set(",
+              "oldLine": 10,
+              "newLine": 10
+            },
+            {
+              "kind": " ",
+              "code": "  Object.freeze([\"PATCH\", \"POST\", \"PUT\", \"DELETE\"])",
+              "oldLine": 11,
+              "newLine": 11
+            },
+            {
+              "kind": " ",
+              "code": ");",
+              "oldLine": 12,
+              "newLine": 12
+            },
+            {
+              "kind": "-",
+              "code": "export function isPayloadMethod(method = \"GET\") {",
+              "oldLine": 13,
+              "newLine": 13
+            },
+            {
+              "kind": "+",
+              "code": "export function isPayloadMethod(method = \"GET\"): boolean {",
+              "oldLine": 14,
+              "newLine": 13
+            },
+            {
+              "kind": " ",
+              "code": "  return payloadMethods.has(method.toUpperCase());",
+              "oldLine": 14,
+              "newLine": 14
+            },
+            {
+              "kind": " ",
+              "code": "}",
+              "oldLine": 15,
+              "newLine": 15
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 16,
+              "newLine": 16
+            },
+            {
+              "kind": "-",
+              "code": "export function isJSONSerializable(value: any) {",
+              "oldLine": 17,
+              "newLine": 17
+            },
+            {
+              "kind": "+",
+              "code": "export function isJSONSerializable(value: any): boolean {",
+              "oldLine": 18,
+              "newLine": 17
+            },
+            {
+              "kind": " ",
+              "code": "  if (value === undefined) {",
+              "oldLine": 18,
+              "newLine": 18
+            },
+            {
+              "kind": " ",
+              "code": "    return false;",
+              "oldLine": 19,
+              "newLine": 19
+            },
+            {
+              "kind": " ",
+              "code": "  }",
+              "oldLine": 20,
+              "newLine": 20
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "test/index.test.ts",
+      "oldFile": "test/index.test.ts",
+      "changedLines": [
+        14,
+        240,
+        270,
+        319,
+        343,
+        471
+      ],
+      "addedCode": [
+        "import { $fetch } from \"../src/node.ts\";",
+        "    const error = await $fetch(getURL(\"404\")).catch((error_: any) => error_);",
+        "      (error_: any) => error_",
+        "      (error: any) => error",
+        "    }).catch((error: any) => {",
+        "    }).catch((error: any) => error);"
+      ],
+      "removedCode": [
+        "import { $fetch } from \"../src/node\";",
+        "    const error = await $fetch(getURL(\"404\")).catch((error_) => error_);",
+        "      (error_) => error_",
+        "      (error) => error",
+        "    }).catch((error) => {",
+        "    }).catch((error) => error);"
+      ],
+      "diff": "diff --git a/test/index.test.ts b/test/index.test.ts\nindex 0f8cf2a..5abb624 100644\n--- a/test/index.test.ts\n+++ b/test/index.test.ts\n@@ -11,7 +11,7 @@ import { Readable } from \"node:stream\";\n import { H3, HTTPError, readBody, serve } from \"h3\";\n import { Headers, FormData, Blob } from \"node-fetch-native\";\n import { nodeMajorVersion } from \"std-env\";\n-import { $fetch } from \"../src/node\";\n+import { $fetch } from \"../src/node.ts\";\n \n describe(\"ofetch\", () => {\n   let listener: ReturnType<typeof serve>;\n@@ -237,7 +237,7 @@ describe(\"ofetch\", () => {\n   });\n \n   it(\"404\", async () => {\n-    const error = await $fetch(getURL(\"404\")).catch((error_) => error_);\n+    const error = await $fetch(getURL(\"404\")).catch((error_: any) => error_);\n     expect(error.toString()).toBe(\n       `FetchError: [GET] \"${getURL(\"404\")}\": 404 Not Found`\n     );\n@@ -267,7 +267,7 @@ describe(\"ofetch\", () => {\n \n   it(\"baseURL with retry\", async () => {\n     const error = await $fetch(\"\", { baseURL: getURL(\"404\"), retry: 3 }).catch(\n-      (error_) => error_\n+      (error_: any) => error_\n     );\n     expect(error.request).to.equal(getURL(\"404\"));\n   });\n@@ -316,7 +316,7 @@ describe(\"ofetch\", () => {\n \n   it(\"passing request obj should return request obj in error\", async () => {\n     const error = await $fetch(getURL(\"/403\"), { method: \"post\" }).catch(\n-      (error) => error\n+      (error: any) => error\n     );\n     expect(error.toString()).toBe(\n       `FetchError: [POST] \"${getURL(\"403\")}\": 403 Forbidden`\n@@ -340,7 +340,7 @@ describe(\"ofetch\", () => {\n     await $fetch(getURL(\"timeout\"), {\n       timeout: 100,\n       retry: 0,\n-    }).catch((error) => {\n+    }).catch((error: any) => {\n       expect(error.cause.message).to.include(\n         \"The operation was aborted due to timeout\"\n       );\n@@ -468,7 +468,7 @@ describe(\"ofetch\", () => {\n       onRequestError,\n       onResponse,\n       onResponseError,\n-    }).catch((error) => error);\n+    }).catch((error: any) => error);\n \n     expect(onRequest).toHaveBeenCalledOnce();\n     expect(onRequestError).not.toHaveBeenCalled();",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "import { H3, HTTPError, readBody, serve } from \"h3\";",
+              "oldLine": 11,
+              "newLine": 11
+            },
+            {
+              "kind": " ",
+              "code": "import { Headers, FormData, Blob } from \"node-fetch-native\";",
+              "oldLine": 12,
+              "newLine": 12
+            },
+            {
+              "kind": " ",
+              "code": "import { nodeMajorVersion } from \"std-env\";",
+              "oldLine": 13,
+              "newLine": 13
+            },
+            {
+              "kind": "-",
+              "code": "import { $fetch } from \"../src/node\";",
+              "oldLine": 14,
+              "newLine": 14
+            },
+            {
+              "kind": "+",
+              "code": "import { $fetch } from \"../src/node.ts\";",
+              "oldLine": 15,
+              "newLine": 14
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 15,
+              "newLine": 15
+            },
+            {
+              "kind": " ",
+              "code": "describe(\"ofetch\", () => {",
+              "oldLine": 16,
+              "newLine": 16
+            },
+            {
+              "kind": " ",
+              "code": "  let listener: ReturnType<typeof serve>;",
+              "oldLine": 17,
+              "newLine": 17
+            }
+          ]
+        },
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "  });",
+              "oldLine": 237,
+              "newLine": 237
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 238,
+              "newLine": 238
+            },
+            {
+              "kind": " ",
+              "code": "  it(\"404\", async () => {",
+              "oldLine": 239,
+              "newLine": 239
+            },
+            {
+              "kind": "-",
+              "code": "    const error = await $fetch(getURL(\"404\")).catch((error_) => error_);",
+              "oldLine": 240,
+              "newLine": 240
+            },
+            {
+              "kind": "+",
+              "code": "    const error = await $fetch(getURL(\"404\")).catch((error_: any) => error_);",
+              "oldLine": 241,
+              "newLine": 240
+            },
+            {
+              "kind": " ",
+              "code": "    expect(error.toString()).toBe(",
+              "oldLine": 241,
+              "newLine": 241
+            },
+            {
+              "kind": " ",
+              "code": "      `FetchError: [GET] \"${getURL(\"404\")}\": 404 Not Found`",
+              "oldLine": 242,
+              "newLine": 242
+            },
+            {
+              "kind": " ",
+              "code": "    );",
+              "oldLine": 243,
+              "newLine": 243
+            }
+          ]
+        },
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 267,
+              "newLine": 267
+            },
+            {
+              "kind": " ",
+              "code": "  it(\"baseURL with retry\", async () => {",
+              "oldLine": 268,
+              "newLine": 268
+            },
+            {
+              "kind": " ",
+              "code": "    const error = await $fetch(\"\", { baseURL: getURL(\"404\"), retry: 3 }).catch(",
+              "oldLine": 269,
+              "newLine": 269
+            },
+            {
+              "kind": "-",
+              "code": "      (error_) => error_",
+              "oldLine": 270,
+              "newLine": 270
+            },
+            {
+              "kind": "+",
+              "code": "      (error_: any) => error_",
+              "oldLine": 271,
+              "newLine": 270
+            },
+            {
+              "kind": " ",
+              "code": "    );",
+              "oldLine": 271,
+              "newLine": 271
+            },
+            {
+              "kind": " ",
+              "code": "    expect(error.request).to.equal(getURL(\"404\"));",
+              "oldLine": 272,
+              "newLine": 272
+            },
+            {
+              "kind": " ",
+              "code": "  });",
+              "oldLine": 273,
+              "newLine": 273
+            }
+          ]
+        },
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 316,
+              "newLine": 316
+            },
+            {
+              "kind": " ",
+              "code": "  it(\"passing request obj should return request obj in error\", async () => {",
+              "oldLine": 317,
+              "newLine": 317
+            },
+            {
+              "kind": " ",
+              "code": "    const error = await $fetch(getURL(\"/403\"), { method: \"post\" }).catch(",
+              "oldLine": 318,
+              "newLine": 318
+            },
+            {
+              "kind": "-",
+              "code": "      (error) => error",
+              "oldLine": 319,
+              "newLine": 319
+            },
+            {
+              "kind": "+",
+              "code": "      (error: any) => error",
+              "oldLine": 320,
+              "newLine": 319
+            },
+            {
+              "kind": " ",
+              "code": "    );",
+              "oldLine": 320,
+              "newLine": 320
+            },
+            {
+              "kind": " ",
+              "code": "    expect(error.toString()).toBe(",
+              "oldLine": 321,
+              "newLine": 321
+            },
+            {
+              "kind": " ",
+              "code": "      `FetchError: [POST] \"${getURL(\"403\")}\": 403 Forbidden`",
+              "oldLine": 322,
+              "newLine": 322
+            }
+          ]
+        },
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "    await $fetch(getURL(\"timeout\"), {",
+              "oldLine": 340,
+              "newLine": 340
+            },
+            {
+              "kind": " ",
+              "code": "      timeout: 100,",
+              "oldLine": 341,
+              "newLine": 341
+            },
+            {
+              "kind": " ",
+              "code": "      retry: 0,",
+              "oldLine": 342,
+              "newLine": 342
+            },
+            {
+              "kind": "-",
+              "code": "    }).catch((error) => {",
+              "oldLine": 343,
+              "newLine": 343
+            },
+            {
+              "kind": "+",
+              "code": "    }).catch((error: any) => {",
+              "oldLine": 344,
+              "newLine": 343
+            },
+            {
+              "kind": " ",
+              "code": "      expect(error.cause.message).to.include(",
+              "oldLine": 344,
+              "newLine": 344
+            },
+            {
+              "kind": " ",
+              "code": "        \"The operation was aborted due to timeout\"",
+              "oldLine": 345,
+              "newLine": 345
+            },
+            {
+              "kind": " ",
+              "code": "      );",
+              "oldLine": 346,
+              "newLine": 346
+            }
+          ]
+        },
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "      onRequestError,",
+              "oldLine": 468,
+              "newLine": 468
+            },
+            {
+              "kind": " ",
+              "code": "      onResponse,",
+              "oldLine": 469,
+              "newLine": 469
+            },
+            {
+              "kind": " ",
+              "code": "      onResponseError,",
+              "oldLine": 470,
+              "newLine": 470
+            },
+            {
+              "kind": "-",
+              "code": "    }).catch((error) => error);",
+              "oldLine": 471,
+              "newLine": 471
+            },
+            {
+              "kind": "+",
+              "code": "    }).catch((error: any) => error);",
+              "oldLine": 472,
+              "newLine": 471
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 472,
+              "newLine": 472
+            },
+            {
+              "kind": " ",
+              "code": "    expect(onRequest).toHaveBeenCalledOnce();",
+              "oldLine": 473,
+              "newLine": 473
+            },
+            {
+              "kind": " ",
+              "code": "    expect(onRequestError).not.toHaveBeenCalled();",
+              "oldLine": 474,
+              "newLine": 474
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "tsconfig.json",
+      "oldFile": "tsconfig.json",
+      "changedLines": [
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        20
+      ],
+      "addedCode": [
+        "    \"module\": \"NodeNext\",",
+        "    \"moduleResolution\": \"NodeNext\",",
+        "    \"resolveJsonModule\": true,",
+        "    \"esModuleInterop\": false,",
+        "    \"allowSyntheticDefaultImports\": true,",
+        "    \"skipLibCheck\": true,",
+        "    \"verbatimModuleSyntax\": true,",
+        "    \"isolatedModules\": true,",
+        "    \"composite\": true,",
+        "    \"allowImportingTsExtensions\": true,",
+        "    \"isolatedDeclarations\": true,",
+        "    \"forceConsistentCasingInFileNames\": true,",
+        "    \"noImplicitOverride\": true,",
+        "    \"noEmit\": true",
+        "  \"include\": [\"src\", \"test\"]"
+      ],
+      "removedCode": [
+        "    \"module\": \"ESNext\",",
+        "    \"moduleResolution\": \"Node\",",
+        "    \"esModuleInterop\": true,",
+        "    \"outDir\": \"dist\",",
+        "    \"declaration\": true,",
+        "    \"types\": [\"node\"]",
+        "  \"include\": [\"src\"]"
+      ],
+      "diff": "diff --git a/tsconfig.json b/tsconfig.json\nindex ecc5476..6f307ef 100644\n--- a/tsconfig.json\n+++ b/tsconfig.json\n@@ -1,13 +1,21 @@\n {\n   \"compilerOptions\": {\n     \"target\": \"ESNext\",\n-    \"module\": \"ESNext\",\n-    \"moduleResolution\": \"Node\",\n-    \"esModuleInterop\": true,\n-    \"outDir\": \"dist\",\n+    \"module\": \"NodeNext\",\n+    \"moduleResolution\": \"NodeNext\",\n+    \"resolveJsonModule\": true,\n+    \"esModuleInterop\": false,\n+    \"allowSyntheticDefaultImports\": true,\n+    \"skipLibCheck\": true,\n     \"strict\": true,\n-    \"declaration\": true,\n-    \"types\": [\"node\"]\n+    \"verbatimModuleSyntax\": true,\n+    \"isolatedModules\": true,\n+    \"composite\": true,\n+    \"allowImportingTsExtensions\": true,\n+    \"isolatedDeclarations\": true,\n+    \"forceConsistentCasingInFileNames\": true,\n+    \"noImplicitOverride\": true,\n+    \"noEmit\": true\n   },\n-  \"include\": [\"src\"]\n+  \"include\": [\"src\", \"test\"]\n }",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "{",
+              "oldLine": 1,
+              "newLine": 1
+            },
+            {
+              "kind": " ",
+              "code": "  \"compilerOptions\": {",
+              "oldLine": 2,
+              "newLine": 2
+            },
+            {
+              "kind": " ",
+              "code": "    \"target\": \"ESNext\",",
+              "oldLine": 3,
+              "newLine": 3
+            },
+            {
+              "kind": "-",
+              "code": "    \"module\": \"ESNext\",",
+              "oldLine": 4,
+              "newLine": 4
+            },
+            {
+              "kind": "-",
+              "code": "    \"moduleResolution\": \"Node\",",
+              "oldLine": 5,
+              "newLine": 4
+            },
+            {
+              "kind": "-",
+              "code": "    \"esModuleInterop\": true,",
+              "oldLine": 6,
+              "newLine": 4
+            },
+            {
+              "kind": "-",
+              "code": "    \"outDir\": \"dist\",",
+              "oldLine": 7,
+              "newLine": 4
+            },
+            {
+              "kind": "+",
+              "code": "    \"module\": \"NodeNext\",",
+              "oldLine": 8,
+              "newLine": 4
+            },
+            {
+              "kind": "+",
+              "code": "    \"moduleResolution\": \"NodeNext\",",
+              "oldLine": 8,
+              "newLine": 5
+            },
+            {
+              "kind": "+",
+              "code": "    \"resolveJsonModule\": true,",
+              "oldLine": 8,
+              "newLine": 6
+            },
+            {
+              "kind": "+",
+              "code": "    \"esModuleInterop\": false,",
+              "oldLine": 8,
+              "newLine": 7
+            },
+            {
+              "kind": "+",
+              "code": "    \"allowSyntheticDefaultImports\": true,",
+              "oldLine": 8,
+              "newLine": 8
+            },
+            {
+              "kind": "+",
+              "code": "    \"skipLibCheck\": true,",
+              "oldLine": 8,
+              "newLine": 9
+            },
+            {
+              "kind": " ",
+              "code": "    \"strict\": true,",
+              "oldLine": 8,
+              "newLine": 10
+            },
+            {
+              "kind": "-",
+              "code": "    \"declaration\": true,",
+              "oldLine": 9,
+              "newLine": 11
+            },
+            {
+              "kind": "-",
+              "code": "    \"types\": [\"node\"]",
+              "oldLine": 10,
+              "newLine": 11
+            },
+            {
+              "kind": "+",
+              "code": "    \"verbatimModuleSyntax\": true,",
+              "oldLine": 11,
+              "newLine": 11
+            },
+            {
+              "kind": "+",
+              "code": "    \"isolatedModules\": true,",
+              "oldLine": 11,
+              "newLine": 12
+            },
+            {
+              "kind": "+",
+              "code": "    \"composite\": true,",
+              "oldLine": 11,
+              "newLine": 13
+            },
+            {
+              "kind": "+",
+              "code": "    \"allowImportingTsExtensions\": true,",
+              "oldLine": 11,
+              "newLine": 14
+            },
+            {
+              "kind": "+",
+              "code": "    \"isolatedDeclarations\": true,",
+              "oldLine": 11,
+              "newLine": 15
+            },
+            {
+              "kind": "+",
+              "code": "    \"forceConsistentCasingInFileNames\": true,",
+              "oldLine": 11,
+              "newLine": 16
+            },
+            {
+              "kind": "+",
+              "code": "    \"noImplicitOverride\": true,",
+              "oldLine": 11,
+              "newLine": 17
+            },
+            {
+              "kind": "+",
+              "code": "    \"noEmit\": true",
+              "oldLine": 11,
+              "newLine": 18
+            },
+            {
+              "kind": " ",
+              "code": "  },",
+              "oldLine": 11,
+              "newLine": 19
+            },
+            {
+              "kind": "-",
+              "code": "  \"include\": [\"src\"]",
+              "oldLine": 12,
+              "newLine": 20
+            },
+            {
+              "kind": "+",
+              "code": "  \"include\": [\"src\", \"test\"]",
+              "oldLine": 13,
+              "newLine": 20
+            },
+            {
+              "kind": " ",
+              "code": "}",
+              "oldLine": 13,
+              "newLine": 21
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "changedEntities": [
+    {
+      "entity": {
+        "id": "src/node.ts#createNodeFetch",
+        "kind": "function",
+        "name": "createNodeFetch",
+        "file": "src/node.ts",
+        "startLine": 14,
+        "endLine": 36
+      },
+      "change": {
+        "file": "src/node.ts",
+        "changedLines": [
+          14,
+          35
+        ],
+        "addedCode": [
+          "export function createNodeFetch(): typeof globalThis.fetch {",
+          "  } as any;"
+        ],
+        "removedCode": [
+          "export function createNodeFetch() {",
+          "  };"
+        ],
+        "diff": "--- a/src/node.ts\n+++ b/src/node.ts\n@@ -13,4 +14,4 @@\n-export function createNodeFetch() {\n+export function createNodeFetch(): typeof globalThis.fetch {\n   const useKeepAlive = JSON.parse(process.env.FETCH_KEEP_ALIVE || \"false\");\n   if (!useKeepAlive) {\n     return nodeFetch;\n@@ -31,5 +32,5 @@\n     init?: RequestInit\n   ) {\n     return (nodeFetch as any)(input, { ...nodeFetchOptions, ...init });\n-  };\n+  } as any;\n }"
+      }
+    },
+    {
+      "entity": {
+        "id": "src/utils.ts#isPayloadMethod",
+        "kind": "function",
+        "name": "isPayloadMethod",
+        "file": "src/utils.ts",
+        "startLine": 13,
+        "endLine": 15
+      },
+      "change": {
+        "file": "src/utils.ts",
+        "changedLines": [
+          13
+        ],
+        "addedCode": [
+          "export function isPayloadMethod(method = \"GET\"): boolean {"
+        ],
+        "removedCode": [
+          "export function isPayloadMethod(method = \"GET\") {"
+        ],
+        "diff": "--- a/src/utils.ts\n+++ b/src/utils.ts\n@@ -13,3 +13,3 @@\n-export function isPayloadMethod(method = \"GET\") {\n+export function isPayloadMethod(method = \"GET\"): boolean {\n   return payloadMethods.has(method.toUpperCase());\n }"
+      }
+    },
+    {
+      "entity": {
+        "id": "src/utils.ts#isJSONSerializable",
+        "kind": "function",
+        "name": "isJSONSerializable",
+        "file": "src/utils.ts",
+        "startLine": 17,
+        "endLine": 43
+      },
+      "change": {
+        "file": "src/utils.ts",
+        "changedLines": [
+          17
+        ],
+        "addedCode": [
+          "export function isJSONSerializable(value: any): boolean {"
+        ],
+        "removedCode": [
+          "export function isJSONSerializable(value: any) {"
+        ],
+        "diff": "--- a/src/utils.ts\n+++ b/src/utils.ts\n@@ -17,4 +17,4 @@\n-export function isJSONSerializable(value: any) {\n+export function isJSONSerializable(value: any): boolean {\n   if (value === undefined) {\n     return false;\n   }"
+      }
+    }
+  ],
+  "impacts": [
+    {
+      "changedEntity": {
+        "id": "src/node.ts#createNodeFetch",
+        "kind": "function",
+        "name": "createNodeFetch",
+        "file": "src/node.ts",
+        "startLine": 14,
+        "endLine": 36
+      },
+      "change": {
+        "file": "src/node.ts",
+        "changedLines": [
+          14,
+          35
+        ],
+        "addedCode": [
+          "export function createNodeFetch(): typeof globalThis.fetch {",
+          "  } as any;"
+        ],
+        "removedCode": [
+          "export function createNodeFetch() {",
+          "  };"
+        ],
+        "diff": "--- a/src/node.ts\n+++ b/src/node.ts\n@@ -13,4 +14,4 @@\n-export function createNodeFetch() {\n+export function createNodeFetch(): typeof globalThis.fetch {\n   const useKeepAlive = JSON.parse(process.env.FETCH_KEEP_ALIVE || \"false\");\n   if (!useKeepAlive) {\n     return nodeFetch;\n@@ -31,5 +32,5 @@\n     init?: RequestInit\n   ) {\n     return (nodeFetch as any)(input, { ...nodeFetchOptions, ...init });\n-  };\n+  } as any;\n }"
+      },
+      "directDependents": [],
+      "blastRadius": {
+        "totalAffectedEntities": 0,
+        "entities": [],
+        "paths": []
+      },
+      "terminalDependents": []
+    },
+    {
+      "changedEntity": {
+        "id": "src/utils.ts#isPayloadMethod",
+        "kind": "function",
+        "name": "isPayloadMethod",
+        "file": "src/utils.ts",
+        "startLine": 13,
+        "endLine": 15
+      },
+      "change": {
+        "file": "src/utils.ts",
+        "changedLines": [
+          13
+        ],
+        "addedCode": [
+          "export function isPayloadMethod(method = \"GET\"): boolean {"
+        ],
+        "removedCode": [
+          "export function isPayloadMethod(method = \"GET\") {"
+        ],
+        "diff": "--- a/src/utils.ts\n+++ b/src/utils.ts\n@@ -13,3 +13,3 @@\n-export function isPayloadMethod(method = \"GET\") {\n+export function isPayloadMethod(method = \"GET\"): boolean {\n   return payloadMethods.has(method.toUpperCase());\n }"
+      },
+      "directDependents": [
+        {
+          "id": "src/fetch.ts#onError",
+          "kind": "function",
+          "name": "onError",
+          "file": "src/fetch.ts",
+          "startLine": 44,
+          "endLine": 92
+        },
+        {
+          "id": "src/fetch.ts#createFetch",
+          "kind": "function",
+          "name": "createFetch",
+          "file": "src/fetch.ts",
+          "startLine": 37,
+          "endLine": 289
+        }
+      ],
+      "blastRadius": {
+        "totalAffectedEntities": 2,
+        "entities": [
+          {
+            "id": "src/fetch.ts#onError",
+            "kind": "function",
+            "name": "onError",
+            "file": "src/fetch.ts",
+            "startLine": 44,
+            "endLine": 92
+          },
+          {
+            "id": "src/fetch.ts#createFetch",
+            "kind": "function",
+            "name": "createFetch",
+            "file": "src/fetch.ts",
+            "startLine": 37,
+            "endLine": 289
+          }
+        ],
+        "paths": [
+          {
+            "target": {
+              "id": "src/fetch.ts#onError",
+              "kind": "function",
+              "name": "onError",
+              "file": "src/fetch.ts",
+              "startLine": 44,
+              "endLine": 92
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/utils.ts#isPayloadMethod",
+                "kind": "function",
+                "name": "isPayloadMethod",
+                "file": "src/utils.ts",
+                "startLine": 13,
+                "endLine": 15
+              },
+              {
+                "id": "src/fetch.ts#onError",
+                "kind": "function",
+                "name": "onError",
+                "file": "src/fetch.ts",
+                "startLine": 44,
+                "endLine": 92
+              }
+            ]
+          },
+          {
+            "target": {
+              "id": "src/fetch.ts#createFetch",
+              "kind": "function",
+              "name": "createFetch",
+              "file": "src/fetch.ts",
+              "startLine": 37,
+              "endLine": 289
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/utils.ts#isPayloadMethod",
+                "kind": "function",
+                "name": "isPayloadMethod",
+                "file": "src/utils.ts",
+                "startLine": 13,
+                "endLine": 15
+              },
+              {
+                "id": "src/fetch.ts#createFetch",
+                "kind": "function",
+                "name": "createFetch",
+                "file": "src/fetch.ts",
+                "startLine": 37,
+                "endLine": 289
+              }
+            ]
+          },
+          {
+            "target": {
+              "id": "src/fetch.ts#createFetch",
+              "kind": "function",
+              "name": "createFetch",
+              "file": "src/fetch.ts",
+              "startLine": 37,
+              "endLine": 289
+            },
+            "depth": 2,
+            "path": [
+              {
+                "id": "src/utils.ts#isPayloadMethod",
+                "kind": "function",
+                "name": "isPayloadMethod",
+                "file": "src/utils.ts",
+                "startLine": 13,
+                "endLine": 15
+              },
+              {
+                "id": "src/fetch.ts#onError",
+                "kind": "function",
+                "name": "onError",
+                "file": "src/fetch.ts",
+                "startLine": 44,
+                "endLine": 92
+              },
+              {
+                "id": "src/fetch.ts#createFetch",
+                "kind": "function",
+                "name": "createFetch",
+                "file": "src/fetch.ts",
+                "startLine": 37,
+                "endLine": 289
+              }
+            ]
+          }
+        ]
+      },
+      "terminalDependents": []
+    },
+    {
+      "changedEntity": {
+        "id": "src/utils.ts#isJSONSerializable",
+        "kind": "function",
+        "name": "isJSONSerializable",
+        "file": "src/utils.ts",
+        "startLine": 17,
+        "endLine": 43
+      },
+      "change": {
+        "file": "src/utils.ts",
+        "changedLines": [
+          17
+        ],
+        "addedCode": [
+          "export function isJSONSerializable(value: any): boolean {"
+        ],
+        "removedCode": [
+          "export function isJSONSerializable(value: any) {"
+        ],
+        "diff": "--- a/src/utils.ts\n+++ b/src/utils.ts\n@@ -17,4 +17,4 @@\n-export function isJSONSerializable(value: any) {\n+export function isJSONSerializable(value: any): boolean {\n   if (value === undefined) {\n     return false;\n   }"
+      },
+      "directDependents": [
+        {
+          "id": "src/fetch.ts#createFetch",
+          "kind": "function",
+          "name": "createFetch",
+          "file": "src/fetch.ts",
+          "startLine": 37,
+          "endLine": 289
+        }
+      ],
+      "blastRadius": {
+        "totalAffectedEntities": 1,
+        "entities": [
+          {
+            "id": "src/fetch.ts#createFetch",
+            "kind": "function",
+            "name": "createFetch",
+            "file": "src/fetch.ts",
+            "startLine": 37,
+            "endLine": 289
+          }
+        ],
+        "paths": [
+          {
+            "target": {
+              "id": "src/fetch.ts#createFetch",
+              "kind": "function",
+              "name": "createFetch",
+              "file": "src/fetch.ts",
+              "startLine": 37,
+              "endLine": 289
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/utils.ts#isJSONSerializable",
+                "kind": "function",
+                "name": "isJSONSerializable",
+                "file": "src/utils.ts",
+                "startLine": 17,
+                "endLine": 43
+              },
+              {
+                "id": "src/fetch.ts#createFetch",
+                "kind": "function",
+                "name": "createFetch",
+                "file": "src/fetch.ts",
+                "startLine": 37,
+                "endLine": 289
+              }
+            ]
+          }
+        ]
+      },
+      "terminalDependents": []
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "OUTSIDE_SUPPORTED_SCOPE",
+      "severity": "warning",
+      "message": "Changes outside TypeScript extraction scope were not analyzed for function impact."
+    },
+    {
+      "code": "AMBIGUOUS_FUNCTION_RANGE",
+      "severity": "warning",
+      "message": "Skipping ambiguous overlapping function ranges: src/fetch.ts#createFetch"
+    },
+    {
+      "code": "AMBIGUOUS_FUNCTION_RANGE",
+      "severity": "warning",
+      "message": "Skipping ambiguous overlapping function ranges: src/fetch.ts#onError"
+    }
+  ],
+  "limitations": [
+    "Only TypeScript is analyzed.",
+    "Only named standalone function declarations are supported.",
+    "Only CALLS relationships are currently supported.",
+    "Class methods are not analyzed.",
+    "Arrow functions are not analyzed.",
+    "Dynamic calls are not analyzed.",
+    "Deleted functions have no current graph entity; renamed or ambiguous functions may lack removed-code evidence.",
+    "Overlapping function line ranges are skipped rather than sharing ambiguous evidence.",
+    "Application surfaces are not yet discovered.",
+    "Blast radius is limited to depth 6."
+  ]
+}

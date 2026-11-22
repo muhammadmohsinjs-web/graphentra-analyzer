@@ -1,0 +1,189 @@
+{
+  "schemaVersion": "1.0",
+  "application": {
+    "name": "ofetch",
+    "summary": "A TypeScript HTTP client library built on the fetch API, providing a $fetch wrapper with automatic JSON handling, retries, timeouts, hooks, and normalized errors, with Node.js and global-fetch entry points.",
+    "purpose": "Simplify making HTTP requests in JavaScript/TypeScript applications by wrapping fetch with sensible defaults, response parsing, retry logic, and consistent error reporting."
+  },
+  "domains": [
+    {
+      "id": "http-client",
+      "name": "HTTP Client",
+      "description": "Core request construction, sending, and response handling via fetch."
+    },
+    {
+      "id": "request-resilience",
+      "name": "Request Resilience",
+      "description": "Retry policies, retry delays, and timeout/abort handling for requests."
+    },
+    {
+      "id": "error-handling",
+      "name": "Error Normalization",
+      "description": "Creation of enriched FetchError objects carrying request, response, and status details."
+    },
+    {
+      "id": "extensibility",
+      "name": "Hooks and Configuration",
+      "description": "Lifecycle hooks (onRequest, onResponse, etc.) and default option merging via create()."
+    },
+    {
+      "id": "runtime-adaptation",
+      "name": "Runtime Adaptation",
+      "description": "Selecting fetch, Headers, and AbortController implementations for global or Node.js environments."
+    }
+  ],
+  "terminology": [
+    {
+      "term": "$fetch",
+      "meaning": "The main exported callable that performs a request and returns the parsed response body."
+    },
+    {
+      "term": "raw",
+      "meaning": "A variant of $fetch that returns the full response object including the parsed _data."
+    },
+    {
+      "term": "FetchError",
+      "meaning": "Normalized error type carrying request, options, response, and status information."
+    },
+    {
+      "term": "Retry status codes",
+      "meaning": "HTTP statuses (e.g. 408, 429, 500, 503) that trigger automatic retries."
+    },
+    {
+      "term": "Payload method",
+      "meaning": "HTTP methods that carry a request body (PATCH, POST, PUT, DELETE), used to decide retry defaults and body handling."
+    },
+    {
+      "term": "Hooks",
+      "meaning": "User-supplied callbacks run at request, response, and error stages."
+    }
+  ],
+  "entityAnnotations": [
+    {
+      "entityId": "src/fetch.ts#createFetch",
+      "businessMeaning": "Factory that builds the configured $fetch client, including the raw request pipeline (option resolution, body serialization, timeout, response parsing, hooks) and the create() method for derived clients.",
+      "domainIds": [
+        "http-client",
+        "extensibility",
+        "request-resilience"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/fetch.ts#onError",
+      "businessMeaning": "Error pipeline that decides whether to retry a failed or error-status request and otherwise throws a normalized FetchError.",
+      "domainIds": [
+        "request-resilience",
+        "error-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/error.ts#createFetchError",
+      "businessMeaning": "Builds a FetchError with a descriptive message combining method, URL, status, and underlying error, and exposes request/response/status properties.",
+      "domainIds": [
+        "error-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#isPayloadMethod",
+      "businessMeaning": "Checks whether an HTTP method carries a request body, affecting body handling and default retry count.",
+      "domainIds": [
+        "http-client",
+        "request-resilience"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#isJSONSerializable",
+      "businessMeaning": "Determines whether a request body should be automatically JSON-encoded.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#detectResponseType",
+      "businessMeaning": "Chooses how to parse a response (json, text, or blob) based on the Content-Type header.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#resolveFetchOptions",
+      "businessMeaning": "Merges per-request options with client defaults, combining query/params and headers.",
+      "domainIds": [
+        "http-client",
+        "extensibility"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#mergeHeaders",
+      "businessMeaning": "Combines default headers with request-specific headers into a single Headers object.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#callHooks",
+      "businessMeaning": "Invokes one or more lifecycle hook functions in sequence with the current request context.",
+      "domainIds": [
+        "extensibility"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/node.ts#createNodeFetch",
+      "businessMeaning": "Provides a fetch implementation for Node.js, optionally enabling keep-alive agents via the FETCH_KEEP_ALIVE environment variable.",
+      "domainIds": [
+        "runtime-adaptation",
+        "http-client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "playground/index.ts#main",
+      "businessMeaning": "Manual development script that issues a sample request to a failing endpoint to exercise error handling.",
+      "domainIds": [
+        "error-handling"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "entityId": "examples/type-safety.ts#main",
+      "businessMeaning": "Example script showing typed JSON fetching of a repository record from a public API.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "test/index.test.ts#abortHandle",
+      "businessMeaning": "Test helper that aborts a request via AbortController and verifies that retry with abort does not continue.",
+      "domainIds": [
+        "request-resilience"
+      ],
+      "confidence": "medium"
+    }
+  ],
+  "applicationFacts": [
+    "The library exports $fetch, ofetch, and create-based derived clients built by createFetch.",
+    "The deterministic graph shows createFetch calling resolveFetchOptions, callHooks, isPayloadMethod, isJSONSerializable, detectResponseType, and onError.",
+    "onError calls isPayloadMethod and createFetchError, and retries requests for retry-eligible status codes or non-abort errors.",
+    "Default retry status codes are 408, 409, 425, 429, 500, 502, 503, and 504 unless overridden.",
+    "Response bodies are parsed with destr for JSON responses unless parseResponse is provided.",
+    "Timeouts are implemented by aborting a controller after the configured timeout.",
+    "The package is built with unbuild with entries src/index and src/node, and externalizes undici.",
+    "The graph contains a self-recursive CALLS relation on createFetch, reflecting the retry path that calls $fetchRaw."
+  ],
+  "unknowns": [
+    "The graph lists createFetch as calling itself, but the source shows the retry path calls $fetchRaw; the mapping between these inner functions and the graph's entity IDs is not fully clear.",
+    "The graph does not include $fetchRaw or the inner functions as separate entities, so their CALLS relationships cannot be confirmed.",
+    "The purpose of the test helper abortHandle is inferred from its name and body and may not reflect the full test intent.",
+    "Whether the playground and example scripts are intended for production use is not stated."
+  ]
+}

@@ -1,0 +1,2457 @@
+{
+  "artifactKind": "graphentra-evidence",
+  "schemaVersion": "2.0",
+  "analyzerVersion": "0.4.0",
+  "target": {
+    "targetPath": "."
+  },
+  "comparison": {
+    "mode": "commit",
+    "requestedBase": "3baf1cc^",
+    "requestedHead": "3baf1cc",
+    "resolvedBaseSha": "7030ad93f597593ec5318cfcfc0bdade631ade8b",
+    "resolvedHeadSha": "3baf1cc076165bdb07ec9a5d918504efd6823074",
+    "comparedTo": "`3baf1cc`"
+  },
+  "sourceState": {
+    "checkoutSha": "3baf1cc076165bdb07ec9a5d918504efd6823074",
+    "isTrackedDirty": false,
+    "untrackedSourcePolicy": "excluded",
+    "contentIdentity": "52cd120ad4313828b1744fd477abf40ea5a4390b7d24e5f463e5229874e8347d"
+  },
+  "options": {
+    "excludePaths": [],
+    "sourcePolicy": "git-tracked"
+  },
+  "outcome": "completed",
+  "technicalGraph": {
+    "schemaVersion": "1.0",
+    "repository": {
+      "targetPath": ".",
+      "headSha": "3baf1cc076165bdb07ec9a5d918504efd6823074",
+      "generatedAt": "2026-11-22T17:52:13.681Z",
+      "analyzerVersion": "0.4.0"
+    },
+    "capabilities": {
+      "language": "typescript",
+      "entityKinds": [
+        "function"
+      ],
+      "relationTypes": [
+        "CALLS"
+      ],
+      "maxBlastDepth": 6
+    },
+    "analyzedFiles": [
+      "build.config.ts",
+      "examples/type-safety.ts",
+      "playground/index.ts",
+      "src/base.ts",
+      "src/error.ts",
+      "src/fetch.ts",
+      "src/index.ts",
+      "src/node.ts",
+      "src/types.ts",
+      "src/utils.ts",
+      "test/index.test.ts",
+      "vitest.config.ts"
+    ],
+    "entities": [
+      {
+        "id": "examples/type-safety.ts#main",
+        "kind": "function",
+        "name": "main",
+        "file": "examples/type-safety.ts",
+        "startLine": 12,
+        "endLine": 18
+      },
+      {
+        "id": "src/error.ts#createFetchError",
+        "kind": "function",
+        "name": "createFetchError",
+        "file": "src/error.ts",
+        "startLine": 21,
+        "endLine": 67
+      },
+      {
+        "id": "src/utils.ts#isPayloadMethod",
+        "kind": "function",
+        "name": "isPayloadMethod",
+        "file": "src/utils.ts",
+        "startLine": 11,
+        "endLine": 13
+      },
+      {
+        "id": "src/utils.ts#isJSONSerializable",
+        "kind": "function",
+        "name": "isJSONSerializable",
+        "file": "src/utils.ts",
+        "startLine": 15,
+        "endLine": 36
+      },
+      {
+        "id": "src/utils.ts#detectResponseType",
+        "kind": "function",
+        "name": "detectResponseType",
+        "file": "src/utils.ts",
+        "startLine": 48,
+        "endLine": 70
+      },
+      {
+        "id": "src/utils.ts#mergeFetchOptions",
+        "kind": "function",
+        "name": "mergeFetchOptions",
+        "file": "src/utils.ts",
+        "startLine": 73,
+        "endLine": 106
+      },
+      {
+        "id": "src/utils.ts#callHooks",
+        "kind": "function",
+        "name": "callHooks",
+        "file": "src/utils.ts",
+        "startLine": 108,
+        "endLine": 121
+      },
+      {
+        "id": "src/fetch.ts#createFetch",
+        "kind": "function",
+        "name": "createFetch",
+        "file": "src/fetch.ts",
+        "startLine": 34,
+        "endLine": 265
+      },
+      {
+        "id": "src/fetch.ts#onError",
+        "kind": "function",
+        "name": "onError",
+        "file": "src/fetch.ts",
+        "startLine": 41,
+        "endLine": 89
+      },
+      {
+        "id": "src/node.ts#createNodeFetch",
+        "kind": "function",
+        "name": "createNodeFetch",
+        "file": "src/node.ts",
+        "startLine": 13,
+        "endLine": 35
+      },
+      {
+        "id": "playground/index.ts#main",
+        "kind": "function",
+        "name": "main",
+        "file": "playground/index.ts",
+        "startLine": 3,
+        "endLine": 9
+      },
+      {
+        "id": "test/index.test.ts#abortHandle",
+        "kind": "function",
+        "name": "abortHandle",
+        "file": "test/index.test.ts",
+        "startLine": 306,
+        "endLine": 314
+      }
+    ],
+    "relations": [
+      {
+        "from": "src/fetch.ts#onError",
+        "to": "src/utils.ts#isPayloadMethod",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#onError",
+        "to": "src/error.ts#createFetchError",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/utils.ts#mergeFetchOptions",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/utils.ts#callHooks",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/utils.ts#isPayloadMethod",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/utils.ts#isJSONSerializable",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/fetch.ts#onError",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/utils.ts#detectResponseType",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/fetch.ts#createFetch",
+        "type": "CALLS"
+      }
+    ]
+  },
+  "changedFiles": [
+    {
+      "file": "README.md",
+      "oldFile": "README.md",
+      "changedLines": [
+        246,
+        247,
+        248,
+        249,
+        250,
+        251,
+        252,
+        253,
+        254,
+        255,
+        256,
+        257,
+        258,
+        259,
+        260,
+        261,
+        262
+      ],
+      "addedCode": [
+        "### Passing array of interceptors",
+        "",
+        "If necessary, it's also possible to pass an array of function that will be called sequentially.",
+        "",
+        "```js",
+        "await ofetch(\"/api\", {",
+        "  onRequest: [",
+        "    () => {",
+        "      /* Do something */",
+        "    },",
+        "    () => {",
+        "      /* Do something else */",
+        "    },",
+        "  ],",
+        "});",
+        "```",
+        ""
+      ],
+      "removedCode": [],
+      "diff": "diff --git a/README.md b/README.md\nindex 7d361ac..aac7861 100644\n--- a/README.md\n+++ b/README.md\n@@ -243,6 +243,23 @@ await ofetch(\"/api\", {\n });\n ```\n \n+### Passing array of interceptors\n+\n+If necessary, it's also possible to pass an array of function that will be called sequentially.\n+\n+```js\n+await ofetch(\"/api\", {\n+  onRequest: [\n+    () => {\n+      /* Do something */\n+    },\n+    () => {\n+      /* Do something else */\n+    },\n+  ],\n+});\n+```\n+\n ## ✔️ Create fetch with default options\n \n This utility is useful if you need to use common options across several fetch calls.",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "});",
+              "oldLine": 243,
+              "newLine": 243
+            },
+            {
+              "kind": " ",
+              "code": "```",
+              "oldLine": 244,
+              "newLine": 244
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 245,
+              "newLine": 245
+            },
+            {
+              "kind": "+",
+              "code": "### Passing array of interceptors",
+              "oldLine": 246,
+              "newLine": 246
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 246,
+              "newLine": 247
+            },
+            {
+              "kind": "+",
+              "code": "If necessary, it's also possible to pass an array of function that will be called sequentially.",
+              "oldLine": 246,
+              "newLine": 248
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 246,
+              "newLine": 249
+            },
+            {
+              "kind": "+",
+              "code": "```js",
+              "oldLine": 246,
+              "newLine": 250
+            },
+            {
+              "kind": "+",
+              "code": "await ofetch(\"/api\", {",
+              "oldLine": 246,
+              "newLine": 251
+            },
+            {
+              "kind": "+",
+              "code": "  onRequest: [",
+              "oldLine": 246,
+              "newLine": 252
+            },
+            {
+              "kind": "+",
+              "code": "    () => {",
+              "oldLine": 246,
+              "newLine": 253
+            },
+            {
+              "kind": "+",
+              "code": "      /* Do something */",
+              "oldLine": 246,
+              "newLine": 254
+            },
+            {
+              "kind": "+",
+              "code": "    },",
+              "oldLine": 246,
+              "newLine": 255
+            },
+            {
+              "kind": "+",
+              "code": "    () => {",
+              "oldLine": 246,
+              "newLine": 256
+            },
+            {
+              "kind": "+",
+              "code": "      /* Do something else */",
+              "oldLine": 246,
+              "newLine": 257
+            },
+            {
+              "kind": "+",
+              "code": "    },",
+              "oldLine": 246,
+              "newLine": 258
+            },
+            {
+              "kind": "+",
+              "code": "  ],",
+              "oldLine": 246,
+              "newLine": 259
+            },
+            {
+              "kind": "+",
+              "code": "});",
+              "oldLine": 246,
+              "newLine": 260
+            },
+            {
+              "kind": "+",
+              "code": "```",
+              "oldLine": 246,
+              "newLine": 261
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 246,
+              "newLine": 262
+            },
+            {
+              "kind": " ",
+              "code": "## ✔️ Create fetch with default options",
+              "oldLine": 246,
+              "newLine": 263
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 247,
+              "newLine": 264
+            },
+            {
+              "kind": " ",
+              "code": "This utility is useful if you need to use common options across several fetch calls.",
+              "oldLine": 248,
+              "newLine": 265
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/fetch.ts",
+      "oldFile": "src/fetch.ts",
+      "changedLines": [
+        10,
+        106,
+        179,
+        180,
+        181,
+        182,
+        221,
+        222,
+        223,
+        224,
+        233,
+        234,
+        235,
+        236
+      ],
+      "addedCode": [
+        "  callHooks,",
+        "      await callHooks(context, context.options.onRequest);",
+        "        await callHooks(",
+        "          context as FetchContext & { error: Error },",
+        "          context.options.onRequestError",
+        "        );",
+        "      await callHooks(",
+        "        context as FetchContext & { response: FetchResponse<any> },",
+        "        context.options.onResponse",
+        "      );",
+        "        await callHooks(",
+        "          context as FetchContext & { response: FetchResponse<any> },",
+        "          context.options.onResponseError",
+        "        );"
+      ],
+      "removedCode": [
+        "      await context.options.onRequest(context);",
+        "        await context.options.onRequestError(context as any);",
+        "      await context.options.onResponse(context as any);",
+        "        await context.options.onResponseError(context as any);"
+      ],
+      "diff": "diff --git a/src/fetch.ts b/src/fetch.ts\nindex 9782dba..b4029fe 100644\n--- a/src/fetch.ts\n+++ b/src/fetch.ts\n@@ -7,6 +7,7 @@ import {\n   isJSONSerializable,\n   detectResponseType,\n   mergeFetchOptions,\n+  callHooks,\n } from \"./utils\";\n import type {\n   CreateFetchOptions,\n@@ -102,7 +103,7 @@ export function createFetch(globalOptions: CreateFetchOptions = {}): $Fetch {\n     context.options.method = context.options.method?.toUpperCase();\n \n     if (context.options.onRequest) {\n-      await context.options.onRequest(context);\n+      await callHooks(context, context.options.onRequest);\n     }\n \n     if (typeof context.request === \"string\") {\n@@ -175,7 +176,10 @@ export function createFetch(globalOptions: CreateFetchOptions = {}): $Fetch {\n     } catch (error) {\n       context.error = error as Error;\n       if (context.options.onRequestError) {\n-        await context.options.onRequestError(context as any);\n+        await callHooks(\n+          context as FetchContext & { error: Error },\n+          context.options.onRequestError\n+        );\n       }\n       return await onError(context);\n     } finally {\n@@ -214,7 +218,10 @@ export function createFetch(globalOptions: CreateFetchOptions = {}): $Fetch {\n     }\n \n     if (context.options.onResponse) {\n-      await context.options.onResponse(context as any);\n+      await callHooks(\n+        context as FetchContext & { response: FetchResponse<any> },\n+        context.options.onResponse\n+      );\n     }\n \n     if (\n@@ -223,7 +230,10 @@ export function createFetch(globalOptions: CreateFetchOptions = {}): $Fetch {\n       context.response.status < 600\n     ) {\n       if (context.options.onResponseError) {\n-        await context.options.onResponseError(context as any);\n+        await callHooks(\n+          context as FetchContext & { response: FetchResponse<any> },\n+          context.options.onResponseError\n+        );\n       }\n       return await onError(context);\n     }",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "  isJSONSerializable,",
+              "oldLine": 7,
+              "newLine": 7
+            },
+            {
+              "kind": " ",
+              "code": "  detectResponseType,",
+              "oldLine": 8,
+              "newLine": 8
+            },
+            {
+              "kind": " ",
+              "code": "  mergeFetchOptions,",
+              "oldLine": 9,
+              "newLine": 9
+            },
+            {
+              "kind": "+",
+              "code": "  callHooks,",
+              "oldLine": 10,
+              "newLine": 10
+            },
+            {
+              "kind": " ",
+              "code": "} from \"./utils\";",
+              "oldLine": 10,
+              "newLine": 11
+            },
+            {
+              "kind": " ",
+              "code": "import type {",
+              "oldLine": 11,
+              "newLine": 12
+            },
+            {
+              "kind": " ",
+              "code": "  CreateFetchOptions,",
+              "oldLine": 12,
+              "newLine": 13
+            }
+          ]
+        },
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "    context.options.method = context.options.method?.toUpperCase();",
+              "oldLine": 102,
+              "newLine": 103
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 103,
+              "newLine": 104
+            },
+            {
+              "kind": " ",
+              "code": "    if (context.options.onRequest) {",
+              "oldLine": 104,
+              "newLine": 105
+            },
+            {
+              "kind": "-",
+              "code": "      await context.options.onRequest(context);",
+              "oldLine": 105,
+              "newLine": 106
+            },
+            {
+              "kind": "+",
+              "code": "      await callHooks(context, context.options.onRequest);",
+              "oldLine": 106,
+              "newLine": 106
+            },
+            {
+              "kind": " ",
+              "code": "    }",
+              "oldLine": 106,
+              "newLine": 107
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 107,
+              "newLine": 108
+            },
+            {
+              "kind": " ",
+              "code": "    if (typeof context.request === \"string\") {",
+              "oldLine": 108,
+              "newLine": 109
+            }
+          ]
+        },
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "    } catch (error) {",
+              "oldLine": 175,
+              "newLine": 176
+            },
+            {
+              "kind": " ",
+              "code": "      context.error = error as Error;",
+              "oldLine": 176,
+              "newLine": 177
+            },
+            {
+              "kind": " ",
+              "code": "      if (context.options.onRequestError) {",
+              "oldLine": 177,
+              "newLine": 178
+            },
+            {
+              "kind": "-",
+              "code": "        await context.options.onRequestError(context as any);",
+              "oldLine": 178,
+              "newLine": 179
+            },
+            {
+              "kind": "+",
+              "code": "        await callHooks(",
+              "oldLine": 179,
+              "newLine": 179
+            },
+            {
+              "kind": "+",
+              "code": "          context as FetchContext & { error: Error },",
+              "oldLine": 179,
+              "newLine": 180
+            },
+            {
+              "kind": "+",
+              "code": "          context.options.onRequestError",
+              "oldLine": 179,
+              "newLine": 181
+            },
+            {
+              "kind": "+",
+              "code": "        );",
+              "oldLine": 179,
+              "newLine": 182
+            },
+            {
+              "kind": " ",
+              "code": "      }",
+              "oldLine": 179,
+              "newLine": 183
+            },
+            {
+              "kind": " ",
+              "code": "      return await onError(context);",
+              "oldLine": 180,
+              "newLine": 184
+            },
+            {
+              "kind": " ",
+              "code": "    } finally {",
+              "oldLine": 181,
+              "newLine": 185
+            }
+          ]
+        },
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "    }",
+              "oldLine": 214,
+              "newLine": 218
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 215,
+              "newLine": 219
+            },
+            {
+              "kind": " ",
+              "code": "    if (context.options.onResponse) {",
+              "oldLine": 216,
+              "newLine": 220
+            },
+            {
+              "kind": "-",
+              "code": "      await context.options.onResponse(context as any);",
+              "oldLine": 217,
+              "newLine": 221
+            },
+            {
+              "kind": "+",
+              "code": "      await callHooks(",
+              "oldLine": 218,
+              "newLine": 221
+            },
+            {
+              "kind": "+",
+              "code": "        context as FetchContext & { response: FetchResponse<any> },",
+              "oldLine": 218,
+              "newLine": 222
+            },
+            {
+              "kind": "+",
+              "code": "        context.options.onResponse",
+              "oldLine": 218,
+              "newLine": 223
+            },
+            {
+              "kind": "+",
+              "code": "      );",
+              "oldLine": 218,
+              "newLine": 224
+            },
+            {
+              "kind": " ",
+              "code": "    }",
+              "oldLine": 218,
+              "newLine": 225
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 219,
+              "newLine": 226
+            },
+            {
+              "kind": " ",
+              "code": "    if (",
+              "oldLine": 220,
+              "newLine": 227
+            }
+          ]
+        },
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "      context.response.status < 600",
+              "oldLine": 223,
+              "newLine": 230
+            },
+            {
+              "kind": " ",
+              "code": "    ) {",
+              "oldLine": 224,
+              "newLine": 231
+            },
+            {
+              "kind": " ",
+              "code": "      if (context.options.onResponseError) {",
+              "oldLine": 225,
+              "newLine": 232
+            },
+            {
+              "kind": "-",
+              "code": "        await context.options.onResponseError(context as any);",
+              "oldLine": 226,
+              "newLine": 233
+            },
+            {
+              "kind": "+",
+              "code": "        await callHooks(",
+              "oldLine": 227,
+              "newLine": 233
+            },
+            {
+              "kind": "+",
+              "code": "          context as FetchContext & { response: FetchResponse<any> },",
+              "oldLine": 227,
+              "newLine": 234
+            },
+            {
+              "kind": "+",
+              "code": "          context.options.onResponseError",
+              "oldLine": 227,
+              "newLine": 235
+            },
+            {
+              "kind": "+",
+              "code": "        );",
+              "oldLine": 227,
+              "newLine": 236
+            },
+            {
+              "kind": " ",
+              "code": "      }",
+              "oldLine": 227,
+              "newLine": 237
+            },
+            {
+              "kind": " ",
+              "code": "      return await onError(context);",
+              "oldLine": 228,
+              "newLine": 238
+            },
+            {
+              "kind": " ",
+              "code": "    }",
+              "oldLine": 229,
+              "newLine": 239
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/types.ts",
+      "oldFile": "src/types.ts",
+      "changedLines": [
+        18,
+        22,
+        23,
+        24,
+        44,
+        46,
+        47,
+        50,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76,
+        77,
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92
+      ],
+      "addedCode": [
+        "export interface FetchOptions<R extends ResponseType = ResponseType, T = any>",
+        "  extends Omit<RequestInit, \"body\">,",
+        "    FetchHooks<T, R> {",
+        "",
+        "  retryDelay?: number | ((context: FetchContext<T, R>) => number);",
+        "",
+        "// --------------------------",
+        "// Hooks and Context",
+        "// --------------------------",
+        "",
+        "export interface FetchContext<T = any, R extends ResponseType = ResponseType> {",
+        "  request: FetchRequest;",
+        "  options: FetchOptions<R>;",
+        "  response?: FetchResponse<T>;",
+        "  error?: Error;",
+        "}",
+        "",
+        "type MaybePromise<T> = T | Promise<T>;",
+        "type MaybeArray<T> = T | T[];",
+        "",
+        "export type FetchHook<C extends FetchContext = FetchContext> = (",
+        "  context: C",
+        ") => MaybePromise<void>;",
+        "",
+        "export interface FetchHooks<T = any, R extends ResponseType = ResponseType> {",
+        "  onRequest?: MaybeArray<FetchHook<FetchContext<T, R>>>;",
+        "  onRequestError?: MaybeArray<FetchHook<FetchContext<T, R> & { error: Error }>>;",
+        "  onResponse?: MaybeArray<",
+        "    FetchHook<FetchContext<T, R> & { response: FetchResponse<T> }>",
+        "  >;",
+        "  onResponseError?: MaybeArray<",
+        "    FetchHook<FetchContext<T, R> & { response: FetchResponse<T> }>",
+        "  >;",
+        "}",
+        ""
+      ],
+      "removedCode": [
+        "// --------------------------",
+        "// Context",
+        "// --------------------------",
+        "",
+        "export interface FetchContext<T = any, R extends ResponseType = ResponseType> {",
+        "  request: FetchRequest;",
+        "",
+        "  options: FetchOptions<R>;",
+        "  response?: FetchResponse<T>;",
+        "  error?: Error;",
+        "}",
+        "",
+        "export interface FetchOptions<R extends ResponseType = ResponseType>",
+        "  extends Omit<RequestInit, \"body\"> {",
+        "  retryDelay?: number | ((context: FetchContext) => number);",
+        "",
+        "  onRequest?(context: FetchContext): Promise<void> | void;",
+        "  onRequestError?(",
+        "    context: FetchContext & { error: Error }",
+        "  ): Promise<void> | void;",
+        "  onResponse?(",
+        "    context: FetchContext & { response: FetchResponse<R> }",
+        "  ): Promise<void> | void;",
+        "  onResponseError?(",
+        "    context: FetchContext & { response: FetchResponse<R> }",
+        "  ): Promise<void> | void;"
+      ],
+      "diff": "diff --git a/src/types.ts b/src/types.ts\nindex 5d19280..e16566b 100644\n--- a/src/types.ts\n+++ b/src/types.ts\n@@ -15,24 +15,13 @@ export interface $Fetch {\n   create(defaults: FetchOptions, globalOptions?: CreateFetchOptions): $Fetch;\n }\n \n-// --------------------------\n-// Context\n-// --------------------------\n-\n-export interface FetchContext<T = any, R extends ResponseType = ResponseType> {\n-  request: FetchRequest;\n-\n-  options: FetchOptions<R>;\n-  response?: FetchResponse<T>;\n-  error?: Error;\n-}\n-\n // --------------------------\n // Options\n // --------------------------\n \n-export interface FetchOptions<R extends ResponseType = ResponseType>\n-  extends Omit<RequestInit, \"body\"> {\n+export interface FetchOptions<R extends ResponseType = ResponseType, T = any>\n+  extends Omit<RequestInit, \"body\">,\n+    FetchHooks<T, R> {\n   baseURL?: string;\n   body?: RequestInit[\"body\"] | Record<string, any>;\n   ignoreResponseError?: boolean;\n@@ -52,21 +41,12 @@ export interface FetchOptions<R extends ResponseType = ResponseType>\n   timeout?: number;\n \n   retry?: number | false;\n+\n   /** Delay between retries in milliseconds. */\n-  retryDelay?: number | ((context: FetchContext) => number);\n+  retryDelay?: number | ((context: FetchContext<T, R>) => number);\n+\n   /** Default is [408, 409, 425, 429, 500, 502, 503, 504] */\n   retryStatusCodes?: number[];\n-\n-  onRequest?(context: FetchContext): Promise<void> | void;\n-  onRequestError?(\n-    context: FetchContext & { error: Error }\n-  ): Promise<void> | void;\n-  onResponse?(\n-    context: FetchContext & { response: FetchResponse<R> }\n-  ): Promise<void> | void;\n-  onResponseError?(\n-    context: FetchContext & { response: FetchResponse<R> }\n-  ): Promise<void> | void;\n }\n \n export interface CreateFetchOptions {\n@@ -81,6 +61,35 @@ export type GlobalOptions = Pick<\n   \"timeout\" | \"retry\" | \"retryDelay\"\n >;\n \n+// --------------------------\n+// Hooks and Context\n+// --------------------------\n+\n+export interface FetchContext<T = any, R extends ResponseType = ResponseType> {\n+  request: FetchRequest;\n+  options: FetchOptions<R>;\n+  response?: FetchResponse<T>;\n+  error?: Error;\n+}\n+\n+type MaybePromise<T> = T | Promise<T>;\n+type MaybeArray<T> = T | T[];\n+\n+export type FetchHook<C extends FetchContext = FetchContext> = (\n+  context: C\n+) => MaybePromise<void>;\n+\n+export interface FetchHooks<T = any, R extends ResponseType = ResponseType> {\n+  onRequest?: MaybeArray<FetchHook<FetchContext<T, R>>>;\n+  onRequestError?: MaybeArray<FetchHook<FetchContext<T, R> & { error: Error }>>;\n+  onResponse?: MaybeArray<\n+    FetchHook<FetchContext<T, R> & { response: FetchResponse<T> }>\n+  >;\n+  onResponseError?: MaybeArray<\n+    FetchHook<FetchContext<T, R> & { response: FetchResponse<T> }>\n+  >;\n+}\n+\n // --------------------------\n // Response Types\n // --------------------------",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "  create(defaults: FetchOptions, globalOptions?: CreateFetchOptions): $Fetch;",
+              "oldLine": 15,
+              "newLine": 15
+            },
+            {
+              "kind": " ",
+              "code": "}",
+              "oldLine": 16,
+              "newLine": 16
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 17,
+              "newLine": 17
+            },
+            {
+              "kind": "-",
+              "code": "// --------------------------",
+              "oldLine": 18,
+              "newLine": 18
+            },
+            {
+              "kind": "-",
+              "code": "// Context",
+              "oldLine": 19,
+              "newLine": 18
+            },
+            {
+              "kind": "-",
+              "code": "// --------------------------",
+              "oldLine": 20,
+              "newLine": 18
+            },
+            {
+              "kind": "-",
+              "code": "",
+              "oldLine": 21,
+              "newLine": 18
+            },
+            {
+              "kind": "-",
+              "code": "export interface FetchContext<T = any, R extends ResponseType = ResponseType> {",
+              "oldLine": 22,
+              "newLine": 18
+            },
+            {
+              "kind": "-",
+              "code": "  request: FetchRequest;",
+              "oldLine": 23,
+              "newLine": 18
+            },
+            {
+              "kind": "-",
+              "code": "",
+              "oldLine": 24,
+              "newLine": 18
+            },
+            {
+              "kind": "-",
+              "code": "  options: FetchOptions<R>;",
+              "oldLine": 25,
+              "newLine": 18
+            },
+            {
+              "kind": "-",
+              "code": "  response?: FetchResponse<T>;",
+              "oldLine": 26,
+              "newLine": 18
+            },
+            {
+              "kind": "-",
+              "code": "  error?: Error;",
+              "oldLine": 27,
+              "newLine": 18
+            },
+            {
+              "kind": "-",
+              "code": "}",
+              "oldLine": 28,
+              "newLine": 18
+            },
+            {
+              "kind": "-",
+              "code": "",
+              "oldLine": 29,
+              "newLine": 18
+            },
+            {
+              "kind": " ",
+              "code": "// --------------------------",
+              "oldLine": 30,
+              "newLine": 18
+            },
+            {
+              "kind": " ",
+              "code": "// Options",
+              "oldLine": 31,
+              "newLine": 19
+            },
+            {
+              "kind": " ",
+              "code": "// --------------------------",
+              "oldLine": 32,
+              "newLine": 20
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 33,
+              "newLine": 21
+            },
+            {
+              "kind": "-",
+              "code": "export interface FetchOptions<R extends ResponseType = ResponseType>",
+              "oldLine": 34,
+              "newLine": 22
+            },
+            {
+              "kind": "-",
+              "code": "  extends Omit<RequestInit, \"body\"> {",
+              "oldLine": 35,
+              "newLine": 22
+            },
+            {
+              "kind": "+",
+              "code": "export interface FetchOptions<R extends ResponseType = ResponseType, T = any>",
+              "oldLine": 36,
+              "newLine": 22
+            },
+            {
+              "kind": "+",
+              "code": "  extends Omit<RequestInit, \"body\">,",
+              "oldLine": 36,
+              "newLine": 23
+            },
+            {
+              "kind": "+",
+              "code": "    FetchHooks<T, R> {",
+              "oldLine": 36,
+              "newLine": 24
+            },
+            {
+              "kind": " ",
+              "code": "  baseURL?: string;",
+              "oldLine": 36,
+              "newLine": 25
+            },
+            {
+              "kind": " ",
+              "code": "  body?: RequestInit[\"body\"] | Record<string, any>;",
+              "oldLine": 37,
+              "newLine": 26
+            },
+            {
+              "kind": " ",
+              "code": "  ignoreResponseError?: boolean;",
+              "oldLine": 38,
+              "newLine": 27
+            }
+          ]
+        },
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "  timeout?: number;",
+              "oldLine": 52,
+              "newLine": 41
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 53,
+              "newLine": 42
+            },
+            {
+              "kind": " ",
+              "code": "  retry?: number | false;",
+              "oldLine": 54,
+              "newLine": 43
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 55,
+              "newLine": 44
+            },
+            {
+              "kind": " ",
+              "code": "  /** Delay between retries in milliseconds. */",
+              "oldLine": 55,
+              "newLine": 45
+            },
+            {
+              "kind": "-",
+              "code": "  retryDelay?: number | ((context: FetchContext) => number);",
+              "oldLine": 56,
+              "newLine": 46
+            },
+            {
+              "kind": "+",
+              "code": "  retryDelay?: number | ((context: FetchContext<T, R>) => number);",
+              "oldLine": 57,
+              "newLine": 46
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 57,
+              "newLine": 47
+            },
+            {
+              "kind": " ",
+              "code": "  /** Default is [408, 409, 425, 429, 500, 502, 503, 504] */",
+              "oldLine": 57,
+              "newLine": 48
+            },
+            {
+              "kind": " ",
+              "code": "  retryStatusCodes?: number[];",
+              "oldLine": 58,
+              "newLine": 49
+            },
+            {
+              "kind": "-",
+              "code": "",
+              "oldLine": 59,
+              "newLine": 50
+            },
+            {
+              "kind": "-",
+              "code": "  onRequest?(context: FetchContext): Promise<void> | void;",
+              "oldLine": 60,
+              "newLine": 50
+            },
+            {
+              "kind": "-",
+              "code": "  onRequestError?(",
+              "oldLine": 61,
+              "newLine": 50
+            },
+            {
+              "kind": "-",
+              "code": "    context: FetchContext & { error: Error }",
+              "oldLine": 62,
+              "newLine": 50
+            },
+            {
+              "kind": "-",
+              "code": "  ): Promise<void> | void;",
+              "oldLine": 63,
+              "newLine": 50
+            },
+            {
+              "kind": "-",
+              "code": "  onResponse?(",
+              "oldLine": 64,
+              "newLine": 50
+            },
+            {
+              "kind": "-",
+              "code": "    context: FetchContext & { response: FetchResponse<R> }",
+              "oldLine": 65,
+              "newLine": 50
+            },
+            {
+              "kind": "-",
+              "code": "  ): Promise<void> | void;",
+              "oldLine": 66,
+              "newLine": 50
+            },
+            {
+              "kind": "-",
+              "code": "  onResponseError?(",
+              "oldLine": 67,
+              "newLine": 50
+            },
+            {
+              "kind": "-",
+              "code": "    context: FetchContext & { response: FetchResponse<R> }",
+              "oldLine": 68,
+              "newLine": 50
+            },
+            {
+              "kind": "-",
+              "code": "  ): Promise<void> | void;",
+              "oldLine": 69,
+              "newLine": 50
+            },
+            {
+              "kind": " ",
+              "code": "}",
+              "oldLine": 70,
+              "newLine": 50
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 71,
+              "newLine": 51
+            },
+            {
+              "kind": " ",
+              "code": "export interface CreateFetchOptions {",
+              "oldLine": 72,
+              "newLine": 52
+            }
+          ]
+        },
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "  \"timeout\" | \"retry\" | \"retryDelay\"",
+              "oldLine": 81,
+              "newLine": 61
+            },
+            {
+              "kind": " ",
+              "code": ">;",
+              "oldLine": 82,
+              "newLine": 62
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 83,
+              "newLine": 63
+            },
+            {
+              "kind": "+",
+              "code": "// --------------------------",
+              "oldLine": 84,
+              "newLine": 64
+            },
+            {
+              "kind": "+",
+              "code": "// Hooks and Context",
+              "oldLine": 84,
+              "newLine": 65
+            },
+            {
+              "kind": "+",
+              "code": "// --------------------------",
+              "oldLine": 84,
+              "newLine": 66
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 84,
+              "newLine": 67
+            },
+            {
+              "kind": "+",
+              "code": "export interface FetchContext<T = any, R extends ResponseType = ResponseType> {",
+              "oldLine": 84,
+              "newLine": 68
+            },
+            {
+              "kind": "+",
+              "code": "  request: FetchRequest;",
+              "oldLine": 84,
+              "newLine": 69
+            },
+            {
+              "kind": "+",
+              "code": "  options: FetchOptions<R>;",
+              "oldLine": 84,
+              "newLine": 70
+            },
+            {
+              "kind": "+",
+              "code": "  response?: FetchResponse<T>;",
+              "oldLine": 84,
+              "newLine": 71
+            },
+            {
+              "kind": "+",
+              "code": "  error?: Error;",
+              "oldLine": 84,
+              "newLine": 72
+            },
+            {
+              "kind": "+",
+              "code": "}",
+              "oldLine": 84,
+              "newLine": 73
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 84,
+              "newLine": 74
+            },
+            {
+              "kind": "+",
+              "code": "type MaybePromise<T> = T | Promise<T>;",
+              "oldLine": 84,
+              "newLine": 75
+            },
+            {
+              "kind": "+",
+              "code": "type MaybeArray<T> = T | T[];",
+              "oldLine": 84,
+              "newLine": 76
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 84,
+              "newLine": 77
+            },
+            {
+              "kind": "+",
+              "code": "export type FetchHook<C extends FetchContext = FetchContext> = (",
+              "oldLine": 84,
+              "newLine": 78
+            },
+            {
+              "kind": "+",
+              "code": "  context: C",
+              "oldLine": 84,
+              "newLine": 79
+            },
+            {
+              "kind": "+",
+              "code": ") => MaybePromise<void>;",
+              "oldLine": 84,
+              "newLine": 80
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 84,
+              "newLine": 81
+            },
+            {
+              "kind": "+",
+              "code": "export interface FetchHooks<T = any, R extends ResponseType = ResponseType> {",
+              "oldLine": 84,
+              "newLine": 82
+            },
+            {
+              "kind": "+",
+              "code": "  onRequest?: MaybeArray<FetchHook<FetchContext<T, R>>>;",
+              "oldLine": 84,
+              "newLine": 83
+            },
+            {
+              "kind": "+",
+              "code": "  onRequestError?: MaybeArray<FetchHook<FetchContext<T, R> & { error: Error }>>;",
+              "oldLine": 84,
+              "newLine": 84
+            },
+            {
+              "kind": "+",
+              "code": "  onResponse?: MaybeArray<",
+              "oldLine": 84,
+              "newLine": 85
+            },
+            {
+              "kind": "+",
+              "code": "    FetchHook<FetchContext<T, R> & { response: FetchResponse<T> }>",
+              "oldLine": 84,
+              "newLine": 86
+            },
+            {
+              "kind": "+",
+              "code": "  >;",
+              "oldLine": 84,
+              "newLine": 87
+            },
+            {
+              "kind": "+",
+              "code": "  onResponseError?: MaybeArray<",
+              "oldLine": 84,
+              "newLine": 88
+            },
+            {
+              "kind": "+",
+              "code": "    FetchHook<FetchContext<T, R> & { response: FetchResponse<T> }>",
+              "oldLine": 84,
+              "newLine": 89
+            },
+            {
+              "kind": "+",
+              "code": "  >;",
+              "oldLine": 84,
+              "newLine": 90
+            },
+            {
+              "kind": "+",
+              "code": "}",
+              "oldLine": 84,
+              "newLine": 91
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 84,
+              "newLine": 92
+            },
+            {
+              "kind": " ",
+              "code": "// --------------------------",
+              "oldLine": 84,
+              "newLine": 93
+            },
+            {
+              "kind": " ",
+              "code": "// Response Types",
+              "oldLine": 85,
+              "newLine": 94
+            },
+            {
+              "kind": " ",
+              "code": "// --------------------------",
+              "oldLine": 86,
+              "newLine": 95
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/utils.ts",
+      "oldFile": "src/utils.ts",
+      "changedLines": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        107,
+        108,
+        109,
+        110,
+        111,
+        112,
+        113,
+        114,
+        115,
+        116,
+        117,
+        118,
+        119,
+        120,
+        121
+      ],
+      "addedCode": [
+        "import type {",
+        "  FetchContext,",
+        "  FetchHook,",
+        "  FetchOptions,",
+        "  ResponseType,",
+        "} from \"./types\";",
+        "",
+        "export async function callHooks<C extends FetchContext = FetchContext>(",
+        "  context: C,",
+        "  hooks: FetchHook<C> | FetchHook<C>[] | undefined",
+        "): Promise<void> {",
+        "  if (hooks) {",
+        "    if (Array.isArray(hooks)) {",
+        "      for (const hook of hooks) {",
+        "        await hook(context);",
+        "      }",
+        "    } else {",
+        "      await hooks(context);",
+        "    }",
+        "  }",
+        "}"
+      ],
+      "removedCode": [
+        "import type { FetchOptions, ResponseType } from \"./types\";"
+      ],
+      "diff": "diff --git a/src/utils.ts b/src/utils.ts\nindex 4147565..f9760ab 100644\n--- a/src/utils.ts\n+++ b/src/utils.ts\n@@ -1,4 +1,9 @@\n-import type { FetchOptions, ResponseType } from \"./types\";\n+import type {\n+  FetchContext,\n+  FetchHook,\n+  FetchOptions,\n+  ResponseType,\n+} from \"./types\";\n \n const payloadMethods = new Set(\n   Object.freeze([\"PATCH\", \"POST\", \"PUT\", \"DELETE\"])\n@@ -99,3 +104,18 @@ export function mergeFetchOptions(\n \n   return merged;\n }\n+\n+export async function callHooks<C extends FetchContext = FetchContext>(\n+  context: C,\n+  hooks: FetchHook<C> | FetchHook<C>[] | undefined\n+): Promise<void> {\n+  if (hooks) {\n+    if (Array.isArray(hooks)) {\n+      for (const hook of hooks) {\n+        await hook(context);\n+      }\n+    } else {\n+      await hooks(context);\n+    }\n+  }\n+}",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": "-",
+              "code": "import type { FetchOptions, ResponseType } from \"./types\";",
+              "oldLine": 1,
+              "newLine": 1
+            },
+            {
+              "kind": "+",
+              "code": "import type {",
+              "oldLine": 2,
+              "newLine": 1
+            },
+            {
+              "kind": "+",
+              "code": "  FetchContext,",
+              "oldLine": 2,
+              "newLine": 2
+            },
+            {
+              "kind": "+",
+              "code": "  FetchHook,",
+              "oldLine": 2,
+              "newLine": 3
+            },
+            {
+              "kind": "+",
+              "code": "  FetchOptions,",
+              "oldLine": 2,
+              "newLine": 4
+            },
+            {
+              "kind": "+",
+              "code": "  ResponseType,",
+              "oldLine": 2,
+              "newLine": 5
+            },
+            {
+              "kind": "+",
+              "code": "} from \"./types\";",
+              "oldLine": 2,
+              "newLine": 6
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 2,
+              "newLine": 7
+            },
+            {
+              "kind": " ",
+              "code": "const payloadMethods = new Set(",
+              "oldLine": 3,
+              "newLine": 8
+            },
+            {
+              "kind": " ",
+              "code": "  Object.freeze([\"PATCH\", \"POST\", \"PUT\", \"DELETE\"])",
+              "oldLine": 4,
+              "newLine": 9
+            }
+          ]
+        },
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 99,
+              "newLine": 104
+            },
+            {
+              "kind": " ",
+              "code": "  return merged;",
+              "oldLine": 100,
+              "newLine": 105
+            },
+            {
+              "kind": " ",
+              "code": "}",
+              "oldLine": 101,
+              "newLine": 106
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 102,
+              "newLine": 107
+            },
+            {
+              "kind": "+",
+              "code": "export async function callHooks<C extends FetchContext = FetchContext>(",
+              "oldLine": 102,
+              "newLine": 108
+            },
+            {
+              "kind": "+",
+              "code": "  context: C,",
+              "oldLine": 102,
+              "newLine": 109
+            },
+            {
+              "kind": "+",
+              "code": "  hooks: FetchHook<C> | FetchHook<C>[] | undefined",
+              "oldLine": 102,
+              "newLine": 110
+            },
+            {
+              "kind": "+",
+              "code": "): Promise<void> {",
+              "oldLine": 102,
+              "newLine": 111
+            },
+            {
+              "kind": "+",
+              "code": "  if (hooks) {",
+              "oldLine": 102,
+              "newLine": 112
+            },
+            {
+              "kind": "+",
+              "code": "    if (Array.isArray(hooks)) {",
+              "oldLine": 102,
+              "newLine": 113
+            },
+            {
+              "kind": "+",
+              "code": "      for (const hook of hooks) {",
+              "oldLine": 102,
+              "newLine": 114
+            },
+            {
+              "kind": "+",
+              "code": "        await hook(context);",
+              "oldLine": 102,
+              "newLine": 115
+            },
+            {
+              "kind": "+",
+              "code": "      }",
+              "oldLine": 102,
+              "newLine": 116
+            },
+            {
+              "kind": "+",
+              "code": "    } else {",
+              "oldLine": 102,
+              "newLine": 117
+            },
+            {
+              "kind": "+",
+              "code": "      await hooks(context);",
+              "oldLine": 102,
+              "newLine": 118
+            },
+            {
+              "kind": "+",
+              "code": "    }",
+              "oldLine": 102,
+              "newLine": 119
+            },
+            {
+              "kind": "+",
+              "code": "  }",
+              "oldLine": 102,
+              "newLine": 120
+            },
+            {
+              "kind": "+",
+              "code": "}",
+              "oldLine": 102,
+              "newLine": 121
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "test/index.test.ts",
+      "oldFile": "test/index.test.ts",
+      "changedLines": [
+        12,
+        388,
+        389,
+        390,
+        391,
+        392,
+        393,
+        394,
+        395,
+        396,
+        397,
+        398,
+        399,
+        400,
+        401,
+        402,
+        403,
+        404,
+        405,
+        406,
+        407,
+        408,
+        409,
+        410,
+        411,
+        412,
+        413,
+        414,
+        415,
+        416,
+        417,
+        418,
+        419,
+        420,
+        421,
+        422,
+        423,
+        424,
+        425,
+        426,
+        427,
+        428,
+        429,
+        430,
+        431,
+        432,
+        433,
+        434,
+        435,
+        436,
+        437,
+        438,
+        439,
+        440,
+        441,
+        442,
+        443,
+        444,
+        445,
+        446,
+        447,
+        448,
+        449,
+        450,
+        451,
+        452,
+        453,
+        454,
+        455,
+        456,
+        457
+      ],
+      "addedCode": [
+        "import { describe, beforeAll, afterAll, it, expect, vi } from \"vitest\";",
+        "",
+        "  it(\"calls hooks\", async () => {",
+        "    const onRequest = vi.fn();",
+        "    const onRequestError = vi.fn();",
+        "    const onResponse = vi.fn();",
+        "    const onResponseError = vi.fn();",
+        "",
+        "    await $fetch(getURL(\"/ok\"), {",
+        "      onRequest,",
+        "      onRequestError,",
+        "      onResponse,",
+        "      onResponseError,",
+        "    });",
+        "",
+        "    expect(onRequest).toHaveBeenCalledOnce();",
+        "    expect(onRequestError).not.toHaveBeenCalled();",
+        "    expect(onResponse).toHaveBeenCalledOnce();",
+        "    expect(onResponseError).not.toHaveBeenCalled();",
+        "",
+        "    onRequest.mockReset();",
+        "    onRequestError.mockReset();",
+        "    onResponse.mockReset();",
+        "    onResponseError.mockReset();",
+        "",
+        "    await $fetch(getURL(\"/403\"), {",
+        "      onRequest,",
+        "      onRequestError,",
+        "      onResponse,",
+        "      onResponseError,",
+        "    }).catch((error) => error);",
+        "",
+        "    expect(onRequest).toHaveBeenCalledOnce();",
+        "    expect(onRequestError).not.toHaveBeenCalled();",
+        "    expect(onResponse).toHaveBeenCalledOnce();",
+        "    expect(onResponseError).toHaveBeenCalledOnce();",
+        "",
+        "    onRequest.mockReset();",
+        "    onRequestError.mockReset();",
+        "    onResponse.mockReset();",
+        "    onResponseError.mockReset();",
+        "",
+        "    await $fetch(getURL(\"/ok\"), {",
+        "      onRequest: [onRequest, onRequest],",
+        "      onRequestError: [onRequestError, onRequestError],",
+        "      onResponse: [onResponse, onResponse],",
+        "      onResponseError: [onResponseError, onResponseError],",
+        "    });",
+        "",
+        "    expect(onRequest).toHaveBeenCalledTimes(2);",
+        "    expect(onRequestError).not.toHaveBeenCalled();",
+        "    expect(onResponse).toHaveBeenCalledTimes(2);",
+        "    expect(onResponseError).not.toHaveBeenCalled();",
+        "",
+        "    onRequest.mockReset();",
+        "    onRequestError.mockReset();",
+        "    onResponse.mockReset();",
+        "    onResponseError.mockReset();",
+        "",
+        "    await $fetch(getURL(\"/403\"), {",
+        "      onRequest: [onRequest, onRequest],",
+        "      onRequestError: [onRequestError, onRequestError],",
+        "      onResponse: [onResponse, onResponse],",
+        "      onResponseError: [onResponseError, onResponseError],",
+        "    }).catch((error) => error);",
+        "",
+        "    expect(onRequest).toHaveBeenCalledTimes(2);",
+        "    expect(onRequestError).not.toHaveBeenCalled();",
+        "    expect(onResponse).toHaveBeenCalledTimes(2);",
+        "    expect(onResponseError).toHaveBeenCalledTimes(2);",
+        "  });"
+      ],
+      "removedCode": [
+        "import { describe, beforeAll, afterAll, it, expect } from \"vitest\";"
+      ],
+      "diff": "diff --git a/test/index.test.ts b/test/index.test.ts\nindex 41446af..abbbd26 100644\n--- a/test/index.test.ts\n+++ b/test/index.test.ts\n@@ -9,7 +9,7 @@ import {\n   readRawBody,\n   toNodeListener,\n } from \"h3\";\n-import { describe, beforeAll, afterAll, it, expect } from \"vitest\";\n+import { describe, beforeAll, afterAll, it, expect, vi } from \"vitest\";\n import { Headers, FormData, Blob } from \"node-fetch-native\";\n import { nodeMajorVersion } from \"std-env\";\n import { $fetch } from \"../src/node\";\n@@ -385,4 +385,74 @@ describe(\"ofetch\", () => {\n \n     expect(path).to.eq(\"?b=2&c=3&a=1\");\n   });\n+\n+  it(\"calls hooks\", async () => {\n+    const onRequest = vi.fn();\n+    const onRequestError = vi.fn();\n+    const onResponse = vi.fn();\n+    const onResponseError = vi.fn();\n+\n+    await $fetch(getURL(\"/ok\"), {\n+      onRequest,\n+      onRequestError,\n+      onResponse,\n+      onResponseError,\n+    });\n+\n+    expect(onRequest).toHaveBeenCalledOnce();\n+    expect(onRequestError).not.toHaveBeenCalled();\n+    expect(onResponse).toHaveBeenCalledOnce();\n+    expect(onResponseError).not.toHaveBeenCalled();\n+\n+    onRequest.mockReset();\n+    onRequestError.mockReset();\n+    onResponse.mockReset();\n+    onResponseError.mockReset();\n+\n+    await $fetch(getURL(\"/403\"), {\n+      onRequest,\n+      onRequestError,\n+      onResponse,\n+      onResponseError,\n+    }).catch((error) => error);\n+\n+    expect(onRequest).toHaveBeenCalledOnce();\n+    expect(onRequestError).not.toHaveBeenCalled();\n+    expect(onResponse).toHaveBeenCalledOnce();\n+    expect(onResponseError).toHaveBeenCalledOnce();\n+\n+    onRequest.mockReset();\n+    onRequestError.mockReset();\n+    onResponse.mockReset();\n+    onResponseError.mockReset();\n+\n+    await $fetch(getURL(\"/ok\"), {\n+      onRequest: [onRequest, onRequest],\n+      onRequestError: [onRequestError, onRequestError],\n+      onResponse: [onResponse, onResponse],\n+      onResponseError: [onResponseError, onResponseError],\n+    });\n+\n+    expect(onRequest).toHaveBeenCalledTimes(2);\n+    expect(onRequestError).not.toHaveBeenCalled();\n+    expect(onResponse).toHaveBeenCalledTimes(2);\n+    expect(onResponseError).not.toHaveBeenCalled();\n+\n+    onRequest.mockReset();\n+    onRequestError.mockReset();\n+    onResponse.mockReset();\n+    onResponseError.mockReset();\n+\n+    await $fetch(getURL(\"/403\"), {\n+      onRequest: [onRequest, onRequest],\n+      onRequestError: [onRequestError, onRequestError],\n+      onResponse: [onResponse, onResponse],\n+      onResponseError: [onResponseError, onResponseError],\n+    }).catch((error) => error);\n+\n+    expect(onRequest).toHaveBeenCalledTimes(2);\n+    expect(onRequestError).not.toHaveBeenCalled();\n+    expect(onResponse).toHaveBeenCalledTimes(2);\n+    expect(onResponseError).toHaveBeenCalledTimes(2);\n+  });\n });",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "  readRawBody,",
+              "oldLine": 9,
+              "newLine": 9
+            },
+            {
+              "kind": " ",
+              "code": "  toNodeListener,",
+              "oldLine": 10,
+              "newLine": 10
+            },
+            {
+              "kind": " ",
+              "code": "} from \"h3\";",
+              "oldLine": 11,
+              "newLine": 11
+            },
+            {
+              "kind": "-",
+              "code": "import { describe, beforeAll, afterAll, it, expect } from \"vitest\";",
+              "oldLine": 12,
+              "newLine": 12
+            },
+            {
+              "kind": "+",
+              "code": "import { describe, beforeAll, afterAll, it, expect, vi } from \"vitest\";",
+              "oldLine": 13,
+              "newLine": 12
+            },
+            {
+              "kind": " ",
+              "code": "import { Headers, FormData, Blob } from \"node-fetch-native\";",
+              "oldLine": 13,
+              "newLine": 13
+            },
+            {
+              "kind": " ",
+              "code": "import { nodeMajorVersion } from \"std-env\";",
+              "oldLine": 14,
+              "newLine": 14
+            },
+            {
+              "kind": " ",
+              "code": "import { $fetch } from \"../src/node\";",
+              "oldLine": 15,
+              "newLine": 15
+            }
+          ]
+        },
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 385,
+              "newLine": 385
+            },
+            {
+              "kind": " ",
+              "code": "    expect(path).to.eq(\"?b=2&c=3&a=1\");",
+              "oldLine": 386,
+              "newLine": 386
+            },
+            {
+              "kind": " ",
+              "code": "  });",
+              "oldLine": 387,
+              "newLine": 387
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 388,
+              "newLine": 388
+            },
+            {
+              "kind": "+",
+              "code": "  it(\"calls hooks\", async () => {",
+              "oldLine": 388,
+              "newLine": 389
+            },
+            {
+              "kind": "+",
+              "code": "    const onRequest = vi.fn();",
+              "oldLine": 388,
+              "newLine": 390
+            },
+            {
+              "kind": "+",
+              "code": "    const onRequestError = vi.fn();",
+              "oldLine": 388,
+              "newLine": 391
+            },
+            {
+              "kind": "+",
+              "code": "    const onResponse = vi.fn();",
+              "oldLine": 388,
+              "newLine": 392
+            },
+            {
+              "kind": "+",
+              "code": "    const onResponseError = vi.fn();",
+              "oldLine": 388,
+              "newLine": 393
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 388,
+              "newLine": 394
+            },
+            {
+              "kind": "+",
+              "code": "    await $fetch(getURL(\"/ok\"), {",
+              "oldLine": 388,
+              "newLine": 395
+            },
+            {
+              "kind": "+",
+              "code": "      onRequest,",
+              "oldLine": 388,
+              "newLine": 396
+            },
+            {
+              "kind": "+",
+              "code": "      onRequestError,",
+              "oldLine": 388,
+              "newLine": 397
+            },
+            {
+              "kind": "+",
+              "code": "      onResponse,",
+              "oldLine": 388,
+              "newLine": 398
+            },
+            {
+              "kind": "+",
+              "code": "      onResponseError,",
+              "oldLine": 388,
+              "newLine": 399
+            },
+            {
+              "kind": "+",
+              "code": "    });",
+              "oldLine": 388,
+              "newLine": 400
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 388,
+              "newLine": 401
+            },
+            {
+              "kind": "+",
+              "code": "    expect(onRequest).toHaveBeenCalledOnce();",
+              "oldLine": 388,
+              "newLine": 402
+            },
+            {
+              "kind": "+",
+              "code": "    expect(onRequestError).not.toHaveBeenCalled();",
+              "oldLine": 388,
+              "newLine": 403
+            },
+            {
+              "kind": "+",
+              "code": "    expect(onResponse).toHaveBeenCalledOnce();",
+              "oldLine": 388,
+              "newLine": 404
+            },
+            {
+              "kind": "+",
+              "code": "    expect(onResponseError).not.toHaveBeenCalled();",
+              "oldLine": 388,
+              "newLine": 405
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 388,
+              "newLine": 406
+            },
+            {
+              "kind": "+",
+              "code": "    onRequest.mockReset();",
+              "oldLine": 388,
+              "newLine": 407
+            },
+            {
+              "kind": "+",
+              "code": "    onRequestError.mockReset();",
+              "oldLine": 388,
+              "newLine": 408
+            },
+            {
+              "kind": "+",
+              "code": "    onResponse.mockReset();",
+              "oldLine": 388,
+              "newLine": 409
+            },
+            {
+              "kind": "+",
+              "code": "    onResponseError.mockReset();",
+              "oldLine": 388,
+              "newLine": 410
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 388,
+              "newLine": 411
+            },
+            {
+              "kind": "+",
+              "code": "    await $fetch(getURL(\"/403\"), {",
+              "oldLine": 388,
+              "newLine": 412
+            },
+            {
+              "kind": "+",
+              "code": "      onRequest,",
+              "oldLine": 388,
+              "newLine": 413
+            },
+            {
+              "kind": "+",
+              "code": "      onRequestError,",
+              "oldLine": 388,
+              "newLine": 414
+            },
+            {
+              "kind": "+",
+              "code": "      onResponse,",
+              "oldLine": 388,
+              "newLine": 415
+            },
+            {
+              "kind": "+",
+              "code": "      onResponseError,",
+              "oldLine": 388,
+              "newLine": 416
+            },
+            {
+              "kind": "+",
+              "code": "    }).catch((error) => error);",
+              "oldLine": 388,
+              "newLine": 417
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 388,
+              "newLine": 418
+            },
+            {
+              "kind": "+",
+              "code": "    expect(onRequest).toHaveBeenCalledOnce();",
+              "oldLine": 388,
+              "newLine": 419
+            },
+            {
+              "kind": "+",
+              "code": "    expect(onRequestError).not.toHaveBeenCalled();",
+              "oldLine": 388,
+              "newLine": 420
+            },
+            {
+              "kind": "+",
+              "code": "    expect(onResponse).toHaveBeenCalledOnce();",
+              "oldLine": 388,
+              "newLine": 421
+            },
+            {
+              "kind": "+",
+              "code": "    expect(onResponseError).toHaveBeenCalledOnce();",
+              "oldLine": 388,
+              "newLine": 422
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 388,
+              "newLine": 423
+            },
+            {
+              "kind": "+",
+              "code": "    onRequest.mockReset();",
+              "oldLine": 388,
+              "newLine": 424
+            },
+            {
+              "kind": "+",
+              "code": "    onRequestError.mockReset();",
+              "oldLine": 388,
+              "newLine": 425
+            },
+            {
+              "kind": "+",
+              "code": "    onResponse.mockReset();",
+              "oldLine": 388,
+              "newLine": 426
+            },
+            {
+              "kind": "+",
+              "code": "    onResponseError.mockReset();",
+              "oldLine": 388,
+              "newLine": 427
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 388,
+              "newLine": 428
+            },
+            {
+              "kind": "+",
+              "code": "    await $fetch(getURL(\"/ok\"), {",
+              "oldLine": 388,
+              "newLine": 429
+            },
+            {
+              "kind": "+",
+              "code": "      onRequest: [onRequest, onRequest],",
+              "oldLine": 388,
+              "newLine": 430
+            },
+            {
+              "kind": "+",
+              "code": "      onRequestError: [onRequestError, onRequestError],",
+              "oldLine": 388,
+              "newLine": 431
+            },
+            {
+              "kind": "+",
+              "code": "      onResponse: [onResponse, onResponse],",
+              "oldLine": 388,
+              "newLine": 432
+            },
+            {
+              "kind": "+",
+              "code": "      onResponseError: [onResponseError, onResponseError],",
+              "oldLine": 388,
+              "newLine": 433
+            },
+            {
+              "kind": "+",
+              "code": "    });",
+              "oldLine": 388,
+              "newLine": 434
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 388,
+              "newLine": 435
+            },
+            {
+              "kind": "+",
+              "code": "    expect(onRequest).toHaveBeenCalledTimes(2);",
+              "oldLine": 388,
+              "newLine": 436
+            },
+            {
+              "kind": "+",
+              "code": "    expect(onRequestError).not.toHaveBeenCalled();",
+              "oldLine": 388,
+              "newLine": 437
+            },
+            {
+              "kind": "+",
+              "code": "    expect(onResponse).toHaveBeenCalledTimes(2);",
+              "oldLine": 388,
+              "newLine": 438
+            },
+            {
+              "kind": "+",
+              "code": "    expect(onResponseError).not.toHaveBeenCalled();",
+              "oldLine": 388,
+              "newLine": 439
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 388,
+              "newLine": 440
+            },
+            {
+              "kind": "+",
+              "code": "    onRequest.mockReset();",
+              "oldLine": 388,
+              "newLine": 441
+            },
+            {
+              "kind": "+",
+              "code": "    onRequestError.mockReset();",
+              "oldLine": 388,
+              "newLine": 442
+            },
+            {
+              "kind": "+",
+              "code": "    onResponse.mockReset();",
+              "oldLine": 388,
+              "newLine": 443
+            },
+            {
+              "kind": "+",
+              "code": "    onResponseError.mockReset();",
+              "oldLine": 388,
+              "newLine": 444
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 388,
+              "newLine": 445
+            },
+            {
+              "kind": "+",
+              "code": "    await $fetch(getURL(\"/403\"), {",
+              "oldLine": 388,
+              "newLine": 446
+            },
+            {
+              "kind": "+",
+              "code": "      onRequest: [onRequest, onRequest],",
+              "oldLine": 388,
+              "newLine": 447
+            },
+            {
+              "kind": "+",
+              "code": "      onRequestError: [onRequestError, onRequestError],",
+              "oldLine": 388,
+              "newLine": 448
+            },
+            {
+              "kind": "+",
+              "code": "      onResponse: [onResponse, onResponse],",
+              "oldLine": 388,
+              "newLine": 449
+            },
+            {
+              "kind": "+",
+              "code": "      onResponseError: [onResponseError, onResponseError],",
+              "oldLine": 388,
+              "newLine": 450
+            },
+            {
+              "kind": "+",
+              "code": "    }).catch((error) => error);",
+              "oldLine": 388,
+              "newLine": 451
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 388,
+              "newLine": 452
+            },
+            {
+              "kind": "+",
+              "code": "    expect(onRequest).toHaveBeenCalledTimes(2);",
+              "oldLine": 388,
+              "newLine": 453
+            },
+            {
+              "kind": "+",
+              "code": "    expect(onRequestError).not.toHaveBeenCalled();",
+              "oldLine": 388,
+              "newLine": 454
+            },
+            {
+              "kind": "+",
+              "code": "    expect(onResponse).toHaveBeenCalledTimes(2);",
+              "oldLine": 388,
+              "newLine": 455
+            },
+            {
+              "kind": "+",
+              "code": "    expect(onResponseError).toHaveBeenCalledTimes(2);",
+              "oldLine": 388,
+              "newLine": 456
+            },
+            {
+              "kind": "+",
+              "code": "  });",
+              "oldLine": 388,
+              "newLine": 457
+            },
+            {
+              "kind": " ",
+              "code": "});",
+              "oldLine": 388,
+              "newLine": 458
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "changedEntities": [
+    {
+      "entity": {
+        "id": "src/utils.ts#callHooks",
+        "kind": "function",
+        "name": "callHooks",
+        "file": "src/utils.ts",
+        "startLine": 108,
+        "endLine": 121
+      },
+      "change": {
+        "file": "src/utils.ts",
+        "changedLines": [
+          108,
+          109,
+          110,
+          111,
+          112,
+          113,
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          121
+        ],
+        "addedCode": [
+          "export async function callHooks<C extends FetchContext = FetchContext>(",
+          "  context: C,",
+          "  hooks: FetchHook<C> | FetchHook<C>[] | undefined",
+          "): Promise<void> {",
+          "  if (hooks) {",
+          "    if (Array.isArray(hooks)) {",
+          "      for (const hook of hooks) {",
+          "        await hook(context);",
+          "      }",
+          "    } else {",
+          "      await hooks(context);",
+          "    }",
+          "  }",
+          "}"
+        ],
+        "removedCode": [],
+        "diff": "--- a/src/utils.ts\n+++ b/src/utils.ts\n@@ -101,0 +108,14 @@\n+export async function callHooks<C extends FetchContext = FetchContext>(\n+  context: C,\n+  hooks: FetchHook<C> | FetchHook<C>[] | undefined\n+): Promise<void> {\n+  if (hooks) {\n+    if (Array.isArray(hooks)) {\n+      for (const hook of hooks) {\n+        await hook(context);\n+      }\n+    } else {\n+      await hooks(context);\n+    }\n+  }\n+}"
+      }
+    }
+  ],
+  "impacts": [
+    {
+      "changedEntity": {
+        "id": "src/utils.ts#callHooks",
+        "kind": "function",
+        "name": "callHooks",
+        "file": "src/utils.ts",
+        "startLine": 108,
+        "endLine": 121
+      },
+      "change": {
+        "file": "src/utils.ts",
+        "changedLines": [
+          108,
+          109,
+          110,
+          111,
+          112,
+          113,
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          121
+        ],
+        "addedCode": [
+          "export async function callHooks<C extends FetchContext = FetchContext>(",
+          "  context: C,",
+          "  hooks: FetchHook<C> | FetchHook<C>[] | undefined",
+          "): Promise<void> {",
+          "  if (hooks) {",
+          "    if (Array.isArray(hooks)) {",
+          "      for (const hook of hooks) {",
+          "        await hook(context);",
+          "      }",
+          "    } else {",
+          "      await hooks(context);",
+          "    }",
+          "  }",
+          "}"
+        ],
+        "removedCode": [],
+        "diff": "--- a/src/utils.ts\n+++ b/src/utils.ts\n@@ -101,0 +108,14 @@\n+export async function callHooks<C extends FetchContext = FetchContext>(\n+  context: C,\n+  hooks: FetchHook<C> | FetchHook<C>[] | undefined\n+): Promise<void> {\n+  if (hooks) {\n+    if (Array.isArray(hooks)) {\n+      for (const hook of hooks) {\n+        await hook(context);\n+      }\n+    } else {\n+      await hooks(context);\n+    }\n+  }\n+}"
+      },
+      "directDependents": [
+        {
+          "id": "src/fetch.ts#createFetch",
+          "kind": "function",
+          "name": "createFetch",
+          "file": "src/fetch.ts",
+          "startLine": 34,
+          "endLine": 265
+        }
+      ],
+      "blastRadius": {
+        "totalAffectedEntities": 1,
+        "entities": [
+          {
+            "id": "src/fetch.ts#createFetch",
+            "kind": "function",
+            "name": "createFetch",
+            "file": "src/fetch.ts",
+            "startLine": 34,
+            "endLine": 265
+          }
+        ],
+        "paths": [
+          {
+            "target": {
+              "id": "src/fetch.ts#createFetch",
+              "kind": "function",
+              "name": "createFetch",
+              "file": "src/fetch.ts",
+              "startLine": 34,
+              "endLine": 265
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/utils.ts#callHooks",
+                "kind": "function",
+                "name": "callHooks",
+                "file": "src/utils.ts",
+                "startLine": 108,
+                "endLine": 121
+              },
+              {
+                "id": "src/fetch.ts#createFetch",
+                "kind": "function",
+                "name": "createFetch",
+                "file": "src/fetch.ts",
+                "startLine": 34,
+                "endLine": 265
+              }
+            ]
+          }
+        ]
+      },
+      "terminalDependents": []
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "OUTSIDE_SUPPORTED_SCOPE",
+      "severity": "warning",
+      "message": "Changes outside TypeScript extraction scope were not analyzed for function impact."
+    },
+    {
+      "code": "AMBIGUOUS_FUNCTION_RANGE",
+      "severity": "warning",
+      "message": "Skipping ambiguous overlapping function ranges: src/fetch.ts#createFetch"
+    },
+    {
+      "code": "AMBIGUOUS_FUNCTION_RANGE",
+      "severity": "warning",
+      "message": "Skipping ambiguous overlapping function ranges: src/fetch.ts#onError"
+    }
+  ],
+  "limitations": [
+    "Only TypeScript is analyzed.",
+    "Only named standalone function declarations are supported.",
+    "Only CALLS relationships are currently supported.",
+    "Class methods are not analyzed.",
+    "Arrow functions are not analyzed.",
+    "Dynamic calls are not analyzed.",
+    "Deleted functions have no current graph entity; renamed or ambiguous functions may lack removed-code evidence.",
+    "Overlapping function line ranges are skipped rather than sharing ambiguous evidence.",
+    "Application surfaces are not yet discovered.",
+    "Blast radius is limited to depth 6."
+  ]
+}

@@ -1,0 +1,11 @@
+model,commit,duration_ms,prompt_tokens,completion_tokens,cached_tokens,billed_usd_openrouter,attempts,finish_reason,resolved_model
+deepseek/deepseek-v4.1-flash-1017,0d84f7b,10909,4374,1775,408,0.001619116,1,stop,deepseek/deepseek-v4.1-flash-1017
+openai/gpt-6-luna,0d84f7b,6199,4128,512,0,0.000771925,1,stop,openai/gpt-6-luna
+deepseek/deepseek-v4.1-flash-1017,3baf1cc,7313,2167,1219,0,0.000736805,1,stop,deepseek/deepseek-v4.1-flash-1017
+openai/gpt-6-luna,3baf1cc,4188,2308,317,0,0.000446925,1,stop,openai/gpt-6-luna
+deepseek/deepseek-v4.1-flash-1017,413397a,8090,4170,1536,640,0.00102195,1,stop,deepseek/deepseek-v4.1-flash-1017
+openai/gpt-6-luna,413397a,4918,4125,356,0,0.00069355,1,stop,openai/gpt-6-luna
+deepseek/deepseek-v4.1-flash-1017,571dcc9,11499,2115,989,0,0.00072852,1,stop,deepseek/deepseek-v4.1-flash-1017
+openai/gpt-6-luna,571dcc9,5556,2223,371,0,0.0004633,1,stop,openai/gpt-6-luna
+deepseek/deepseek-v4.1-flash-1017,6a879d4,7058,8112,2567,0,0.0033084,1,stop,deepseek/deepseek-v4.1-flash-1017
+openai/gpt-6-luna,6a879d4,5682,8102,480,0,0.001252675,1,stop,openai/gpt-6-luna

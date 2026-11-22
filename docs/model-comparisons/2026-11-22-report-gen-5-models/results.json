@@ -1,0 +1,10 @@
+[{"model":"ds","commit":"0d84f7b","attempt":1,"ms":10909,"pt":4374,"ct":1775,"cached":408,"rcost":0.001619116,"cost":0.001661124,"fin":"stop","mdl":"deepseek/deepseek-v4.1-flash-1017"},
+{"model":"luna","commit":"0d84f7b","attempt":1,"ms":6199,"pt":4128,"ct":512,"cached":0,"rcost":0.000771925,"cost":0.0006688,"fin":"stop","mdl":"openai/gpt-6-luna"},
+{"model":"ds","commit":"3baf1cc","attempt":1,"ms":7313,"pt":2167,"ct":1219,"cached":0,"rcost":0.000736805,"cost":0.00105645,"fin":"stop","mdl":"deepseek/deepseek-v4.1-flash-1017"},
+{"model":"luna","commit":"3baf1cc","attempt":1,"ms":4188,"pt":2308,"ct":317,"cached":0,"rcost":0.000446925,"cost":0.00038930000000000003,"fin":"stop","mdl":"openai/gpt-6-luna"},
+{"model":"ds","commit":"413397a","attempt":1,"ms":8090,"pt":4170,"ct":1536,"cached":640,"rcost":0.00102195,"cost":0.00145302,"fin":"stop","mdl":"deepseek/deepseek-v4.1-flash-1017"},
+{"model":"luna","commit":"413397a","attempt":1,"ms":4918,"pt":4125,"ct":356,"cached":0,"rcost":0.00069355,"cost":0.0005905,"fin":"stop","mdl":"openai/gpt-6-luna"},
+{"model":"ds","commit":"571dcc9","attempt":1,"ms":11499,"pt":2115,"ct":989,"cached":0,"rcost":0.00072852,"cost":0.0009106499999999999,"fin":"stop","mdl":"deepseek/deepseek-v4.1-flash-1017"},
+{"model":"luna","commit":"571dcc9","attempt":1,"ms":5556,"pt":2223,"ct":371,"cached":0,"rcost":0.0004633,"cost":0.0004078,"fin":"stop","mdl":"openai/gpt-6-luna"},
+{"model":"ds","commit":"6a879d4","attempt":1,"ms":7058,"pt":8112,"ct":2567,"cached":0,"rcost":0.0033084,"cost":0.002757,"fin":"stop","mdl":"deepseek/deepseek-v4.1-flash-1017"},
+{"model":"luna","commit":"6a879d4","attempt":1,"ms":5682,"pt":8102,"ct":480,"cached":0,"rcost":0.001252675,"cost":0.0010502,"fin":"stop","mdl":"openai/gpt-6-luna"}]

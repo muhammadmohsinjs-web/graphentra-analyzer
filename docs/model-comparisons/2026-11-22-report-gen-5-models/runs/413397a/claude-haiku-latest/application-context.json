@@ -1,0 +1,198 @@
+{
+  "schemaVersion": "1.0",
+  "application": {
+    "name": "ofetch",
+    "summary": "A TypeScript HTTP client library built on the fetch API, providing automatic JSON handling, retries, timeouts, hooks, and normalized errors for Node.js and browser environments.",
+    "purpose": "Simplify making HTTP requests and handling responses, errors, and retries in JavaScript/TypeScript applications."
+  },
+  "domains": [
+    {
+      "id": "http-client",
+      "name": "HTTP Client",
+      "description": "Core request construction, sending, and response parsing over fetch."
+    },
+    {
+      "id": "error-handling",
+      "name": "Error Handling",
+      "description": "Normalizes failed requests and responses into structured FetchError objects with status and request details."
+    },
+    {
+      "id": "resilience",
+      "name": "Retry and Timeout",
+      "description": "Automatic retries for transient failures and request timeouts via abort signals."
+    },
+    {
+      "id": "request-preparation",
+      "name": "Request Preparation",
+      "description": "Merges default and per-request options, headers, query parameters, and serializes JSON bodies."
+    },
+    {
+      "id": "runtime-adaptation",
+      "name": "Runtime Adaptation",
+      "description": "Selects fetch, Headers, and AbortController implementations for global, Node.js, and polyfilled environments."
+    }
+  ],
+  "terminology": [
+    {
+      "term": "$fetch",
+      "meaning": "The main exported callable HTTP client function that returns parsed response data."
+    },
+    {
+      "term": "raw",
+      "meaning": "A variant of $fetch that returns the full response object including parsed data."
+    },
+    {
+      "term": "FetchError",
+      "meaning": "Error type thrown on failed requests, carrying request, options, response, and status information."
+    },
+    {
+      "term": "Hooks",
+      "meaning": "User-supplied callbacks (onRequest, onRequestError, onResponse, onResponseError) invoked at stages of a request."
+    },
+    {
+      "term": "Payload method",
+      "meaning": "HTTP methods that carry a request body (PATCH, POST, PUT, DELETE)."
+    },
+    {
+      "term": "Retry status codes",
+      "meaning": "HTTP status codes (such as 408, 429, 500, 503) considered transient and eligible for retry."
+    },
+    {
+      "term": "baseURL",
+      "meaning": "Option prefixing relative request URLs with a base address."
+    },
+    {
+      "term": "Defaults",
+      "meaning": "Default options merged into each request, created via $fetch.create."
+    }
+  ],
+  "entityAnnotations": [
+    {
+      "entityId": "src/fetch.ts#createFetch",
+      "businessMeaning": "Factory that builds the configured $fetch client, including the raw request pipeline, body handling, timeout, response parsing, and hook execution.",
+      "domainIds": [
+        "http-client",
+        "request-preparation",
+        "resilience",
+        "error-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/fetch.ts#onError",
+      "businessMeaning": "Decides whether a failed request should be retried and otherwise throws a normalized FetchError.",
+      "domainIds": [
+        "error-handling",
+        "resilience"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/error.ts#createFetchError",
+      "businessMeaning": "Builds a FetchError with a descriptive message and attached request, response, and status details.",
+      "domainIds": [
+        "error-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#isPayloadMethod",
+      "businessMeaning": "Checks whether an HTTP method is one that carries a request body.",
+      "domainIds": [
+        "request-preparation",
+        "resilience"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#isJSONSerializable",
+      "businessMeaning": "Determines whether a request body can be automatically JSON-serialized.",
+      "domainIds": [
+        "request-preparation"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#detectResponseType",
+      "businessMeaning": "Infers how to parse a response body from its Content-Type header (json, text, stream, or blob).",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#resolveFetchOptions",
+      "businessMeaning": "Combines default and per-request options, merging headers and query parameters.",
+      "domainIds": [
+        "request-preparation"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#mergeHeaders",
+      "businessMeaning": "Merges default headers with request-specific headers into a single Headers object.",
+      "domainIds": [
+        "request-preparation"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#callHooks",
+      "businessMeaning": "Invokes one or more user-supplied lifecycle hook functions in sequence.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/node.ts#createNodeFetch",
+      "businessMeaning": "Provides a Node.js fetch implementation, optionally with keep-alive HTTP agents controlled by an environment variable.",
+      "domainIds": [
+        "runtime-adaptation"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "examples/type-safety.ts#main",
+      "businessMeaning": "Example script showing a typed GitHub-style repository lookup via ofetch.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "entityId": "playground/index.ts#main",
+      "businessMeaning": "Manual playground script issuing a request to an error-returning endpoint to exercise error handling.",
+      "domainIds": [
+        "error-handling"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "entityId": "test/index.test.ts#abortHandle",
+      "businessMeaning": "Test helper that aborts a request and verifies abort behavior with retries.",
+      "domainIds": [
+        "resilience"
+      ],
+      "confidence": "medium"
+    }
+  ],
+  "applicationFacts": [
+    "The deterministic graph contains 12 function entities and 10 CALLS relations, all originating within createFetch or its helper chain.",
+    "createFetch is the central orchestrator and calls resolveFetchOptions, callHooks, isPayloadMethod, isJSONSerializable, onError, and detectResponseType.",
+    "onError calls isPayloadMethod and createFetchError and may recursively re-invoke $fetchRaw for retries.",
+    "Retry defaults differ: payload methods default to 0 retries while other methods default to 1 unless configured.",
+    "Default retry-eligible status codes are 408, 409, 425, 429, 500, 502, 503, 504.",
+    "Response bodies are parsed with destr for JSON by default, or via a custom parseResponse function.",
+    "src/index.ts exports a browser-oriented ofetch and $fetch using global fetch; src/node.ts provides a Node.js variant with optional keep-alive agents.",
+    "Build config defines two entry points, src/index and src/node, and marks undici as external.",
+    "Timeouts are implemented by aborting the request with a TimeoutError after the configured duration."
+  ],
+  "unknowns": [
+    "The graph does not include entities for types, constants, or exported class methods, so their roles are described only from source.",
+    "CALLS relations for calls to external libraries (destr, ufo, node-fetch-native) are not present in the graph and are not modeled.",
+    "The CALLS relation from createFetch to itself and the call to $fetchRaw from onError are present in the source but the graph does not expose $fetchRaw as an entity, so the recursive retry path is not represented as a distinct node.",
+    "The intended consumers and deployment context beyond the README-level purpose are not stated in the provided source.",
+    "Whether test/index.test.ts#abortHandle is an isolated test function or is invoked as part of a test case is not determinable from the graph alone."
+  ]
+}
