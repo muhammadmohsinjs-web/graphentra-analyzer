@@ -532,3 +532,38 @@ The code now caps the checks at 7 (`MAX_PLAIN_CHECKS` in `verifier/plain-checks.
 the plain-check call succeeds. If the call fails, the grouped code list is shown, which could exceed 7 lines on a commit
 touching more than 7 files. `summary` reports `reportsQaLinesAtMost7` and `e7ListMet`. On `data-v4` with V-13f checks, E7 is
 **met**: all 35 valid reports have at most 7 QA lines (33 with gaps, each with at least one check; max 7).
+
+## Phase V verifier: full 31-commit check (2026-11-22, commit 88cba4f)
+
+The run before rollout (Chunk 5). Current code: no repair round (V-13a), noise filter (V-13b), grouped list (V-13d), plain
+checks written live with the 7-line cap (V-13e/f). Only the `verify` arm ran, on the 19 commits that V-13c left out, 3 runs
+each, same writer (`gpt-6-luna`) and judge (`deepseek-v4-pro-0813`) as V-12. The 36 V-13c rows of the other 12 commits were
+copied in, so `data-v5/` holds 31 × 3 verify reports. Base is the V-12 base arm (`data-v3`). 57 new reports,
+$1.51 for all 93 rows with judge. Only difference between the halves: the 12 old rows got their plain checks offline
+(`data-v4/plain-checks-v13e.jsonl`), the 19 new ones live. The judge never sees the list or its checks, so catch and explain
+are not affected.
+
+| 31 commits, 93 reports each | base (V-12) | verify (V-12) | verify now |
+|---|---|---|---|
+| Invalid reports | 7 | 8 | 7 |
+| Reports that catch / explain the bug | 31 / 34 | 30 / 36 | 27 / 32 |
+| Commits caught / explained by majority (E1 / E2) | 10 / 12 | 11 / 11 | 10 / 9 |
+| Median seconds per report (E6) | 236 | 339 | **238** (+1 %) |
+| Writer + verifier cost, no judge (E6) | $0.81 | $1.06 | **$1.00** (+24 %) |
+| Writer prompt tokens | 10.9 M | 19.9 M | **10.8 M** |
+| Verifier input tokens | – | 3.8 M | **1.6 M** |
+| QA checks per report (E7 body) | 3.6 | 5.0 | **3.6** |
+| Verifier errors / refusals | – | 0 / 0 | 0 / 0 |
+| Silent drops (E3) | – | 0 | **0** of 1,586 |
+| Reports with ≤ 7 QA lines for the gaps (E7) | – | – | **86 of 86** (max 7) |
+
+Reading the table:
+- **Cost and time are within budget on all 31 commits.** E6 (≤ +35 % cost, ≤ +50 % median time) is met: +24 % and +1 %.
+  The extra cost is the verifier ($0.16) and the plain-check call.
+- **E3 and E7 hold at full scale.** 0 silent drops; every valid report has at most 7 QA lines for its gaps. The 19 new
+  commits are the smaller ones: their live plain checks top out at 3 per report.
+- **Catch and explain are base-level, not better.** The verify path writes the same report as base, so the differences are
+  run-to-run noise of the writer. Majority explain moved on three commits (consola-01, json-server-01, ofetch-02); with 3 runs per commit a
+  one-run swing flips a majority. E1 (≥ 13/31) and E2 (≥ 15/31) are not met, as at V-13: the verifier was never meant to
+  raise them once the repair round was removed.
+- **Conclusion:** nothing in the full run blocks rollout as an opt-in feature. The V-13 decision (default off) stands.
