@@ -1,0 +1,262 @@
+{
+  "schemaVersion": "1.0",
+  "application": {
+    "name": "ofetch",
+    "summary": "A type-safe, feature-rich wrapper around the Fetch API.",
+    "purpose": "Provide a ergonomic, typed `$fetch`/`ofetch` client that automatically handles baseURLs, query parameters, request body serialization, response parsing, retries, timeouts, hooks and normalized errors."
+  },
+  "domains": [
+    {
+      "id": "core-client",
+      "name": "Core fetch client",
+      "description": "The createFetch factory and the $fetch/ofetch/$fetch.native/raw API surface."
+    },
+    {
+      "id": "url-handling",
+      "name": "URL handling",
+      "description": "Joining base URLs, applying base paths and serializing query parameters into request URLs."
+    },
+    {
+      "id": "request-processing",
+      "name": "Request and response processing",
+      "description": "Option resolution, header merging, body serialization, response type detection and hook invocation."
+    },
+    {
+      "id": "error-handling",
+      "name": "Error handling and retries",
+      "description": "Normalized FetchError creation, retry logic, timeout/abort handling and 4xx/5xx error propagation."
+    },
+    {
+      "id": "examples-tests",
+      "name": "Examples and tests",
+      "description": "Usage examples, a manual playground and tests that exercise the library against a local h3 server."
+    }
+  ],
+  "terminology": [
+    {
+      "term": "ofetch",
+      "meaning": "Default exported typed $fetch instance, created by createFetch."
+    },
+    {
+      "term": "$fetch",
+      "meaning": "Main fetch function that returns the parsed response body; also exposes raw, native and create."
+    },
+    {
+      "term": "$fetch.raw / FetchResponse",
+      "meaning": "Lower-level call returning the full Response object with a _data property holding the parsed body."
+    },
+    {
+      "term": "createFetch",
+      "meaning": "Factory that creates a $fetch instance with global options (fetch implementation, defaults)."
+    },
+    {
+      "term": "baseURL",
+      "meaning": "Base path/URL prepended to relative request paths."
+    },
+    {
+      "term": "query / params",
+      "meaning": "Query string parameters merged and appended to the request URL (params is deprecated in favor of query)."
+    },
+    {
+      "term": "responseType",
+      "meaning": "Expected response body type (json, text, blob, arrayBuffer, stream) used to parse the response."
+    },
+    {
+      "term": "parseResponse",
+      "meaning": "Custom parser for JSON-like responses, bypassing the default destr-based parser."
+    },
+    {
+      "term": "ignoreResponseError",
+      "meaning": "Option to suppress throwing on HTTP error status (>=400) and return the response instead."
+    },
+    {
+      "term": "retry / retryDelay / retryStatusCodes",
+      "meaning": "Retry policy: attempt count, delay before retry (number or callback) and which HTTP status codes trigger a retry."
+    },
+    {
+      "term": "timeout",
+      "meaning": "Milliseconds before the request is aborted via AbortSignal.timeout."
+    },
+    {
+      "term": "hooks",
+      "meaning": "User callbacks (onRequest, onRequestError, onResponse, onResponseError) invoked around the fetch lifecycle."
+    },
+    {
+      "term": "FetchError",
+      "meaning": "Normalized error class carrying request, options, response and data with a formatted message."
+    },
+    {
+      "term": "payload methods",
+      "meaning": "PATCH/POST/PUT/DELETE methods that may carry a request body."
+    },
+    {
+      "term": "JSON-serializable body",
+      "meaning": "Body whose value can be safely JSON.stringify'd (not FormData/URLSearchParams/streams); auto-stringified and sent with application/json."
+    },
+    {
+      "term": "_data",
+      "meaning": "Property on FetchResponse holding the parsed response body."
+    }
+  ],
+  "entityAnnotations": [
+    {
+      "entityId": "examples/type-safety.ts#main",
+      "businessMeaning": "Example demonstrating strong typing of an ofetch response (typed repo payload).",
+      "domainIds": [
+        "examples-tests"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.url.ts#joinURL",
+      "businessMeaning": "Joins a base URL/path and a relative path ensuring a single slash between them.",
+      "domainIds": [
+        "url-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.url.ts#withBase",
+      "businessMeaning": "Applies the configured baseURL to a relative path, avoiding double-joining when already present.",
+      "domainIds": [
+        "url-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.url.ts#withoutTrailingSlash",
+      "businessMeaning": "Trims a trailing slash from a base path used before joining.",
+      "domainIds": [
+        "url-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.url.ts#withQuery",
+      "businessMeaning": "Serializes query/params object (including arrays and nested objects) into the URL query string.",
+      "domainIds": [
+        "url-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.url.ts#normalizeQueryValue",
+      "businessMeaning": "Converts a single query value into its string representation (numbers/booleans, objects via JSON, null as empty).",
+      "domainIds": [
+        "url-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/error.ts#createFetchError",
+      "businessMeaning": "Builds the normalized FetchError with a message like `[METHOD] \"URL\": STATUS TEXT`, plus request/options/response/data/status accessors.",
+      "domainIds": [
+        "error-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#isPayloadMethod",
+      "businessMeaning": "Determines whether the HTTP method carries a body (PATCH, POST, PUT, DELETE).",
+      "domainIds": [
+        "request-processing"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#isJSONSerializable",
+      "businessMeaning": "Determines whether a request body can be safely JSON-stringified instead of passed through (excludes FormData/URLSearchParams/streams/buffers).",
+      "domainIds": [
+        "request-processing"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#detectResponseType",
+      "businessMeaning": "Infers the response parsing strategy (json/text/stream/blob) from the response Content-Type header.",
+      "domainIds": [
+        "request-processing"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#resolveFetchOptions",
+      "businessMeaning": "Merges default options, per-call options, headers, query/params and request-level headers into a final options object.",
+      "domainIds": [
+        "request-processing",
+        "core-client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#mergeHeaders",
+      "businessMeaning": "Merges header sources (request headers, input headers, defaults) into a single Headers instance, with input overriding defaults.",
+      "domainIds": [
+        "request-processing"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#callHooks",
+      "businessMeaning": "Invokes zero, one or an array of lifecycle hook functions in order.",
+      "domainIds": [
+        "request-processing",
+        "core-client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/fetch.ts#createFetch",
+      "businessMeaning": "Main factory that builds the $fetch/$fetchRaw client: resolves options, builds the URL, serializes bodies, sets timeouts/signals, calls fetch, parses the response, handles hooks, errors and retries.",
+      "domainIds": [
+        "core-client",
+        "request-processing",
+        "error-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/fetch.ts#onError",
+      "businessMeaning": "Retry decision logic and final error normalization: checks abort vs retryable status, waits retryDelay, retries once (or per retry config), then throws a FetchError.",
+      "domainIds": [
+        "error-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "test/index.test.ts#abortHandle",
+      "businessMeaning": "Test helper that aborts the request while it is in-flight and asserts the abort error propagates.",
+      "domainIds": [
+        "examples-tests"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "test/playground.ts#main",
+      "businessMeaning": "Manual playground script hitting a live endpoint to observe FetchError output.",
+      "domainIds": [
+        "examples-tests"
+      ],
+      "confidence": "high"
+    }
+  ],
+  "applicationFacts": [
+    "This is the unjs ofetch library: a small, typed wrapper around the global Fetch API.",
+    "The package exports a default ofetch instance, $fetch, typed fetch/raw/native/create entry points, plus types ($Fetch, FetchOptions, FetchResponse, FetchContext, FetchError, etc.).",
+    "createFetch(globalOptions) returns a $fetch function; $fetchRaw does the actual work, $fetch returns parsed _data only, $fetch.raw exposes response/_data, $fetch.native delegates to the underlying fetch, and $fetch.create builds derived instances with merged defaults.",
+    "Retry policy: GET/DELETE-like and other non-payload methods get one retry by default, payload methods get none; retryable statuses are 408/409/425/429/500/502/503/504 unless overridden via retryStatusCodes; retries are skipped for active aborts.",
+    "Response bodies are parsed based on responseType/detected content-type (json via destr, stream for text/event-stream, text for text/* and svg/xml/html/xhtml, otherwise blob), with optional custom parseResponse for JSON-like responses.",
+    "JSON-serializable request bodies are auto-stringified (URLSearchParams for x-www-form-urlencoded, JSON.stringify otherwise), and the default content-type/accept headers are set to application/json when not already provided.",
+    "FormData/URLSearchParams/stream bodies are passed through untouched; stream bodies automatically set duplex=\"half\".",
+    "The library applies baseURL and query/params to string requests before sending; aborts are supported via AbortSignal and the timeout option via AbortSignal.timeout combined with the caller's signal.",
+    "Errors are normalized into FetchError with a formatted message ([METHOD] \"URL\": STATUS TEXT) and getter-based request/options/response/data/status/statusCode/statusText/statusMessage properties.",
+    "Hooks (onRequest, onRequestError, onResponse, onResponseError) are invoked in order and may be a single function or an array.",
+    "Tests spin up a local h3 server (ok/echo/post/binary/403/408/204/timeout routes) and spy on globalThis.fetch, covering success, errors, retries, timeouts, aborts, hooks, deep-merge defaults, headers and streaming bodies."
+  ],
+  "unknowns": [
+    "No package.json/README was included in the analysis, so the published package name, version, maintainers, license and distribution channels are not confirmed; the repo is identified only via test/example imports as 'ofetch'.",
+    "The runtime environment and bundling targets (Node/Bun/browser) are not explicit in the analyzed files beyond usage of global fetch and Node Readable; exact supported runtimes are unknown.",
+    "No type-checking configuration or build tooling was analyzed, so exact supported TypeScript versions and build artifacts are unknown.",
+    "The test suite hits a real external endpoint (jsonplaceholder.typicode.com) in one case, so network-dependent test behavior is not fully verifiable offline."
+  ]
+}

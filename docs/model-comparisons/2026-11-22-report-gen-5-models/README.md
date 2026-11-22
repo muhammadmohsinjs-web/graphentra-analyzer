@@ -1,4 +1,4 @@
-# Report-generation model comparison: DeepSeek V4.1 Flash, GPT-6 Luna, Claude Haiku, GLM-5.3 Flash, MiniMax M3.1 Flash
+# Report-generation model comparison: DeepSeek V4.1 Flash, GPT-6 Luna, Claude Haiku, GLM-5.3 Flash, MiniMax M3.1 Flash, Inkling-2-mini
 
 Run date: 2026-11-22. Both models ran in parallel (one stream each) through `tools/report.ts --generate-context`
 against 5 real commits of https://github.com/unjs/ofetch (full SHAs in `commits.txt`). Provider: OpenRouter.
@@ -88,3 +88,7 @@ Risks in the diffs, and whether any report flagged them:
 | 6a879d4 | `ufo` swapped for hand-written URL code | none |
 | 413397a | `.ts` import extensions can break builds | none |
 The 3 universal misses may be analyzer evidence gaps (function-level only) rather than model gaps; worth checking what evidence was sent.
+
+## Round 4: added `thinkingmachines/inkling-2-mini`
+Same 5 commits; 5/5 valid on first attempt. Same 4-commit basis as the summary: bug-catching 7.25/10, $1.41 per 1k reports, 13.3 s per report.
+Quality scored with the same rubric but NOT blind (judge knew the model). Notable: on 571dcc9 it made the same false claim as MiniMax (parameterized event-stream stays text). Missed the Request-object header fallback on 0d84f7b, and like every model missed the `/api` vs `/apiv2` prefix bug.

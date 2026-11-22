@@ -1,0 +1,760 @@
+{
+  "artifactKind": "graphentra-evidence",
+  "schemaVersion": "2.0",
+  "analyzerVersion": "0.4.0",
+  "target": {
+    "targetPath": "."
+  },
+  "comparison": {
+    "mode": "commit",
+    "requestedBase": "571dcc9^",
+    "requestedHead": "571dcc9",
+    "resolvedBaseSha": "f528da39d8530974ef606aeafb6a9c205b6da3ec",
+    "resolvedHeadSha": "571dcc9b4dd987974689075d9c0f23b8e5901261",
+    "comparedTo": "`571dcc9`"
+  },
+  "sourceState": {
+    "checkoutSha": "571dcc9b4dd987974689075d9c0f23b8e5901261",
+    "isTrackedDirty": false,
+    "untrackedSourcePolicy": "excluded",
+    "contentIdentity": "ede3c68d2da89ebdf32b5ac6653e0244bfe5a9e7ee5f24e871bb6b711667dc3d"
+  },
+  "options": {
+    "excludePaths": [],
+    "sourcePolicy": "git-tracked"
+  },
+  "outcome": "completed",
+  "technicalGraph": {
+    "schemaVersion": "1.0",
+    "repository": {
+      "targetPath": ".",
+      "headSha": "571dcc9b4dd987974689075d9c0f23b8e5901261",
+      "generatedAt": "2026-11-22T18:23:36.241Z",
+      "analyzerVersion": "0.4.0"
+    },
+    "capabilities": {
+      "language": "typescript",
+      "entityKinds": [
+        "function"
+      ],
+      "relationTypes": [
+        "CALLS"
+      ],
+      "maxBlastDepth": 6
+    },
+    "analyzedFiles": [
+      "build.config.ts",
+      "examples/type-safety.ts",
+      "playground/index.ts",
+      "src/base.ts",
+      "src/error.ts",
+      "src/fetch.ts",
+      "src/index.ts",
+      "src/node.ts",
+      "src/types.ts",
+      "src/utils.ts",
+      "test/index.test.ts",
+      "vitest.config.ts"
+    ],
+    "entities": [
+      {
+        "id": "examples/type-safety.ts#main",
+        "kind": "function",
+        "name": "main",
+        "file": "examples/type-safety.ts",
+        "startLine": 12,
+        "endLine": 18
+      },
+      {
+        "id": "src/error.ts#createFetchError",
+        "kind": "function",
+        "name": "createFetchError",
+        "file": "src/error.ts",
+        "startLine": 21,
+        "endLine": 67
+      },
+      {
+        "id": "src/utils.ts#isPayloadMethod",
+        "kind": "function",
+        "name": "isPayloadMethod",
+        "file": "src/utils.ts",
+        "startLine": 13,
+        "endLine": 15
+      },
+      {
+        "id": "src/utils.ts#isJSONSerializable",
+        "kind": "function",
+        "name": "isJSONSerializable",
+        "file": "src/utils.ts",
+        "startLine": 17,
+        "endLine": 43
+      },
+      {
+        "id": "src/utils.ts#detectResponseType",
+        "kind": "function",
+        "name": "detectResponseType",
+        "file": "src/utils.ts",
+        "startLine": 55,
+        "endLine": 83
+      },
+      {
+        "id": "src/utils.ts#resolveFetchOptions",
+        "kind": "function",
+        "name": "resolveFetchOptions",
+        "file": "src/utils.ts",
+        "startLine": 85,
+        "endLine": 119
+      },
+      {
+        "id": "src/utils.ts#mergeHeaders",
+        "kind": "function",
+        "name": "mergeHeaders",
+        "file": "src/utils.ts",
+        "startLine": 121,
+        "endLine": 138
+      },
+      {
+        "id": "src/utils.ts#callHooks",
+        "kind": "function",
+        "name": "callHooks",
+        "file": "src/utils.ts",
+        "startLine": 140,
+        "endLine": 153
+      },
+      {
+        "id": "src/fetch.ts#createFetch",
+        "kind": "function",
+        "name": "createFetch",
+        "file": "src/fetch.ts",
+        "startLine": 37,
+        "endLine": 289
+      },
+      {
+        "id": "src/fetch.ts#onError",
+        "kind": "function",
+        "name": "onError",
+        "file": "src/fetch.ts",
+        "startLine": 44,
+        "endLine": 92
+      },
+      {
+        "id": "src/node.ts#createNodeFetch",
+        "kind": "function",
+        "name": "createNodeFetch",
+        "file": "src/node.ts",
+        "startLine": 13,
+        "endLine": 35
+      },
+      {
+        "id": "playground/index.ts#main",
+        "kind": "function",
+        "name": "main",
+        "file": "playground/index.ts",
+        "startLine": 3,
+        "endLine": 9
+      },
+      {
+        "id": "test/index.test.ts#abortHandle",
+        "kind": "function",
+        "name": "abortHandle",
+        "file": "test/index.test.ts",
+        "startLine": 333,
+        "endLine": 341
+      }
+    ],
+    "relations": [
+      {
+        "from": "src/utils.ts#resolveFetchOptions",
+        "to": "src/utils.ts#mergeHeaders",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#onError",
+        "to": "src/utils.ts#isPayloadMethod",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#onError",
+        "to": "src/error.ts#createFetchError",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/utils.ts#resolveFetchOptions",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/utils.ts#callHooks",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/utils.ts#isPayloadMethod",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/utils.ts#isJSONSerializable",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/fetch.ts#onError",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/utils.ts#detectResponseType",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/fetch.ts#createFetch",
+        "type": "CALLS"
+      }
+    ]
+  },
+  "changedFiles": [
+    {
+      "file": "README.md",
+      "oldFile": "README.md",
+      "changedLines": [
+        54,
+        65,
+        66,
+        67,
+        306,
+        307,
+        308,
+        309,
+        310,
+        311,
+        312,
+        313,
+        314,
+        315,
+        316,
+        317,
+        318,
+        319,
+        320,
+        321
+      ],
+      "addedCode": [
+        "You can optionally provide a different parser than `destr`, or specify `blob`, `arrayBuffer`, `text` or `stream` to force parsing the body with the respective `FetchResponse` method.",
+        "",
+        "// Get the stream version of the response",
+        "await ofetch(\"/api/generate-image\", { responseType: \"stream\" });",
+        "## 📡 SSE",
+        "",
+        "**Example:** Handle SSE response:",
+        "",
+        "```js",
+        "const stream = await ofetch(\"/sse\")",
+        "const reader = stream.getReader();",
+        "const decoder = new TextDecoder()",
+        "while (true) {",
+        "  const { done, value } = await reader.read();",
+        "  if (done) break;",
+        "  // Here is the chunked text of the SSE response.",
+        "  const text = decoder.decode(value)",
+        "}",
+        "```",
+        ""
+      ],
+      "removedCode": [
+        "You can optionally provide a different parser than `destr`, or specify `blob`, `arrayBuffer`, or `text` to force parsing the body with the respective `FetchResponse` method."
+      ],
+      "diff": "diff --git a/README.md b/README.md\nindex 2e54ec0..e60ccdb 100644\n--- a/README.md\n+++ b/README.md\n@@ -51,7 +51,7 @@ const { users } = await ofetch(\"/api/users\");\n \n For binary content types, `ofetch` will instead return a `Blob` object.\n \n-You can optionally provide a different parser than `destr`, or specify `blob`, `arrayBuffer`, or `text` to force parsing the body with the respective `FetchResponse` method.\n+You can optionally provide a different parser than `destr`, or specify `blob`, `arrayBuffer`, `text` or `stream` to force parsing the body with the respective `FetchResponse` method.\n \n ```js\n // Use JSON.parse\n@@ -62,6 +62,9 @@ await ofetch(\"/movie?lang=en\", { parseResponse: (txt) => txt });\n \n // Get the blob version of the response\n await ofetch(\"/api/generate-image\", { responseType: \"blob\" });\n+\n+// Get the stream version of the response\n+await ofetch(\"/api/generate-image\", { responseType: \"stream\" });\n ```\n \n ## ✔️ JSON Body\n@@ -300,6 +303,22 @@ As a shortcut, you can use `ofetch.native` that provides native `fetch` API\n const json = await ofetch.native(\"/sushi\").then((r) => r.json());\n ```\n \n+## 📡 SSE\n+\n+**Example:** Handle SSE response:\n+\n+```js\n+const stream = await ofetch(\"/sse\")\n+const reader = stream.getReader();\n+const decoder = new TextDecoder()\n+while (true) {\n+  const { done, value } = await reader.read();\n+  if (done) break;\n+  // Here is the chunked text of the SSE response.\n+  const text = decoder.decode(value)\n+}\n+```\n+\n ## 🕵️ Adding HTTP(S) Agent\n \n In Node.js (>= 18) environments, you can provide a custom dispatcher to intercept requests and support features such as Proxy and self-signed certificates. This feature is enabled by [undici](https://undici.nodejs.org/) built-in Node.js. [read more](https://undici.nodejs.org/#/docs/api/Dispatcher) about the Dispatcher API.",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 51,
+              "newLine": 51
+            },
+            {
+              "kind": " ",
+              "code": "For binary content types, `ofetch` will instead return a `Blob` object.",
+              "oldLine": 52,
+              "newLine": 52
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 53,
+              "newLine": 53
+            },
+            {
+              "kind": "-",
+              "code": "You can optionally provide a different parser than `destr`, or specify `blob`, `arrayBuffer`, or `text` to force parsing the body with the respective `FetchResponse` method.",
+              "oldLine": 54,
+              "newLine": 54
+            },
+            {
+              "kind": "+",
+              "code": "You can optionally provide a different parser than `destr`, or specify `blob`, `arrayBuffer`, `text` or `stream` to force parsing the body with the respective `FetchResponse` method.",
+              "oldLine": 55,
+              "newLine": 54
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 55,
+              "newLine": 55
+            },
+            {
+              "kind": " ",
+              "code": "```js",
+              "oldLine": 56,
+              "newLine": 56
+            },
+            {
+              "kind": " ",
+              "code": "// Use JSON.parse",
+              "oldLine": 57,
+              "newLine": 57
+            }
+          ]
+        },
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 62,
+              "newLine": 62
+            },
+            {
+              "kind": " ",
+              "code": "// Get the blob version of the response",
+              "oldLine": 63,
+              "newLine": 63
+            },
+            {
+              "kind": " ",
+              "code": "await ofetch(\"/api/generate-image\", { responseType: \"blob\" });",
+              "oldLine": 64,
+              "newLine": 64
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 65,
+              "newLine": 65
+            },
+            {
+              "kind": "+",
+              "code": "// Get the stream version of the response",
+              "oldLine": 65,
+              "newLine": 66
+            },
+            {
+              "kind": "+",
+              "code": "await ofetch(\"/api/generate-image\", { responseType: \"stream\" });",
+              "oldLine": 65,
+              "newLine": 67
+            },
+            {
+              "kind": " ",
+              "code": "```",
+              "oldLine": 65,
+              "newLine": 68
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 66,
+              "newLine": 69
+            },
+            {
+              "kind": " ",
+              "code": "## ✔️ JSON Body",
+              "oldLine": 67,
+              "newLine": 70
+            }
+          ]
+        },
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "const json = await ofetch.native(\"/sushi\").then((r) => r.json());",
+              "oldLine": 300,
+              "newLine": 303
+            },
+            {
+              "kind": " ",
+              "code": "```",
+              "oldLine": 301,
+              "newLine": 304
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 302,
+              "newLine": 305
+            },
+            {
+              "kind": "+",
+              "code": "## 📡 SSE",
+              "oldLine": 303,
+              "newLine": 306
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 303,
+              "newLine": 307
+            },
+            {
+              "kind": "+",
+              "code": "**Example:** Handle SSE response:",
+              "oldLine": 303,
+              "newLine": 308
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 303,
+              "newLine": 309
+            },
+            {
+              "kind": "+",
+              "code": "```js",
+              "oldLine": 303,
+              "newLine": 310
+            },
+            {
+              "kind": "+",
+              "code": "const stream = await ofetch(\"/sse\")",
+              "oldLine": 303,
+              "newLine": 311
+            },
+            {
+              "kind": "+",
+              "code": "const reader = stream.getReader();",
+              "oldLine": 303,
+              "newLine": 312
+            },
+            {
+              "kind": "+",
+              "code": "const decoder = new TextDecoder()",
+              "oldLine": 303,
+              "newLine": 313
+            },
+            {
+              "kind": "+",
+              "code": "while (true) {",
+              "oldLine": 303,
+              "newLine": 314
+            },
+            {
+              "kind": "+",
+              "code": "  const { done, value } = await reader.read();",
+              "oldLine": 303,
+              "newLine": 315
+            },
+            {
+              "kind": "+",
+              "code": "  if (done) break;",
+              "oldLine": 303,
+              "newLine": 316
+            },
+            {
+              "kind": "+",
+              "code": "  // Here is the chunked text of the SSE response.",
+              "oldLine": 303,
+              "newLine": 317
+            },
+            {
+              "kind": "+",
+              "code": "  const text = decoder.decode(value)",
+              "oldLine": 303,
+              "newLine": 318
+            },
+            {
+              "kind": "+",
+              "code": "}",
+              "oldLine": 303,
+              "newLine": 319
+            },
+            {
+              "kind": "+",
+              "code": "```",
+              "oldLine": 303,
+              "newLine": 320
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 303,
+              "newLine": 321
+            },
+            {
+              "kind": " ",
+              "code": "## 🕵️ Adding HTTP(S) Agent",
+              "oldLine": 303,
+              "newLine": 322
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 304,
+              "newLine": 323
+            },
+            {
+              "kind": " ",
+              "code": "In Node.js (>= 18) environments, you can provide a custom dispatcher to intercept requests and support features such as Proxy and self-signed certificates. This feature is enabled by [undici](https://undici.nodejs.org/) built-in Node.js. [read more](https://undici.nodejs.org/#/docs/api/Dispatcher) about the Dispatcher API.",
+              "oldLine": 305,
+              "newLine": 324
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/utils.ts",
+      "oldFile": "src/utils.ts",
+      "changedLines": [
+        72,
+        73,
+        74,
+        75,
+        76,
+        77
+      ],
+      "addedCode": [
+        "  // SSE",
+        "  // https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#sending_events_from_the_server",
+        "  if (contentType === \"text/event-stream\") {",
+        "    return \"stream\";",
+        "  }",
+        ""
+      ],
+      "removedCode": [],
+      "diff": "diff --git a/src/utils.ts b/src/utils.ts\nindex d729546..15a6d84 100644\n--- a/src/utils.ts\n+++ b/src/utils.ts\n@@ -69,6 +69,12 @@ export function detectResponseType(_contentType = \"\"): ResponseType {\n   //   return 'stream'\n   // }\n \n+  // SSE\n+  // https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#sending_events_from_the_server\n+  if (contentType === \"text/event-stream\") {\n+    return \"stream\";\n+  }\n+\n   if (textTypes.has(contentType) || contentType.startsWith(\"text/\")) {\n     return \"text\";\n   }",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "  //   return 'stream'",
+              "oldLine": 69,
+              "newLine": 69
+            },
+            {
+              "kind": " ",
+              "code": "  // }",
+              "oldLine": 70,
+              "newLine": 70
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 71,
+              "newLine": 71
+            },
+            {
+              "kind": "+",
+              "code": "  // SSE",
+              "oldLine": 72,
+              "newLine": 72
+            },
+            {
+              "kind": "+",
+              "code": "  // https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#sending_events_from_the_server",
+              "oldLine": 72,
+              "newLine": 73
+            },
+            {
+              "kind": "+",
+              "code": "  if (contentType === \"text/event-stream\") {",
+              "oldLine": 72,
+              "newLine": 74
+            },
+            {
+              "kind": "+",
+              "code": "    return \"stream\";",
+              "oldLine": 72,
+              "newLine": 75
+            },
+            {
+              "kind": "+",
+              "code": "  }",
+              "oldLine": 72,
+              "newLine": 76
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 72,
+              "newLine": 77
+            },
+            {
+              "kind": " ",
+              "code": "  if (textTypes.has(contentType) || contentType.startsWith(\"text/\")) {",
+              "oldLine": 72,
+              "newLine": 78
+            },
+            {
+              "kind": " ",
+              "code": "    return \"text\";",
+              "oldLine": 73,
+              "newLine": 79
+            },
+            {
+              "kind": " ",
+              "code": "  }",
+              "oldLine": 74,
+              "newLine": 80
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "changedEntities": [
+    {
+      "entity": {
+        "id": "src/utils.ts#detectResponseType",
+        "kind": "function",
+        "name": "detectResponseType",
+        "file": "src/utils.ts",
+        "startLine": 55,
+        "endLine": 83
+      },
+      "change": {
+        "file": "src/utils.ts",
+        "changedLines": [
+          72,
+          73,
+          74,
+          75,
+          76,
+          77
+        ],
+        "addedCode": [
+          "  // SSE",
+          "  // https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#sending_events_from_the_server",
+          "  if (contentType === \"text/event-stream\") {",
+          "    return \"stream\";",
+          "  }",
+          ""
+        ],
+        "removedCode": [],
+        "diff": "--- a/src/utils.ts\n+++ b/src/utils.ts\n@@ -69,6 +69,12 @@\n   //   return 'stream'\n   // }\n \n+  // SSE\n+  // https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#sending_events_from_the_server\n+  if (contentType === \"text/event-stream\") {\n+    return \"stream\";\n+  }\n+\n   if (textTypes.has(contentType) || contentType.startsWith(\"text/\")) {\n     return \"text\";\n   }"
+      }
+    }
+  ],
+  "impacts": [
+    {
+      "changedEntity": {
+        "id": "src/utils.ts#detectResponseType",
+        "kind": "function",
+        "name": "detectResponseType",
+        "file": "src/utils.ts",
+        "startLine": 55,
+        "endLine": 83
+      },
+      "change": {
+        "file": "src/utils.ts",
+        "changedLines": [
+          72,
+          73,
+          74,
+          75,
+          76,
+          77
+        ],
+        "addedCode": [
+          "  // SSE",
+          "  // https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#sending_events_from_the_server",
+          "  if (contentType === \"text/event-stream\") {",
+          "    return \"stream\";",
+          "  }",
+          ""
+        ],
+        "removedCode": [],
+        "diff": "--- a/src/utils.ts\n+++ b/src/utils.ts\n@@ -69,6 +69,12 @@\n   //   return 'stream'\n   // }\n \n+  // SSE\n+  // https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#sending_events_from_the_server\n+  if (contentType === \"text/event-stream\") {\n+    return \"stream\";\n+  }\n+\n   if (textTypes.has(contentType) || contentType.startsWith(\"text/\")) {\n     return \"text\";\n   }"
+      },
+      "directDependents": [
+        {
+          "id": "src/fetch.ts#createFetch",
+          "kind": "function",
+          "name": "createFetch",
+          "file": "src/fetch.ts",
+          "startLine": 37,
+          "endLine": 289
+        }
+      ],
+      "blastRadius": {
+        "totalAffectedEntities": 1,
+        "entities": [
+          {
+            "id": "src/fetch.ts#createFetch",
+            "kind": "function",
+            "name": "createFetch",
+            "file": "src/fetch.ts",
+            "startLine": 37,
+            "endLine": 289
+          }
+        ],
+        "paths": [
+          {
+            "target": {
+              "id": "src/fetch.ts#createFetch",
+              "kind": "function",
+              "name": "createFetch",
+              "file": "src/fetch.ts",
+              "startLine": 37,
+              "endLine": 289
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/utils.ts#detectResponseType",
+                "kind": "function",
+                "name": "detectResponseType",
+                "file": "src/utils.ts",
+                "startLine": 55,
+                "endLine": 83
+              },
+              {
+                "id": "src/fetch.ts#createFetch",
+                "kind": "function",
+                "name": "createFetch",
+                "file": "src/fetch.ts",
+                "startLine": 37,
+                "endLine": 289
+              }
+            ]
+          }
+        ]
+      },
+      "terminalDependents": []
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "OUTSIDE_SUPPORTED_SCOPE",
+      "severity": "warning",
+      "message": "Changes outside TypeScript extraction scope were not analyzed for function impact."
+    }
+  ],
+  "limitations": [
+    "Only TypeScript is analyzed.",
+    "Only named standalone function declarations are supported.",
+    "Only CALLS relationships are currently supported.",
+    "Class methods are not analyzed.",
+    "Arrow functions are not analyzed.",
+    "Dynamic calls are not analyzed.",
+    "Deleted functions have no current graph entity; renamed or ambiguous functions may lack removed-code evidence.",
+    "Overlapping function line ranges are skipped rather than sharing ambiguous evidence.",
+    "Application surfaces are not yet discovered.",
+    "Blast radius is limited to depth 6."
+  ]
+}
