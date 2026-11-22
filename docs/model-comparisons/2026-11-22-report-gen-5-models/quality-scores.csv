@@ -23,3 +23,8 @@ commit,model,blind_label,accuracy,completeness,qa_value,clarity,total_of_20,note
 6a879d4,glm-5.3-flash,X,5,4,4,3,16,"Accurate, good merge semantics, no-dangling-? check; wordy"
 6a879d4,minimax-m3.1-flash,Y,5,5,4,3,17,"Most detailed (encoding, '/' default); no end-to-end client check"
 6a879d4,deepseek-v4.1-flash-1017,Z,5,5,5,4,19,"Complete, precise, includes end-to-end client check"
+6a879d4,inkling-2-mini,-,5,5,5,3,18,"Accurate and complete incl. end-to-end check; jargon-heavy summary. Not blind."
+3baf1cc,inkling-2-mini,-,4,4,5,4,17,"Rejection check is good; summary frames as new async dispatch. Not blind."
+0d84f7b,inkling-2-mini,-,5,4,4,3,16,"Covers header input formats and unset query; misses Request-object header fallback. Not blind."
+571dcc9,inkling-2-mini,-,2,3,2,4,11,"False claim: parameterized event-stream stays text (split(';') strips params); check built on it. Not blind."
+413397a,inkling-2-mini,-,5,3,3,4,15,"Accurate, generic runtime regression checks. Not blind."
