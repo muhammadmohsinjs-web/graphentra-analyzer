@@ -104,12 +104,43 @@ flowchart LR
 
 **Why together:** all outside the report library: config, data-processing review, dashboard, feedback. Start only after the V-13 gate.
 
-| ID | Task | Size | Depends on | Done when |
-|---|---|---|---|---|
-| V-14 | Backend config: OpenAI key and threshold in backend config; data-processing review (ZDR where eligible). | S | V-13 | Config in place; review recorded |
-| V-15 | Dashboard signals: coverage scores, repair rate, "Not covered" count, refusals, verifier cost and latency (M6). | M | V-14 | Dashboard shows repair rate and "Not covered" count for real runs |
-| V-16 | Feedback loop: QA-reported misses go into the labelled set; threshold re-checked monthly. | S | V-15 | First monthly re-check recorded |
-| V-17 *(optional, later)* | Risk triage score to order the payload under a size budget (U4). Never drops evidence. | M | V-13 | Payload ordered by score; no evidence dropped |
+| ID | Task | Size | Depends on | Done when | Status |
+|---|---|---|---|---|---|
+| V-14 | Backend config: OpenAI key and threshold in backend config; data-processing review (ZDR where eligible). | S | V-13 | Config in place; review recorded | ✅ Done 2026-11-22 (sign-off items listed under the review) |
+| V-15 | Dashboard signals: coverage scores, repair rate, "Not covered" count, refusals, verifier cost and latency (M6). | M | V-14 | Dashboard shows repair rate and "Not covered" count for real runs | ✅ Server side done 2026-11-22; dashboard screen deferred (outside this repo) |
+| V-16 | Feedback loop: QA-reported misses go into the labelled set; threshold re-checked monthly. | S | V-15 | First monthly re-check recorded | ⏸ Deferred: needs real reports and QA-reported misses first |
+| V-17 *(optional, later)* | Risk triage score to order the payload under a size budget (U4). Never drops evidence. | M | V-13 | Payload ordered by score; no evidence dropped | ⏸ Deferred (optional) |
+
+### V-14 · Report server config and data-processing review
+
+**Config (`tools/server.ts`, `tools/verifier-config.ts`).** Off by default, same switch as the CLI.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `GRAPHENTRA_VERIFY_REPORT` | unset (off) | `1` switches the verifier on for `POST /reports`. Any other value is off. |
+| `OPENAI_API_KEY` | — | Direct OpenAI key, required when on. OpenRouter does not proxy `/v1/decisions`. |
+| `GRAPHENTRA_VERIFIER_THRESHOLD` | `0.7` (V-3) | Flag below this probability. Must be strictly between 0 and 1. |
+
+Bad config (switch on, no key, or a bad threshold) stops the server at start, not on the first report. With the switch off no Decisions client is created and no OpenAI call is made.
+
+**Data-processing review (drafted 2026-11-22, sign-off open).**
+
+| Question | Answer |
+|---|---|
+| Who receives data | OpenAI (`api.openai.com/v1/decisions`, model `gpt-6-luna`). The V-13e plain-check call goes to the writer's provider (OpenRouter), which already receives the full payload. |
+| What is sent per report | Per changed production entity: its id, file path, and the removed and added code lines, capped at 4,000 characters per side (`CODE_CAP`). The finished report text (summary, key changes, QA checks, test areas). Changed test files and changes with no runtime effect are not sent. No commit message, author, PR data or application context. |
+| What is stored by Graphentra | `reports.verification`: counts, scores, tokens and time only (`VerificationSummary`). No question text and no code. |
+| Retention at OpenAI | Default API retention unless the org has Zero Data Retention. The request sets no `store` flag. |
+| Customer impact | Source code lines leave to a second processor (OpenAI) only when the server runs with the switch on. |
+
+Open before switching it on for a customer:
+- [ ] Request ZDR for the OpenAI org that owns `OPENAI_API_KEY`, or record why it is not eligible.
+- [ ] Add OpenAI to the subprocessor list and the customer data-processing terms.
+- [ ] Use a project-scoped OpenAI key with a spend limit, stored in the backend secret store, not in `.env` on a shared host.
+
+### V-15 · Verifier signals (API side)
+
+Each verified report stores a `VerificationSummary` in `reports.verification` (also returned by `GET /reports/:id/technical`). `GET /verifier/stats` aggregates them for the dashboard: verified reports, reports with gaps and the gap rate (replaces "repair rate": the repair round was removed at V-13a), "Not covered" total, median, p90 and max, share with at most 3 items, mean coverage score, refusals, errors and missing answers, verifier and plain-check tokens, p50 and p95 verifier time. The QA view (`GET /reports/:id`, `POST /reports`) gains `notCovered: { checks, developer }` on verified reports with gaps. The dashboard UI itself is not in this repository.
 
 ---
 
@@ -122,4 +153,4 @@ flowchart LR
 | 2 · Verifier module | ✅ V-4 to V-7 on `feat/phase-v-verifier-module` (U1 + U3, threshold 0.7). |
 | 3 · Wire into reports | ✅ V-8 to V-10 on `feat/phase-v-wire-reports` (stacked on Chunk 2). `review` hook in `generateImpactReport` (repair shares the 2-attempt cap; an unusable repair keeps the first report), `createReportVerifier` in `verifier/verified-report.ts`, optional `notCovered` on the report (owns the field for N-5), `--verify` / `GRAPHENTRA_VERIFY_REPORT=1`, `verifier.completed` / `verifier.finished` traces. Next: V-11. |
 | 4 · Measure | ✅ V-11 to V-13 (2026-11-19). Base vs verify, 31 × 3: catch flat (10 → 11 of 31), 0 silent drops in 1,578 entities, +82 % writer prompt tokens, +44 % time, flag precision 28 %. Results in `impactbench/eval/REPORT.md`, baseline data in `impactbench/eval/data-v3/`. **Decision (ADR-0011):** default stays off; the V-8 repair round is removed (V-13a done: no `review` hook, one verifier pass, `ReportVerification` drops `passes` / `repairRequested` / `repairAccepted`, `verifier.finished` trace merged into `verifier.completed`). V-13b done: deterministic noise filter (`verifier/behaviour.ts`, `planCoverage`): skip changes with no runtime effect (verdict `skipped`), fold `A>b` inner functions into their outermost changed ancestor. Offline replay: 13/13 real gaps still asked, 21/34 noise flags removed, no ground-truth bug entity skipped, coverage questions −25 %. V-13c done: 12-commit check in `data-v4/` (REPORT.md "after V-13a/b"): 0 silent drops, time and writer tokens back to base, verifier tokens −61 %, 18/19 trivial flags gone; list length (E7) still too long on big refactors. V-13d done: `notCoveredLines` groups a list of more than 3 items per file, naming every change (data unchanged). Re-scored on `data-v4`: max 39 → 7 lines, ≤ 3 lines in 16 of 35 reports. E7 at 90 % is still not met: the remaining lists are spread over 4–6 files. Open: set E7 to "≤ 7 lines" or cut false flags. V-13e done: after the verifier, one LLM call (`verifier/plain-checks.ts`) rewrites the gaps as plain QA checks, and gaps with no valid check stay listed by code name for a developer (never dropped). Offline on 33 `data-v4` reports: 411 gaps → 103 checks, $0.02 total, median 41 s per report, 0 errors (REPORT.md, `data-v4/plain-checks.md`). Graded by an independent judge: 76/103 accurate, 2 real errors confirmed by hand. Recall issue: 64/359 claimed gaps are not really tested by their check and get hidden. V-13f done: the developer list always names every gap (0 hidden, by construction); the prompt rules for removed code, honest merging and exports show no measurable gain (judge: wrong 13 → 13, accurate 76 → 76 of 112). E7 changed (2026-11-20) to "≤ 7 QA lines for the gaps in every report" and capped in code (`MAX_PLAIN_CHECKS`); met on `data-v4` (max 7). Full 31-commit run done (2026-11-22, `data-v5/`, REPORT.md "full 31-commit check"): E3, E6, E7 met; catch and explain at base level. |
-| 5 · Rollout | ⬜ next: V-14 (full run done; nothing blocks opt-in rollout) |
+| 5 · Rollout | ✅ Done for now (2026-11-22). V-14: report-server config and data-processing review written. V-15: `reports.verification` and `GET /verifier/stats`. **Deferred:** V-15 dashboard screen, V-16 feedback loop, V-17 risk triage. Open before switching on for a customer: ZDR, subprocessor list, scoped OpenAI key. |
