@@ -1,0 +1,221 @@
+{
+  "schemaVersion": "1.0",
+  "application": {
+    "name": "ofetch",
+    "summary": "A TypeScript HTTP client built on the Fetch API, with configurable requests, response parsing, retries, hooks, and normalized errors.",
+    "purpose": "Make Fetch API requests more convenient and type-safe across applications and runtimes that provide a compatible fetch implementation."
+  },
+  "domains": [
+    {
+      "id": "http-client",
+      "name": "HTTP client and request configuration",
+      "description": "Creates configured fetch clients and prepares request options, headers, bodies, and timeouts."
+    },
+    {
+      "id": "url-construction",
+      "name": "URL and query construction",
+      "description": "Combines base URLs with paths and adds or updates query parameters."
+    },
+    {
+      "id": "response-handling",
+      "name": "Response parsing and lifecycle",
+      "description": "Selects response parsing behavior, runs request and response hooks, and handles HTTP failures and retries."
+    },
+    {
+      "id": "errors",
+      "name": "Fetch errors",
+      "description": "Builds errors containing request, response, status, and parsed response data context."
+    },
+    {
+      "id": "type-safety",
+      "name": "Typed fetch API",
+      "description": "Defines TypeScript request options and maps response types for callers."
+    }
+  ],
+  "terminology": [
+    {
+      "term": "$fetch / ofetch",
+      "meaning": "The main convenience function: makes a request and returns its parsed data. Its raw method returns the response object."
+    },
+    {
+      "term": "Fetch options",
+      "meaning": "Request configuration such as method, headers, body, base URL, query parameters, timeout, retry policy, and hooks."
+    },
+    {
+      "term": "Fetch hooks",
+      "meaning": "Callbacks invoked at request, request-error, response, and response-error stages."
+    },
+    {
+      "term": "Response type",
+      "meaning": "The requested or inferred format for response data, such as JSON, text, blob, array buffer, or stream."
+    },
+    {
+      "term": "FetchError",
+      "meaning": "A normalized error that exposes the request context and, when available, response data and status information."
+    },
+    {
+      "term": "Retry status codes",
+      "meaning": "HTTP status codes eligible for retry when retries are enabled; callers can provide a custom list."
+    }
+  ],
+  "entityAnnotations": [
+    {
+      "entityId": "examples/type-safety.ts#main",
+      "businessMeaning": "Demonstrates using a generic response type to access repository data with TypeScript checking.",
+      "domainIds": [
+        "type-safety"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.url.ts#joinURL",
+      "businessMeaning": "Joins a base URL and path while avoiding duplicate or missing separators.",
+      "domainIds": [
+        "url-construction"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.url.ts#withBase",
+      "businessMeaning": "Adds a configured base path to a request URL when it is not already present.",
+      "domainIds": [
+        "url-construction"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.url.ts#withoutTrailingSlash",
+      "businessMeaning": "Removes a trailing slash from a URL path, with special handling for the root path.",
+      "domainIds": [
+        "url-construction"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.url.ts#withQuery",
+      "businessMeaning": "Adds or updates URL query parameters, omitting undefined values.",
+      "domainIds": [
+        "url-construction"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.url.ts#normalizeQueryValue",
+      "businessMeaning": "Converts query values into strings suitable for URL parameters.",
+      "domainIds": [
+        "url-construction"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/error.ts#createFetchError",
+      "businessMeaning": "Creates a contextual fetch error with request details and available response data and status.",
+      "domainIds": [
+        "errors"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#isPayloadMethod",
+      "businessMeaning": "Identifies HTTP methods treated as payload methods, including POST, PUT, PATCH, and DELETE.",
+      "domainIds": [
+        "http-client",
+        "response-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#isJSONSerializable",
+      "businessMeaning": "Determines whether a request body can be serialized as JSON rather than passed through as a non-JSON payload.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#detectResponseType",
+      "businessMeaning": "Chooses a default response parser based on the response Content-Type.",
+      "domainIds": [
+        "response-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#resolveFetchOptions",
+      "businessMeaning": "Combines per-request and default options, including query parameters and headers.",
+      "domainIds": [
+        "http-client",
+        "url-construction"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#mergeHeaders",
+      "businessMeaning": "Combines default and request headers, allowing request headers to override matching defaults.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#callHooks",
+      "businessMeaning": "Runs one or more lifecycle hooks in sequence and awaits their completion.",
+      "domainIds": [
+        "response-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/fetch.ts#createFetch",
+      "businessMeaning": "Creates a fetch client that prepares requests, invokes hooks, parses responses, and handles HTTP errors and retries.",
+      "domainIds": [
+        "http-client",
+        "url-construction",
+        "response-handling",
+        "errors"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/fetch.ts#onError",
+      "businessMeaning": "Decides whether a failed request should be retried and otherwise throws a normalized fetch error.",
+      "domainIds": [
+        "response-handling",
+        "errors"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "test/index.test.ts#abortHandle",
+      "businessMeaning": "Exercises abort behavior when a request is made with an already-aborted signal.",
+      "domainIds": [
+        "http-client",
+        "response-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "test/playground.ts#main",
+      "businessMeaning": "Example program that requests a URL returning an HTTP error status and logs the result or failure.",
+      "domainIds": [
+        "http-client",
+        "errors"
+      ],
+      "confidence": "high"
+    }
+  ],
+  "applicationFacts": [
+    "The default exported ofetch and $fetch clients are created using globalThis.fetch when available.",
+    "The client supports creating additional clients with default options and optional custom fetch implementations.",
+    "Requests can specify a base URL, query parameters, headers, body, timeout, retry settings, and lifecycle hooks.",
+    "JSON-serializable bodies for payload methods are serialized automatically, with JSON headers added when appropriate.",
+    "Response parsing can be selected explicitly or inferred from Content-Type; JSON parsing uses destr by default.",
+    "HTTP response errors from status codes 400 through 599 are thrown unless ignoreResponseError is enabled.",
+    "The source defines default retry status codes of 408, 409, 425, 429, 500, 502, 503, and 504.",
+    "The API exposes typed response options, including JSON, text, blob, array buffer, and stream."
+  ],
+  "unknowns": [
+    "The source provided does not specify the package version, release process, or supported runtime matrix.",
+    "The intended end-user audience and the project's broader product or organizational context are not stated."
+  ]
+}

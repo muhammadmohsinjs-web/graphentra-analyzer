@@ -1,0 +1,227 @@
+{
+  "schemaVersion": "1.0",
+  "application": {
+    "name": "ofetch",
+    "summary": "The repository is a library (not an end-user application) built with unbuild and tested with vitest. Its core is `createFetch` in src/fetch.ts, which constructs the `$fetch`/`ofetch` callable implementing the full request pipeline: option merging, hook invocation, URL/query resolution, body serialization, timeout/abort handling, response content-type parsing, retry on failed responses, and normalized FetchError throwing. Two entry points export it: src/index.ts (uses global fetch) and src/node.ts (falls back to node-fetch-native with optional keep-alive agents).",
+    "purpose": "A TypeScript fetch library providing an enhanced, universal HTTP client (`ofetch` / `$fetch`) built on top of the Fetch API, with automatic JSON handling, retries, timeouts, request/response hooks, base-URL/query handling, and normalized error objects."
+  },
+  "domains": [
+    {
+      "id": "http-client",
+      "name": "HTTP Fetch Client",
+      "description": "Core fetch wrapper and HTTP client with typed responses"
+    },
+    {
+      "id": "resilience",
+      "name": "Request Resilience",
+      "description": "Retry policies, retry status codes, delays, and timeout/abort handling"
+    },
+    {
+      "id": "hooks",
+      "name": "Request Lifecycle Hooks",
+      "description": "Request/response lifecycle hooks (onRequest, onRequestError, onResponse, onResponseError)"
+    },
+    {
+      "id": "error-handling",
+      "name": "Fetch Error Handling",
+      "description": "Normalized FetchError with request, response, and status accessors"
+    },
+    {
+      "id": "response-parsing",
+      "name": "Response Parsing",
+      "description": "Content-type detection, JSON/text/blob/stream response parsing with destr"
+    },
+    {
+      "id": "runtime-adapters",
+      "name": "Runtime Adapters",
+      "description": "Runtime-specific fetch shims (global fetch vs node-fetch-native with keep-alive agents)"
+    }
+  ],
+  "terminology": [
+    {
+      "term": "ofetch",
+      "meaning": "Public fetch client instance created by createFetch; aliased as `$fetch` for ergonomic call syntax"
+    },
+    {
+      "term": "$fetch",
+      "meaning": "Alias of ofetch, also the name of the callable returned by createFetch with .raw/.native/.create members"
+    },
+    {
+      "term": "FetchError",
+      "meaning": "Normalized error class carrying request, options, response, data, status, statusCode, statusText, and statusMessage"
+    },
+    {
+      "term": "retry",
+      "meaning": "Number of automatic retry attempts; defaults to 1 for non-payload methods and 0 for payload methods"
+    },
+    {
+      "term": "retryDelay",
+      "meaning": "Delay between retries in milliseconds, fixed number or context-based callback"
+    },
+    {
+      "term": "retryStatusCodes",
+      "meaning": "Custom status codes eligible for retry; defaults to 408/409/425/429/500/502/503/504"
+    },
+    {
+      "term": "timeout",
+      "meaning": "Request timeout in milliseconds, enforced via AbortController"
+    },
+    {
+      "term": "hooks",
+      "meaning": "Lifecycle callbacks: onRequest, onRequestError, onResponse, onResponseError"
+    },
+    {
+      "term": "baseURL",
+      "meaning": "Base URL prefix resolved with ufo's withBase"
+    },
+    {
+      "term": "query / params",
+      "meaning": "Query parameters appended to the URL via ufo's withQuery"
+    },
+    {
+      "term": "ignoreResponseError",
+      "meaning": "Option that returns error responses instead of throwing FetchError"
+    },
+    {
+      "term": "parseResponse",
+      "meaning": "Custom parser function overriding destr-based JSON parsing"
+    },
+    {
+      "term": "responseType",
+      "meaning": "Forced response parsing type: json, text, blob, arrayBuffer, or stream"
+    },
+    {
+      "term": "payload methods",
+      "meaning": "HTTP methods with request bodies: PATCH, POST, PUT, DELETE"
+    },
+    {
+      "term": "keep-alive agents",
+      "meaning": "Node.js HTTP agent option to reuse connections, enabled via FETCH_KEEP_ALIVE env var"
+    },
+    {
+      "term": "defaults",
+      "meaning": "Option on $fetch.create instances containing per-instance default fetch options"
+    }
+  ],
+  "entityAnnotations": [
+    {
+      "entityId": "examples/type-safety.ts#main",
+      "businessMeaning": "Demonstration of typed API consumption: fetches repository metadata (id, name, stars, description) from the ungh.cc repo API with strongly typed response.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/error.ts#createFetchError",
+      "businessMeaning": "Builds a normalized FetchError whose message is `[METHOD] \"url\": status statusText` and which exposes request, options, response, data, status, statusCode, statusText, and statusMessage accessors.",
+      "domainIds": [
+        "error-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#isPayloadMethod",
+      "businessMeaning": "Determines whether an HTTP method carries a request body (PATCH, POST, PUT, DELETE), influencing default retry behavior.",
+      "domainIds": [
+        "resilience"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#isJSONSerializable",
+      "businessMeaning": "Checks whether a request body can be JSON-stringified, enabling automatic JSON serialization.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#detectResponseType",
+      "businessMeaning": "Maps a response Content-Type header to a parsing strategy (json, text, or blob), the library's content negotiation defaults.",
+      "domainIds": [
+        "response-parsing"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#mergeFetchOptions",
+      "businessMeaning": "Merges per-request options with instance defaults, deep-merging params, query, and headers.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#callHooks",
+      "businessMeaning": "Invokes user-defined lifecycle hooks, supporting single callbacks or arrays of callbacks.",
+      "domainIds": [
+        "hooks"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/fetch.ts#createFetch",
+      "businessMeaning": "Core factory producing the `$fetch`/`ofetch` callable; implements the entire request pipeline (option merging, hooks, URL resolution, body handling, timeout, parsing, retry-on-error) and exposes `.raw`, `.native`, and `.create`.",
+      "domainIds": [
+        "http-client",
+        "resilience",
+        "response-parsing"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/fetch.ts#onError",
+      "businessMeaning": "Retry-and-throw handler: on request or response error, applies retry policy (honoring retry counts, retry status codes, delays, and active aborts) and otherwise throws a normalized FetchError.",
+      "domainIds": [
+        "resilience",
+        "error-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/node.ts#createNodeFetch",
+      "businessMeaning": "Node.js runtime adapter: returns node-fetch-native, optionally wrapped with HTTP/HTTPS keep-alive agents based on the FETCH_KEEP_ALIVE environment variable.",
+      "domainIds": [
+        "runtime-adapters"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "playground/index.ts#main",
+      "businessMeaning": "Manual playground script fetching http://httpstat.us/500 to demonstrate error handling behavior.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "test/index.test.ts#abortHandle",
+      "businessMeaning": "Test helper verifying that an actively aborted request (via AbortController) rejects and is not retried.",
+      "domainIds": [
+        "resilience"
+      ],
+      "confidence": "high"
+    }
+  ],
+  "applicationFacts": [
+    "Exports `ofetch` (aliased as `$fetch`) from both src/index.ts and src/node.ts, both built via createFetch.",
+    "`$fetch` exposes `.raw` (full response with parsed `_data`), `.native` (pass-through to native fetch), and `.create` (factory for instances with merged default options).",
+    "Request bodies that are JSON-serializable are auto-stringified with `application/json` content-type and accept headers set.",
+    "Response bodies are parsed based on Content-Type (json/text/blob/stream) using the `destr` library for safe JSON parsing; `parseResponse` can override the parser.",
+    "Retries: default 1 retry for non-payload methods, 0 for payload methods (PATCH/POST/PUT/DELETE); retried status codes default to 408, 409, 425, 429, 500, 502, 503, 504; `retryDelay` supports fixed or callback-based delays.",
+    "Timeouts are implemented with AbortController, producing a TimeoutError-named error with DOMException code 23.",
+    "Lifecycle hooks are supported: onRequest, onRequestError, onResponse, onResponseError (each accepts a function or array of functions).",
+    "`ignoreResponseError` option returns error responses instead of throwing; null-body statuses (101, 204, 205, 304) and HEAD requests skip body parsing.",
+    "src/node.ts supports optional HTTP/HTTPS keep-alive agents via the FETCH_KEEP_ALIVE environment variable.",
+    "Tests spin up an h3 HTTP server via listhen with fixture routes (/ok, /params, /echo, /post, /binary, /403, /408, /204, /timeout) to exercise client behavior.",
+    "Build configuration (build.config.ts) emits declarations and CJS via unbuild for the src/index and src/node entry points."
+  ],
+  "unknowns": [
+    "No npm package name, version, or changelog file is present in the analyzed sources; the library identity as 'ofetch' is inferred from the import in examples/type-safety.ts, the exported names, and the `[ofetch]` error message prefix in src/index.ts.",
+    "The repository has no README or documentation files in the analyzed set; terminology is derived from code and tests only.",
+    "The graph contains only function entities, so classes (FetchError), interfaces, and exported constants (ofetch, $fetch, fetch, Headers, AbortController) are not represented as entities.",
+    "The self-CALLS edge `src/fetch.ts#createFetch` → `src/fetch.ts#createFetch` reflects the internal `$fetch.create` factory re-invoking createFetch; precise call-site semantics of the closure (`$fetchRaw` recursion during retries) are not captured by the graph.",
+    "No CI/CD, publishing, or deployment configuration was analyzed."
+  ]
+}

@@ -1,0 +1,236 @@
+{
+  "schemaVersion": "1.0",
+  "application": {
+    "name": "ofetch (unjs/ofetch)",
+    "summary": "A small, isomorphic (browser + Node.js) HTTP client library that wraps the standard Fetch API. It provides a single `$fetch` / `ofetch` function that returns the parsed response body directly, plus a `.raw` variant that returns the full Response. It layers ergonomics on top of native fetch: base URL and query resolution, automatic JSON body serialization and headers, content-type-driven response parsing, request timeouts, automatic retries, normalized `FetchError` objects, and lifecycle hooks.",
+    "purpose": "Reusable infrastructure / developer tooling rather than an end-user business application. There is no domain business logic; the product value is "
+  },
+  "domains": [
+    {
+      "id": "http-client-core",
+      "name": "HTTP Client Core",
+      "description": "Request execution lifecycle: option resolution, URL/base/query composition, header merging, body preparation, invoking the platform fetch, and parsing the response body."
+    },
+    {
+      "id": "resilience",
+      "name": "Resilience (Retry & Timeout)",
+      "description": "Automatic retry policy for transient failures and per-request timeout enforcement via AbortController."
+    },
+    {
+      "id": "error-normalization",
+      "name": "Error Normalization",
+      "description": "Converting transport failures and HTTP error statuses into a single, predictable `FetchError` shape exposing request, options, response, data and status metadata."
+    },
+    {
+      "id": "observability",
+      "name": "Lifecycle Hooks / Interceptors",
+      "description": "Extension points (onRequest, onRequestError, onResponse, onResponseError) that let consumers observe or mutate every stage of the request lifecycle."
+    },
+    {
+      "id": "runtime-portability",
+      "name": "Runtime Portability & Connection Management",
+      "description": "Dual entry points for browser/edge and Node.js, plus optional HTTP/HTTPS keep-alive agents for connection pooling in Node."
+    }
+  ],
+  "terminology": [
+    {
+      "term": "$fetch / ofetch",
+      "meaning": "The primary exported callable. `ofetch` is the canonical name; `$fetch` is an alias. Calling it resolves to the parsed payload (`_data`)."
+    },
+    {
+      "term": "raw request",
+      "meaning": "`$fetch.raw` returns the whole `FetchResponse` (status, headers, body, `_data`) instead of only the payload."
+    },
+    {
+      "term": "native",
+      "meaning": "`$fetch.native` is a pass-through to the underlying platform `fetch`, bypassing all ofetch processing."
+    },
+    {
+      "term": "create / defaults",
+      "meaning": "`$fetch.create(defaults, globalOptions)` produces a new pre-configured client instance; defaults are deep-merged across global options, custom global options and per-instance defaults."
+    },
+    {
+      "term": "baseURL",
+      "meaning": "A URL prefix joined to relative request paths (via `ufo` `withBase`)."
+    },
+    {
+      "term": "query / params",
+      "meaning": "Query-string parameters; the two option names are aliases and are merged into one object that is appended to the URL."
+    },
+    {
+      "term": "payload method",
+      "meaning": "HTTP methods that carry a body: PATCH, POST, PUT, DELETE. Payload methods are treated as non-idempotent, so they are not retried by default."
+    },
+    {
+      "term": "responseType",
+      "meaning": "How the body should be interpreted: `json`, `text`, `blob`, `arrayBuffer` or `stream`. Auto-detected from the `Content-Type` header when not given."
+    },
+    {
+      "term": "parseResponse",
+      "meaning": "Custom text-to-object parser; overrides the default `destr` parser (which safely tolerates non-JSON payloads)."
+    },
+    {
+      "term": "retry / retryDelay / retryStatusCodes",
+      "meaning": "Retry count (number or `false`), delay in ms (number or a function of the request context), and the set of status codes considered retryable."
+    },
+    {
+      "term": "timeout",
+      "meaning": "Milliseconds after which the request is aborted with a `TimeoutError` cause (DOMException code 23)."
+    },
+    {
+      "term": "ignoreResponseError",
+      "meaning": "When true, 4xx/5xx responses are returned instead of throwing."
+    },
+    {
+      "term": "FetchError",
+      "meaning": "The normalized error class thrown on failure; exposes `request`, `options`, `response`, `data`, `status`/`statusCode`, `statusText`/`statusMessage`."
+    },
+    {
+      "term": "hooks",
+      "meaning": "Callback(s) invoked at request, request-error, response and response-error stages; each accepts a single function or an array of functions executed sequentially."
+    },
+    {
+      "term": "duplex: half",
+      "meaning": "Required flag for streaming request bodies (ReadableStream / Node Readable), auto-set by the library."
+    },
+    {
+      "term": "keep-alive agent",
+      "meaning": "Reusable Node.js HTTP/HTTPS connection pools, enabled via the `FETCH_KEEP_ALIVE` environment variable."
+    }
+  ],
+  "entityAnnotations": [
+    {
+      "entityId": "src/fetch.ts#createFetch",
+      "businessMeaning": "Factory that assembles the entire HTTP client: it resolves per-request options against global defaults, normalizes the HTTP method, invokes the onRequest hook, applies baseURL and query to the URL, prepares the body (automatic JSON serialization and content-type/accept headers, or streaming with duplex 'half'), enforces the timeout via AbortController, performs the network call, parses the response according to the detected response type, fires the response hooks, and delegates failures to the retry/error path.",
+      "domainIds": [
+        "http-client-core",
+        "resilience",
+        "observability"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/fetch.ts#onError",
+      "businessMeaning": "Failure handler that decides between retrying and failing. Aborted requests are never retried; payload methods default to zero retries while other methods default to one; a retry only occurs for retryable status codes (default 408, 409, 425, 429, 500, 502, 503, 504) after an optional delay, otherwise it normalizes and throws a FetchError.",
+      "domainIds": [
+        "resilience",
+        "error-normalization"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/error.ts#createFetchError",
+      "businessMeaning": "Builds the user-facing error object: composes a message of the form `[METHOD] \"url\": status statusText <cause>`, and exposes lazily derived accessors for request, options, response, data, status/statusCode and statusText/statusMessage so callers have one consistent error contract regardless of whether the failure was transport-level or HTTP-level.",
+      "domainIds": [
+        "error-normalization"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#resolveFetchOptions",
+      "businessMeaning": "Produces the effective request configuration by layering per-call options over the instance defaults, merging headers (defaults first, request-specific values win) and consolidating the `query`/`params` aliases into a single parameter set.",
+      "domainIds": [
+        "http-client-core"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#mergeHeaders",
+      "businessMeaning": "Combines default headers with request-level headers into one Headers collection, with request-level values overriding defaults.",
+      "domainIds": [
+        "http-client-core"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#isPayloadMethod",
+      "businessMeaning": "Identifies body-carrying methods (PATCH, POST, PUT, DELETE); used to decide automatic JSON body handling and to suppress automatic retries for non-idempotent requests.",
+      "domainIds": [
+        "http-client-core",
+        "resilience"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#isJSONSerializable",
+      "businessMeaning": "Determines whether a request body can be automatically JSON-stringified. Plain objects, arrays and primitives qualify; buffers, streams, class instances without `toJSON`, bigints, functions and symbols do not.",
+      "domainIds": [
+        "http-client-core"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#detectResponseType",
+      "businessMeaning": "Infers the response body format from the `Content-Type` header: JSON media types (including `+json` suffixes) map to `json`, XML/HTML/SVG and `text/*` map to `text`, everything else maps to `blob`; a missing content type defaults to `json`.",
+      "domainIds": [
+        "http-client-core"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#callHooks",
+      "businessMeaning": "Runs a lifecycle hook, supporting either a single callback or an array of callbacks executed sequentially, awaiting each so hooks can perform asynchronous work such as logging or refreshing credentials.",
+      "domainIds": [
+        "observability"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/node.ts#createNodeFetch",
+      "businessMeaning": "Node.js-specific transport setup. When the `FETCH_KEEP_ALIVE` environment variable parses to true, it configures dedicated keep-alive HTTP and HTTPS agents and returns a fetch wrapper that selects the agent per URL protocol, enabling connection reuse; otherwise it falls back to the plain node-fetch-native implementation.",
+      "domainIds": [
+        "runtime-portability"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "test/index.test.ts#abortHandle",
+      "businessMeaning": "Test helper proving that an explicit AbortSignal cancellation is surfaced to the caller as an aborted error rather than being silently retried.",
+      "domainIds": [
+        "resilience"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "playground/index.ts#main",
+      "businessMeaning": "Manual smoke-test entry point that performs a live request against an external status-code service to observe error handling on a 500 response.",
+      "domainIds": [
+        "http-client-core"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "entityId": "examples/type-safety.ts#main",
+      "businessMeaning": "Demonstrates the developer-facing type-safety story: a generic type argument on `ofetch` types the response payload so nested fields are strongly typed at compile time.",
+      "domainIds": [
+        "http-client-core"
+      ],
+      "confidence": "medium"
+    }
+  ],
+  "applicationFacts": [
+    "Two published entry points: `src/index.ts` for browsers/edge/generic runtimes (uses `globalThis.fetch`, `Headers`, `AbortController`) and `src/node.ts` for Node.js (falls back to `node-fetch-native` and its `Headers`/`AbortController` polyfills when the globals are absent).",
+    "The Node entry prefers the platform `globalThis.fetch` when available and only falls back to the polyfill otherwise; both entries export the same `ofetch`/`$fetch` names.",
+    "Automatic JSON handling: for payload methods, JSON-serializable bodies are stringified automatically and `content-type: application/json` / `accept: application/json` are set only when the caller has not specified them, so caller-supplied content types (e.g. `text/plain`) are preserved.",
+    "Streaming request bodies (browser ReadableStream or Node Readable) are passed through untouched and automatically get `duplex: \"half\"`.",
+    "Response parsing uses `destr` as the default JSON parser, which avoids throwing on non-JSON payloads; a custom `parseResponse` function can override it.",
+    "Bodies are not read for null-body status codes (101, 204, 205, 304) or for HEAD requests, and in those cases the resolved payload is `undefined`.",
+    "Timeouts are implemented client-side with an AbortController; the resulting error carries a `TimeoutError` cause with `code: 23` (`DOMException.TIMEOUT_ERR`), and the timer is always cleared afterwards.",
+    "Explicit aborts (AbortError) are not retried automatically, which prevents the library from fighting user cancellation.",
+    "Default retryable status codes: 408, 409, 425, 429, 500, 502, 503, 504; callers can override them with `retryStatusCodes`.",
+    "Retry delay may be a fixed number of milliseconds or a callback receiving the request context, enabling per-request or adaptive backoff strategies.",
+    "HTTP errors (400-599) throw a `FetchError` by default; `ignoreResponseError: true` returns the response instead.",
+    "Hook coverage: `onRequest` fires before the network call, `onRequestError` on transport failure, `onResponse` after a response is received, and `onResponseError` for 4xx/5xx responses.",
+    "The build is produced with `unbuild`, emitting type declarations plus both CJS and ESM bundles from `src/index` and `src/node`, with `undici` treated as an external dependency.",
+    "Tests use `vitest` with an in-process `h3` application served by `listhen`, exercising routes such as /ok, /echo, /post, /params, /binary, /403, /408, /204 and /timeout.",
+    "External dependencies used at runtime: `destr` (safe JSON parsing), `ufo` (URL base/query helpers), and `node-fetch-native` (Node fallback transport)."
+  ],
+  "unknowns": [
+    "No README, changelog, license or package manifest was provided, so the published package version, support matrix and release process are unknown.",
+    "The consuming applications of this library are not present in the repository; downstream business domains that depend on it are unknown.",
+    "Ownership of the code (team or organization beyond the `unjs` namespace) is not determinable from the source.",
+    "The `FETCH_KEEP_ALIVE` flag's production usage and operational rationale are unknown; only its parsing behaviour is visible.",
+    "Whether the `undici` dispatcher option is exercised anywhere is unknown; it is declared as a type-only dependency and marked external in the build.",
+    "The `textTypes` content-type set in response-type detection intentionally excludes some formats; the intended business rationale for treating unknown types as `blob` is not documented."
+  ]
+}

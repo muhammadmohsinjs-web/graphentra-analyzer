@@ -1,0 +1,2220 @@
+{
+  "artifactKind": "graphentra-evidence",
+  "schemaVersion": "2.0",
+  "analyzerVersion": "0.4.0",
+  "target": {
+    "targetPath": "."
+  },
+  "comparison": {
+    "mode": "commit",
+    "requestedBase": "0d84f7b^",
+    "requestedHead": "0d84f7b",
+    "resolvedBaseSha": "6aff08e529223d728b6fc49459aadf2bb9be7274",
+    "resolvedHeadSha": "0d84f7b37a73d1a5dfdde737956591e84528866f",
+    "comparedTo": "`0d84f7b`"
+  },
+  "sourceState": {
+    "checkoutSha": "0d84f7b37a73d1a5dfdde737956591e84528866f",
+    "isTrackedDirty": false,
+    "untrackedSourcePolicy": "excluded",
+    "contentIdentity": "32f63fccef70c1a9107efb88179f55da855fe2966c8746a5d54e2756edb2dbc3"
+  },
+  "options": {
+    "excludePaths": [],
+    "sourcePolicy": "git-tracked"
+  },
+  "outcome": "completed",
+  "technicalGraph": {
+    "schemaVersion": "1.0",
+    "repository": {
+      "targetPath": ".",
+      "headSha": "0d84f7b37a73d1a5dfdde737956591e84528866f",
+      "generatedAt": "2026-11-22T17:53:23.467Z",
+      "analyzerVersion": "0.4.0"
+    },
+    "capabilities": {
+      "language": "typescript",
+      "entityKinds": [
+        "function"
+      ],
+      "relationTypes": [
+        "CALLS"
+      ],
+      "maxBlastDepth": 6
+    },
+    "analyzedFiles": [
+      "build.config.ts",
+      "examples/type-safety.ts",
+      "playground/index.ts",
+      "src/base.ts",
+      "src/error.ts",
+      "src/fetch.ts",
+      "src/index.ts",
+      "src/node.ts",
+      "src/types.ts",
+      "src/utils.ts",
+      "test/index.test.ts",
+      "vitest.config.ts"
+    ],
+    "entities": [
+      {
+        "id": "examples/type-safety.ts#main",
+        "kind": "function",
+        "name": "main",
+        "file": "examples/type-safety.ts",
+        "startLine": 12,
+        "endLine": 18
+      },
+      {
+        "id": "src/error.ts#createFetchError",
+        "kind": "function",
+        "name": "createFetchError",
+        "file": "src/error.ts",
+        "startLine": 21,
+        "endLine": 67
+      },
+      {
+        "id": "src/utils.ts#isPayloadMethod",
+        "kind": "function",
+        "name": "isPayloadMethod",
+        "file": "src/utils.ts",
+        "startLine": 13,
+        "endLine": 15
+      },
+      {
+        "id": "src/utils.ts#isJSONSerializable",
+        "kind": "function",
+        "name": "isJSONSerializable",
+        "file": "src/utils.ts",
+        "startLine": 17,
+        "endLine": 38
+      },
+      {
+        "id": "src/utils.ts#detectResponseType",
+        "kind": "function",
+        "name": "detectResponseType",
+        "file": "src/utils.ts",
+        "startLine": 50,
+        "endLine": 72
+      },
+      {
+        "id": "src/utils.ts#resolveFetchOptions",
+        "kind": "function",
+        "name": "resolveFetchOptions",
+        "file": "src/utils.ts",
+        "startLine": 74,
+        "endLine": 108
+      },
+      {
+        "id": "src/utils.ts#mergeHeaders",
+        "kind": "function",
+        "name": "mergeHeaders",
+        "file": "src/utils.ts",
+        "startLine": 110,
+        "endLine": 127
+      },
+      {
+        "id": "src/utils.ts#callHooks",
+        "kind": "function",
+        "name": "callHooks",
+        "file": "src/utils.ts",
+        "startLine": 129,
+        "endLine": 142
+      },
+      {
+        "id": "src/fetch.ts#createFetch",
+        "kind": "function",
+        "name": "createFetch",
+        "file": "src/fetch.ts",
+        "startLine": 37,
+        "endLine": 270
+      },
+      {
+        "id": "src/fetch.ts#onError",
+        "kind": "function",
+        "name": "onError",
+        "file": "src/fetch.ts",
+        "startLine": 44,
+        "endLine": 92
+      },
+      {
+        "id": "src/node.ts#createNodeFetch",
+        "kind": "function",
+        "name": "createNodeFetch",
+        "file": "src/node.ts",
+        "startLine": 13,
+        "endLine": 35
+      },
+      {
+        "id": "playground/index.ts#main",
+        "kind": "function",
+        "name": "main",
+        "file": "playground/index.ts",
+        "startLine": 3,
+        "endLine": 9
+      },
+      {
+        "id": "test/index.test.ts#abortHandle",
+        "kind": "function",
+        "name": "abortHandle",
+        "file": "test/index.test.ts",
+        "startLine": 306,
+        "endLine": 314
+      }
+    ],
+    "relations": [
+      {
+        "from": "src/utils.ts#resolveFetchOptions",
+        "to": "src/utils.ts#mergeHeaders",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#onError",
+        "to": "src/utils.ts#isPayloadMethod",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#onError",
+        "to": "src/error.ts#createFetchError",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/utils.ts#resolveFetchOptions",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/utils.ts#callHooks",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/utils.ts#isPayloadMethod",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/utils.ts#isJSONSerializable",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/fetch.ts#onError",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/utils.ts#detectResponseType",
+        "type": "CALLS"
+      },
+      {
+        "from": "src/fetch.ts#createFetch",
+        "to": "src/fetch.ts#createFetch",
+        "type": "CALLS"
+      }
+    ]
+  },
+  "changedFiles": [
+    {
+      "file": "src/fetch.ts",
+      "oldFile": "src/fetch.ts",
+      "changedLines": [
+        9,
+        15,
+        18,
+        19,
+        94,
+        95,
+        96,
+        97,
+        100,
+        101,
+        102,
+        103,
+        104,
+        105,
+        121,
+        122
+      ],
+      "addedCode": [
+        "  resolveFetchOptions,",
+        "  ResponseType,",
+        "  FetchRequest,",
+        "  FetchOptions,",
+        "  const $fetchRaw: $Fetch[\"raw\"] = async function $fetchRaw<",
+        "    T = any,",
+        "    R extends ResponseType = \"json\",",
+        "  >(_request: FetchRequest, _options: FetchOptions<R> = {}) {",
+        "      options: resolveFetchOptions<R, T>(",
+        "        _request,",
+        "        _options,",
+        "        globalOptions.defaults as unknown as FetchOptions<R, T>,",
+        "        Headers",
+        "      ),",
+        "      if (context.options.query) {",
+        "        context.request = withQuery(context.request, context.options.query);"
+      ],
+      "removedCode": [
+        "  mergeFetchOptions,",
+        "  const $fetchRaw: $Fetch[\"raw\"] = async function $fetchRaw(",
+        "    _request,",
+        "    _options = {}",
+        "  ) {",
+        "      options: mergeFetchOptions(_options, globalOptions.defaults, Headers),",
+        "      if (context.options.query || context.options.params) {",
+        "        context.request = withQuery(context.request, {",
+        "          ...context.options.params,",
+        "          ...context.options.query,",
+        "        });"
+      ],
+      "diff": "diff --git a/src/fetch.ts b/src/fetch.ts\nindex b4029fe..3c2b440 100644\n--- a/src/fetch.ts\n+++ b/src/fetch.ts\n@@ -6,14 +6,17 @@ import {\n   isPayloadMethod,\n   isJSONSerializable,\n   detectResponseType,\n-  mergeFetchOptions,\n+  resolveFetchOptions,\n   callHooks,\n } from \"./utils\";\n import type {\n   CreateFetchOptions,\n   FetchResponse,\n+  ResponseType,\n   FetchContext,\n   $Fetch,\n+  FetchRequest,\n+  FetchOptions,\n } from \"./types\";\n \n // https://developer.mozilla.org/en-US/docs/Web/HTTP/Status\n@@ -88,13 +91,18 @@ export function createFetch(globalOptions: CreateFetchOptions = {}): $Fetch {\n     throw error;\n   }\n \n-  const $fetchRaw: $Fetch[\"raw\"] = async function $fetchRaw(\n-    _request,\n-    _options = {}\n-  ) {\n+  const $fetchRaw: $Fetch[\"raw\"] = async function $fetchRaw<\n+    T = any,\n+    R extends ResponseType = \"json\",\n+  >(_request: FetchRequest, _options: FetchOptions<R> = {}) {\n     const context: FetchContext = {\n       request: _request,\n-      options: mergeFetchOptions(_options, globalOptions.defaults, Headers),\n+      options: resolveFetchOptions<R, T>(\n+        _request,\n+        _options,\n+        globalOptions.defaults as unknown as FetchOptions<R, T>,\n+        Headers\n+      ),\n       response: undefined,\n       error: undefined,\n     };\n@@ -110,11 +118,8 @@ export function createFetch(globalOptions: CreateFetchOptions = {}): $Fetch {\n       if (context.options.baseURL) {\n         context.request = withBase(context.request, context.options.baseURL);\n       }\n-      if (context.options.query || context.options.params) {\n-        context.request = withQuery(context.request, {\n-          ...context.options.params,\n-          ...context.options.query,\n-        });\n+      if (context.options.query) {\n+        context.request = withQuery(context.request, context.options.query);\n       }\n     }",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "  isPayloadMethod,",
+              "oldLine": 6,
+              "newLine": 6
+            },
+            {
+              "kind": " ",
+              "code": "  isJSONSerializable,",
+              "oldLine": 7,
+              "newLine": 7
+            },
+            {
+              "kind": " ",
+              "code": "  detectResponseType,",
+              "oldLine": 8,
+              "newLine": 8
+            },
+            {
+              "kind": "-",
+              "code": "  mergeFetchOptions,",
+              "oldLine": 9,
+              "newLine": 9
+            },
+            {
+              "kind": "+",
+              "code": "  resolveFetchOptions,",
+              "oldLine": 10,
+              "newLine": 9
+            },
+            {
+              "kind": " ",
+              "code": "  callHooks,",
+              "oldLine": 10,
+              "newLine": 10
+            },
+            {
+              "kind": " ",
+              "code": "} from \"./utils\";",
+              "oldLine": 11,
+              "newLine": 11
+            },
+            {
+              "kind": " ",
+              "code": "import type {",
+              "oldLine": 12,
+              "newLine": 12
+            },
+            {
+              "kind": " ",
+              "code": "  CreateFetchOptions,",
+              "oldLine": 13,
+              "newLine": 13
+            },
+            {
+              "kind": " ",
+              "code": "  FetchResponse,",
+              "oldLine": 14,
+              "newLine": 14
+            },
+            {
+              "kind": "+",
+              "code": "  ResponseType,",
+              "oldLine": 15,
+              "newLine": 15
+            },
+            {
+              "kind": " ",
+              "code": "  FetchContext,",
+              "oldLine": 15,
+              "newLine": 16
+            },
+            {
+              "kind": " ",
+              "code": "  $Fetch,",
+              "oldLine": 16,
+              "newLine": 17
+            },
+            {
+              "kind": "+",
+              "code": "  FetchRequest,",
+              "oldLine": 17,
+              "newLine": 18
+            },
+            {
+              "kind": "+",
+              "code": "  FetchOptions,",
+              "oldLine": 17,
+              "newLine": 19
+            },
+            {
+              "kind": " ",
+              "code": "} from \"./types\";",
+              "oldLine": 17,
+              "newLine": 20
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 18,
+              "newLine": 21
+            },
+            {
+              "kind": " ",
+              "code": "// https://developer.mozilla.org/en-US/docs/Web/HTTP/Status",
+              "oldLine": 19,
+              "newLine": 22
+            }
+          ]
+        },
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "    throw error;",
+              "oldLine": 88,
+              "newLine": 91
+            },
+            {
+              "kind": " ",
+              "code": "  }",
+              "oldLine": 89,
+              "newLine": 92
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 90,
+              "newLine": 93
+            },
+            {
+              "kind": "-",
+              "code": "  const $fetchRaw: $Fetch[\"raw\"] = async function $fetchRaw(",
+              "oldLine": 91,
+              "newLine": 94
+            },
+            {
+              "kind": "-",
+              "code": "    _request,",
+              "oldLine": 92,
+              "newLine": 94
+            },
+            {
+              "kind": "-",
+              "code": "    _options = {}",
+              "oldLine": 93,
+              "newLine": 94
+            },
+            {
+              "kind": "-",
+              "code": "  ) {",
+              "oldLine": 94,
+              "newLine": 94
+            },
+            {
+              "kind": "+",
+              "code": "  const $fetchRaw: $Fetch[\"raw\"] = async function $fetchRaw<",
+              "oldLine": 95,
+              "newLine": 94
+            },
+            {
+              "kind": "+",
+              "code": "    T = any,",
+              "oldLine": 95,
+              "newLine": 95
+            },
+            {
+              "kind": "+",
+              "code": "    R extends ResponseType = \"json\",",
+              "oldLine": 95,
+              "newLine": 96
+            },
+            {
+              "kind": "+",
+              "code": "  >(_request: FetchRequest, _options: FetchOptions<R> = {}) {",
+              "oldLine": 95,
+              "newLine": 97
+            },
+            {
+              "kind": " ",
+              "code": "    const context: FetchContext = {",
+              "oldLine": 95,
+              "newLine": 98
+            },
+            {
+              "kind": " ",
+              "code": "      request: _request,",
+              "oldLine": 96,
+              "newLine": 99
+            },
+            {
+              "kind": "-",
+              "code": "      options: mergeFetchOptions(_options, globalOptions.defaults, Headers),",
+              "oldLine": 97,
+              "newLine": 100
+            },
+            {
+              "kind": "+",
+              "code": "      options: resolveFetchOptions<R, T>(",
+              "oldLine": 98,
+              "newLine": 100
+            },
+            {
+              "kind": "+",
+              "code": "        _request,",
+              "oldLine": 98,
+              "newLine": 101
+            },
+            {
+              "kind": "+",
+              "code": "        _options,",
+              "oldLine": 98,
+              "newLine": 102
+            },
+            {
+              "kind": "+",
+              "code": "        globalOptions.defaults as unknown as FetchOptions<R, T>,",
+              "oldLine": 98,
+              "newLine": 103
+            },
+            {
+              "kind": "+",
+              "code": "        Headers",
+              "oldLine": 98,
+              "newLine": 104
+            },
+            {
+              "kind": "+",
+              "code": "      ),",
+              "oldLine": 98,
+              "newLine": 105
+            },
+            {
+              "kind": " ",
+              "code": "      response: undefined,",
+              "oldLine": 98,
+              "newLine": 106
+            },
+            {
+              "kind": " ",
+              "code": "      error: undefined,",
+              "oldLine": 99,
+              "newLine": 107
+            },
+            {
+              "kind": " ",
+              "code": "    };",
+              "oldLine": 100,
+              "newLine": 108
+            }
+          ]
+        },
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "      if (context.options.baseURL) {",
+              "oldLine": 110,
+              "newLine": 118
+            },
+            {
+              "kind": " ",
+              "code": "        context.request = withBase(context.request, context.options.baseURL);",
+              "oldLine": 111,
+              "newLine": 119
+            },
+            {
+              "kind": " ",
+              "code": "      }",
+              "oldLine": 112,
+              "newLine": 120
+            },
+            {
+              "kind": "-",
+              "code": "      if (context.options.query || context.options.params) {",
+              "oldLine": 113,
+              "newLine": 121
+            },
+            {
+              "kind": "-",
+              "code": "        context.request = withQuery(context.request, {",
+              "oldLine": 114,
+              "newLine": 121
+            },
+            {
+              "kind": "-",
+              "code": "          ...context.options.params,",
+              "oldLine": 115,
+              "newLine": 121
+            },
+            {
+              "kind": "-",
+              "code": "          ...context.options.query,",
+              "oldLine": 116,
+              "newLine": 121
+            },
+            {
+              "kind": "-",
+              "code": "        });",
+              "oldLine": 117,
+              "newLine": 121
+            },
+            {
+              "kind": "+",
+              "code": "      if (context.options.query) {",
+              "oldLine": 118,
+              "newLine": 121
+            },
+            {
+              "kind": "+",
+              "code": "        context.request = withQuery(context.request, context.options.query);",
+              "oldLine": 118,
+              "newLine": 122
+            },
+            {
+              "kind": " ",
+              "code": "      }",
+              "oldLine": 118,
+              "newLine": 123
+            },
+            {
+              "kind": " ",
+              "code": "    }",
+              "oldLine": 119,
+              "newLine": 124
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 120,
+              "newLine": 125
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/types.ts",
+      "oldFile": "src/types.ts",
+      "changedLines": [
+        26,
+        28,
+        30,
+        32,
+        34,
+        36,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76,
+        95
+      ],
+      "addedCode": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "export interface ResolvedFetchOptions<",
+        "  R extends ResponseType = ResponseType,",
+        "  T = any,",
+        "> extends FetchOptions<R, T> {",
+        "  headers: Headers;",
+        "}",
+        "",
+        "  options: ResolvedFetchOptions<R>;"
+      ],
+      "removedCode": [
+        "  options: FetchOptions<R>;"
+      ],
+      "diff": "diff --git a/src/types.ts b/src/types.ts\nindex e9c9cbd..5f2e818 100644\n--- a/src/types.ts\n+++ b/src/types.ts\n@@ -23,11 +23,17 @@ export interface FetchOptions<R extends ResponseType = ResponseType, T = any>\n   extends Omit<RequestInit, \"body\">,\n     FetchHooks<T, R> {\n   baseURL?: string;\n+\n   body?: RequestInit[\"body\"] | Record<string, any>;\n+\n   ignoreResponseError?: boolean;\n+\n   params?: Record<string, any>;\n+\n   query?: Record<string, any>;\n+\n   parseResponse?: (responseText: string) => any;\n+\n   responseType?: R;\n \n   /**\n@@ -61,6 +67,13 @@ export interface FetchOptions<R extends ResponseType = ResponseType, T = any>\n   retryStatusCodes?: number[];\n }\n \n+export interface ResolvedFetchOptions<\n+  R extends ResponseType = ResponseType,\n+  T = any,\n+> extends FetchOptions<R, T> {\n+  headers: Headers;\n+}\n+\n export interface CreateFetchOptions {\n   defaults?: FetchOptions;\n   fetch?: Fetch;\n@@ -79,7 +92,7 @@ export type GlobalOptions = Pick<\n \n export interface FetchContext<T = any, R extends ResponseType = ResponseType> {\n   request: FetchRequest;\n-  options: FetchOptions<R>;\n+  options: ResolvedFetchOptions<R>;\n   response?: FetchResponse<T>;\n   error?: Error;\n }",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "  extends Omit<RequestInit, \"body\">,",
+              "oldLine": 23,
+              "newLine": 23
+            },
+            {
+              "kind": " ",
+              "code": "    FetchHooks<T, R> {",
+              "oldLine": 24,
+              "newLine": 24
+            },
+            {
+              "kind": " ",
+              "code": "  baseURL?: string;",
+              "oldLine": 25,
+              "newLine": 25
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 26,
+              "newLine": 26
+            },
+            {
+              "kind": " ",
+              "code": "  body?: RequestInit[\"body\"] | Record<string, any>;",
+              "oldLine": 26,
+              "newLine": 27
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 27,
+              "newLine": 28
+            },
+            {
+              "kind": " ",
+              "code": "  ignoreResponseError?: boolean;",
+              "oldLine": 27,
+              "newLine": 29
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 28,
+              "newLine": 30
+            },
+            {
+              "kind": " ",
+              "code": "  params?: Record<string, any>;",
+              "oldLine": 28,
+              "newLine": 31
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 29,
+              "newLine": 32
+            },
+            {
+              "kind": " ",
+              "code": "  query?: Record<string, any>;",
+              "oldLine": 29,
+              "newLine": 33
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 30,
+              "newLine": 34
+            },
+            {
+              "kind": " ",
+              "code": "  parseResponse?: (responseText: string) => any;",
+              "oldLine": 30,
+              "newLine": 35
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 31,
+              "newLine": 36
+            },
+            {
+              "kind": " ",
+              "code": "  responseType?: R;",
+              "oldLine": 31,
+              "newLine": 37
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 32,
+              "newLine": 38
+            },
+            {
+              "kind": " ",
+              "code": "  /**",
+              "oldLine": 33,
+              "newLine": 39
+            }
+          ]
+        },
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "  retryStatusCodes?: number[];",
+              "oldLine": 61,
+              "newLine": 67
+            },
+            {
+              "kind": " ",
+              "code": "}",
+              "oldLine": 62,
+              "newLine": 68
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 63,
+              "newLine": 69
+            },
+            {
+              "kind": "+",
+              "code": "export interface ResolvedFetchOptions<",
+              "oldLine": 64,
+              "newLine": 70
+            },
+            {
+              "kind": "+",
+              "code": "  R extends ResponseType = ResponseType,",
+              "oldLine": 64,
+              "newLine": 71
+            },
+            {
+              "kind": "+",
+              "code": "  T = any,",
+              "oldLine": 64,
+              "newLine": 72
+            },
+            {
+              "kind": "+",
+              "code": "> extends FetchOptions<R, T> {",
+              "oldLine": 64,
+              "newLine": 73
+            },
+            {
+              "kind": "+",
+              "code": "  headers: Headers;",
+              "oldLine": 64,
+              "newLine": 74
+            },
+            {
+              "kind": "+",
+              "code": "}",
+              "oldLine": 64,
+              "newLine": 75
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 64,
+              "newLine": 76
+            },
+            {
+              "kind": " ",
+              "code": "export interface CreateFetchOptions {",
+              "oldLine": 64,
+              "newLine": 77
+            },
+            {
+              "kind": " ",
+              "code": "  defaults?: FetchOptions;",
+              "oldLine": 65,
+              "newLine": 78
+            },
+            {
+              "kind": " ",
+              "code": "  fetch?: Fetch;",
+              "oldLine": 66,
+              "newLine": 79
+            }
+          ]
+        },
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 79,
+              "newLine": 92
+            },
+            {
+              "kind": " ",
+              "code": "export interface FetchContext<T = any, R extends ResponseType = ResponseType> {",
+              "oldLine": 80,
+              "newLine": 93
+            },
+            {
+              "kind": " ",
+              "code": "  request: FetchRequest;",
+              "oldLine": 81,
+              "newLine": 94
+            },
+            {
+              "kind": "-",
+              "code": "  options: FetchOptions<R>;",
+              "oldLine": 82,
+              "newLine": 95
+            },
+            {
+              "kind": "+",
+              "code": "  options: ResolvedFetchOptions<R>;",
+              "oldLine": 83,
+              "newLine": 95
+            },
+            {
+              "kind": " ",
+              "code": "  response?: FetchResponse<T>;",
+              "oldLine": 83,
+              "newLine": 96
+            },
+            {
+              "kind": " ",
+              "code": "  error?: Error;",
+              "oldLine": 84,
+              "newLine": 97
+            },
+            {
+              "kind": " ",
+              "code": "}",
+              "oldLine": 85,
+              "newLine": 98
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/utils.ts",
+      "oldFile": "src/utils.ts",
+      "changedLines": [
+        5,
+        6,
+        74,
+        75,
+        76,
+        77,
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        90,
+        91,
+        92,
+        93,
+        95,
+        96,
+        101,
+        102,
+        103,
+        104,
+        105,
+        106,
+        107,
+        108,
+        109,
+        110,
+        111,
+        112,
+        113,
+        114,
+        115,
+        116,
+        117,
+        118,
+        119,
+        120,
+        121,
+        122,
+        123,
+        126
+      ],
+      "addedCode": [
+        "  FetchRequest,",
+        "  ResolvedFetchOptions,",
+        "export function resolveFetchOptions<",
+        "  R extends ResponseType = ResponseType,",
+        "  T = any,",
+        ">(",
+        "  request: FetchRequest,",
+        "  input: FetchOptions<R, T> | undefined,",
+        "  defaults: FetchOptions<R, T> | undefined,",
+        "  Headers: typeof globalThis.Headers",
+        "): ResolvedFetchOptions<R, T> {",
+        "  // Merge headers",
+        "  const headers = mergeHeaders(",
+        "    input?.headers ?? (request as Request)?.headers,",
+        "    defaults?.headers,",
+        "    Headers",
+        "  );",
+        "  // Merge query/params",
+        "  let query: Record<string, any> | undefined;",
+        "  if (defaults?.query || defaults?.params || input?.params || input?.query) {",
+        "    query = {",
+        "      ...input?.params,",
+        "  return {",
+        "    ...defaults,",
+        "    ...input,",
+        "    query,",
+        "    params: query,",
+        "    headers,",
+        "  };",
+        "}",
+        "",
+        "function mergeHeaders(",
+        "  input: HeadersInit | undefined,",
+        "  defaults: HeadersInit | undefined,",
+        "  Headers: typeof globalThis.Headers",
+        "): Headers {",
+        "  if (!defaults) {",
+        "    return new Headers(input);",
+        "  }",
+        "  const headers = new Headers(defaults);",
+        "  if (input) {",
+        "    for (const [key, value] of Symbol.iterator in input || Array.isArray(input)",
+        "      ? input",
+        "      : new Headers(input)) {",
+        "      headers.set(key, value);",
+        "  return headers;"
+      ],
+      "removedCode": [
+        "// Merging of fetch option objects.",
+        "export function mergeFetchOptions(",
+        "  input: FetchOptions | undefined,",
+        "  defaults: FetchOptions | undefined,",
+        "  Headers = globalThis.Headers",
+        "): FetchOptions {",
+        "  const merged: FetchOptions = {",
+        "    ...defaults,",
+        "    ...input,",
+        "  };",
+        "  // Merge params and query",
+        "  if (defaults?.params && input?.params) {",
+        "    merged.params = {",
+        "      ...input?.params,",
+        "    };",
+        "  }",
+        "  if (defaults?.query && input?.query) {",
+        "    merged.query = {",
+        "  // Merge headers",
+        "  if (defaults?.headers && input?.headers) {",
+        "    merged.headers = new Headers(defaults?.headers || {});",
+        "    for (const [key, value] of new Headers(input?.headers || {})) {",
+        "      merged.headers.set(key, value);",
+        "",
+        "  return merged;"
+      ],
+      "diff": "diff --git a/src/utils.ts b/src/utils.ts\nindex f9760ab..0efd414 100644\n--- a/src/utils.ts\n+++ b/src/utils.ts\n@@ -2,6 +2,8 @@ import type {\n   FetchContext,\n   FetchHook,\n   FetchOptions,\n+  FetchRequest,\n+  ResolvedFetchOptions,\n   ResponseType,\n } from \"./types\";\n \n@@ -69,40 +71,59 @@ export function detectResponseType(_contentType = \"\"): ResponseType {\n   return \"blob\";\n }\n \n-// Merging of fetch option objects.\n-export function mergeFetchOptions(\n-  input: FetchOptions | undefined,\n-  defaults: FetchOptions | undefined,\n-  Headers = globalThis.Headers\n-): FetchOptions {\n-  const merged: FetchOptions = {\n-    ...defaults,\n-    ...input,\n-  };\n+export function resolveFetchOptions<\n+  R extends ResponseType = ResponseType,\n+  T = any,\n+>(\n+  request: FetchRequest,\n+  input: FetchOptions<R, T> | undefined,\n+  defaults: FetchOptions<R, T> | undefined,\n+  Headers: typeof globalThis.Headers\n+): ResolvedFetchOptions<R, T> {\n+  // Merge headers\n+  const headers = mergeHeaders(\n+    input?.headers ?? (request as Request)?.headers,\n+    defaults?.headers,\n+    Headers\n+  );\n \n-  // Merge params and query\n-  if (defaults?.params && input?.params) {\n-    merged.params = {\n+  // Merge query/params\n+  let query: Record<string, any> | undefined;\n+  if (defaults?.query || defaults?.params || input?.params || input?.query) {\n+    query = {\n       ...defaults?.params,\n-      ...input?.params,\n-    };\n-  }\n-  if (defaults?.query && input?.query) {\n-    merged.query = {\n       ...defaults?.query,\n+      ...input?.params,\n       ...input?.query,\n     };\n   }\n \n-  // Merge headers\n-  if (defaults?.headers && input?.headers) {\n-    merged.headers = new Headers(defaults?.headers || {});\n-    for (const [key, value] of new Headers(input?.headers || {})) {\n-      merged.headers.set(key, value);\n+  return {\n+    ...defaults,\n+    ...input,\n+    query,\n+    params: query,\n+    headers,\n+  };\n+}\n+\n+function mergeHeaders(\n+  input: HeadersInit | undefined,\n+  defaults: HeadersInit | undefined,\n+  Headers: typeof globalThis.Headers\n+): Headers {\n+  if (!defaults) {\n+    return new Headers(input);\n+  }\n+  const headers = new Headers(defaults);\n+  if (input) {\n+    for (const [key, value] of Symbol.iterator in input || Array.isArray(input)\n+      ? input\n+      : new Headers(input)) {\n+      headers.set(key, value);\n     }\n   }\n-\n-  return merged;\n+  return headers;\n }\n \n export async function callHooks<C extends FetchContext = FetchContext>(",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "  FetchContext,",
+              "oldLine": 2,
+              "newLine": 2
+            },
+            {
+              "kind": " ",
+              "code": "  FetchHook,",
+              "oldLine": 3,
+              "newLine": 3
+            },
+            {
+              "kind": " ",
+              "code": "  FetchOptions,",
+              "oldLine": 4,
+              "newLine": 4
+            },
+            {
+              "kind": "+",
+              "code": "  FetchRequest,",
+              "oldLine": 5,
+              "newLine": 5
+            },
+            {
+              "kind": "+",
+              "code": "  ResolvedFetchOptions,",
+              "oldLine": 5,
+              "newLine": 6
+            },
+            {
+              "kind": " ",
+              "code": "  ResponseType,",
+              "oldLine": 5,
+              "newLine": 7
+            },
+            {
+              "kind": " ",
+              "code": "} from \"./types\";",
+              "oldLine": 6,
+              "newLine": 8
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 7,
+              "newLine": 9
+            }
+          ]
+        },
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "  return \"blob\";",
+              "oldLine": 69,
+              "newLine": 71
+            },
+            {
+              "kind": " ",
+              "code": "}",
+              "oldLine": 70,
+              "newLine": 72
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 71,
+              "newLine": 73
+            },
+            {
+              "kind": "-",
+              "code": "// Merging of fetch option objects.",
+              "oldLine": 72,
+              "newLine": 74
+            },
+            {
+              "kind": "-",
+              "code": "export function mergeFetchOptions(",
+              "oldLine": 73,
+              "newLine": 74
+            },
+            {
+              "kind": "-",
+              "code": "  input: FetchOptions | undefined,",
+              "oldLine": 74,
+              "newLine": 74
+            },
+            {
+              "kind": "-",
+              "code": "  defaults: FetchOptions | undefined,",
+              "oldLine": 75,
+              "newLine": 74
+            },
+            {
+              "kind": "-",
+              "code": "  Headers = globalThis.Headers",
+              "oldLine": 76,
+              "newLine": 74
+            },
+            {
+              "kind": "-",
+              "code": "): FetchOptions {",
+              "oldLine": 77,
+              "newLine": 74
+            },
+            {
+              "kind": "-",
+              "code": "  const merged: FetchOptions = {",
+              "oldLine": 78,
+              "newLine": 74
+            },
+            {
+              "kind": "-",
+              "code": "    ...defaults,",
+              "oldLine": 79,
+              "newLine": 74
+            },
+            {
+              "kind": "-",
+              "code": "    ...input,",
+              "oldLine": 80,
+              "newLine": 74
+            },
+            {
+              "kind": "-",
+              "code": "  };",
+              "oldLine": 81,
+              "newLine": 74
+            },
+            {
+              "kind": "+",
+              "code": "export function resolveFetchOptions<",
+              "oldLine": 82,
+              "newLine": 74
+            },
+            {
+              "kind": "+",
+              "code": "  R extends ResponseType = ResponseType,",
+              "oldLine": 82,
+              "newLine": 75
+            },
+            {
+              "kind": "+",
+              "code": "  T = any,",
+              "oldLine": 82,
+              "newLine": 76
+            },
+            {
+              "kind": "+",
+              "code": ">(",
+              "oldLine": 82,
+              "newLine": 77
+            },
+            {
+              "kind": "+",
+              "code": "  request: FetchRequest,",
+              "oldLine": 82,
+              "newLine": 78
+            },
+            {
+              "kind": "+",
+              "code": "  input: FetchOptions<R, T> | undefined,",
+              "oldLine": 82,
+              "newLine": 79
+            },
+            {
+              "kind": "+",
+              "code": "  defaults: FetchOptions<R, T> | undefined,",
+              "oldLine": 82,
+              "newLine": 80
+            },
+            {
+              "kind": "+",
+              "code": "  Headers: typeof globalThis.Headers",
+              "oldLine": 82,
+              "newLine": 81
+            },
+            {
+              "kind": "+",
+              "code": "): ResolvedFetchOptions<R, T> {",
+              "oldLine": 82,
+              "newLine": 82
+            },
+            {
+              "kind": "+",
+              "code": "  // Merge headers",
+              "oldLine": 82,
+              "newLine": 83
+            },
+            {
+              "kind": "+",
+              "code": "  const headers = mergeHeaders(",
+              "oldLine": 82,
+              "newLine": 84
+            },
+            {
+              "kind": "+",
+              "code": "    input?.headers ?? (request as Request)?.headers,",
+              "oldLine": 82,
+              "newLine": 85
+            },
+            {
+              "kind": "+",
+              "code": "    defaults?.headers,",
+              "oldLine": 82,
+              "newLine": 86
+            },
+            {
+              "kind": "+",
+              "code": "    Headers",
+              "oldLine": 82,
+              "newLine": 87
+            },
+            {
+              "kind": "+",
+              "code": "  );",
+              "oldLine": 82,
+              "newLine": 88
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 82,
+              "newLine": 89
+            },
+            {
+              "kind": "-",
+              "code": "  // Merge params and query",
+              "oldLine": 83,
+              "newLine": 90
+            },
+            {
+              "kind": "-",
+              "code": "  if (defaults?.params && input?.params) {",
+              "oldLine": 84,
+              "newLine": 90
+            },
+            {
+              "kind": "-",
+              "code": "    merged.params = {",
+              "oldLine": 85,
+              "newLine": 90
+            },
+            {
+              "kind": "+",
+              "code": "  // Merge query/params",
+              "oldLine": 86,
+              "newLine": 90
+            },
+            {
+              "kind": "+",
+              "code": "  let query: Record<string, any> | undefined;",
+              "oldLine": 86,
+              "newLine": 91
+            },
+            {
+              "kind": "+",
+              "code": "  if (defaults?.query || defaults?.params || input?.params || input?.query) {",
+              "oldLine": 86,
+              "newLine": 92
+            },
+            {
+              "kind": "+",
+              "code": "    query = {",
+              "oldLine": 86,
+              "newLine": 93
+            },
+            {
+              "kind": " ",
+              "code": "      ...defaults?.params,",
+              "oldLine": 86,
+              "newLine": 94
+            },
+            {
+              "kind": "-",
+              "code": "      ...input?.params,",
+              "oldLine": 87,
+              "newLine": 95
+            },
+            {
+              "kind": "-",
+              "code": "    };",
+              "oldLine": 88,
+              "newLine": 95
+            },
+            {
+              "kind": "-",
+              "code": "  }",
+              "oldLine": 89,
+              "newLine": 95
+            },
+            {
+              "kind": "-",
+              "code": "  if (defaults?.query && input?.query) {",
+              "oldLine": 90,
+              "newLine": 95
+            },
+            {
+              "kind": "-",
+              "code": "    merged.query = {",
+              "oldLine": 91,
+              "newLine": 95
+            },
+            {
+              "kind": " ",
+              "code": "      ...defaults?.query,",
+              "oldLine": 92,
+              "newLine": 95
+            },
+            {
+              "kind": "+",
+              "code": "      ...input?.params,",
+              "oldLine": 93,
+              "newLine": 96
+            },
+            {
+              "kind": " ",
+              "code": "      ...input?.query,",
+              "oldLine": 93,
+              "newLine": 97
+            },
+            {
+              "kind": " ",
+              "code": "    };",
+              "oldLine": 94,
+              "newLine": 98
+            },
+            {
+              "kind": " ",
+              "code": "  }",
+              "oldLine": 95,
+              "newLine": 99
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 96,
+              "newLine": 100
+            },
+            {
+              "kind": "-",
+              "code": "  // Merge headers",
+              "oldLine": 97,
+              "newLine": 101
+            },
+            {
+              "kind": "-",
+              "code": "  if (defaults?.headers && input?.headers) {",
+              "oldLine": 98,
+              "newLine": 101
+            },
+            {
+              "kind": "-",
+              "code": "    merged.headers = new Headers(defaults?.headers || {});",
+              "oldLine": 99,
+              "newLine": 101
+            },
+            {
+              "kind": "-",
+              "code": "    for (const [key, value] of new Headers(input?.headers || {})) {",
+              "oldLine": 100,
+              "newLine": 101
+            },
+            {
+              "kind": "-",
+              "code": "      merged.headers.set(key, value);",
+              "oldLine": 101,
+              "newLine": 101
+            },
+            {
+              "kind": "+",
+              "code": "  return {",
+              "oldLine": 102,
+              "newLine": 101
+            },
+            {
+              "kind": "+",
+              "code": "    ...defaults,",
+              "oldLine": 102,
+              "newLine": 102
+            },
+            {
+              "kind": "+",
+              "code": "    ...input,",
+              "oldLine": 102,
+              "newLine": 103
+            },
+            {
+              "kind": "+",
+              "code": "    query,",
+              "oldLine": 102,
+              "newLine": 104
+            },
+            {
+              "kind": "+",
+              "code": "    params: query,",
+              "oldLine": 102,
+              "newLine": 105
+            },
+            {
+              "kind": "+",
+              "code": "    headers,",
+              "oldLine": 102,
+              "newLine": 106
+            },
+            {
+              "kind": "+",
+              "code": "  };",
+              "oldLine": 102,
+              "newLine": 107
+            },
+            {
+              "kind": "+",
+              "code": "}",
+              "oldLine": 102,
+              "newLine": 108
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 102,
+              "newLine": 109
+            },
+            {
+              "kind": "+",
+              "code": "function mergeHeaders(",
+              "oldLine": 102,
+              "newLine": 110
+            },
+            {
+              "kind": "+",
+              "code": "  input: HeadersInit | undefined,",
+              "oldLine": 102,
+              "newLine": 111
+            },
+            {
+              "kind": "+",
+              "code": "  defaults: HeadersInit | undefined,",
+              "oldLine": 102,
+              "newLine": 112
+            },
+            {
+              "kind": "+",
+              "code": "  Headers: typeof globalThis.Headers",
+              "oldLine": 102,
+              "newLine": 113
+            },
+            {
+              "kind": "+",
+              "code": "): Headers {",
+              "oldLine": 102,
+              "newLine": 114
+            },
+            {
+              "kind": "+",
+              "code": "  if (!defaults) {",
+              "oldLine": 102,
+              "newLine": 115
+            },
+            {
+              "kind": "+",
+              "code": "    return new Headers(input);",
+              "oldLine": 102,
+              "newLine": 116
+            },
+            {
+              "kind": "+",
+              "code": "  }",
+              "oldLine": 102,
+              "newLine": 117
+            },
+            {
+              "kind": "+",
+              "code": "  const headers = new Headers(defaults);",
+              "oldLine": 102,
+              "newLine": 118
+            },
+            {
+              "kind": "+",
+              "code": "  if (input) {",
+              "oldLine": 102,
+              "newLine": 119
+            },
+            {
+              "kind": "+",
+              "code": "    for (const [key, value] of Symbol.iterator in input || Array.isArray(input)",
+              "oldLine": 102,
+              "newLine": 120
+            },
+            {
+              "kind": "+",
+              "code": "      ? input",
+              "oldLine": 102,
+              "newLine": 121
+            },
+            {
+              "kind": "+",
+              "code": "      : new Headers(input)) {",
+              "oldLine": 102,
+              "newLine": 122
+            },
+            {
+              "kind": "+",
+              "code": "      headers.set(key, value);",
+              "oldLine": 102,
+              "newLine": 123
+            },
+            {
+              "kind": " ",
+              "code": "    }",
+              "oldLine": 102,
+              "newLine": 124
+            },
+            {
+              "kind": " ",
+              "code": "  }",
+              "oldLine": 103,
+              "newLine": 125
+            },
+            {
+              "kind": "-",
+              "code": "",
+              "oldLine": 104,
+              "newLine": 126
+            },
+            {
+              "kind": "-",
+              "code": "  return merged;",
+              "oldLine": 105,
+              "newLine": 126
+            },
+            {
+              "kind": "+",
+              "code": "  return headers;",
+              "oldLine": 106,
+              "newLine": 126
+            },
+            {
+              "kind": " ",
+              "code": "}",
+              "oldLine": 106,
+              "newLine": 127
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 107,
+              "newLine": 128
+            },
+            {
+              "kind": " ",
+              "code": "export async function callHooks<C extends FetchContext = FetchContext>(",
+              "oldLine": 108,
+              "newLine": 129
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "test/index.test.ts",
+      "oldFile": "test/index.test.ts",
+      "changedLines": [
+        386,
+        387,
+        388,
+        389,
+        390,
+        391,
+        392,
+        393,
+        394,
+        395,
+        396,
+        397,
+        398,
+        399,
+        400,
+        401,
+        402,
+        403
+      ],
+      "addedCode": [
+        "    const parseParams = (str: string) =>",
+        "      Object.fromEntries(new URLSearchParams(str).entries());",
+        "    expect(parseParams(path)).toMatchObject(parseParams(\"?b=2&c=3&a=1\"));",
+        "  });",
+        "",
+        "  it(\"uses request headers\", async () => {",
+        "    expect(",
+        "      await $fetch(",
+        "        new Request(getURL(\"echo\"), { headers: { foo: \"1\" } }),",
+        "        {}",
+        "      ).then((r) => r.headers)",
+        "    ).toMatchObject({ foo: \"1\" });",
+        "",
+        "    expect(",
+        "      await $fetch(new Request(getURL(\"echo\"), { headers: { foo: \"1\" } }), {",
+        "        headers: { foo: \"2\", bar: \"3\" },",
+        "      }).then((r) => r.headers)",
+        "    ).toMatchObject({ foo: \"2\", bar: \"3\" });"
+      ],
+      "removedCode": [
+        "    expect(path).to.eq(\"?b=2&c=3&a=1\");"
+      ],
+      "diff": "diff --git a/test/index.test.ts b/test/index.test.ts\nindex abbbd26..aabb9dd 100644\n--- a/test/index.test.ts\n+++ b/test/index.test.ts\n@@ -383,7 +383,24 @@ describe(\"ofetch\", () => {\n       \"x-header-c\": \"3\",\n     });\n \n-    expect(path).to.eq(\"?b=2&c=3&a=1\");\n+    const parseParams = (str: string) =>\n+      Object.fromEntries(new URLSearchParams(str).entries());\n+    expect(parseParams(path)).toMatchObject(parseParams(\"?b=2&c=3&a=1\"));\n+  });\n+\n+  it(\"uses request headers\", async () => {\n+    expect(\n+      await $fetch(\n+        new Request(getURL(\"echo\"), { headers: { foo: \"1\" } }),\n+        {}\n+      ).then((r) => r.headers)\n+    ).toMatchObject({ foo: \"1\" });\n+\n+    expect(\n+      await $fetch(new Request(getURL(\"echo\"), { headers: { foo: \"1\" } }), {\n+        headers: { foo: \"2\", bar: \"3\" },\n+      }).then((r) => r.headers)\n+    ).toMatchObject({ foo: \"2\", bar: \"3\" });\n   });\n \n   it(\"calls hooks\", async () => {",
+      "hunks": [
+        {
+          "lines": [
+            {
+              "kind": " ",
+              "code": "      \"x-header-c\": \"3\",",
+              "oldLine": 383,
+              "newLine": 383
+            },
+            {
+              "kind": " ",
+              "code": "    });",
+              "oldLine": 384,
+              "newLine": 384
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 385,
+              "newLine": 385
+            },
+            {
+              "kind": "-",
+              "code": "    expect(path).to.eq(\"?b=2&c=3&a=1\");",
+              "oldLine": 386,
+              "newLine": 386
+            },
+            {
+              "kind": "+",
+              "code": "    const parseParams = (str: string) =>",
+              "oldLine": 387,
+              "newLine": 386
+            },
+            {
+              "kind": "+",
+              "code": "      Object.fromEntries(new URLSearchParams(str).entries());",
+              "oldLine": 387,
+              "newLine": 387
+            },
+            {
+              "kind": "+",
+              "code": "    expect(parseParams(path)).toMatchObject(parseParams(\"?b=2&c=3&a=1\"));",
+              "oldLine": 387,
+              "newLine": 388
+            },
+            {
+              "kind": "+",
+              "code": "  });",
+              "oldLine": 387,
+              "newLine": 389
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 387,
+              "newLine": 390
+            },
+            {
+              "kind": "+",
+              "code": "  it(\"uses request headers\", async () => {",
+              "oldLine": 387,
+              "newLine": 391
+            },
+            {
+              "kind": "+",
+              "code": "    expect(",
+              "oldLine": 387,
+              "newLine": 392
+            },
+            {
+              "kind": "+",
+              "code": "      await $fetch(",
+              "oldLine": 387,
+              "newLine": 393
+            },
+            {
+              "kind": "+",
+              "code": "        new Request(getURL(\"echo\"), { headers: { foo: \"1\" } }),",
+              "oldLine": 387,
+              "newLine": 394
+            },
+            {
+              "kind": "+",
+              "code": "        {}",
+              "oldLine": 387,
+              "newLine": 395
+            },
+            {
+              "kind": "+",
+              "code": "      ).then((r) => r.headers)",
+              "oldLine": 387,
+              "newLine": 396
+            },
+            {
+              "kind": "+",
+              "code": "    ).toMatchObject({ foo: \"1\" });",
+              "oldLine": 387,
+              "newLine": 397
+            },
+            {
+              "kind": "+",
+              "code": "",
+              "oldLine": 387,
+              "newLine": 398
+            },
+            {
+              "kind": "+",
+              "code": "    expect(",
+              "oldLine": 387,
+              "newLine": 399
+            },
+            {
+              "kind": "+",
+              "code": "      await $fetch(new Request(getURL(\"echo\"), { headers: { foo: \"1\" } }), {",
+              "oldLine": 387,
+              "newLine": 400
+            },
+            {
+              "kind": "+",
+              "code": "        headers: { foo: \"2\", bar: \"3\" },",
+              "oldLine": 387,
+              "newLine": 401
+            },
+            {
+              "kind": "+",
+              "code": "      }).then((r) => r.headers)",
+              "oldLine": 387,
+              "newLine": 402
+            },
+            {
+              "kind": "+",
+              "code": "    ).toMatchObject({ foo: \"2\", bar: \"3\" });",
+              "oldLine": 387,
+              "newLine": 403
+            },
+            {
+              "kind": " ",
+              "code": "  });",
+              "oldLine": 387,
+              "newLine": 404
+            },
+            {
+              "kind": " ",
+              "code": "",
+              "oldLine": 388,
+              "newLine": 405
+            },
+            {
+              "kind": " ",
+              "code": "  it(\"calls hooks\", async () => {",
+              "oldLine": 389,
+              "newLine": 406
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "changedEntities": [
+    {
+      "entity": {
+        "id": "src/utils.ts#resolveFetchOptions",
+        "kind": "function",
+        "name": "resolveFetchOptions",
+        "file": "src/utils.ts",
+        "startLine": 74,
+        "endLine": 108
+      },
+      "change": {
+        "file": "src/utils.ts",
+        "changedLines": [
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82,
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          90,
+          91,
+          92,
+          93,
+          96,
+          101,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107,
+          108
+        ],
+        "addedCode": [
+          "export function resolveFetchOptions<",
+          "  R extends ResponseType = ResponseType,",
+          "  T = any,",
+          ">(",
+          "  request: FetchRequest,",
+          "  input: FetchOptions<R, T> | undefined,",
+          "  defaults: FetchOptions<R, T> | undefined,",
+          "  Headers: typeof globalThis.Headers",
+          "): ResolvedFetchOptions<R, T> {",
+          "  // Merge headers",
+          "  const headers = mergeHeaders(",
+          "    input?.headers ?? (request as Request)?.headers,",
+          "    defaults?.headers,",
+          "    Headers",
+          "  );",
+          "  // Merge query/params",
+          "  let query: Record<string, any> | undefined;",
+          "  if (defaults?.query || defaults?.params || input?.params || input?.query) {",
+          "    query = {",
+          "      ...input?.params,",
+          "  return {",
+          "    ...defaults,",
+          "    ...input,",
+          "    query,",
+          "    params: query,",
+          "    headers,",
+          "  };",
+          "}"
+        ],
+        "removedCode": [],
+        "diff": "--- a/src/utils.ts\n+++ b/src/utils.ts\n@@ -81,0 +74,15 @@\n+export function resolveFetchOptions<\n+  R extends ResponseType = ResponseType,\n+  T = any,\n+>(\n+  request: FetchRequest,\n+  input: FetchOptions<R, T> | undefined,\n+  defaults: FetchOptions<R, T> | undefined,\n+  Headers: typeof globalThis.Headers\n+): ResolvedFetchOptions<R, T> {\n+  // Merge headers\n+  const headers = mergeHeaders(\n+    input?.headers ?? (request as Request)?.headers,\n+    defaults?.headers,\n+    Headers\n+  );\n@@ -85,0 +90,4 @@\n+  // Merge query/params\n+  let query: Record<string, any> | undefined;\n+  if (defaults?.query || defaults?.params || input?.params || input?.query) {\n+    query = {\n@@ -92,0 +96,1 @@\n+      ...input?.params,\n@@ -101,0 +101,8 @@\n+  return {\n+    ...defaults,\n+    ...input,\n+    query,\n+    params: query,\n+    headers,\n+  };\n+}"
+      }
+    },
+    {
+      "entity": {
+        "id": "src/utils.ts#mergeHeaders",
+        "kind": "function",
+        "name": "mergeHeaders",
+        "file": "src/utils.ts",
+        "startLine": 110,
+        "endLine": 127
+      },
+      "change": {
+        "file": "src/utils.ts",
+        "changedLines": [
+          110,
+          111,
+          112,
+          113,
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          121,
+          122,
+          123,
+          126
+        ],
+        "addedCode": [
+          "function mergeHeaders(",
+          "  input: HeadersInit | undefined,",
+          "  defaults: HeadersInit | undefined,",
+          "  Headers: typeof globalThis.Headers",
+          "): Headers {",
+          "  if (!defaults) {",
+          "    return new Headers(input);",
+          "  }",
+          "  const headers = new Headers(defaults);",
+          "  if (input) {",
+          "    for (const [key, value] of Symbol.iterator in input || Array.isArray(input)",
+          "      ? input",
+          "      : new Headers(input)) {",
+          "      headers.set(key, value);",
+          "  return headers;"
+        ],
+        "removedCode": [],
+        "diff": "--- a/src/utils.ts\n+++ b/src/utils.ts\n@@ -101,0 +110,14 @@\n+function mergeHeaders(\n+  input: HeadersInit | undefined,\n+  defaults: HeadersInit | undefined,\n+  Headers: typeof globalThis.Headers\n+): Headers {\n+  if (!defaults) {\n+    return new Headers(input);\n+  }\n+  const headers = new Headers(defaults);\n+  if (input) {\n+    for (const [key, value] of Symbol.iterator in input || Array.isArray(input)\n+      ? input\n+      : new Headers(input)) {\n+      headers.set(key, value);\n@@ -105,0 +126,1 @@\n+  return headers;"
+      }
+    }
+  ],
+  "impacts": [
+    {
+      "changedEntity": {
+        "id": "src/utils.ts#resolveFetchOptions",
+        "kind": "function",
+        "name": "resolveFetchOptions",
+        "file": "src/utils.ts",
+        "startLine": 74,
+        "endLine": 108
+      },
+      "change": {
+        "file": "src/utils.ts",
+        "changedLines": [
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82,
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          90,
+          91,
+          92,
+          93,
+          96,
+          101,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107,
+          108
+        ],
+        "addedCode": [
+          "export function resolveFetchOptions<",
+          "  R extends ResponseType = ResponseType,",
+          "  T = any,",
+          ">(",
+          "  request: FetchRequest,",
+          "  input: FetchOptions<R, T> | undefined,",
+          "  defaults: FetchOptions<R, T> | undefined,",
+          "  Headers: typeof globalThis.Headers",
+          "): ResolvedFetchOptions<R, T> {",
+          "  // Merge headers",
+          "  const headers = mergeHeaders(",
+          "    input?.headers ?? (request as Request)?.headers,",
+          "    defaults?.headers,",
+          "    Headers",
+          "  );",
+          "  // Merge query/params",
+          "  let query: Record<string, any> | undefined;",
+          "  if (defaults?.query || defaults?.params || input?.params || input?.query) {",
+          "    query = {",
+          "      ...input?.params,",
+          "  return {",
+          "    ...defaults,",
+          "    ...input,",
+          "    query,",
+          "    params: query,",
+          "    headers,",
+          "  };",
+          "}"
+        ],
+        "removedCode": [],
+        "diff": "--- a/src/utils.ts\n+++ b/src/utils.ts\n@@ -81,0 +74,15 @@\n+export function resolveFetchOptions<\n+  R extends ResponseType = ResponseType,\n+  T = any,\n+>(\n+  request: FetchRequest,\n+  input: FetchOptions<R, T> | undefined,\n+  defaults: FetchOptions<R, T> | undefined,\n+  Headers: typeof globalThis.Headers\n+): ResolvedFetchOptions<R, T> {\n+  // Merge headers\n+  const headers = mergeHeaders(\n+    input?.headers ?? (request as Request)?.headers,\n+    defaults?.headers,\n+    Headers\n+  );\n@@ -85,0 +90,4 @@\n+  // Merge query/params\n+  let query: Record<string, any> | undefined;\n+  if (defaults?.query || defaults?.params || input?.params || input?.query) {\n+    query = {\n@@ -92,0 +96,1 @@\n+      ...input?.params,\n@@ -101,0 +101,8 @@\n+  return {\n+    ...defaults,\n+    ...input,\n+    query,\n+    params: query,\n+    headers,\n+  };\n+}"
+      },
+      "directDependents": [
+        {
+          "id": "src/fetch.ts#createFetch",
+          "kind": "function",
+          "name": "createFetch",
+          "file": "src/fetch.ts",
+          "startLine": 37,
+          "endLine": 270
+        }
+      ],
+      "blastRadius": {
+        "totalAffectedEntities": 1,
+        "entities": [
+          {
+            "id": "src/fetch.ts#createFetch",
+            "kind": "function",
+            "name": "createFetch",
+            "file": "src/fetch.ts",
+            "startLine": 37,
+            "endLine": 270
+          }
+        ],
+        "paths": [
+          {
+            "target": {
+              "id": "src/fetch.ts#createFetch",
+              "kind": "function",
+              "name": "createFetch",
+              "file": "src/fetch.ts",
+              "startLine": 37,
+              "endLine": 270
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/utils.ts#resolveFetchOptions",
+                "kind": "function",
+                "name": "resolveFetchOptions",
+                "file": "src/utils.ts",
+                "startLine": 74,
+                "endLine": 108
+              },
+              {
+                "id": "src/fetch.ts#createFetch",
+                "kind": "function",
+                "name": "createFetch",
+                "file": "src/fetch.ts",
+                "startLine": 37,
+                "endLine": 270
+              }
+            ]
+          }
+        ]
+      },
+      "terminalDependents": []
+    },
+    {
+      "changedEntity": {
+        "id": "src/utils.ts#mergeHeaders",
+        "kind": "function",
+        "name": "mergeHeaders",
+        "file": "src/utils.ts",
+        "startLine": 110,
+        "endLine": 127
+      },
+      "change": {
+        "file": "src/utils.ts",
+        "changedLines": [
+          110,
+          111,
+          112,
+          113,
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          121,
+          122,
+          123,
+          126
+        ],
+        "addedCode": [
+          "function mergeHeaders(",
+          "  input: HeadersInit | undefined,",
+          "  defaults: HeadersInit | undefined,",
+          "  Headers: typeof globalThis.Headers",
+          "): Headers {",
+          "  if (!defaults) {",
+          "    return new Headers(input);",
+          "  }",
+          "  const headers = new Headers(defaults);",
+          "  if (input) {",
+          "    for (const [key, value] of Symbol.iterator in input || Array.isArray(input)",
+          "      ? input",
+          "      : new Headers(input)) {",
+          "      headers.set(key, value);",
+          "  return headers;"
+        ],
+        "removedCode": [],
+        "diff": "--- a/src/utils.ts\n+++ b/src/utils.ts\n@@ -101,0 +110,14 @@\n+function mergeHeaders(\n+  input: HeadersInit | undefined,\n+  defaults: HeadersInit | undefined,\n+  Headers: typeof globalThis.Headers\n+): Headers {\n+  if (!defaults) {\n+    return new Headers(input);\n+  }\n+  const headers = new Headers(defaults);\n+  if (input) {\n+    for (const [key, value] of Symbol.iterator in input || Array.isArray(input)\n+      ? input\n+      : new Headers(input)) {\n+      headers.set(key, value);\n@@ -105,0 +126,1 @@\n+  return headers;"
+      },
+      "directDependents": [
+        {
+          "id": "src/utils.ts#resolveFetchOptions",
+          "kind": "function",
+          "name": "resolveFetchOptions",
+          "file": "src/utils.ts",
+          "startLine": 74,
+          "endLine": 108
+        }
+      ],
+      "blastRadius": {
+        "totalAffectedEntities": 2,
+        "entities": [
+          {
+            "id": "src/utils.ts#resolveFetchOptions",
+            "kind": "function",
+            "name": "resolveFetchOptions",
+            "file": "src/utils.ts",
+            "startLine": 74,
+            "endLine": 108
+          },
+          {
+            "id": "src/fetch.ts#createFetch",
+            "kind": "function",
+            "name": "createFetch",
+            "file": "src/fetch.ts",
+            "startLine": 37,
+            "endLine": 270
+          }
+        ],
+        "paths": [
+          {
+            "target": {
+              "id": "src/utils.ts#resolveFetchOptions",
+              "kind": "function",
+              "name": "resolveFetchOptions",
+              "file": "src/utils.ts",
+              "startLine": 74,
+              "endLine": 108
+            },
+            "depth": 1,
+            "path": [
+              {
+                "id": "src/utils.ts#mergeHeaders",
+                "kind": "function",
+                "name": "mergeHeaders",
+                "file": "src/utils.ts",
+                "startLine": 110,
+                "endLine": 127
+              },
+              {
+                "id": "src/utils.ts#resolveFetchOptions",
+                "kind": "function",
+                "name": "resolveFetchOptions",
+                "file": "src/utils.ts",
+                "startLine": 74,
+                "endLine": 108
+              }
+            ]
+          },
+          {
+            "target": {
+              "id": "src/fetch.ts#createFetch",
+              "kind": "function",
+              "name": "createFetch",
+              "file": "src/fetch.ts",
+              "startLine": 37,
+              "endLine": 270
+            },
+            "depth": 2,
+            "path": [
+              {
+                "id": "src/utils.ts#mergeHeaders",
+                "kind": "function",
+                "name": "mergeHeaders",
+                "file": "src/utils.ts",
+                "startLine": 110,
+                "endLine": 127
+              },
+              {
+                "id": "src/utils.ts#resolveFetchOptions",
+                "kind": "function",
+                "name": "resolveFetchOptions",
+                "file": "src/utils.ts",
+                "startLine": 74,
+                "endLine": 108
+              },
+              {
+                "id": "src/fetch.ts#createFetch",
+                "kind": "function",
+                "name": "createFetch",
+                "file": "src/fetch.ts",
+                "startLine": 37,
+                "endLine": 270
+              }
+            ]
+          }
+        ]
+      },
+      "terminalDependents": []
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "AMBIGUOUS_FUNCTION_RANGE",
+      "severity": "warning",
+      "message": "Skipping ambiguous overlapping function ranges: src/fetch.ts#createFetch"
+    },
+    {
+      "code": "AMBIGUOUS_FUNCTION_RANGE",
+      "severity": "warning",
+      "message": "Skipping ambiguous overlapping function ranges: src/fetch.ts#onError"
+    }
+  ],
+  "limitations": [
+    "Only TypeScript is analyzed.",
+    "Only named standalone function declarations are supported.",
+    "Only CALLS relationships are currently supported.",
+    "Class methods are not analyzed.",
+    "Arrow functions are not analyzed.",
+    "Dynamic calls are not analyzed.",
+    "Deleted functions have no current graph entity; renamed or ambiguous functions may lack removed-code evidence.",
+    "Overlapping function line ranges are skipped rather than sharing ambiguous evidence.",
+    "Application surfaces are not yet discovered.",
+    "Blast radius is limited to depth 6."
+  ]
+}

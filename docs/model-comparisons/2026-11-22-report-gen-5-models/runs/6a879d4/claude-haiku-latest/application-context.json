@@ -1,0 +1,223 @@
+{
+  "schemaVersion": "1.0",
+  "application": {
+    "name": "ofetch",
+    "summary": "A TypeScript HTTP client wrapper around fetch that adds URL/base/query handling, automatic body serialization, response parsing, retries, timeouts, hooks, and normalized error objects.",
+    "purpose": "Provide a convenient, configurable fetch-based API for making HTTP requests in JavaScript/TypeScript runtimes."
+  },
+  "domains": [
+    {
+      "id": "http-client",
+      "name": "HTTP Client",
+      "description": "Core request lifecycle: option resolution, request dispatch, response parsing, and status handling."
+    },
+    {
+      "id": "url-handling",
+      "name": "URL Construction",
+      "description": "Joining base URLs, appending and normalizing query parameters."
+    },
+    {
+      "id": "error-handling",
+      "name": "Error Normalization",
+      "description": "Building descriptive fetch error objects with request, response, and status details."
+    },
+    {
+      "id": "resilience",
+      "name": "Retry and Timeout",
+      "description": "Retrying failed requests based on status codes or retry settings, and aborting on timeout."
+    },
+    {
+      "id": "extensibility",
+      "name": "Hooks and Configuration",
+      "description": "Lifecycle hooks (onRequest, onResponse, etc.) and merged default options for created clients."
+    }
+  ],
+  "terminology": [
+    {
+      "term": "$fetch",
+      "meaning": "The main exported callable client that returns parsed response data."
+    },
+    {
+      "term": "$fetch.raw",
+      "meaning": "Variant that returns the full response object with parsed data attached."
+    },
+    {
+      "term": "FetchContext",
+      "meaning": "Mutable per-request state object carrying request, options, response, and error through the lifecycle."
+    },
+    {
+      "term": "Payload method",
+      "meaning": "HTTP methods that carry a request body (PATCH, POST, PUT, DELETE)."
+    },
+    {
+      "term": "Hook",
+      "meaning": "User-supplied callback invoked at a request lifecycle stage."
+    },
+    {
+      "term": "Base URL",
+      "meaning": "Prefix joined to relative request paths."
+    },
+    {
+      "term": "Retry status codes",
+      "meaning": "HTTP status codes (e.g. 408, 429, 5xx) that trigger automatic retry."
+    }
+  ],
+  "entityAnnotations": [
+    {
+      "entityId": "src/fetch.ts#createFetch",
+      "businessMeaning": "Factory that builds the configured $fetch client and orchestrates the full request lifecycle including body handling, timeouts, response parsing, and error routing.",
+      "domainIds": [
+        "http-client",
+        "extensibility",
+        "resilience"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/fetch.ts#onError",
+      "businessMeaning": "Error-handling stage that decides whether to retry a failed request or throw a normalized FetchError.",
+      "domainIds": [
+        "resilience",
+        "error-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/error.ts#createFetchError",
+      "businessMeaning": "Builds a FetchError with a descriptive message and attached request, response, and status properties.",
+      "domainIds": [
+        "error-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.url.ts#joinURL",
+      "businessMeaning": "Joins a base URL and path with exactly one slash between them.",
+      "domainIds": [
+        "url-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.url.ts#withBase",
+      "businessMeaning": "Prefixes a request path with a base URL if not already present.",
+      "domainIds": [
+        "url-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.url.ts#withoutTrailingSlash",
+      "businessMeaning": "Removes a trailing slash from a path for consistent URL joining.",
+      "domainIds": [
+        "url-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.url.ts#withQuery",
+      "businessMeaning": "Appends or merges query parameters into a URL, omitting undefined values and expanding arrays.",
+      "domainIds": [
+        "url-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.url.ts#normalizeQueryValue",
+      "businessMeaning": "Converts a query value to its string form for URL encoding.",
+      "domainIds": [
+        "url-handling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#isPayloadMethod",
+      "businessMeaning": "Checks whether an HTTP method is one that carries a request body.",
+      "domainIds": [
+        "http-client",
+        "resilience"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#isJSONSerializable",
+      "businessMeaning": "Determines whether a request body can be automatically serialized to JSON.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#detectResponseType",
+      "businessMeaning": "Chooses how to parse a response (json, text, stream, or blob) from its Content-Type header.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#resolveFetchOptions",
+      "businessMeaning": "Merges default and per-request options, including headers and query parameters, into resolved request options.",
+      "domainIds": [
+        "http-client",
+        "extensibility"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#mergeHeaders",
+      "businessMeaning": "Combines default headers with request-specific headers, with request headers taking precedence.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "src/utils.ts#callHooks",
+      "businessMeaning": "Invokes one or more lifecycle hook functions with the current context.",
+      "domainIds": [
+        "extensibility"
+      ],
+      "confidence": "high"
+    },
+    {
+      "entityId": "examples/type-safety.ts#main",
+      "businessMeaning": "Example script showing typed usage of ofetch to fetch a repository record from a public API.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "entityId": "test/playground.ts#main",
+      "businessMeaning": "Manual playground script that issues a request to an external URL for experimentation.",
+      "domainIds": [
+        "http-client"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "entityId": "test/index.test.ts#abortHandle",
+      "businessMeaning": "Test helper that aborts a request and verifies abort behavior with retries.",
+      "domainIds": [
+        "resilience"
+      ],
+      "confidence": "medium"
+    }
+  ],
+  "applicationFacts": [
+    "The main request function $fetch is created by createFetch in src/fetch.ts and exported via src/index.ts with a fetch wrapper.",
+    "createFetch's internal $fetchRaw calls resolveFetchOptions, callHooks, withBase, withQuery, isPayloadMethod, isJSONSerializable, detectResponseType, and onError according to the graph.",
+    "onError retries requests on retryable status codes (when retry is enabled) and otherwise throws a normalized error built by createFetchError.",
+    "The graph contains a self-referencing CALLS relation on src/fetch.ts#createFetch, which corresponds to the internal $fetchRaw being invoked by the retry path in the source.",
+    "Request bodies that are JSON-serializable are stringified and given JSON content-type and accept headers by default.",
+    "Response bodies are parsed by detected type: JSON via destr (or a custom parseResponse), stream, or other methods such as text, blob, or arrayBuffer.",
+    "The package exports a convenience ofetch and $fetch instance configured with a global fetch wrapper."
+  ],
+  "unknowns": [
+    "The graph lists createFetch as calling itself, while the source shows the request function as $fetchRaw; the entity name mapping for nested functions is not fully resolved by the graph.",
+    "The graph does not include relations for $fetch, $fetch.raw, or other nested closures, so their call paths are not represented.",
+    "The package name 'ofetch' is inferred from imports and tests in the source rather than from a package manifest, which was not provided.",
+    "The behavior of the test helper abortHandle beyond its visible code is not fully determinable from the provided source."
+  ]
+}

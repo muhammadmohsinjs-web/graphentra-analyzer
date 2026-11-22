@@ -1,0 +1,5 @@
+6a879d46bdf9f9d4e65b975b91ba3e005e132771 refactor!: inline url utils (#440)
+3baf1cc076165bdb07ec9a5d918504efd6823074 feat: support interceptors arrays (#353)
+0d84f7b37a73d1a5dfdde737956591e84528866f feat: always clone and normalize `options.headers` and `options.query` (#436)
+571dcc9b4dd987974689075d9c0f23b8e5901261 feat: auto detect `text/event-stream` as `stream` response type (#486)
+413397a9c541b0a98e1b70277783c41b72c24bb8 refactor: more strict types
