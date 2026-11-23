@@ -8,6 +8,7 @@ export const openApiDocument = {
   servers: [{ url: '/' }],
   tags: [
     { name: 'Reports', description: 'QA report operations' },
+    { name: 'Verifier', description: 'Phase V report verifier signals' },
     { name: 'Documentation', description: 'API documentation' },
   ],
   paths: {
@@ -93,9 +94,18 @@ export const openApiDocument = {
         operationId: 'getTechnicalReport',
         parameters: [{ $ref: '#/components/parameters/ReportId' }],
         responses: {
-          '200': { description: 'Stored evidence, graph, context, and QA report.', content: { 'application/json': { schema: { type: 'object', required: ['id', 'evidence', 'technicalGraph', 'applicationContext', 'applicationMap', 'qaReport'], properties: { id: { type: 'integer' }, evidenceIdentity: { type: 'string', nullable: true }, model: { type: 'string', nullable: true }, evidence: { type: 'object', additionalProperties: true }, technicalGraph: { type: 'object', additionalProperties: true }, applicationContext: { type: 'object', additionalProperties: true }, applicationMap: { type: 'object', nullable: true, additionalProperties: true }, qaReport: { type: 'object', additionalProperties: true } } } } } },
+          '200': { description: 'Stored evidence, graph, context, and QA report.', content: { 'application/json': { schema: { type: 'object', required: ['id', 'evidence', 'technicalGraph', 'applicationContext', 'applicationMap', 'qaReport'], properties: { id: { type: 'integer' }, evidenceIdentity: { type: 'string', nullable: true }, model: { type: 'string', nullable: true }, evidence: { type: 'object', additionalProperties: true }, technicalGraph: { type: 'object', additionalProperties: true }, applicationContext: { type: 'object', additionalProperties: true }, applicationMap: { type: 'object', nullable: true, additionalProperties: true }, qaReport: { type: 'object', additionalProperties: true }, verification: { type: 'object', nullable: true, additionalProperties: true, description: 'Phase V verifier summary (counts, scores, tokens, time). Null when the report was not verified.' } } } } } },
           '404': { description: 'Report not found.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
         },
+      },
+    },
+    '/verifier/stats': {
+      get: {
+        tags: ['Verifier'],
+        summary: 'Get verifier signals over all reports',
+        description: 'Phase V (M6): how often verified reports list "Not covered" changes, the list length, mean coverage score, refusals, errors, missing answers, verifier tokens and latency. Off unless the server runs with GRAPHENTRA_VERIFY_REPORT=1.',
+        operationId: 'getVerifierStats',
+        responses: { '200': { description: 'Verifier statistics.', content: { 'application/json': { schema: { type: 'object', required: ['enabled', 'reports', 'verifiedReports'], properties: { enabled: { type: 'boolean' }, threshold: { type: 'number' }, reports: { type: 'integer' }, verifiedReports: { type: 'integer' }, reportsWithGaps: { type: 'integer' }, gapRate: { type: 'number', nullable: true }, notCovered: { type: 'object', additionalProperties: true }, notCoveredAtMost3Rate: { type: 'number', nullable: true }, meanScore: { type: 'number', nullable: true }, refusals: { type: 'integer' }, errors: { type: 'integer' }, missing: { type: 'integer' }, reportsWithFailedAnswers: { type: 'integer' }, durationMs: { type: 'object', additionalProperties: true }, usage: { type: 'object', additionalProperties: true }, plainCheckFailures: { type: 'integer' } } } } } } },
       },
     },
     '/openapi.json': {
@@ -150,6 +160,7 @@ export const openApiDocument = {
           testAreas: { type: 'array', items: { type: 'object', additionalProperties: true } },
           qaChecks: { type: 'array', items: { type: 'string' } },
           openQuestions: { type: 'array', items: { type: 'string' } },
+          notCovered: { type: 'object', description: 'Phase V: only on verified reports with gaps. checks are plain QA checks; developer names every gap by code.', properties: { checks: { type: 'array', items: { type: 'string' } }, developer: { type: 'array', items: { type: 'string' } } } },
         },
       },
       ReportListItem: {

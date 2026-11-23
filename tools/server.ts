@@ -11,8 +11,9 @@ import { DatabaseSync } from 'node:sqlite';
 import { config } from 'dotenv';
 import { z } from 'zod';
 import type { ApplicationMap } from '@graphentra/analyzer';
-import { DEFAULT_OPENROUTER_MODEL, formatImpactReport, generateQAReport, type ImpactReport } from '@graphentra/reporting';
+import { createOpenAIDecisionClient, DEFAULT_OPENROUTER_MODEL, formatImpactReport, generateQAReport, notCoveredDisplay, type ImpactReport } from '@graphentra/reporting';
 import { openApiDocument } from './openapi';
+import { readVerifierConfig, summarizeVerification, verifierStats, type VerificationSummary } from './verifier-config';
 
 config({ path: ['.env'], quiet: true });
 
@@ -43,6 +44,8 @@ const addedColumns: Record<string, string> = {
   pr_url: 'TEXT',
   change_info: 'TEXT',
   model: 'TEXT',
+  // Phase V (V-15): verifier counts, scores, tokens and time per report (VerificationSummary JSON). Null when not verified.
+  verification: 'TEXT',
 };
 const existingColumns = new Set((db.prepare('PRAGMA table_info(reports)').all() as Array<{ name: string }>).map(column => column.name));
 for (const [name, type] of Object.entries(addedColumns)) {
@@ -56,6 +59,10 @@ const llmOptions = {
   baseURL: process.env.OPENROUTER_BASE_URL,
   logLevel: 'off' as const,
 };
+
+// Phase V (V-14, ADR-0011): opt-in. Off unless GRAPHENTRA_VERIFY_REPORT=1; then bad config stops the server at start.
+const verifierConfig = readVerifierConfig(process.env);
+const decisionClient = verifierConfig.enabled ? createOpenAIDecisionClient({ apiKey: verifierConfig.apiKey }) : undefined;
 
 const text = (max: number) => z.string().trim().min(1).max(max);
 const person = z.object({ name: text(200).optional(), email: text(320).optional(), login: text(200).optional() }).strict();
@@ -134,6 +141,9 @@ function qaView(report: ImpactReport) {
     testAreas: (report.testAreas ?? []).map(({ area, howToReach, access, setup, checks }) => ({ area, howToReach, access, setup, checks })),
     qaChecks: report.qaChecks,
     openQuestions: report.uncertainty,
+    // Phase V: present only on verified reports with gaps (additive, ADR-0005).
+    // `checks` are plain QA checks for the gaps; `developer` names every gap by code (a check never hides one).
+    ...(report.notCovered?.length ? { notCovered: notCoveredDisplay(report) } : {}),
   };
 }
 
@@ -190,6 +200,12 @@ const server = createServer(async (req, res) => {
       if (!definition) return send(res, 404, { error: 'not found' });
       return send(res, 200, readFileSync(resolve(swaggerUiDirectory, definition.fileName)), definition.contentType);
     }
+    // GET /verifier/stats  (V-15: verifier signals for the dashboard, over every stored report)
+    if (req.method === 'GET' && url.pathname === '/verifier/stats') {
+      const rows = db.prepare('SELECT verification FROM reports').all() as Row[];
+      const summaries = rows.filter(row => row.verification).map(row => JSON.parse(String(row.verification)) as VerificationSummary);
+      return send(res, 200, { enabled: verifierConfig.enabled, ...(verifierConfig.enabled ? { threshold: verifierConfig.threshold } : {}), ...verifierStats(rows.length, summaries) });
+    }
     if (resource !== 'reports') return send(res, 404, { error: 'not found' });
 
     // POST /reports  body: { evidence, applicationContext, applicationMap?, change? }
@@ -214,12 +230,14 @@ const server = createServer(async (req, res) => {
       // The application map lets the report say which page/endpoint to open and how to get there.
       const report = await generateQAReport(evidence, applicationContext, llmOptions, {
         applicationMap: applicationMap as ApplicationMap | undefined,
+        ...(decisionClient && verifierConfig.enabled ? { verify: { client: decisionClient, threshold: verifierConfig.threshold } } : {}),
       });
+      const verification = report.verification ? summarizeVerification(report.verification) : undefined;
       const markdown = qaMarkdown(change, report.qaReport);
       const row = db.prepare(`INSERT INTO reports
         (evidence_identity, evidence, technical_graph, application_context, application_map, qa_report, markdown,
-         repository, branch, base_branch, commit_sha, commit_message, author_name, author_email, pr_number, pr_title, pr_url, change_info, model)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+         repository, branch, base_branch, commit_sha, commit_message, author_name, author_email, pr_number, pr_title, pr_url, change_info, model, verification)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
         report.evidenceIdentity,
         JSON.stringify(evidence),
         JSON.stringify(evidence.technicalGraph),
@@ -239,6 +257,7 @@ const server = createServer(async (req, res) => {
         change.pullRequest?.url ?? null,
         JSON.stringify(change),
         llmOptions.model,
+        verification ? JSON.stringify(verification) : null,
       );
       return send(res, 201, { id: Number(row.lastInsertRowid), change, qaReport: qaView(report.qaReport) });
     }
@@ -278,6 +297,7 @@ const server = createServer(async (req, res) => {
         applicationContext: JSON.parse(String(row.application_context)),
         applicationMap: row.application_map ? JSON.parse(String(row.application_map)) : null,
         qaReport: JSON.parse(String(row.qa_report)),
+        verification: row.verification ? JSON.parse(String(row.verification)) : null,
       });
     }
     if (format) return send(res, 404, { error: 'not found' });
