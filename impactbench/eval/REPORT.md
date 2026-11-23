@@ -567,3 +567,31 @@ Reading the table:
   one-run swing flips a majority. E1 (≥ 13/31) and E2 (≥ 15/31) are not met, as at V-13: the verifier was never meant to
   raise them once the repair round was removed.
 - **Conclusion:** nothing in the full run blocks rollout as an opt-in feature. The V-13 decision (default off) stands.
+
+## Writer model: GLM-5.3 Flash vs GPT-6 Luna on the full 31-commit verify run (2026-11-23)
+
+Same `verify` arm, evidence and corpus as the data-v5 run above, with the writer swapped to `z-ai/glm-5.3-flash`
+(`--max-tokens 32000 --timeout-s 0 --no-judge`). Data: `data-v6-glm/`. No API judge: every report of both models
+(data-v5 Luna, data-v6-glm GLM) was graded by hand in Claude Code, blind (sets A/B shuffled per commit), with the
+same rubric as the old judge plus a 0-10 usefulness score (`data-v6-glm/hand-grades-glm-vs-luna.jsonl`).
+
+| 31 commits, 93 reports each | GPT-6 Luna | GLM-5.3 Flash |
+|---|---|---|
+| Valid reports | 86 | 86 |
+| Reports that catch / explain the bug | 19 / 21 | **33 / 29** |
+| Commits caught / explained by majority (E1 / E2) | 7 / 7 | **12 / 10** |
+| Mean usefulness score (0-10) | 3.2 | **4.9** (higher on 28 of 31 commits) |
+| Verifier: changed entities covered / "Not covered" | 829 / 490 | **1,104 / 210** |
+| Silent drops (E3) | 0 | 0 |
+| Checks per report | 3.6 | 9.4 |
+| Median / p90 seconds per valid report | 246 / 463 | 350 / 806 |
+| Writer + verifier cost | $1.00 | $1.75 |
+
+Reading the table:
+- GLM catches the bug on 5 commits Luna never caught (json-server-01, excalidraw-08, excalidraw-18, ofetch-02, consola-02)
+  and its reports cover far more changed code. Hand grades are stricter than the old API judge (Luna 7/31 here vs 10/31 there).
+- Invalid: excalidraw-19/20 exceed the provider input limit for both models (6 each). GLM's seventh is pathe-01#2, which
+  spent all 32k output tokens on reasoning and returned nothing. At the old 240 s writer timeout, 7 of the first 30 GLM
+  reports timed out (`timed-out-240s.jsonl`); with no timeout they all finished.
+- GLM is ~40 % slower and ~75 % dearer, still under 2 cents a report. Some of its checks state the buggy result as expected.
+- E1 (≥ 13/31) and E2 (≥ 15/31) are still not met; 18 commits are missed by every report of both models.

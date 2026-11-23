@@ -42,8 +42,14 @@ const work = flag('work') ? path.resolve(flag('work')!) : undefined;
 config({ path: MAIN_ENV, quiet: true });
 const REPORT_MODEL = flag('model', process.env.OPENROUTER_MODEL ?? 'openai/gpt-6-luna')!;
 const JUDGE_MODEL = flag('judge', 'deepseek/deepseek-v4-pro-0813')!;
+// --no-judge: write reports only; catch/explain are graded by hand afterwards (no API judge).
+const NO_JUDGE = rest.includes('--no-judge');
+// --max-tokens: output cap per call (reasoning models can spend the default 8000 on hidden reasoning and return nothing).
+const MAX_TOKENS = Number(flag('max-tokens', '8000'));
+// --timeout-s: per-request writer timeout; 0 means no practical limit (24 h), for slow models.
+const TIMEOUT_MS = Number(flag('timeout-s', '240')) * 1000 || 86_400_000;
 // USD per million tokens, from the OpenRouter models API on 2026-11-09; used only when the provider reports no cost.
-const PRICE: Record<string, [number, number]> = { 'openai/gpt-6-luna': [0.1, 0.5], 'deepseek/deepseek-v4-pro-0813': [0.111, 4.44], 'deepseek/deepseek-v4.1-flash-1017': [0.006, 0.5] };
+const PRICE: Record<string, [number, number]> = { 'openai/gpt-6-luna': [0.1, 0.5], 'deepseek/deepseek-v4-pro-0813': [0.111, 4.44], 'deepseek/deepseek-v4.1-flash-1017': [0.006, 0.5], 'z-ai/glm-5.3-flash': [0.0399, 0.0784] };
 
 type Truth = { id: string; outsideIntroducerDiff: boolean; role: string };
 type Entry = { id: string; repo: string; changeClass: string; symptom: string; evidence: string; introducer: { sha: string; subject: string }; fix: { subject: string }; affected: { entities: Truth[]; areas: string[] } };
@@ -101,16 +107,18 @@ function fixContext(ctx: any) { if ('unassignedFiles' in ctx && !('unassignedFil
 // Kept so the meter stays comparable with data-v3; usage.repair is now always zero.
 const REPAIR_MARKER = 'A coverage check of your report found the gaps below.';
 function meteredClient(model: string) {
-  const meter = { calls: 0, prompt: 0, completion: 0, cached: 0, cost: 0, last: undefined as string | undefined,
+  const meter = { calls: 0, prompt: 0, completion: 0, cached: 0, cost: 0, reasoning: 0, truncated: 0, last: undefined as string | undefined,
     // Subset of the above: calls sent after a repair round started (the repair call and any retry after it). M4.
     repair: { calls: 0, prompt: 0, completion: 0, cached: 0, cost: 0 } };
-  const client = new OpenAI({ apiKey: process.env.OPENROUTER_API_KEY, baseURL: 'https://openrouter.ai/api/v1', maxRetries: 2, timeout: 240_000 });
+  const client = new OpenAI({ apiKey: process.env.OPENROUTER_API_KEY, baseURL: 'https://openrouter.ai/api/v1', maxRetries: 2, timeout: TIMEOUT_MS });
   const create = client.chat.completions.create.bind(client.chat.completions);
   (client.chat.completions as any).create = (body: any, opts: any) => {
-    const promise: any = create({ ...body, max_tokens: body.max_tokens ?? 8000, usage: { include: true } }, opts);
+    const promise: any = create({ ...body, max_tokens: body.max_tokens ?? MAX_TOKENS, usage: { include: true } }, opts);
     promise.then((completion: any) => {
       if (body.response_format?.type === 'json_schema') meter.last = completion?.choices?.[0]?.message?.content ?? meter.last;
       const usage = completion?.usage; if (!usage) return;
+      meter.reasoning += usage.completion_tokens_details?.reasoning_tokens ?? 0;
+      if (completion?.choices?.[0]?.finish_reason === 'length') meter.truncated += 1;
       const [pin, pout] = PRICE[model] ?? [0, 0];
       const cost = typeof usage.cost === 'number' ? usage.cost : ((usage.prompt_tokens ?? 0) * pin + (usage.completion_tokens ?? 0) * pout) / 1e6;
       const repair = (body.messages ?? []).some((m: any) => typeof m.content === 'string' && m.content.startsWith(REPAIR_MARKER));
@@ -205,7 +213,8 @@ Then decide for the whole report:
  "area": the report points the tester at one of the user-visible areas (or the same capability in other words).
 Return JSON {"checks":[{"n":1,"exposes":false}],"explained":false,"area":false,"why":"one sentence"}. Judge strictly from the words.`;
 
-async function judge(entry: Entry, report: any, judgeClient: OpenAI) {
+async function judge(entry: Entry, report: any, judgeClient: OpenAI): Promise<any> {
+  if (NO_JUDGE) return { judged: false };
   const checks: string[] = (report.testAreas ?? []).flatMap((area: any) => area.checks);
   const input = {
     regression: { repo: entry.repo, commit: entry.introducer.subject, symptom: entry.symptom, areas: entry.affected.areas, howTheFixProvedIt: entry.evidence, fix: entry.fix.subject },
@@ -373,7 +382,7 @@ if (command === 'evidence') {
     .filter(job => job.variant === 'base' || job.variant === 'verify' || !flag('lookup-max-kb') || payloadKb(job.entry.id) <= Number(flag('lookup-max-kb')))
     // --skip-started: leave commits that already have rows alone (budget runs cover only untouched commits).
     .filter(job => !rest.includes('--skip-started') || ![...done].some(key => key.startsWith(`${job.entry.id}|`)));
-  console.log(`${jobs.length} reports to run with ${REPORT_MODEL}, judged by ${JUDGE_MODEL}`);
+  console.log(`${jobs.length} reports to run with ${REPORT_MODEL}, ${NO_JUDGE ? 'not judged (--no-judge)' : `judged by ${JUDGE_MODEL}`}`);
   let finished = 0; let spent = 0;
   await pool(jobs, Number(flag('concurrency', '6')), async ({ entry, variant, run }) => {
     let row: any;
