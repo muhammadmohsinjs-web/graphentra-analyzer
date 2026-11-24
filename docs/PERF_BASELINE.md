@@ -186,3 +186,26 @@ node --import tsx tools/impactbench-report-eval.mts sections --work <work dir> [
 ```
 
 `summary` rewrites `summary.json` and `cost-time.csv` in its `--data` directory, so run it on a copy to keep a committed data set unchanged.
+
+## Shared graph index (R-1, 2026-11-24)
+
+`buildGraphIndex` (`packages/analyzer/src/graph-index.ts`) is built once per report run in `generateQAReport` and shared by
+the context pack's surface lookup and the code lookup tool. It covers entity by ID and by file, relations by type in both
+directions, distinct caller counts, consumer sets for a group of IDs (for R-10), and surfaces by entry entity.
+`findSurfacesForEntity` keeps its signature and delegates to a one-off index.
+
+**Outputs are byte-identical.** The LLM payload, the compact payload, code lookup results for every changed entity, and
+surface lookups were hashed on all 19 corpus evidence files before and after the change. Surface lookups covered every
+entity of excalidraw-16 (3,441 entities, 1,628 of which reach a surface) with a real application map. All hashes match,
+both with each caller building its own index and with one shared index.
+
+The surface lookup no longer rebuilds the reverse relation map for each changed entity, so it scales with relations once
+rather than changes × relations (excalidraw-16: 7,572 graph and 2,158 map relations):
+
+| Changed entities | Before | After |
+|---|---|---|
+| 41 | 28 ms | 5 ms |
+| 100 | 24 ms | 5 ms |
+| 400 | 87 ms | 7 ms |
+
+Code lookup setup was already about 2 ms on excalidraw-19/20 and is unchanged.

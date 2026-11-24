@@ -1,5 +1,5 @@
 import {
-  findSurfacesForEntity, type ApplicationMap, type EntityImpact, type Relation, type Surface,
+  buildGraphIndex, type ApplicationMap, type EntityImpact, type GraphIndex, type Relation, type Surface,
 } from '@graphentra/analyzer';
 import type { SurfaceEvidence } from './surface-evidence';
 import type { ApplicationContextV2, EntityAnnotationV2 } from './context-contract';
@@ -69,6 +69,8 @@ export interface ContextPack {
 export interface BuildContextPackOptions {
   applicationMap?: ApplicationMap;
   relations?: Relation[];
+  /** R-1: the run's shared index. Used when it was built with the same applicationMap; otherwise one is built here. */
+  graphIndex?: GraphIndex;
   warnings?: string[];
   surfaceEvidence?: SurfaceEvidence;
 }
@@ -104,7 +106,9 @@ const describeConflict = (characters: string[]): string => {
 
 export function buildContextPack(context: ApplicationContextV2, impacts: EntityImpact[], options: BuildContextPackOptions = {}): ContextPack {
   const map = options.applicationMap;
-  const relations = options.relations ?? [];
+  const index = options.graphIndex && options.graphIndex.applicationMap === map
+    ? options.graphIndex
+    : buildGraphIndex({ relations: options.relations ?? [], applicationMap: map });
   const omitted: string[] = [];
   const changedIds = new Set(impacts.map(impact => impact.changedEntity.id));
   const annotationById = new Map(context.entityAnnotations.map(annotation => [annotation.entityId, annotation]));
@@ -112,12 +116,7 @@ export function buildContextPack(context: ApplicationContextV2, impacts: EntityI
   const describedSurface = new Map(context.surfaces.map(surface => [surface.surfaceId, surface]));
   const surfaceById = new Map((map?.surfaces ?? []).map(surface => [surface.id, surface]));
   const fileRoleOf = new Map((context.fileSummaries ?? []).map(item => [item.file, item.summary]));
-  const fanIn = new Map<string, Set<string>>();
-  for (const relation of options.relations ?? []) {
-    if (!fanIn.has(relation.to)) fanIn.set(relation.to, new Set());
-    fanIn.get(relation.to)!.add(relation.from);
-  }
-  const callersOf = (id: string) => fanIn.get(id)?.size ?? 0;
+  const callersOf = (id: string) => index.callerCount(id);
   // A report reads these, so rank specific code in another file first: it is the likeliest to hold a hidden assumption.
   // A receiver that relies on a character the change removes comes first: it is the strongest lead the analyzer has.
   const receiversOf = (impact: EntityImpact) => [...(impact.receivesChangedValue ?? [])].sort((a, b) =>
@@ -173,7 +172,7 @@ export function buildContextPack(context: ApplicationContextV2, impacts: EntityI
     const hiddenReceivers = (impact.receivesChangedValue?.length ?? 0) - receivers.length;
     if (hiddenReceivers > 0) omitted.push(`${hiddenReceivers} code locations that receive a changed value`);
     const areas = map
-      ? findSurfacesForEntity(map, relations, id, MAX_AREAS_PER_CHANGE * 2).map(item => describeArea(item.surface, item.path))
+      ? index.surfacesForEntity(id, MAX_AREAS_PER_CHANGE * 2).map(item => describeArea(item.surface, item.path))
         .sort((a, b) => (criticalityRank[a.feature?.criticality ?? 'normal']! - criticalityRank[b.feature?.criticality ?? 'normal']!) || a.distance - b.distance)
       : [];
     if (areas.length > MAX_AREAS_PER_CHANGE) omitted.push(`${areas.length - MAX_AREAS_PER_CHANGE} more reachable surfaces for one change`);

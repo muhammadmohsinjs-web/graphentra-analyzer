@@ -1,4 +1,4 @@
-import { formatTypedPath, type ApplicationMap, type Entity, type EntityImpact, type Relation, type TechnicalGraph } from '@graphentra/analyzer';
+import { formatTypedPath, type ApplicationMap, type Entity, type EntityImpact, type GraphIndex, type Relation, type TechnicalGraph } from '@graphentra/analyzer';
 import { isExtendedGraph } from './extended-graph';
 import type { ApplicationContext } from './contracts';
 import { migrateApplicationContextV1, type AnyApplicationContext, type ApplicationContextV2 } from './context-contract';
@@ -135,6 +135,8 @@ export interface BuildPayloadOptions {
   applicationMap?: ApplicationMap;
   /** Full graph relations; needed to map changes to surfaces beyond the recorded blast radius. */
   relations?: Relation[];
+  /** R-1: the run's shared index, built with the same relations and applicationMap. */
+  graphIndex?: GraphIndex;
   contextWarnings?: string[];
   /** Graph capabilities; extended (2.1) graphs report entity granularity and kinds. */
   capabilities?: TechnicalGraph['capabilities'];
@@ -203,7 +205,7 @@ export function buildLLMPayload(impacts: EntityImpact[], context: AnyApplication
       };
     }),
     applicationContext: buildContextPack(toV2(context, impacts), impacts, {
-      applicationMap: options.applicationMap, relations: options.relations, warnings: options.contextWarnings,
+      applicationMap: options.applicationMap, relations: options.relations, graphIndex: options.graphIndex, warnings: options.contextWarnings,
       surfaceEvidence: options.surfaceEvidence,
     }),
     limitations: [
