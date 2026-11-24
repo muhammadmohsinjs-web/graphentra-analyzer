@@ -3,6 +3,7 @@ import { isExtendedGraph } from './extended-graph';
 import type { ApplicationContext } from './contracts';
 import { migrateApplicationContextV1, type AnyApplicationContext, type ApplicationContextV2 } from './context-contract';
 import { buildContextPack } from './context-pack';
+import { compactEncodingInstruction } from './compact-payload';
 import type { SurfaceEvidence } from './surface-evidence';
 
 export function getSourceRole(file: string): 'production' | 'test' {
@@ -58,10 +59,7 @@ APIs, menus, buttons, roles, application surfaces, or workflows. You may name on
 endpoints, menu labels, button labels, roles, and flows that appear in applicationContext (affectedAreas,
 visibleText, howToReach, usedByPages, e2eFlows, userRoles). Do not claim anything is broken without evidence.
 A path establishes potential reachability, not a proven behavioral failure or user-facing surface.
-When a path has stepTypes and typedPath, each step names how the next entity depends on the previous one: called by,
-rendered by (a component shows it in its JSX), constructed by (new), or referenced by (passed or stored as a value,
-for example as a callback or event handler). Use these to explain why a page or component is affected, for example
-that a changed row component appears inside a list that a page renders.
+${compactEncodingInstruction}
 Test entities represent test coverage/evidence and must not be described as user-facing application impact.
 Terminal dependents are graph endpoints, not necessarily production entry points.
 
@@ -181,9 +179,14 @@ export function buildLLMPayload(impacts: EntityImpact[], context: AnyApplication
           addedCode: impact.change.addedCode,
           diff: impact.change.diff,
         },
+        // R-2: change-level confidence and contract risk, and the radius's truncation and hubs (dropped before R-2).
+        ...(impact.confidence !== undefined ? { confidence: impact.confidence } : {}),
+        ...(impact.contractRisk !== undefined ? { contractRisk: impact.contractRisk } : {}),
         directDependents: impact.directDependents.map(withRole),
         blastRadius: {
           totalAffectedEntities: impact.blastRadius.totalAffectedEntities,
+          ...(impact.blastRadius.truncated !== undefined ? { truncated: impact.blastRadius.truncated } : {}),
+          ...(impact.blastRadius.hubs?.length ? { hubs: impact.blastRadius.hubs } : {}),
           entities: dependents,
           paths: impact.blastRadius.paths.map(info => ({
             ...info,
