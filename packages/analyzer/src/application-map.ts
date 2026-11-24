@@ -6,6 +6,7 @@ import {
   routeMatches, stringArray, toPath, unwrapExpression, GUARD_NAME,
 } from './application-map-ast';
 import { extractE2EFlows, type E2EFlow } from './application-map-e2e';
+import { buildGraphIndex } from './graph-index';
 import { createAdapterContext } from './adapters/context';
 import { detectClientRequest } from './adapters/http-client';
 import { ADAPTERS } from './adapters/registry';
@@ -646,37 +647,11 @@ export function findSurfacePath(map: ApplicationMap, relations: Relation[], surf
   return path;
 }
 
-/** Surfaces whose component/handler tree can reach the entity, nearest first. */
+/**
+ * Surfaces whose component/handler tree can reach the entity, nearest first. Builds an index per call; callers that
+ * look up many entities should build one GraphIndex and call its surfacesForEntity (R-1).
+ */
 export function findSurfacesForEntity(map: ApplicationMap, relations: Relation[], entityId: string, limit = 8):
   Array<{ surface: Surface; path: string[] }> {
-  const reverse = new Map<string, string[]>();
-  for (const relation of [...relations, ...map.relations]) {
-    if (!reverse.has(relation.to)) reverse.set(relation.to, []);
-    reverse.get(relation.to)!.push(relation.from);
-  }
-  // Reverse BFS from the entity; any reached entity that is a surface entry maps to that surface.
-  const next = new Map<string, string | null>([[entityId, null]]);
-  let frontier = [entityId];
-  const entryIndex = new Map<string, Surface[]>();
-  for (const surface of map.surfaces) for (const id of surface.entryEntityIds) {
-    if (!entryIndex.has(id)) entryIndex.set(id, []);
-    entryIndex.get(id)!.push(surface);
-  }
-  const found: Array<{ surface: Surface; path: string[] }> = [];
-  const seenSurfaces = new Set<string>();
-  for (let depth = 0; depth <= MAX_SURFACE_REACH_DEPTH && frontier.length && found.length < limit; depth += 1) {
-    const upcoming: string[] = [];
-    for (const id of frontier) {
-      for (const surface of entryIndex.get(id) ?? []) {
-        if (seenSurfaces.has(surface.id)) continue;
-        seenSurfaces.add(surface.id);
-        const path: string[] = [];
-        for (let current: string | null | undefined = id; current; current = next.get(current)) path.push(current);
-        found.push({ surface, path });
-      }
-      for (const caller of reverse.get(id) ?? []) if (!next.has(caller)) { next.set(caller, id); upcoming.push(caller); }
-    }
-    frontier = upcoming;
-  }
-  return found.slice(0, limit);
+  return buildGraphIndex({ relations, applicationMap: map }).surfacesForEntity(entityId, limit);
 }

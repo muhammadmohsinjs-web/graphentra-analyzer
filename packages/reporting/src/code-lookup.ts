@@ -1,4 +1,4 @@
-import type { Entity, TechnicalGraph } from '@graphentra/analyzer';
+import { buildGraphIndex, type Entity, type GraphIndex, type TechnicalGraph } from '@graphentra/analyzer';
 import type OpenAI from 'openai';
 
 /** Reads one repository-relative file at the revision the evidence describes; undefined when absent. */
@@ -25,6 +25,8 @@ export interface CodeLookupOptions {
   maxLookups?: number;
   /** Bytes per result before it is cut. Default 12000. */
   maxResultBytes?: number;
+  /** R-1: the run's shared index over the same graph; built here when absent. */
+  graphIndex?: GraphIndex;
 }
 
 export interface CodeLookup {
@@ -74,16 +76,7 @@ function slice(source: string, start: number, end: number, limit: number): strin
 export function createCodeLookup(graph: Pick<TechnicalGraph, 'entities' | 'relations' | 'analyzedFiles'>, read: SourceReader, options: CodeLookupOptions = {}): CodeLookup {
   const maxLookups = options.maxLookups ?? 12;
   const maxBytes = options.maxResultBytes ?? 12_000;
-  const byId = new Map(graph.entities.map(entity => [entity.id, entity]));
-  const byFile = new Map<string, Entity[]>();
-  for (const entity of graph.entities) byFile.set(entity.file, [...(byFile.get(entity.file) ?? []), entity]);
-  for (const list of byFile.values()) list.sort((a, b) => a.startLine - b.startLine);
-  const callers = new Map<string, string[]>();
-  const callees = new Map<string, string[]>();
-  for (const relation of graph.relations) {
-    callers.set(relation.to, [...(callers.get(relation.to) ?? []), `${relation.from} (${relation.type})`]);
-    callees.set(relation.from, [...(callees.get(relation.from) ?? []), `${relation.to} (${relation.type})`]);
-  }
+  const graphIndex = options.graphIndex ?? buildGraphIndex({ entities: graph.entities, relations: graph.relations });
   const cache = new Map<string, string | undefined>();
   const source = (file: string) => {
     if (!cache.has(file)) cache.set(file, read(file));
@@ -93,7 +86,7 @@ export function createCodeLookup(graph: Pick<TechnicalGraph, 'entities' | 'relat
 
   const findEntities = (query: string): Entity[] => {
     const q = query.trim();
-    const exact = byId.get(q);
+    const exact = graphIndex.entity(q);
     if (exact) return [exact];
     const name = q.includes('#') ? q.slice(q.indexOf('#') + 1) : q;
     const all = graph.entities;
@@ -109,7 +102,7 @@ export function createCodeLookup(graph: Pick<TechnicalGraph, 'entities' | 'relat
   };
 
   const enclosing = (file: string, line: number) =>
-    (byFile.get(file) ?? []).filter(e => e.startLine <= line && e.endLine >= line).sort((a, b) => (a.endLine - a.startLine) - (b.endLine - b.startLine))[0];
+    graphIndex.entitiesInFile(file).filter(e => e.startLine <= line && e.endLine >= line).sort((a, b) => (a.endLine - a.startLine) - (b.endLine - b.startLine))[0];
 
   const entityResult = (query: string): [string, string[]] => {
     const found = findEntities(query);
@@ -117,8 +110,8 @@ export function createCodeLookup(graph: Pick<TechnicalGraph, 'entities' | 'relat
     const blocks = found.map((entity, index) => {
       const text = source(entity.file);
       const code = text === undefined ? '(source unavailable)' : slice(text, entity.startLine, entity.endLine, index === 0 ? ENTITY_LINES : 25);
-      const up = callers.get(entity.id) ?? [];
-      const down = callees.get(entity.id) ?? [];
+      const up = graphIndex.incoming(entity.id).map(relation => `${relation.from} (${relation.type})`);
+      const down = graphIndex.outgoing(entity.id).map(relation => `${relation.to} (${relation.type})`);
       return [
         `Entity ${entity.id} (${entity.kind}${entity.exported ? ', exported' : ''}) lines ${entity.startLine}-${entity.endLine}`,
         `Used by (${up.length}): ${up.slice(0, RELATED).join(', ') || 'none in graph'}${up.length > RELATED ? ', …' : ''}`,
@@ -131,11 +124,11 @@ export function createCodeLookup(graph: Pick<TechnicalGraph, 'entities' | 'relat
 
   const fileResult = (query: string): [string, string[]] => {
     const file = query.trim().replace(/^\.\//, '');
-    const candidates = byFile.has(file) ? [file] : [...byFile.keys(), ...graph.analyzedFiles].filter(f => f.endsWith(file) || f.includes(file));
+    const candidates = graphIndex.entitiesInFile(file).length ? [file] : [...graphIndex.files(), ...graph.analyzedFiles].filter(f => f.endsWith(file) || f.includes(file));
     const target = candidates[0];
     const text = target ? source(target) : undefined;
     if (!target || text === undefined) return [`No analyzed file matches "${query}".`, []];
-    const entities = byFile.get(target) ?? [];
+    const entities = graphIndex.entitiesInFile(target);
     return [[
       `File ${target} (${text.split('\n').length} lines). Entities:`,
       ...entities.map(e => `- ${e.id} (${e.kind}) lines ${e.startLine}-${e.endLine}`),

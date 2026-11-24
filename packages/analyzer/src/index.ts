@@ -11,6 +11,7 @@ export * from './errors';
 export * from './validator';
 export * from './deterministic';
 export * from './application-map';
+export { buildGraphIndex, type ConsumerOptions, type GraphIndex, type GraphIndexInput } from './graph-index';
 export * from './business-signals';
 export { outlineSource, DEFAULT_OUTLINE_CHARS } from './source-outline';
 export * from './toolchain';

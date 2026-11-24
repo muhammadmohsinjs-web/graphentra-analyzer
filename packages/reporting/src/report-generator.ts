@@ -1,4 +1,4 @@
-import { computeDeterministicEvidenceIdentity, readEvidence } from '@graphentra/analyzer';
+import { buildGraphIndex, computeDeterministicEvidenceIdentity, readEvidence } from '@graphentra/analyzer';
 import type {
   ApplicationMap,
   ChangedEntity,
@@ -52,12 +52,14 @@ export async function generateQAReport(
   const evidenceIdentity = computeDeterministicEvidenceIdentity(rawEvidence as typeof evidence);
   const applicationMap = extras.applicationMap && extras.applicationMap.schemaVersion === '1.0' ? extras.applicationMap : undefined;
   const surfaceEvidence = buildSurfaceEvidence(evidence);
+  // R-1: one graph index per run, shared by the context pack's surface lookup and the code lookup tool.
+  const graphIndex = buildGraphIndex({ entities: evidence.technicalGraph.entities, relations: evidence.technicalGraph.relations, applicationMap });
   const payload = buildLLMPayload(evidence.impacts, context, {
-    applicationMap, relations: evidence.technicalGraph.relations, contextWarnings: warnings,
+    applicationMap, relations: evidence.technicalGraph.relations, graphIndex, contextWarnings: warnings,
     capabilities: evidence.technicalGraph.capabilities,
     surfaceEvidence,
   });
-  const tool = extras.lookup ? createCodeLookup(evidence.technicalGraph, extras.lookup.read, extras.lookup) : undefined;
+  const tool = extras.lookup ? createCodeLookup(evidence.technicalGraph, extras.lookup.read, { ...extras.lookup, graphIndex }) : undefined;
   // V-13e: the gaps are rewritten as plain QA checks by the writer's own model, unless the caller turned it off.
   const verifier = extras.verify
     ? createReportVerifier(evidence.impacts, { ...extras.verify, plainChecks: extras.verify.plainChecks ?? options ?? false })
