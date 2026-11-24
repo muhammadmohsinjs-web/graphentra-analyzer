@@ -216,3 +216,41 @@ export function payloadSizes(rawEvidence: unknown, applicationContext: unknown) 
   const budget = budgetPayload(compact, BUDGET);
   return { original: JSON.stringify(payload), compact: JSON.stringify(compact), budget: JSON.stringify(budget), chunks: chunks(compact, CHUNK).map(s => bytes(s)) };
 }
+
+// ---------- R-0: payload by section ----------
+/** Rough token estimate (about 4 bytes per token for JSON and code); good enough to compare sections, not to bill. */
+export const estimateTokens = (byteCount: number) => Math.ceil(byteCount / 4);
+export interface SectionSize { section: string; bytes: number; tokens: number }
+
+/**
+ * Bytes per section of a report payload, as sent or compact. Per-change fields are summed over all changes
+ * (`changes.change.diff` is every diff together); `applicationContext.*` is split by key. The `(json overhead)` row
+ * holds the keys, brackets and commas that join the sections, so the rows add up to the whole payload.
+ */
+export function sectionSizes(body: any): SectionSize[] {
+  const rows = new Map<string, number>();
+  const add = (section: string, value: unknown) => { if (value !== undefined) rows.set(section, (rows.get(section) ?? 0) + bytes(value)); };
+  for (const [key, value] of Object.entries(body)) {
+    if (key === 'changes' && Array.isArray(value)) {
+      for (const change of value) for (const [field, inner] of Object.entries(change as object)) {
+        if ((field === 'change' || field === 'blastRadius') && inner && typeof inner === 'object') for (const [sub, v] of Object.entries(inner)) add(`changes.${field}.${sub}`, v);
+        else add(`changes.${field}`, inner);
+      }
+    } else if (key === 'applicationContext' && value && typeof value === 'object') {
+      for (const [sub, v] of Object.entries(value)) add(`applicationContext.${sub}`, v);
+    } else add(key, value);
+  }
+  const total = bytes(body);
+  const parts = [...rows].map(([section, b]) => ({ section, bytes: b, tokens: estimateTokens(b) })).sort((a, b) => b.bytes - a.bytes);
+  const overhead = total - parts.reduce((s, p) => s + p.bytes, 0);
+  return [...parts, { section: '(json overhead)', bytes: overhead, tokens: estimateTokens(overhead) }, { section: 'TOTAL', bytes: total, tokens: estimateTokens(total) }];
+}
+
+/** Section tables for the payload as sent today and for the lossless compact encoding (R-2), plus the system instruction. */
+export function payloadSections(rawEvidence: unknown, applicationContext: unknown) {
+  const evidence = readEvidence(rawEvidence);
+  const { context, warnings } = loadApplicationContext(applicationContext, evidence.technicalGraph);
+  const payload: any = buildLLMPayload(evidence.impacts, context, { relations: evidence.technicalGraph.relations, contextWarnings: warnings,
+    capabilities: evidence.technicalGraph.capabilities, surfaceEvidence: buildSurfaceEvidence(evidence) });
+  return { changedFunctions: evidence.impacts.length, instructionBytes: bytes(qaInstruction), asSent: sectionSizes(payload), compact: sectionSizes(compactPayload(payload)) };
+}

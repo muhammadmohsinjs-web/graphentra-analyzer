@@ -4,7 +4,10 @@
 //   node --import tsx tools/impactbench-report-eval.mts evidence --history <dir> --work <dir> [ids...]
 //   node --import tsx tools/impactbench-report-eval.mts run --history <dir> --work <dir> [--variants base,lookup,lookup-always,verify] [--runs 3] [--concurrency 6] [ids...]
 //   (verify = base plus the Phase V verifier; needs OPENAI_API_KEY for the Decisions API. Rows gain usage.verifier, usage.repair, verification, audit.)
-//   node --import tsx tools/impactbench-report-eval.mts summary
+//   node --import tsx tools/impactbench-report-eval.mts summary [--grades <hand-grades.jsonl> [--grades-model glm]]
+//   (--grades: catch/explained from hand grades, matched on id and run, instead of the API judge. Summary also prints R-0 band tables.)
+//   node --import tsx tools/impactbench-report-eval.mts sections --work <dir> [--json <file>] [ids...]
+//   (R-0: bytes and estimated tokens per payload section, as sent and compact. No LLM calls.)
 //
 // <history> holds one full-history clone per corpus repo. <work> receives checkouts and evidence (large; keep it outside the repo).
 // Rows append to impactbench/eval/data/runs.jsonl; a rerun skips (id, variant, run) rows already there.
@@ -16,7 +19,7 @@ import { config } from 'dotenv';
 import OpenAI from 'openai';
 import analyzer from '../packages/analyzer/src/index';
 import reporting, { type DecisionAnswer, type DecisionClient, type LookupLogEntry, type ReportVerification } from '../packages/reporting/src/index';
-import { LARGE_VARIANTS, largePayloadReport, payloadSizes, type LargeVariant } from './impactbench-large-payload.mts';
+import { LARGE_VARIANTS, largePayloadReport, payloadSections, payloadSizes, type LargeVariant } from './impactbench-large-payload.mts';
 
 const { readEvidence } = analyzer;
 const { buildLLMPayload, buildSurfaceEvidence, createOpenAIDecisionClient, DEFAULT_THRESHOLD, generateQAReport, getSourceRole, judgeAnswer, loadApplicationContext, notCoveredDisplay } = reporting;
@@ -401,8 +404,38 @@ if (command === 'evidence') {
     const truth = (t: string) => `${entry.affected.entities.filter(e => t.includes(`"${e.id}"`)).length}/${entry.affected.entities.length}`;
     console.log(`${entry.id} original ${kb(s.original)} KB truth ${truth(s.original)} | compact ${kb(s.compact)} KB truth ${truth(s.compact)} | budget ${kb(s.budget)} KB truth ${truth(s.budget)} | chunks ${s.chunks.length} max ${Math.round(Math.max(...s.chunks) / 1024)} KB`);
   }
+} else if (command === 'sections') {
+  need(flag('work'), 'work');
+  const kb = (b: number) => (b / 1024).toFixed(1);
+  const all: any[] = [];
+  for (const entry of selected.filter(e => fs.existsSync(evidenceFile(e.id)))) {
+    const raw = loadEvidence(entry.id); const s = payloadSections(raw, fixContext(contextFor(entry, readEvidence(raw).technicalGraph)));
+    all.push({ id: entry.id, ...s });
+    const compactBy = new Map(s.compact.map(r => [r.section, r]));
+    console.log(`\n${entry.id}  changed functions ${s.changedFunctions}  instruction ${kb(s.instructionBytes)} KB`);
+    console.log(`${'section'.padEnd(40)} ${'sent KB'.padStart(9)} ${'tokens'.padStart(9)} ${'share'.padStart(6)} ${'compact KB'.padStart(11)} ${'tokens'.padStart(9)}`);
+    const total = s.asSent.at(-1)!.bytes;
+    const sections = [...new Set([...s.asSent.map(r => r.section), ...s.compact.map(r => r.section)])].filter(n => n !== 'TOTAL').concat('TOTAL');
+    for (const name of sections) {
+      const a = s.asSent.find(r => r.section === name); const c = compactBy.get(name);
+      console.log(`${name.padEnd(40)} ${(a ? kb(a.bytes) : '-').padStart(9)} ${String(a?.tokens ?? '-').padStart(9)} ${(a ? `${Math.round((100 * a.bytes) / total)}%` : '-').padStart(6)} ${(c ? kb(c.bytes) : '-').padStart(11)} ${String(c?.tokens ?? '-').padStart(9)}`);
+    }
+  }
+  if (flag('json')) { fs.writeFileSync(path.resolve(flag('json')!), `${JSON.stringify(all, null, 1)}\n`); console.log(`\nwrote ${flag('json')}`); }
 } else if (command === 'summary') {
   const rows = fs.readFileSync(RUNS, 'utf8').trim().split('\n').map(line => JSON.parse(line));
+  // --grades: hand grades (manual judging) replace catch/explained on matching (id, run) rows; --grades-model keeps one model's grades.
+  if (flag('grades')) {
+    const gradesModel = flag('grades-model');
+    const grades = fs.readFileSync(path.resolve(flag('grades')!), 'utf8').trim().split('\n').filter(Boolean).map(line => JSON.parse(line))
+      .filter(g => !gradesModel || g.model === gradesModel);
+    let matched = 0;
+    for (const r of rows) {
+      const g = grades.find(x => x.id === r.id && x.run === r.run);
+      if (g) { r.catch = Boolean(g.catch); r.explained = Boolean(g.explained); r.area = Boolean(g.area); r.graded = 'hand'; matched += 1; }
+    }
+    console.log(`hand grades: ${matched}/${rows.length} rows matched from ${path.relative(ROOT, path.resolve(flag('grades')!))}${gradesModel ? ` (model ${gradesModel})` : ''}`);
+  }
   const facts: any[] = JSON.parse(fs.readFileSync(path.join(DATA, 'analyzer.json'), 'utf8'));
   const variants = [...new Set(rows.map(r => r.variant))];
   const pct = (n: number, d: number) => (d ? `${Math.round((100 * n) / d)}%` : '-');
@@ -476,7 +509,42 @@ if (command === 'evidence') {
   console.log('\nvariant        payloadKB   reports  mean s  median s  mean $   total $');
   for (const b of costTime) console.log(`${b.variant.padEnd(14)} ${b.payloadKB.padEnd(11)} ${String(b.reports).padStart(7)} ${String(b.meanSeconds).padStart(7)} ${String(b.medianSeconds).padStart(9)}  ${b.meanCost.toFixed(4)}  ${b.totalCost.toFixed(3)}`);
   console.log(`total ${rows.length} reports, $${rows.reduce((a, r) => a + costOf(r), 0).toFixed(2)}, ${(rows.reduce((a, r) => a + r.seconds, 0) / 3600).toFixed(1)} report-hours; per-report CSV: ${path.relative(ROOT, path.join(DATA, 'cost-time.csv'))}`);
-  fs.writeFileSync(path.join(DATA, 'summary.json'), `${JSON.stringify({ generatedAt: new Date().toISOString(), reportModel: rows[0]?.model, judgeModel: JUDGE_MODEL, byVariant, costTime, perCommit }, null, 1)}\n`);
+  // R-0: results by change size. "Caught" = commits where at least one run caught the bug; "majority" = more than half the runs did.
+  // Coverage = changed production functions the report covered (Phase V audit), so it is empty for variants without the verifier.
+  const fnsOf = (id: string) => facts.find(f => f.id === id)?.impacts ?? 0;
+  const fnBands: [string, number, number][] = [['<= 10', 0, 10], ['11-25', 11, 25], ['> 25', 26, Infinity]];
+  const kbBands: [string, number, number][] = [['< 50 KB', 0, 50], ['50-250 KB', 50, 250], ['250-500 KB', 250, 500], ['500 KB-1 MB', 500, 1024], ['> 1 MB', 1024, Infinity]];
+  const bandRow = (rs: any[]) => {
+    const commits = [...new Set(rs.map(r => r.id))];
+    const runsOf = (id: string) => rs.filter(r => r.id === id);
+    const audited = rs.filter(r => r.audit && r.audit.skipped !== 'invalid');
+    const production = audited.reduce((s, r) => s + r.audit.production, 0);
+    const mean = (f: (r: any) => number) => (rs.length ? rs.reduce((s, r) => s + f(r), 0) / rs.length : 0);
+    return { commits: commits.length, reports: rs.length, valid: rs.filter(r => r.valid).length,
+      caught: commits.filter(id => runsOf(id).some(r => r.catch)).length,
+      caughtMajority: commits.filter(id => { const c = runsOf(id); return c.filter(r => r.catch).length * 2 > c.length; }).length,
+      explained: commits.filter(id => runsOf(id).some(r => r.explained)).length,
+      catchReports: rs.filter(r => r.catch).length,
+      coverage: production ? audited.reduce((s, r) => s + r.audit.covered, 0) / production : null,
+      meanOutputTokens: Math.round(mean(r => r.usage.report.completion ?? 0)),
+      meanChecks: mean(r => r.checks ?? 0), meanCost: mean(costOf), meanSeconds: Math.round(mean(r => r.seconds ?? 0)) };
+  };
+  const bands = variants.map(v => {
+    const rs = rows.filter(r => r.variant === v);
+    return { variant: v,
+      byChangedFunctions: fnBands.map(([band, lo, hi]) => ({ band, ...bandRow(rs.filter(r => fnsOf(r.id) >= lo && fnsOf(r.id) <= hi)) })),
+      byPayload: kbBands.map(([band, lo, hi]) => ({ band, ...bandRow(rs.filter(r => sizeOf(r) / 1024 >= lo && sizeOf(r) / 1024 < hi)) })) };
+  });
+  const printBands = (title: string, list: any[]) => {
+    console.log(`\n${title}`);
+    console.log(`${'band'.padEnd(12)} commits caught majority explained  valid  catch/reports  coverage  out tok  checks   mean $  mean s`);
+    for (const b of list) console.log(`${b.band.padEnd(12)} ${String(b.commits).padStart(7)} ${String(b.caught).padStart(6)} ${String(b.caughtMajority).padStart(8)} ${String(b.explained).padStart(9)} ${`${b.valid}/${b.reports}`.padStart(6)} ${`${b.catchReports}/${b.reports}`.padStart(14)} ${(b.coverage === null ? '-' : `${Math.round(100 * b.coverage)}%`).padStart(9)} ${String(b.meanOutputTokens).padStart(8)} ${b.meanChecks.toFixed(1).padStart(7)} ${b.meanCost.toFixed(4).padStart(8)} ${String(b.meanSeconds).padStart(7)}`);
+  };
+  for (const b of bands) {
+    printBands(`${b.variant}: by changed functions`, b.byChangedFunctions);
+    printBands(`${b.variant}: by payload size (as sent)`, b.byPayload);
+  }
+  fs.writeFileSync(path.join(DATA, 'summary.json'), `${JSON.stringify({ generatedAt: new Date().toISOString(), reportModel: rows[0]?.model, judgeModel: JUDGE_MODEL, byVariant, costTime, bands, perCommit }, null, 1)}\n`);
   console.log(`wrote ${path.relative(ROOT, path.join(DATA, 'summary.json'))}`);
 } else {
   console.log('Usage: evidence | run | summary. See the header of this file.');
