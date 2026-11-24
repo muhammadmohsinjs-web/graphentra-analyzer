@@ -1,0 +1,1221 @@
+[
+  {
+    "id": "r11-consola-01",
+    "repo": "consola",
+    "repoUrl": "https://github.com/unjs/consola",
+    "introducer": {
+      "sha": "f4b301b9e26778b1feaabedbdb50e596039fba1c",
+      "subject": "refactos on reporters",
+      "date": "2018-10-18T14:04:45+03:30"
+    },
+    "fix": {
+      "sha": "66eba0f4fb3355385651e7813d04c5de3760c46a",
+      "subject": "fix chalkBgColor cache",
+      "date": "2018-11-02T19:49:48+03:30",
+      "issue": null
+    },
+    "impacts": 30,
+    "changeClass": "plain-logic",
+    "symptom": "Using the same background color name a second time returned the whole cache object instead of the chalk color function, breaking colored badge output.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/utils/chalk.js#chalkBgColor",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Background color chalk helper cache"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix changes the cache-hit return from _bgColorCache to color in the function the introducer wrote; no test added.",
+    "confidence": "high",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-01",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "5256096d76be4685d3a6f06e2be4926d0b0a9def",
+      "subject": "Fast & Furious (#655)",
+      "date": "2020-02-19T17:25:01+01:00"
+    },
+    "fix": {
+      "sha": "4b8b9965c211a09179ae08a0052460c7462c76df",
+      "subject": "fix early return from renderScene (#815)",
+      "date": "2020-02-23T21:19:27+01:00",
+      "issue": null
+    },
+    "impacts": 40,
+    "changeClass": "plain-logic",
+    "symptom": "Whenever any element was selected, renderScene returned early and the scrollbars were not painted.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/renderer/renderScene.ts#renderScene",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Scrollbar rendering while elements are selected"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix removes the 'return visibleElements.length > 0' that the introducer placed inside the renderSelection block, so the scrollbar painting below runs; no test added.",
+    "confidence": "high",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-02",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "65be7973be42dfa5daa7299bbd68cab05f961f0e",
+      "subject": "Rotation support (#1099)",
+      "date": "2020-04-02T10:40:26+02:00"
+    },
+    "fix": {
+      "sha": "4003fa24b247d8f84dca6e04faa9e693a1c60e34",
+      "subject": "fix #1254 (#1255)",
+      "date": "2020-04-05T20:54:27-07:00",
+      "issue": "#1255"
+    },
+    "impacts": 34,
+    "changeClass": "plain-logic",
+    "symptom": "At zoom other than 100% the rotation handle was drawn at the wrong distance from the selected element.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/element/handlerRectangles.ts#handlerRectangles",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Rotation handle position when zoomed"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix divides ROTATION_HANDLER_GAP by zoom (constant added by the introducer with rotation support); no test added.",
+    "confidence": "high",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-03",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "61e5b66dac00176b8f66ad6ba87160b35fc66404",
+      "subject": "Group/ungroup (#1648)",
+      "date": "2020-05-26T13:07:46-07:00"
+    },
+    "fix": {
+      "sha": "46b574283f3ae00d78680098bb41cb1e4da41339",
+      "subject": "Fix zindex in groups (#1660)",
+      "date": "2020-05-26T22:56:22+02:00",
+      "issue": "#1660"
+    },
+    "impacts": 42,
+    "changeClass": "plain-logic",
+    "symptom": "Grouping elements put the group at the wrong z-order, so grouped shapes changed stacking relative to other elements.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/actions/actionGroup.ts#actionGroup.perform",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Grouping elements",
+        "Layer ordering of groups"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix reorders elements after grouping so the group sits at the highest member's position; the introducer's group action returned elements unordered; no test added.",
+    "confidence": "medium",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-04",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "14a66956d76e3a7c7d3ad573171dbad1b063bd08",
+      "subject": "Implement line editing (#1616)",
+      "date": "2020-06-01T11:35:44+02:00"
+    },
+    "fix": {
+      "sha": "476c0e9f8a281b08b65f482cf2f66b8909f5f288",
+      "subject": "Fix undo with line editing (#1717)",
+      "date": "2020-06-05T17:11:24+02:00",
+      "issue": null
+    },
+    "impacts": 54,
+    "changeClass": "plain-logic",
+    "symptom": "Undo after line editing did not step back correctly because history recording was not resumed when finishing a point.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/element/linearElementEditor.ts#LinearElementEditor.handlePointerUp",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Undo while editing a line"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix makes history.resumeRecording() unconditional, removing the lastUncommittedPoint !== null guard the introducer wrote; no test added.",
+    "confidence": "medium",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-05",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "baa8fb6c14c49fdd0b6ff0b4a5ab768bb39071f9",
+      "subject": "grid support (1st iteration) (#1788)",
+      "date": "2020-06-23T17:24:52+02:00"
+    },
+    "fix": {
+      "sha": "9c89504b6f35e66cdf627364c401e3c03423d1b2",
+      "subject": "fix: start dragging grouped elements (#1818)",
+      "date": "2020-06-24T13:38:42+02:00",
+      "issue": "#1818"
+    },
+    "impacts": 28,
+    "changeClass": "plain-logic",
+    "symptom": "Starting to drag a grouped element moved the group with a wrong offset because the drag offset was computed before the selection included the whole group.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/components/App.tsx#App.handleCanvasPointerDown",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/element/dragElements.ts#getDragOffsetXY",
+          "outsideIntroducerDiff": false,
+          "role": "consumer"
+        }
+      ],
+      "areas": [
+        "Dragging grouped elements"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix removes the pointerDown computation of dragOffsetXY (written by the introducer) and computes it lazily on first pointerMove, after state.selectedElementIds is updated. No test added.",
+    "confidence": "high",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-06",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "e617ccc2521b46bc1e25a1a771019e09d12ea338",
+      "subject": "Factor out collaboration code (#2313)",
+      "date": "2020-12-05T15:30:53+01:00"
+    },
+    "fix": {
+      "sha": "98c26642d0f405bbea2375d908ba79bf71949ed3",
+      "subject": "fix: hide collab button when onCollabButtonClick not supplied (#2598)",
+      "date": "2020-12-15T16:21:14+01:00",
+      "issue": "#2598"
+    },
+    "impacts": 126,
+    "changeClass": "default-option",
+    "symptom": "The collab button was always shown, even when the host app supplied no onCollabButtonClick handler.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/packages/excalidraw/index.tsx#Excalidraw",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Collab button visibility in the embedded package"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix removes the onCollabButtonClick = noop default (added by the introducer) so the button is hidden when unsupplied; no test added.",
+    "confidence": "high",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-07",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "7eff6893c5c1e09739dfc4a28a2e0bec738c80f4",
+      "subject": "calculate coords based on container viewport position (#1955)",
+      "date": "2020-07-27T13:48:49+02:00"
+    },
+    "fix": {
+      "sha": "fb582b45db4755fd5102f710935e188cb989d926",
+      "subject": "fix: Fix centering element on init (#2445)",
+      "date": "2020-12-16T18:17:39+01:00",
+      "issue": "#2445"
+    },
+    "impacts": 32,
+    "changeClass": "plain-logic",
+    "symptom": "On init with a non-zero canvas offset the scene was not scrolled to the center of the canvas.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/components/App.tsx#App.initializeScene",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Scroll-to-center on init",
+        "Embedding with canvas offsets"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix passes this.state.width/height into calculateScrollCenter; test scroll.test.tsx asserts scrollX/scrollY center with offsets 200/100. Call was added by the introducer without width/height; blame at fix^ points to a later move, so attribution is moderate.",
+    "confidence": "medium",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-08",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "26f67d27ec431493ac64d2b199e79de133c18e83",
+      "subject": "Allow binding linear elements to other elements (#1899)",
+      "date": "2020-08-08T21:04:15-07:00"
+    },
+    "fix": {
+      "sha": "969d3c694aedba0fdf74f8a7f727118655acba84",
+      "subject": "fix: keep binding for attached arrows after changing text (#3754)",
+      "date": "2021-06-21T14:31:49+02:00",
+      "issue": "#3754"
+    },
+    "impacts": 210,
+    "changeClass": "plain-logic",
+    "symptom": "Editing the text of an element that an arrow was bound to removed the arrow binding.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/components/App.tsx#App.handleTextWysiwyg",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/element/binding.ts#fixBindingsAfterDeletion",
+          "outsideIntroducerDiff": false,
+          "role": "consumer"
+        }
+      ],
+      "areas": [
+        "Arrows bound to text elements",
+        "Editing bound text"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix calls fixBindingsAfterDeletion only when the text was deleted (isDeleted) instead of in the else of the selection branch; binding.test.tsx adds should keep binding on text update. The else branch was written by the introducer.",
+    "confidence": "high",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-09",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "98b5c37e452d56b7d0fdbce82ce31e6389ba5330",
+      "subject": "feat: bind text to shapes when pressing enter and support sticky notes 🎉  (#4343)",
+      "date": "2021-12-16T21:14:03+05:30"
+    },
+    "fix": {
+      "sha": "28546fbb550ce861daf4c0562e87689a8c33bf5f",
+      "subject": "fix: bound text doesn't inherit container (#4521)",
+      "date": "2021-12-31T14:55:02+01:00",
+      "issue": null
+    },
+    "impacts": 89,
+    "changeClass": "plain-logic",
+    "symptom": "A text element bound to a container inside a group was not part of that group.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/components/App.tsx#App.startTextEditing",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Bound text group membership"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix adds groupIds: container?.groupIds ?? [] next to the containerId the introducer set when creating bound text; no test added.",
+    "confidence": "medium",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-10",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "f47ddb988f0da43e22b99201664b837d150f5254",
+      "subject": "feat: Support hyperlinks 🔥  (#4620)",
+      "date": "2022-02-03T20:34:59+05:30"
+    },
+    "fix": {
+      "sha": "de6371aac4220c560689ad7828c930bdf61f4c0d",
+      "subject": "fix: link popup position not accounting for offsets (#4695)",
+      "date": "2022-02-03T17:00:00+01:00",
+      "issue": null
+    },
+    "impacts": 61,
+    "changeClass": "plain-logic",
+    "symptom": "The hyperlink popup appeared shifted by the editor offset when the canvas was not at the page origin.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/element/Hyperlink.tsx#getCoordsForPopover",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/element/Hyperlink.tsx#Hyperlink",
+          "outsideIntroducerDiff": false,
+          "role": "caller"
+        }
+      ],
+      "areas": [
+        "Link popup position over linked elements"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix subtracts appState.offsetLeft/offsetTop in getCoordsForPopover, which the introducer wrote without offsets. No test added.",
+    "confidence": "high",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-11",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "8e26d5b500a02c60ab128934953282b236a1ffcb",
+      "subject": "feat: support vertical text align for bound containers (#4852)",
+      "date": "2022-03-02T20:06:07+05:30"
+    },
+    "fix": {
+      "sha": "94b387ef7ba9d5597a15205da69a91732c7b2d1b",
+      "subject": "fix: ensure verticalAlign properties not shown when no element selected (#4860)",
+      "date": "2022-03-02T23:56:20+01:00",
+      "issue": null
+    },
+    "impacts": 26,
+    "changeClass": "plain-logic",
+    "symptom": "With nothing selected, the vertical-align control showed in the properties panel (all-of-empty-selection was true), and with mixed selections it was hidden.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/components/Actions.tsx#SelectedShapeActions",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Properties panel vertical align visibility"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix changes targetElements.every(...) to some(...) so changeVerticalAlign shows only when at least one selected element is bound text or a container; no test added.",
+    "confidence": "high",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-12",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "d2e687ed0a0d3f9eb0efdd8a3ea1d093f2f641a6",
+      "subject": "feat: make file handling more robust (#5057)",
+      "date": "2022-05-09T15:53:04+02:00"
+    },
+    "fix": {
+      "sha": "bbfd2b3cd3b944d1c8191e54d848401ed0a00e90",
+      "subject": "fix: file handle not persisted when importing excalidraw files (#5372)",
+      "date": "2022-06-28T14:44:59+02:00",
+      "issue": null
+    },
+    "impacts": 26,
+    "changeClass": "same-signature-behavior",
+    "symptom": "After opening an .excalidraw file through the file picker, the file handle was not remembered, so Save did not write back to the opened file.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/data/json.ts#loadFromJSON",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/data/blob.ts#loadFromBlob",
+          "outsideIntroducerDiff": false,
+          "role": "consumer"
+        }
+      ],
+      "areas": [
+        "Opening a scene file and saving back to it"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix passes file.handle as the new fileHandle argument of loadFromBlob. The introducer replaced the raw picked file with normalizeFile(file), a new File that no longer carries .handle, while loadFromBlob defaults to blob.handle. No test added.",
+    "confidence": "high",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-13",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "08ce7c7fc3e1e3056e349a6497014e3931c1578b",
+      "subject": "feat: redesign linear elements 🎉 (#5501)",
+      "date": "2022-08-03T20:58:17+05:30"
+    },
+    "fix": {
+      "sha": "27cf5ed17e20b0b90dc98e8a151a598d2ea679c4",
+      "subject": "fix: deselect linear element when clicked inside bounding box outside editor (#5579)",
+      "date": "2022-08-16T23:05:38+05:30",
+      "issue": null
+    },
+    "impacts": 30,
+    "changeClass": "plain-logic",
+    "symptom": "Clicking inside a selected line's bounding box but off the line did not deselect it.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/components/App.tsx#App.onPointerUpFromPointerDownHandler",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/components/App.tsx#App.onPointerMoveFromPointerDownHandler",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Deselecting a linear element by clicking inside its bounding box"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix drops the !selectedLinearElement guard (written by the introducer) from the pointer-up deselect branch and sets drag.hasOccurred on drag; no test added.",
+    "confidence": "medium",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-14",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "0d1058a596145894b703fe3078b574f83bfbb312",
+      "subject": "feat: support segment midpoints in line editor (#5641)",
+      "date": "2022-09-14T19:55:54+05:30"
+    },
+    "fix": {
+      "sha": "02286465079be6c6af646f41317fbc5178c8dc4d",
+      "subject": "fix: line editor points rendering below elements (#5781)",
+      "date": "2022-11-05T11:35:53+01:00",
+      "issue": null
+    },
+    "impacts": 27,
+    "changeClass": "plain-logic",
+    "symptom": "While editing a line, its point handles were drawn under other elements overlapping it, so covered points could not be seen or dragged.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/renderer/renderScene.ts#_renderScene",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Line editor point handles rendering",
+        "Dragging line points covered by other elements"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix defers renderLinearPointHandles until after all visible elements are drawn; test 'in-editor dragging a line point covered by another element' in linearElementEditor.test.tsx drags a point under a rectangle.",
+    "confidence": "high",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-15",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "b704705ed84205b3bb3983ad20a6970b4eb33d15",
+      "subject": "feat: render footer as a component instead of render prop (#5970)",
+      "date": "2022-12-21T14:29:06+05:30"
+    },
+    "fix": {
+      "sha": "c8370b394c8295bde5c74c3b891546f215f8e0bb",
+      "subject": "fix: use displayName since name gets stripped off when uglifying/minifiyng in production (#6036)",
+      "date": "2022-12-27T15:17:13+05:30",
+      "issue": "#6036"
+    },
+    "impacts": 32,
+    "changeClass": "same-signature-behavior",
+    "symptom": "In production (minified) builds, custom Footer children passed to Excalidraw were not recognised and the footer did not render.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/utils.ts#ReactChildrenToObject",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/components/LayerUI.tsx#LayerUI",
+          "outsideIntroducerDiff": false,
+          "role": "consumer"
+        }
+      ],
+      "areas": [
+        "Rendering the Footer component in minified production builds"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix keys the children dictionary by child.type.displayName instead of child.type.name, which uglifiers strip. The introducer wrote the .name based lookup in ReactChildrenToObject. No test added.",
+    "confidence": "high",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-16",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "9f76f8677baa1e95fc1af011e35f31f87631167b",
+      "subject": "feat: cache most of element selection (#6747)",
+      "date": "2023-07-17T01:09:44+02:00"
+    },
+    "fix": {
+      "sha": "8101a351dbbf269b92b525e885e4dda5cdd51c2a",
+      "subject": "fix: resetting deleted elements on duplication (#6906)",
+      "date": "2023-08-18T00:28:26+02:00",
+      "issue": null
+    },
+    "impacts": 101,
+    "changeClass": "same-signature-behavior",
+    "symptom": "Alt-dragging to duplicate elements dropped deleted elements from the scene, so they could not be restored by undo or sync.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/components/App.tsx#App.onPointerMoveFromPointerDownHandler",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Alt-drag duplication of selected elements"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix reverts the line the introducer changed from getElementsIncludingDeleted() back to include deleted elements when rebuilding nextElements. No test added.",
+    "confidence": "high",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-17",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "d4afd6626850befdb000d86c203e7a604f8a871c",
+      "subject": "feat: add hand/panning tool (#6141)",
+      "date": "2023-01-23T16:12:28+01:00"
+    },
+    "fix": {
+      "sha": "68179356e685e5750b1353ceec5c8adabec46237",
+      "subject": "fix: Fixes the shortcut collision between \"toggleHandTool\" and \"distributeHorizontally\" (#7189)",
+      "date": "2023-11-10T15:33:02+01:00",
+      "issue": null
+    },
+    "impacts": 41,
+    "changeClass": "protocol-enum",
+    "symptom": "Pressing Alt+Shift+H to distribute horizontally switched to the hand tool instead, because the H key test ignored modifiers.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/actions/actionCanvas.tsx#actionToggleHandTool",
+          "outsideIntroducerDiff": false,
+          "role": "fault",
+          "collectorGap": true
+        },
+        {
+          "id": "src/actions/actionDistribute.tsx#distributeHorizontally",
+          "outsideIntroducerDiff": true,
+          "role": "caller",
+          "collectorGap": true
+        }
+      ],
+      "areas": [
+        "Keyboard shortcuts: hand tool vs distribute horizontally"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix changes keyTest of toggleHandTool from event.key === H to also require no alt and no ctrl/cmd. The introducer added the unmodified H test. No test added.",
+    "confidence": "high",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-18",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "e9cae918a7c83c577afb5f6385f6aba9d3544670",
+      "subject": "feat: sidebar tabs support (#6213)",
+      "date": "2023-05-04T17:33:31Z"
+    },
+    "fix": {
+      "sha": "65bc500598b70be00c8d770f49928ff66f77470b",
+      "subject": "fix: `excalidrawAPI.toggleSidebar` not switching between tabs correctly (#7821)",
+      "date": "2024-03-28T14:52:23+01:00",
+      "issue": null
+    },
+    "impacts": 120,
+    "changeClass": "plain-logic",
+    "symptom": "excalidrawAPI.toggleSidebar did not switch between tabs of an open sidebar; it closed the sidebar instead.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/components/App.tsx#App.toggleSidebar",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Sidebar tabs toggled through the imperative API"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix compares tab as well as name when deciding to close, and accepts name null; test added in Sidebar.test.tsx switches library to comments tab. The toggling logic was written by the introducer.",
+    "confidence": "high",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-19",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "015b46ab233e1a6a8d1ca81fa8fd9d2b36a37567",
+      "subject": "feat: expose `StoreAction` in relation to multiplayer history (#7898)",
+      "date": "2024-04-22T09:22:25Z"
+    },
+    "fix": {
+      "sha": "4d83d1c91e8a13ae639032e7cba3900d7729ffc5",
+      "subject": "fix: use Reflect API instead of Object.hasOwn (#7958)",
+      "date": "2024-04-25T15:36:26+02:00",
+      "issue": "#7958"
+    },
+    "impacts": 45,
+    "changeClass": "same-signature-behavior",
+    "symptom": "In browsers without Object.hasOwn the store's observed-app-state check threw, breaking editor updates.",
+    "affected": {
+      "entities": [
+        {
+          "id": "packages/excalidraw/store.ts#isObservedAppState",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "packages/excalidraw/store.ts#getObservedAppState",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Store/history capture on older browsers"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix replaces Object.hasOwn with Reflect.get in code the introducer wrote; no test and no linked issue, so the user-visible failure is inferred from the subject.",
+    "confidence": "low",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-20",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "550a388b2ba435211e3e91764beaf2ed421686d6",
+      "subject": "feat: command palette (#7804)",
+      "date": "2024-03-28T16:16:32Z"
+    },
+    "fix": {
+      "sha": "ed5ce8d3ded0c4797ce729cc857c7eaab5c5b74a",
+      "subject": "fix: command palette filter (#7981)",
+      "date": "2024-05-08T17:56:05+02:00",
+      "issue": "#7981"
+    },
+    "impacts": 103,
+    "changeClass": "plain-logic",
+    "symptom": "Command palette search was case sensitive, so typing lowercase did not match capitalized command labels.",
+    "affected": {
+      "entities": [
+        {
+          "id": "packages/excalidraw/components/CommandPalette/CommandPalette.tsx#CommandPaletteInner",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Command palette search"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix lowercases the label haystack and the query (both written by the introducer) and moves the dash in the strip regex; no test added.",
+    "confidence": "medium",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-21",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "530617be90df8d41f93c7c885d3097565c4c7f6d",
+      "subject": "feat: multiplayer undo / redo (#7348)",
+      "date": "2024-04-17T14:01:24+02:00"
+    },
+    "fix": {
+      "sha": "afe52c89a7e467dadb7aa923dac97cc05bd687cf",
+      "subject": "fix: undo/redo when exiting view mode (#8024)",
+      "date": "2024-05-19T15:54:52+02:00",
+      "issue": null
+    },
+    "impacts": 280,
+    "changeClass": "plain-logic",
+    "symptom": "After exiting view mode the undo and redo buttons showed the wrong enabled state until the history changed.",
+    "affected": {
+      "entities": [
+        {
+          "id": "packages/excalidraw/actions/actionHistory.tsx#createUndoAction",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "packages/excalidraw/actions/actionHistory.tsx#createRedoAction",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Undo and redo buttons after view mode toggles"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix seeds useEmitter with the current history.isUndoStackEmpty/isRedoStackEmpty instead of an empty HistoryChangedEvent; test in history.test.tsx asserts button disabled states. The empty initial event was written by the introducer.",
+    "confidence": "medium",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-22",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "15e019706d70ee69dc691faf0430d776752ba5e1",
+      "subject": "feat: Orthogonal (elbow) arrows for diagramming (#8299)",
+      "date": "2024-08-01T18:39:03+02:00"
+    },
+    "fix": {
+      "sha": "84398a7e5ccb2765d011be48cad74f375f058158",
+      "subject": "fix: Point duplication in LEE on ALT+click (#8347)",
+      "date": "2024-08-09T12:01:32+02:00",
+      "issue": "#8347"
+    },
+    "impacts": 214,
+    "changeClass": "plain-logic",
+    "symptom": "Alt+click in the linear element editor duplicated a point on elbow arrows.",
+    "affected": {
+      "entities": [
+        {
+          "id": "packages/excalidraw/element/linearElementEditor.ts#LinearElementEditor.handlePointerDown",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Alt+click point add in the line editor",
+        "Elbow arrows"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix changes || to && in the lastUncommittedPoint/isElbowArrow condition the introducer wrote; no test added.",
+    "confidence": "high",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-23",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "ce267aa0d3bcaa639e72cd41581f030d1a0a3f3b",
+      "subject": "feat: lasso selection (#9169)",
+      "date": "2025-04-07T16:44:25+10:00"
+    },
+    "fix": {
+      "sha": "a18b139a60a50f1db73444140443254961655a55",
+      "subject": "fix: laser pointer trail disappearing on pointerup (#9413) (#9427)",
+      "date": "2025-04-24T10:05:08+10:00",
+      "issue": "#9427"
+    },
+    "impacts": 54,
+    "changeClass": "plain-logic",
+    "symptom": "The laser pointer trail vanished immediately on pointerup instead of fading out.",
+    "affected": {
+      "entities": [
+        {
+          "id": "packages/excalidraw/animated-trail.ts#AnimatedTrail.update",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Laser pointer trail"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix removes the this.pastTrails = [] reset that the lasso introducer added to update(); no test added.",
+    "confidence": "high",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-24",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "b4903a7eab2330ce127509977472f6c50f52327b",
+      "subject": "feat: drag, resize, and rotate after selecting in lasso (#9732)",
+      "date": "2025-08-20T00:03:02+02:00"
+    },
+    "fix": {
+      "sha": "90ec2739aea65222f235dd7a2c0c929dce7bdbee",
+      "subject": "fix: calling toLowerCase on potentially undefined `navigator.*` values (#9901)",
+      "date": "2025-08-22T17:37:16+02:00",
+      "issue": null
+    },
+    "impacts": 33,
+    "changeClass": "plain-logic",
+    "symptom": "The app crashed at load in environments where navigator.platform or navigator.userAgent is undefined, because the new isMobile constant called toLowerCase on them.",
+    "affected": {
+      "entities": [
+        {
+          "id": "packages/common/src/constants.ts#isMobile",
+          "outsideIntroducerDiff": false,
+          "role": "fault",
+          "collectorGap": true
+        }
+      ],
+      "areas": [
+        "App startup device detection"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix removes .toLowerCase() on navigator.userAgent and navigator.platform in isMobile (both added by the introducer); regexes are already case-insensitive. No test added.",
+    "confidence": "medium",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-25",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "a0b98a944f1ddedba090b8a6908ff38b9132177e",
+      "subject": "feat: TextToDiagram v2 (#10530)",
+      "date": "2026-01-15T19:15:41+01:00"
+    },
+    "fix": {
+      "sha": "6135548534fcfacc0ffa7bd1d1f7d32ce05f137d",
+      "subject": "fix: rerender TTD preview on message remove (#10681)",
+      "date": "2026-01-21T14:07:48+01:00",
+      "issue": null
+    },
+    "impacts": 110,
+    "changeClass": "plain-logic",
+    "symptom": "In the text-to-diagram dialog the diagram preview did not re-render after a chat message was removed.",
+    "affected": {
+      "entities": [
+        {
+          "id": "packages/excalidraw/components/TTDDialog/hooks/useMermaidRenderer.ts#useMermaidRenderer",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "TTD preview refresh on message removal"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix merges the two effects so a non-generating state flushes and re-renders the last assistant message when content changes; no test added.",
+    "confidence": "medium",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-26",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "d331bb49fce8975819bae1c55c7a43bcd778a8af",
+      "subject": "fix(editor): avoid overlap of flowchart children (#11532)",
+      "date": "2026-07-13T16:52:19+02:00"
+    },
+    "fix": {
+      "sha": "a758e93d6a03e9f995973703cb886850a398a6d3",
+      "subject": "fix(editor): restore centered flowchart node creation (#12500)",
+      "date": "2026-10-30T20:19:53+01:00",
+      "issue": "#12500"
+    },
+    "impacts": 38,
+    "changeClass": "plain-logic",
+    "symptom": "Pending flowchart children were no longer centered on the parent node while Ctrl+arrow added more of them.",
+    "affected": {
+      "entities": [
+        {
+          "id": "packages/element/src/flowchart.ts#placeCluster",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "packages/element/src/flowchart.ts#addNewNodes",
+          "outsideIntroducerDiff": false,
+          "role": "caller"
+        }
+      ],
+      "areas": [
+        "Flowchart node creation with Ctrl+arrow"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix re-adds the parent-centered slot to the sticky candidates and narrows the obstacle zone in placeCluster; tests in packages/element/tests/flowchart.test.tsx assert centered pending positions as the cluster grows. placeCluster and the sticky logic were written by the introducer.",
+    "confidence": "medium",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-excalidraw-27",
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "d2557474e2a9cfccd0a94ab950a2e763ab12823a",
+      "subject": "fix(editor): fix target element index when creating/adding elements to frames (#11257)",
+      "date": "2026-05-05T21:35:32+02:00"
+    },
+    "fix": {
+      "sha": "8bcdca4526867433f99fdfcb55a063668db0c9dc",
+      "subject": "fix(editor): ignore deleted elements when inserting frame children (#12510)",
+      "date": "2026-10-31T17:48:47+01:00",
+      "issue": "#12510"
+    },
+    "impacts": 67,
+    "changeClass": "plain-logic",
+    "symptom": "After deleting a frame child that sat above the frame, new children of that frame were inserted above the frame, up to the top of the canvas.",
+    "affected": {
+      "entities": [
+        {
+          "id": "packages/element/src/frame.ts#getFrameChildrenInsertionIndex",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Adding elements to frames",
+        "Layer ordering of frame children"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix skips deleted children in getFrameChildrenInsertionIndex (written by the introducer); test in frame.test.tsx expects the new child below the frame despite a deleted child above.",
+    "confidence": "high",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  },
+  {
+    "id": "r11-json-server-01",
+    "repo": "json-server",
+    "repoUrl": "https://github.com/typicode/json-server",
+    "introducer": {
+      "sha": "2b26630ac6379fba77eb104b22e83b41a004b52e",
+      "subject": "v0.9.0 (#404)",
+      "date": "2016-11-12T01:59:43+01:00"
+    },
+    "fix": {
+      "sha": "eca6b763f2b904e6c0739f14cd4f9eb04a7c2a27",
+      "subject": "fix filter for boolean value false (#412) (#413)",
+      "date": "2016-11-21T02:24:35+01:00",
+      "issue": "#412"
+    },
+    "impacts": 42,
+    "changeClass": "plain-logic",
+    "symptom": "Filtering a collection by a boolean false value, e.g. /comments?published=false, returned nothing.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/server/router/plural.js#<module>",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Query filtering by false values"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix changes `if (!elementValue)` to `elementValue == null` so false/0 values are compared; test 'should support filtering by boolean value false' expects the three unpublished comments.",
+    "confidence": "high",
+    "review": {
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
+    }
+  }
+]

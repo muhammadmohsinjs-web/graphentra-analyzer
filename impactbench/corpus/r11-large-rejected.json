@@ -1,0 +1,74 @@
+[
+  {
+    "repo": "excalidraw",
+    "introducer": "cd50aa719fa5dcb77beb9f736725fa744e5ba6ba",
+    "fix": "8a162a4cb4ba420830cf07363fb0495477424442",
+    "fixSubject": "fix: import (#7869)",
+    "verdict": "reject",
+    "reason": "SZZ blame wrong: fix only adds a missing CODES import; at fix^ the file already used CODES.D, while the introducer's version used KEYS.D, so a later commit introduced the break."
+  },
+  {
+    "repo": "excalidraw",
+    "introducer": "e1b7aacb356a492aa1e0fc6eb57b8896124027f0",
+    "fix": "95307fa136a3e190f73c7af4626e86d6e41c2eb6",
+    "fixSubject": "fix(packages/excalidraw): export PNGs from a CPU-backed canvas (#12471)",
+    "verdict": "reject",
+    "reason": "Not caused by introducer: fix works around Chrome's Skia Graphite GPU canvas antialiasing; the canvas creation path is environmental/browser behavior, not logic the introducer changed. Cosmetic quality issue."
+  },
+  {
+    "repo": "excalidraw",
+    "introducer": "b57b3b573da874f7527589c10632ec936c1962d2",
+    "fix": "1f94f204dd40b5d8766f720bc1e64feb9ade0991",
+    "fixSubject": "fix: isBindableElement to affirm frames (#6900)",
+    "verdict": "reject",
+    "reason": "SZZ blame wrong: omission of 'frame' in isBindableElement belongs to the frames feature (81ebf829 introduced frame); web-embeds only added an adjacent 'embeddable' line."
+  },
+  {
+    "repo": "excalidraw",
+    "introducer": "81ebf82979f7efba460a882478284583451f2f32",
+    "fix": "eb020d04105a8f725e71292cc822acddec3fa203",
+    "fixSubject": "fix: generic element's labels not flipping with them (#6967)",
+    "verdict": "reject",
+    "reason": "SZZ blame wrong: bound text was not included in multi-element flip since multi-flip was added (6459ccda); frames only added the includeElementsInFrames option beside it. Bug not caused by frames."
+  },
+  {
+    "repo": "consola",
+    "introducer": "661752c3a9330226384c1cb5b3acc81488f0a657",
+    "fix": "ff24b696f1929262c9c9310dfe25d63c3a498964",
+    "fixSubject": "fix: remove file:// from error stack traces",
+    "verdict": "reject",
+    "reason": "The introducer only moved parseStack from utils/index.js to utils/error.js unchanged; file:// prefixes in ESM stack traces were never handled. The fix adds handling for a case that was always missing, so not a regression."
+  },
+  {
+    "repo": "json-server",
+    "introducer": "25b2e436489c1557f6595811ba95207857d2853a",
+    "fix": "e660f0bd6b3ddd305acea0dd9c8d086d6badb960",
+    "fixSubject": "Fix empty string conversion",
+    "verdict": "reject",
+    "reason": "toNative with the isNaN(+value) check existed before \"Use restify\" and was only moved (old utils/utils.js had the same line); empty strings were always converted to 0. SZZ blame is wrong."
+  },
+  {
+    "repo": "excalidraw",
+    "introducer": "437595fa652b77df700c7f4e6d4fcd8d9ff42000",
+    "fix": "47c254216b45b42e48a20de693ffc3ab15cff86f",
+    "fixSubject": "fix(editor): disable snap-to-midpoint menu item when arrow-binding disabled (#10885)",
+    "verdict": "reject",
+    "reason": "Fix only greys out the midpoint snapping menu item when binding is disabled (DefaultItems.tsx plus scss). It is a UI polish with no wrong data or functional regression and no test."
+  },
+  {
+    "repo": "excalidraw",
+    "introducer": "0e5c29b3f31de90344117479954ee19327d31426",
+    "fix": "e27f3f9ad2379c1023bff2c2c7e0d9a0c48de544",
+    "fixSubject": "fix(data): removes unnecessary await (#1549)",
+    "verdict": "reject",
+    "reason": "Fix only drops an unnecessary async/await in getImportedKey; no behavior was broken by the introducer."
+  },
+  {
+    "repo": "excalidraw",
+    "introducer": "675da16ca4ffb15fe7818b12f4e9a0e586cb9571",
+    "fix": "cf6a5ff16be39de8ff474c51c5aa18c77e2abcf5",
+    "fixSubject": "fix: state continuously updated when holding ctrl/cmd (#3283)",
+    "verdict": "reject",
+    "reason": "Fix guards a redundant setState; the introducer only moved the pre-existing 'if (event[CTRL_OR_CMD]) setState({isBindingEnabled:false})' lines, so the repeated update predates it (blame is a move)."
+  }
+]

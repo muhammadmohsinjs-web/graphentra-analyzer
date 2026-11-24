@@ -1,0 +1,749 @@
+[
+ {
+  "id": "r11-consola-01",
+  "repo": "consola",
+  "changeClass": "plain-logic",
+  "seconds": 1.1,
+  "outcome": "completed",
+  "impacts": 30,
+  "blastTotal": 12,
+  "receivers": 0,
+  "payloadBytes": 101963,
+  "truth": [
+   {
+    "id": "src/utils/chalk.js#chalkBgColor",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 0,
+  "hasContext": false
+ },
+ {
+  "id": "r11-excalidraw-01",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 1.7,
+  "outcome": "completed",
+  "impacts": 40,
+  "blastTotal": 47,
+  "receivers": 28,
+  "payloadBytes": 508214,
+  "truth": [
+   {
+    "id": "src/renderer/renderScene.ts#renderScene",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 33,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-02",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 2.1,
+  "outcome": "completed",
+  "impacts": 34,
+  "blastTotal": 69,
+  "receivers": 18,
+  "payloadBytes": 643414,
+  "truth": [
+   {
+    "id": "src/element/handlerRectangles.ts#handlerRectangles",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 54,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-03",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 2.3,
+  "outcome": "completed",
+  "impacts": 42,
+  "blastTotal": 66,
+  "receivers": 52,
+  "payloadBytes": 653484,
+  "truth": [
+   {
+    "id": "src/actions/actionGroup.ts#actionGroup.perform",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 57,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-04",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 2.4,
+  "outcome": "completed",
+  "impacts": 54,
+  "blastTotal": 123,
+  "receivers": 31,
+  "payloadBytes": 972481,
+  "truth": [
+   {
+    "id": "src/element/linearElementEditor.ts#LinearElementEditor.handlePointerUp",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 58,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-05",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 2.5,
+  "outcome": "completed",
+  "impacts": 28,
+  "blastTotal": 50,
+  "receivers": 53,
+  "payloadBytes": 374235,
+  "truth": [
+   {
+    "id": "src/components/App.tsx#App.handleCanvasPointerDown",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/element/dragElements.ts#getDragOffsetXY",
+    "outside": false,
+    "role": "consumer",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 63,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-06",
+  "repo": "excalidraw",
+  "changeClass": "default-option",
+  "seconds": 3,
+  "outcome": "completed",
+  "impacts": 126,
+  "blastTotal": 140,
+  "receivers": 46,
+  "payloadBytes": 1997385,
+  "truth": [
+   {
+    "id": "src/packages/excalidraw/index.tsx#Excalidraw",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 82,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-07",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 2.4,
+  "outcome": "completed",
+  "impacts": 32,
+  "blastTotal": 69,
+  "receivers": 24,
+  "payloadBytes": 521557,
+  "truth": [
+   {
+    "id": "src/components/App.tsx#App.initializeScene",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 67,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-08",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 2.8,
+  "outcome": "completed",
+  "impacts": 210,
+  "blastTotal": 249,
+  "receivers": 40,
+  "payloadBytes": 7181029,
+  "truth": [
+   {
+    "id": "src/components/App.tsx#App.handleTextWysiwyg",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/element/binding.ts#fixBindingsAfterDeletion",
+    "outside": false,
+    "role": "consumer",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 69,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-09",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 4.2,
+  "outcome": "completed",
+  "impacts": 89,
+  "blastTotal": 228,
+  "receivers": 81,
+  "payloadBytes": 2688965,
+  "truth": [
+   {
+    "id": "src/components/App.tsx#App.startTextEditing",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 110,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-10",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 4.2,
+  "outcome": "completed",
+  "impacts": 61,
+  "blastTotal": 168,
+  "receivers": 100,
+  "payloadBytes": 1216561,
+  "truth": [
+   {
+    "id": "src/element/Hyperlink.tsx#getCoordsForPopover",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/element/Hyperlink.tsx#Hyperlink",
+    "outside": false,
+    "role": "caller",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 112,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-11",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 4.1,
+  "outcome": "completed",
+  "impacts": 26,
+  "blastTotal": 69,
+  "receivers": 37,
+  "payloadBytes": 275859,
+  "truth": [
+   {
+    "id": "src/components/Actions.tsx#SelectedShapeActions",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 112,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-12",
+  "repo": "excalidraw",
+  "changeClass": "same-signature-behavior",
+  "seconds": 4.5,
+  "outcome": "completed",
+  "impacts": 26,
+  "blastTotal": 116,
+  "receivers": 6,
+  "payloadBytes": 814837,
+  "truth": [
+   {
+    "id": "src/data/json.ts#loadFromJSON",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/data/blob.ts#loadFromBlob",
+    "outside": false,
+    "role": "consumer",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 115,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-13",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 4.6,
+  "outcome": "completed",
+  "impacts": 30,
+  "blastTotal": 123,
+  "receivers": 62,
+  "payloadBytes": 704768,
+  "truth": [
+   {
+    "id": "src/components/App.tsx#App.onPointerUpFromPointerDownHandler",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/components/App.tsx#App.onPointerMoveFromPointerDownHandler",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 120,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-14",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 4.5,
+  "outcome": "completed",
+  "impacts": 27,
+  "blastTotal": 62,
+  "receivers": 13,
+  "payloadBytes": 953658,
+  "truth": [
+   {
+    "id": "src/renderer/renderScene.ts#_renderScene",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 121,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-15",
+  "repo": "excalidraw",
+  "changeClass": "same-signature-behavior",
+  "seconds": 4.9,
+  "outcome": "completed",
+  "impacts": 32,
+  "blastTotal": 33,
+  "receivers": 2,
+  "payloadBytes": 433647,
+  "truth": [
+   {
+    "id": "src/utils.ts#ReactChildrenToObject",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "src/components/LayerUI.tsx#LayerUI",
+    "outside": false,
+    "role": "consumer",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 131,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-16",
+  "repo": "excalidraw",
+  "changeClass": "same-signature-behavior",
+  "seconds": 6,
+  "outcome": "completed",
+  "impacts": 101,
+  "blastTotal": 108,
+  "receivers": 135,
+  "payloadBytes": 732396,
+  "truth": [
+   {
+    "id": "src/components/App.tsx#App.onPointerMoveFromPointerDownHandler",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 196,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-17",
+  "repo": "excalidraw",
+  "changeClass": "protocol-enum",
+  "seconds": 5,
+  "outcome": "completed",
+  "impacts": 41,
+  "blastTotal": 123,
+  "receivers": 8,
+  "payloadBytes": 728587,
+  "truth": [
+   {
+    "id": "src/actions/actionCanvas.tsx#actionToggleHandTool",
+    "outside": false,
+    "role": "fault",
+    "inGraph": false,
+    "as": "missed",
+    "inPayload": false
+   },
+   {
+    "id": "src/actions/actionDistribute.tsx#distributeHorizontally",
+    "outside": true,
+    "role": "caller",
+    "inGraph": false,
+    "as": "missed",
+    "inPayload": false
+   }
+  ],
+  "contextFiles": 147,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-18",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 5.3,
+  "outcome": "completed",
+  "impacts": 120,
+  "blastTotal": 164,
+  "receivers": 22,
+  "payloadBytes": 1581344,
+  "truth": [
+   {
+    "id": "src/components/App.tsx#App.toggleSidebar",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 167,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-19",
+  "repo": "excalidraw",
+  "changeClass": "same-signature-behavior",
+  "seconds": 7.1,
+  "outcome": "completed",
+  "impacts": 45,
+  "blastTotal": 78,
+  "receivers": 103,
+  "payloadBytes": 949851,
+  "truth": [
+   {
+    "id": "packages/excalidraw/store.ts#isObservedAppState",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "packages/excalidraw/store.ts#getObservedAppState",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 253,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-20",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 6.3,
+  "outcome": "completed",
+  "impacts": 103,
+  "blastTotal": 82,
+  "receivers": 184,
+  "payloadBytes": 776002,
+  "truth": [
+   {
+    "id": "packages/excalidraw/components/CommandPalette/CommandPalette.tsx#CommandPaletteInner",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 246,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-21",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 7.3,
+  "outcome": "completed",
+  "impacts": 280,
+  "blastTotal": 214,
+  "receivers": 95,
+  "payloadBytes": 4041795,
+  "truth": [
+   {
+    "id": "packages/excalidraw/actions/actionHistory.tsx#createUndoAction",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "packages/excalidraw/actions/actionHistory.tsx#createRedoAction",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 253,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-22",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 8.1,
+  "outcome": "completed",
+  "impacts": 214,
+  "blastTotal": 443,
+  "receivers": 141,
+  "payloadBytes": 13441486,
+  "truth": [
+   {
+    "id": "packages/excalidraw/element/linearElementEditor.ts#LinearElementEditor.handlePointerDown",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 280,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-23",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 9.9,
+  "outcome": "completed",
+  "impacts": 54,
+  "blastTotal": 267,
+  "receivers": 53,
+  "payloadBytes": 1738437,
+  "truth": [
+   {
+    "id": "packages/excalidraw/animated-trail.ts#AnimatedTrail.update",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 348,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-24",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 10.1,
+  "outcome": "completed",
+  "impacts": 33,
+  "blastTotal": 44,
+  "receivers": 51,
+  "payloadBytes": 331652,
+  "truth": [
+   {
+    "id": "packages/common/src/constants.ts#isMobile",
+    "outside": false,
+    "role": "fault",
+    "inGraph": false,
+    "as": "missed",
+    "inPayload": false
+   }
+  ],
+  "contextFiles": 356,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-25",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 10.1,
+  "outcome": "completed",
+  "impacts": 110,
+  "blastTotal": 86,
+  "receivers": 16,
+  "payloadBytes": 1430703,
+  "truth": [
+   {
+    "id": "packages/excalidraw/components/TTDDialog/hooks/useMermaidRenderer.ts#useMermaidRenderer",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 383,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-26",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 11.9,
+  "outcome": "completed",
+  "impacts": 38,
+  "blastTotal": 65,
+  "receivers": 16,
+  "payloadBytes": 703873,
+  "truth": [
+   {
+    "id": "packages/element/src/flowchart.ts#placeCluster",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   },
+   {
+    "id": "packages/element/src/flowchart.ts#addNewNodes",
+    "outside": false,
+    "role": "caller",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 425,
+  "hasContext": true
+ },
+ {
+  "id": "r11-excalidraw-27",
+  "repo": "excalidraw",
+  "changeClass": "plain-logic",
+  "seconds": 11.1,
+  "outcome": "completed",
+  "impacts": 67,
+  "blastTotal": 245,
+  "receivers": 74,
+  "payloadBytes": 2051888,
+  "truth": [
+   {
+    "id": "packages/element/src/frame.ts#getFrameChildrenInsertionIndex",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 411,
+  "hasContext": true
+ },
+ {
+  "id": "r11-json-server-01",
+  "repo": "json-server",
+  "changeClass": "plain-logic",
+  "seconds": 1.2,
+  "outcome": "completed",
+  "impacts": 42,
+  "blastTotal": 16,
+  "receivers": 0,
+  "payloadBytes": 161437,
+  "truth": [
+   {
+    "id": "src/server/router/plural.js#<module>",
+    "outside": false,
+    "role": "fault",
+    "inGraph": true,
+    "as": "changed",
+    "inPayload": true
+   }
+  ],
+  "contextFiles": 0,
+  "hasContext": false
+ }
+]
