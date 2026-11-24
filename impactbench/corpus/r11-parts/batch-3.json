@@ -56,10 +56,10 @@
     "evidence": "Fix changes the cache-hit return from _bgColorCache to color in the function the introducer wrote; no test added.",
     "confidence": "high",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -97,10 +97,10 @@
     "evidence": "Fix passes this.state.width/height into calculateScrollCenter; test scroll.test.tsx asserts scrollX/scrollY center with offsets 200/100. Call was added by the introducer without width/height; blame at fix^ points to a later move, so attribution is moderate.",
     "confidence": "medium",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -137,10 +137,10 @@
     "evidence": "Fix divides ROTATION_HANDLER_GAP by zoom (constant added by the introducer with rotation support); no test added.",
     "confidence": "high",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -202,10 +202,10 @@
     "evidence": "Fix reorders elements after grouping so the group sits at the highest member's position; the introducer's group action returned elements unordered; no test added.",
     "confidence": "medium",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -247,10 +247,10 @@
     "evidence": "Fix replaces Object.hasOwn with Reflect.get in code the introducer wrote; no test and no linked issue, so the user-visible failure is inferred from the subject.",
     "confidence": "low",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -287,10 +287,10 @@
     "evidence": "Fix removes the this.pastTrails = [] reset that the lasso introducer added to update(); no test added.",
     "confidence": "high",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -328,10 +328,10 @@
     "evidence": "Fix skips deleted children in getFrameChildrenInsertionIndex (written by the introducer); test in frame.test.tsx expects the new child below the frame despite a deleted child above.",
     "confidence": "high",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -368,10 +368,10 @@
     "evidence": "Fix lowercases the label haystack and the query (both written by the introducer) and moves the dash in the strip regex; no test added.",
     "confidence": "medium",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -408,10 +408,10 @@
     "evidence": "Fix removes the onCollabButtonClick = noop default (added by the introducer) so the button is hidden when unsupplied; no test added.",
     "confidence": "high",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -449,10 +449,10 @@
     "evidence": "Fix changes || to && in the lastUncommittedPoint/isElbowArrow condition the introducer wrote; no test added.",
     "confidence": "high",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   }

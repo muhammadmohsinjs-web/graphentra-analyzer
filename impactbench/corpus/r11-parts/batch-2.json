@@ -37,10 +37,10 @@
     "evidence": "Fix passes file.handle as the new fileHandle argument of loadFromBlob. The introducer replaced the raw picked file with normalizeFile(file), a new File that no longer carries .handle, while loadFromBlob defaults to blob.handle. No test added.",
     "confidence": "high",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -82,10 +82,10 @@
     "evidence": "Fix removes the pointerDown computation of dragOffsetXY (written by the introducer) and computes it lazily on first pointerMove, after state.selectedElementIds is updated. No test added.",
     "confidence": "high",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -127,10 +127,10 @@
     "evidence": "Fix keys the children dictionary by child.type.displayName instead of child.type.name, which uglifiers strip. The introducer wrote the .name based lookup in ReactChildrenToObject. No test added.",
     "confidence": "high",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -190,10 +190,10 @@
     "evidence": "Fix re-adds the parent-centered slot to the sticky candidates and narrows the obstacle zone in placeCluster; tests in packages/element/tests/flowchart.test.tsx assert centered pending positions as the cluster grows. placeCluster and the sticky logic were written by the introducer.",
     "confidence": "medium",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -237,10 +237,10 @@
     "evidence": "Fix changes keyTest of toggleHandTool from event.key === H to also require no alt and no ctrl/cmd. The introducer added the unmodified H test. No test added.",
     "confidence": "high",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -318,10 +318,10 @@
     "evidence": "Fix subtracts appState.offsetLeft/offsetTop in getCoordsForPopover, which the introducer wrote without offsets. No test added.",
     "confidence": "high",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -358,10 +358,10 @@
     "evidence": "Fix reverts the line the introducer changed from getElementsIncludingDeleted() back to include deleted elements when rebuilding nextElements. No test added.",
     "confidence": "high",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -398,10 +398,10 @@
     "evidence": "Fix compares tab as well as name when deciding to close, and accepts name null; test added in Sidebar.test.tsx switches library to comments tab. The toggling logic was written by the introducer.",
     "confidence": "high",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -444,10 +444,10 @@
     "evidence": "Fix calls fixBindingsAfterDeletion only when the text was deleted (isDeleted) instead of in the else of the selection branch; binding.test.tsx adds should keep binding on text update. The else branch was written by the introducer.",
     "confidence": "high",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -489,10 +489,10 @@
     "evidence": "Fix seeds useEmitter with the current history.isUndoStackEmpty/isRedoStackEmpty instead of an empty HistoryChangedEvent; test in history.test.tsx asserts button disabled states. The empty initial event was written by the introducer.",
     "confidence": "medium",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   }

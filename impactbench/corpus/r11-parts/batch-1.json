@@ -32,10 +32,10 @@
     "evidence": "Fix changes targetElements.every(...) to some(...) so changeVerticalAlign shows only when at least one selected element is bound text or a container; no test added.",
     "confidence": "high",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -73,10 +73,10 @@
     "evidence": "Fix defers renderLinearPointHandles until after all visible elements are drawn; test 'in-editor dragging a line point covered by another element' in linearElementEditor.test.tsx drags a point under a rectangle.",
     "confidence": "high",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -118,10 +118,10 @@
     "evidence": "Fix drops the !selectedLinearElement guard (written by the introducer) from the pointer-up deselect branch and sets drag.hasOccurred on drag; no test added.",
     "confidence": "medium",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -159,10 +159,10 @@
     "evidence": "Fix removes .toLowerCase() on navigator.userAgent and navigator.platform in isMobile (both added by the introducer); regexes are already case-insensitive. No test added.",
     "confidence": "medium",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -223,10 +223,10 @@
     "evidence": "Fix removes the 'return visibleElements.length > 0' that the introducer placed inside the renderSelection block, so the scrollbar painting below runs; no test added.",
     "confidence": "high",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -263,10 +263,10 @@
     "evidence": "Fix changes `if (!elementValue)` to `elementValue == null` so false/0 values are compared; test 'should support filtering by boolean value false' expects the three unpublished comments.",
     "confidence": "high",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -327,10 +327,10 @@
     "evidence": "Fix makes history.resumeRecording() unconditional, removing the lastUncommittedPoint !== null guard the introducer wrote; no test added.",
     "confidence": "medium",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -367,10 +367,10 @@
     "evidence": "Fix adds groupIds: container?.groupIds ?? [] next to the containerId the introducer set when creating bound text; no test added.",
     "confidence": "medium",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
@@ -407,10 +407,10 @@
     "evidence": "Fix merges the two effects so a non-generating state flushes and re-renders the last assistant message when content changes; no test added.",
     "confidence": "medium",
     "review": {
-      "by": null,
-      "date": null,
-      "agrees": null,
-      "note": null
+      "by": "muhammadmohsinjs-web",
+      "date": "2026-11-24",
+      "agrees": true,
+      "note": "Reviewed by hand from r11-review.md; all kept entries accepted."
     },
     "verdict": "keep"
   },
