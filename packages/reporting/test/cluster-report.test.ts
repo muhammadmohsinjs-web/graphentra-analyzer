@@ -5,7 +5,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { test } from 'node:test';
 import { analyzeRepository, buildGraphIndex, type Entity, type EntityImpact, type Relation } from '@graphentra/analyzer';
-import { clusterChanges, generateQAReport, mergeGroupReports, relatedCodeFor, type ImpactReport } from '../src/index';
+import { clusterChanges, generateQAReport, mergeGroupReports, relatedCodeFor, TRIGGER_AREA, type ImpactReport } from '../src/index';
 
 const entity = (id: string, startLine = 1): Entity => {
   const [file, name] = id.split('#') as [string, string];
@@ -158,7 +158,7 @@ function repoWith(files: number, perFile: number) {
   return { dir, evidence: analyzeRepository({ target: dir, comparison: { mode: 'working-tree' } }).evidence, cleanup: () => fs.rmSync(dir, { recursive: true, force: true }) };
 }
 
-function fakeProvider(options: { failWhen?: (user: any) => boolean; failOnce?: (user: any) => boolean } = {}) {
+function fakeProvider(options: { failWhen?: (user: any) => boolean; failOnce?: (user: any) => boolean; failTriggers?: boolean } = {}) {
   const failedOnce = new Set<string>();
   const seen: Array<{ schema: string; user: any; system: string }> = [];
   let reports = 0;
@@ -174,7 +174,15 @@ function fakeProvider(options: { failWhen?: (user: any) => boolean; failOnce?: (
       if (!failedOnce.has(key)) { failedOnce.add(key); throw new Error('402 credit limit'); }
     }
     reports += schema === 'qa_change_impact_report' ? 1 : 0;
-    const content = JSON.stringify(schema === 'qa_cluster_summary'
+    if (schema === 'qa_cluster_triggers' && options.failTriggers) throw new Error('provider refused triggers');
+    const trigger = (id: string, check: string) => ({ changedFunction: id, behaviourChange: 'Returns a new value.', input: 'An empty price.', before: 'Showed one.', after: 'Shows two.', check });
+    const content = JSON.stringify(schema === 'qa_cluster_triggers'
+      ? { triggers: [
+        ...user.changes.map((c: any, i: number) => trigger(c.changedEntity, `Confirm on the pricing page with an empty price in row ${c.changedEntity.replace(/\D+/g, ' ').trim()} item ${i}; it showed one before, so two must be intended.`)),
+        trigger('not-a-changed-function', 'Confirm on the pricing page that nothing else changed.'),
+        trigger(user.changes[0].changedEntity, 'Confirm the priceValue is shown.'),
+      ] }
+      : schema === 'qa_cluster_summary'
       ? { summary: 'Several parts of the release changed and need testing.' }
       : { summary: `Review number ${reports} found a change.`, keyChanges: [`Review number ${reports} found a changed value.`], testAreas: [area('Pricing page', [`Verify review number ${reports} shows the new value.`])], uncertainty: [] });
     const completion = { id: `fake-${seen.length}`, model: body.model, choices: [{ finish_reason: 'stop', message: { content } }], usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 } };
@@ -201,6 +209,7 @@ test('more than 15 changed functions are reviewed per group and merged without l
     assert.ok(reviews.every(call => call.user.changes.length === 6));
     assert.ok(reviews.every(call => call.system.includes('group ') && call.system.includes('of 3 of one large change')));
     for (const call of reviews) assert.ok(call.user.relatedCode.filter((c: any) => c.role === 'changed').length === 6, 'full code of each changed function');
+    assert.equal(provider.seen.filter(call => call.schema === 'qa_cluster_triggers').length, 0, 'triggers are opt-in');
     assert.equal(result.qaReport.qaChecks.length, 3, 'the three distinct checks all survive');
     assert.equal(result.qaReport.testAreas!.length, 1, 'same area name and surfaces are joined');
     assert.equal(result.qaReport.testAreas![0]!.checks.length, 3);
@@ -260,4 +269,34 @@ test('15 changed functions or fewer take the single-call path, and so does a run
     await generateQAReport(large.evidence, context, { client: lowered.client, model: 'offline' }, { cluster: { threshold: 20 } });
     assert.equal(lowered.seen.length, 1, 'the threshold is configurable');
   } finally { large.cleanup(); }
+});
+
+test('triggers add one check per changed function to each group and drop invalid ones', async t => {
+  quiet(t);
+  const repo = repoWith(3, 6);
+  try {
+    const provider = fakeProvider();
+    const read = (file: string) => { try { return fs.readFileSync(path.join(repo.dir, file), 'utf8'); } catch { return undefined; } };
+    const result = await generateQAReport(repo.evidence, context, { client: provider.client, model: 'offline' }, { cluster: { read, triggers: true } });
+    const calls = provider.seen.filter(call => call.schema === 'qa_cluster_triggers');
+    assert.equal(calls.length, 6, 'one trigger call per group plus one correction request each (invalid items)');
+    assert.ok(calls.every(call => call.user.relatedCode && call.user.changes.every((c: any) => 'change' in c)), 'the diff and the related code are sent');
+    assert.ok(result.cluster!.groups.every(g => g.ok && g.triggers === 6 && !g.triggerError), 'the unknown function and the code-named check are dropped');
+    const area = result.qaReport.testAreas!.filter(a => a.area === TRIGGER_AREA);
+    assert.equal(area.flatMap(a => a.checks).length, 18);
+    assert.ok(area.every(a => a.checks.length <= 4), 'a long area continues in further entries');
+    assert.equal(result.qaReport.qaChecks.length, 21, 'review checks and trigger checks are all kept');
+    assert.equal(result.cluster!.checksIn, result.cluster!.checksOut);
+  } finally { repo.cleanup(); }
+});
+
+test('a failed trigger call never fails its group', async t => {
+  quiet(t);
+  const repo = repoWith(3, 6);
+  try {
+    const result = await generateQAReport(repo.evidence, context, { client: fakeProvider({ failTriggers: true }).client, model: 'offline' }, { cluster: { retryDelayMs: 0, triggers: true } });
+    assert.equal(result.qaReport.qaChecks.length, 3);
+    assert.equal(result.qaReport.notCovered, undefined);
+    assert.ok(result.cluster!.groups.every(g => g.ok && g.triggers === 0 && /refused triggers/.test(g.triggerError ?? '')));
+  } finally { repo.cleanup(); }
 });

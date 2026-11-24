@@ -2,7 +2,7 @@
 // Corpus-32 evaluation: analyzer recall, QA report catch/explain rates, and the lookup tool. Plan: impactbench/eval/PLAN.md.
 //
 //   node --import tsx tools/impactbench-report-eval.mts evidence --history <dir> --work <dir> [ids...]
-//   node --import tsx tools/impactbench-report-eval.mts run --history <dir> --work <dir> [--variants base,lookup,lookup-always,verify,cluster] [--cluster-concurrency 4] [--group-size 10] [--max-groups 8] [--runs 3] [--concurrency 6] [ids...]
+//   node --import tsx tools/impactbench-report-eval.mts run --history <dir> --work <dir> [--variants base,lookup,lookup-always,verify,cluster,cluster-triggers] [--cluster-concurrency 4] [--group-size 10] [--max-groups 8] [--runs 3] [--concurrency 6] [ids...]
 //   (openai/* report models, e.g. openai/gpt-6-luna, call the OpenAI API directly with OPENAI_API_KEY; --provider openrouter forces the OpenRouter route. The judge and other models stay on OpenRouter.)
 //   (verify = base plus the Phase V verifier; needs OPENAI_API_KEY for the Decisions API. Rows gain usage.verifier, usage.repair, verification, audit.)
 //   node --import tsx tools/impactbench-report-eval.mts summary [--grades <hand-grades.jsonl> [--grades-model glm]]
@@ -303,7 +303,7 @@ async function oneReport(entry: Entry, variant: string, run: number) {
   const { client, meter } = meteredClient(REPORT_MODEL);
   const { client: judgeClient, meter: judgeMeter } = meteredClient(JUDGE_MODEL);
   const read = (file: string) => { try { return execFileSync('git', ['-C', path.join(history!, entry.repo), 'show', `${entry.introducer.sha}:${file}`], { encoding: 'utf8', maxBuffer: 1 << 26, stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return undefined; } };
-  const lookup = variant === 'base' || variant === 'verify' || variant === 'cluster' ? undefined : { read, style: variant === 'lookup-always' ? 'always' as const : 'optional' as const };
+  const lookup = variant === 'base' || variant === 'verify' || variant.startsWith('cluster') ? undefined : { read, style: variant === 'lookup-always' ? 'always' as const : 'optional' as const };
   // verify = base + the Phase V verifier ("Not covered" list; no repair round since V-13). Same report model and judge as base.
   const decisions = variant === 'verify' ? meteredDecisionClient(createOpenAIDecisionClient({ apiKey: process.env.OPENAI_API_KEY })) : undefined;
   let verification: ReportVerification | undefined;
@@ -323,8 +323,9 @@ async function oneReport(entry: Entry, variant: string, run: number) {
     const result = await generateQAReport(raw, context, { client, model: REPORT_MODEL, logLevel: 'off' },
       lookup ? { lookup } : decisions ? { verify: { client: decisions.client } }
         // R-10: more than 15 changed functions are reviewed in groups; smaller changes take the base path.
-        : variant === 'cluster' ? { cluster: {
-          read, concurrency: Number(flag('cluster-concurrency', '4')),
+        : variant.startsWith('cluster') ? { cluster: {
+          // cluster-triggers: each group also names the input each changed function now handles differently (one check each).
+          read, triggers: variant === 'cluster-triggers', concurrency: Number(flag('cluster-concurrency', '4')),
           // The base revision supplies the code of changed functions that no longer exist at the analyzed one (removed or renamed away).
           readBase: (file: string) => { try { return execFileSync('git', ['-C', path.join(history!, entry.repo), 'show', `${entry.introducer.sha}^:${file}`], { encoding: 'utf8', maxBuffer: 1 << 26, stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return undefined; } },
           ...(flag('group-size') ? { maxGroupSize: Number(flag('group-size')) } : {}), ...(flag('max-groups') ? { maxGroups: Number(flag('max-groups')) } : {}),
@@ -410,7 +411,7 @@ if (command === 'evidence') {
   const jobs = selected.flatMap(entry => variants.flatMap(variant => Array.from({ length: runs }, (_, i) => ({ entry, variant, run: i + 1 }))))
     .filter(job => !done.has(`${job.entry.id}|${job.variant}|${job.run}`) && fs.existsSync(evidenceFile(job.entry.id)))
     // --lookup-max-kb: skip tool variants on payloads above this size (each lookup round resends the payload).
-    .filter(job => job.variant === 'base' || job.variant === 'verify' || job.variant === 'cluster' || !flag('lookup-max-kb') || payloadKb(job.entry.id) <= Number(flag('lookup-max-kb')))
+    .filter(job => job.variant === 'base' || job.variant === 'verify' || job.variant.startsWith('cluster') || !flag('lookup-max-kb') || payloadKb(job.entry.id) <= Number(flag('lookup-max-kb')))
     // --skip-started: leave commits that already have rows alone (budget runs cover only untouched commits).
     .filter(job => !rest.includes('--skip-started') || ![...done].some(key => key.startsWith(`${job.entry.id}|`)));
   console.log(`${jobs.length} reports to run with ${REPORT_MODEL}, ${NO_JUDGE ? 'not judged (--no-judge)' : `judged by ${JUDGE_MODEL}`}`);
