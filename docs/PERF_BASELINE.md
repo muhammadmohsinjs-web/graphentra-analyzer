@@ -100,3 +100,89 @@ Command: `node tools/bench-perf.mjs --runs 3 --sizes 2000,5000 --skip-impactbenc
 | synthetic-5000 (205k LOC) | 70.5 | 94.9 | 20.2 | 20.4 |
 
 Peak RSS is unchanged (about 0.85 GB and 1.5 GB). The 90 s p95 gate is met with wide margin at 200k LOC.
+
+## Phase R baseline (R-0, 2026-11-24)
+
+What the report model gets, and how report quality falls as a change grows. Every later Phase R step
+(R-2, R-10, R-3, R-8) is compared against these tables. Data: corpus-31 (`d0-corpus.json` without
+excalidraw-21), Phase V `verify` variant, 3 runs per commit, graded by hand in blind sets A/B
+(`impactbench/eval/data-v6-glm/hand-grades-glm-vs-luna.jsonl`). Both models ran on the same evidence
+(identical changed-function counts and payload bytes in `analyzer.json`).
+
+### Results by change size
+
+*Caught* counts commits where at least one of 3 runs caught the regression; *majority* counts commits where 2 or more did.
+*Coverage* is the share of changed production functions that the report covered (Phase V audit, `audit.covered / audit.production`).
+*Out tok* is the writer's mean completion tokens per report (reasoning included). Costs are the writer plus the verifier; no API judge.
+
+**Default report model, `openai/gpt-6-luna`** (`impactbench/eval/data-v5`)
+
+| Changed functions | Commits | Caught | Majority | Explained | Valid | Coverage | Out tok | Checks | Mean $ | Mean s |
+|---|---|---|---|---|---|---|---|---|---|---|
+| ≤ 10 | 12 | 4 | 4 | 5 | 35/36 | 65% | 1,801 | 2.4 | 0.0089 | 306 |
+| 11–25 | 10 | 3 | 3 | 4 | 30/30 | 62% | 2,834 | 4.3 | 0.0191 | 276 |
+| > 25 | 9 | **0** | 0 | 1 | 21/27 | 43% | 2,394 | 3.5 | 0.0229 | 202 |
+
+| Payload (as sent) | Commits | Caught | Valid | Coverage | Mean $ | Mean s |
+|---|---|---|---|---|---|---|
+| < 50 KB | 8 | 3 | 23/24 | 65% | 0.0043 | 257 |
+| 50–250 KB | 13 | 2 | 39/39 | 45% | 0.0119 | 265 |
+| 250–500 KB | 4 | 2 | 12/12 | 41% | 0.0241 | 322 |
+| 500 KB–1 MB | 2 | 0 | 6/6 | 70% | 0.0377 | 359 |
+| > 1 MB | 4 | 0 | 6/12 | 84% | 0.0356 | 185 |
+
+**Reference: `z-ai/glm-5.3-flash`** (`impactbench/eval/data-v6-glm`; reproduces the 2026-11-23 dashboard numbers 7 / 6 / 0)
+
+| Changed functions | Commits | Caught | Majority | Explained | Valid | Coverage | Out tok | Checks | Mean $ | Mean s |
+|---|---|---|---|---|---|---|---|---|---|---|
+| ≤ 10 | 12 | 7 | 6 | 7 | 35/36 | 78% | 11,736 | 6.9 | 0.0085 | 397 |
+| 11–25 | 10 | 6 | 6 | 4 | 30/30 | 71% | 11,572 | 10.2 | 0.0217 | 405 |
+| > 25 | 9 | **0** | 0 | 1 | 21/27 | 67% | 10,638 | 9.4 | 0.0293 | 433 |
+
+| Payload (as sent) | Commits | Caught | Valid | Coverage | Mean $ | Mean s |
+|---|---|---|---|---|---|---|
+| < 50 KB | 8 | 6 | 23/24 | 81% | 0.0075 | 392 |
+| 50–250 KB | 13 | 5 | 39/39 | 68% | 0.0170 | 459 |
+| 250–500 KB | 4 | 2 | 12/12 | 61% | 0.0227 | 340 |
+| 500 KB–1 MB | 2 | 0 | 6/6 | 73% | 0.0352 | 698 |
+| > 1 MB | 4 | 0 | 6/12 | 88% | 0.0349 | 212 |
+
+- Neither model catches anything above 25 changed functions or above 500 KB.
+- The 6 invalid reports in the > 25 band are excalidraw-19 (3.0 MB) and excalidraw-20 (4.9 MB), 3 runs each: no report at all ("input too large").
+- Output does not grow with the change: about 11–12K tokens for GLM and 2–3K for Luna in every band. Each changed function gets less attention as the change grows.
+- Coverage in the > 1 MB band looks high only because just the valid reports are audited there.
+
+### Payload by section (31 commits, no LLM)
+
+Bytes per section of the report payload (`buildLLMPayload`), summed over all commits, as sent today and in the
+lossless compact encoding from `tools/impactbench-large-payload.mts` (the R-2 candidate). Tokens are estimated at 4 bytes per token.
+The system instruction adds 7.6 KB per call.
+
+| Section | All 31: sent KB | Share | Compact KB | > 25 band (9): sent KB | Share | Compact KB |
+|---|---|---|---|---|---|---|
+| `changes.blastRadius.paths` | 11,001 | 67% | 2,780 | 8,418 | 69% | 2,123 |
+| `changes.blastRadius.entities` | 1,586 | 10% | 364 | 1,211 | 10% | 279 |
+| `changes.productionDependents` | 1,364 | 8% | 0 (derived from `sourceRole`) | 1,057 | 9% | 0 |
+| `applicationContext.changes` | 495 | 3% | 495 | 290 | 2% | 290 |
+| `changes.terminalDependents` | 433 | 3% | 95 | 299 | 2% | 66 |
+| `changes.change.diff` | 406 | 2% | 406 | 234 | 2% | 234 |
+| `changes.testDependents` | 223 | 1% | 0 | 154 | 1% | 0 |
+| **Total** | **16,437** (~4.2M tokens) | | **5,070** (3.2×) | **12,206** | | **3,547** (3.4×) |
+
+- Blast-radius paths and the dependent lists are about 89% of what we send. The changed code itself (diff, added and removed code) is under 5%.
+- Compact is 2.5× smaller in the ≤ 10 band and 3.4× in the > 25 band. On the very smallest commit it is 7% *larger*,
+  because of the fixed encoding text and entity table; R-2 should send the as-sent form when that is smaller.
+- The two "no report" commits shrink to 890 KB (excalidraw-19, from 3,049) and 1,299 KB (excalidraw-20, from 4,857),
+  about 228K and 333K estimated tokens. Compaction alone may not fit them into every model's window, which is why R-10 and R-3 follow.
+
+### Reproduce
+
+```
+# Band tables (prints them after the variant and cost tables; adds "bands" to summary.json in --data)
+node --import tsx tools/impactbench-report-eval.mts summary --data <copy of impactbench/eval/data-v5> \
+  --grades impactbench/eval/data-v6-glm/hand-grades-glm-vs-luna.jsonl --grades-model luna
+# Section table per commit (needs the evidence files from the `evidence` command)
+node --import tsx tools/impactbench-report-eval.mts sections --work <work dir> [--json <file>] [ids...]
+```
+
+`summary` rewrites `summary.json` and `cost-time.csv` in its `--data` directory, so run it on a copy to keep a committed data set unchanged.
