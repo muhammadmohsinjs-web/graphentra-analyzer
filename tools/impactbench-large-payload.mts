@@ -10,7 +10,7 @@ import analyzer from '../packages/analyzer/src/index';
 import reporting from '../packages/reporting/src/index';
 
 const { readEvidence } = analyzer;
-const { buildLLMPayload, buildSurfaceEvidence, loadApplicationContext, generateImpactReport, generateStructured, qaInstruction } = reporting;
+const { buildLLMPayload, buildSurfaceEvidence, compactEncodingInstruction, compactLLMPayload, loadApplicationContext, generateImpactReport, generateStructured, qaInstruction } = reporting;
 
 export const LARGE_VARIANTS = ['compact', 'budget', 'fanout', 'rlm'] as const;
 export type LargeVariant = (typeof LARGE_VARIANTS)[number];
@@ -21,44 +21,29 @@ const BUDGET = Number(process.env.LARGE_BUDGET_KB ?? 250) * 1024;
 const CHUNK = Number(process.env.LARGE_CHUNK_KB ?? 200) * 1024;
 
 // ---------- lossless compact encoding ----------
-const ENCODING = 'entities maps each entity ID to "file:startLine-endLine kind sourceRole". In changes, every dependent and path step is an entity ID; '
-  + 'a path lists IDs from the changed entity to the target, and stepTypes[i] is how path[i+1] depends on path[i] (CALLS = called by, RENDERS = rendered by, '
-  + 'INSTANTIATES = constructed by, REFERENCES = referenced by). Production and test dependents are the dependents whose sourceRole says so.';
-
-function compactPayload(payload: any) {
-  const entities: Record<string, string> = {};
-  const ref = (entity: any) => { entities[entity.id] ??= `${entity.file}:${entity.startLine}-${entity.endLine} ${entity.kind} ${entity.sourceRole}`; return entity.id; };
-  const changes = payload.changes.map((c: any) => ({
-    changedEntity: ref(c.changedEntity),
-    change: c.change,
-    directDependents: c.directDependents.map(ref),
-    blastRadius: {
-      totalAffectedEntities: c.blastRadius.totalAffectedEntities,
-      entities: c.blastRadius.entities.map(ref),
-      paths: c.blastRadius.paths.map(({ target, path, typedPath, ...rest }: any) => ({ target: ref(target), path: path.map(ref), ...rest })),
-    },
-    terminalDependents: c.terminalDependents.map(ref),
-  }));
-  return { encoding: ENCODING, analysisScope: payload.analysisScope, entities, changes, applicationContext: payload.applicationContext, limitations: payload.limitations };
-}
+// R-2 moved the encoding into packages/reporting (`compactLLMPayload`); its explanation is part of `qaInstruction`.
+const compactPayload = (payload: any): any => compactLLMPayload(payload);
+/** IDs a compact change mentions (its blast-radius entity list is omitted when it equals the path targets). */
+const idsOf = (c: any): string[] => [c.changedEntity, ...c.directDependents, ...(c.blastRadius.entities ?? []), ...c.terminalDependents,
+  ...c.blastRadius.paths.flatMap((p: any) => [...(p.target ? [p.target] : []), ...p.path])];
 
 /** Keeps every change's code and direct dependents; drops the deepest, least certain paths and blast entities first, round-robin across changes. */
 function budgetPayload(compact: any, budget: number) {
   const out = structuredClone(compact);
-  const rank = (p: any) => (p.confidence === 'proven' ? 0 : 1) * 100 + (p.depth ?? 0);
+  const rank = (p: any) => (p.confidence === 'likely' ? 1 : 0) * 100 + (p.depth ?? p.path.length);
   for (const c of out.changes) c.blastRadius.paths.sort((a: any, b: any) => rank(a) - rank(b));
   let dropped = 0;
   while (bytes(out) > budget) {
     let progressed = false;
     for (const c of [...out.changes].sort((a: any, b: any) => bytes(b) - bytes(a))) {
       if (c.blastRadius.paths.length > 1) { c.blastRadius.paths.length = Math.max(1, Math.floor(c.blastRadius.paths.length * 0.8)); progressed = true; }
-      else if (c.blastRadius.entities.length > c.directDependents.length) { c.blastRadius.entities.length = Math.max(c.directDependents.length, Math.floor(c.blastRadius.entities.length * 0.8)); progressed = true; }
+      else if (c.blastRadius.entities && c.blastRadius.entities.length > c.directDependents.length) { c.blastRadius.entities.length = Math.max(c.directDependents.length, Math.floor(c.blastRadius.entities.length * 0.8)); progressed = true; }
       if (bytes(out) <= budget) break;
     }
     dropped += 1;
     if (!progressed) break;
   }
-  const used = new Set<string>(out.changes.flatMap((c: any) => [c.changedEntity, ...c.directDependents, ...c.blastRadius.entities, ...c.terminalDependents, ...c.blastRadius.paths.flatMap((p: any) => [p.target, ...p.path])]));
+  const used = new Set<string>(out.changes.flatMap(idsOf));
   out.entities = Object.fromEntries(Object.entries(out.entities).filter(([id]) => used.has(id)));
   out.truncated = `Blast-radius paths and entities were cut to fit a ${Math.round(budget / 1024)} KB budget; totalAffectedEntities still gives the full count.`;
   return out;
@@ -74,8 +59,8 @@ function chunks(compact: any, limit: number) {
   }
   if (current.length) groups.push(current);
   const slice = (changes: any[]) => {
-    const ids = new Set<string>(changes.flatMap((c: any) => [c.changedEntity, ...c.directDependents, ...c.blastRadius.entities, ...c.terminalDependents, ...c.blastRadius.paths.flatMap((p: any) => [p.target, ...p.path])]));
-    return { encoding: ENCODING, analysisScope: compact.analysisScope, entities: Object.fromEntries(Object.entries(compact.entities).filter(([id]) => ids.has(id))), changes };
+    const ids = new Set<string>(changes.flatMap(idsOf));
+    return { analysisScope: compact.analysisScope, entities: Object.fromEntries(Object.entries(compact.entities).filter(([id]) => ids.has(id))), changes };
   };
   return groups.map(slice);
 }
@@ -168,7 +153,7 @@ async function rlmReport(compact: any, payload: any, options: any): Promise<Larg
       let code = ''; try { code = JSON.parse(call.function.arguments).code ?? ''; } catch { /* bad args */ }
       codeLog.push(code.slice(0, 2000));
       const out: string[] = [];
-      const sandbox = { evidence: structuredClone(compact), print: (...v: unknown[]) => out.push(v.map(x => typeof x === 'string' ? x : JSON.stringify(x)).join(' ')), llm, JSON, Math, Object, Array, Promise, Set, Map, String, Number };
+      const sandbox = { evidence: { encoding: compactEncodingInstruction, ...structuredClone(compact) }, print: (...v: unknown[]) => out.push(v.map(x => typeof x === 'string' ? x : JSON.stringify(x)).join(' ')), llm, JSON, Math, Object, Array, Promise, Set, Map, String, Number };
       try {
         const script = new vm.Script(`(async () => {\n${code}\n})()`);
         const run = script.runInNewContext(sandbox, { timeout: 5000 });

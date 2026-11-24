@@ -14,6 +14,7 @@ import {
   type LLMClientOptions,
 } from './llm-client';
 import { buildLLMPayload, qaInstruction } from './qa-evidence';
+import { compactLLMPayload } from './compact-payload';
 import { createCodeLookup, lookupInstruction, type CodeLookupOptions, type LookupLogEntry, type SourceReader } from './code-lookup';
 import { buildSurfaceEvidence, formatSurfaceEvidence } from './surface-evidence';
 import { createReportVerifier, type ReportVerification, type ReportVerifierOptions } from './verifier/verified-report';
@@ -63,7 +64,8 @@ export async function generateQAReport(
     : undefined;
   const writtenReport = await generateImpactReport({
     instruction: tool ? `${qaInstruction}\n\n${lookupInstruction(extras.lookup!.style)}` : qaInstruction,
-    evidence: payload,
+    // R-2: the lossless compact form (one entity table, IDs elsewhere); about 3x smaller on large changes.
+    evidence: compactLLMPayload(payload),
     options,
     allowedSurfaceIds: payload.applicationContext.allowedSurfaceIds,
     ...(tool ? { lookup: { tool, maxRounds: extras.lookup!.maxRounds, requireFirst: extras.lookup!.style === 'always' } } : {}),
