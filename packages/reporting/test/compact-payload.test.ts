@@ -88,7 +88,7 @@ const spaced = { ...e('src/g.ts#weird'), file: 'src/my file.ts' };
 const testCaller = e('test/a.test.ts#spec');
 const impact: EntityImpact = {
   changedEntity: changed,
-  change: { file: 'src/a.ts', changedLines: [1], removedCode: 'old', addedCode: 'new', diff: '-old\n+new' } as EntityImpact['change'],
+  change: { file: 'src/a.ts', changedLines: [1], removedCode: ['old'], addedCode: ['new'], diff: '-old\n+new' },
   directDependents: [caller, testCaller],
   blastRadius: {
     totalAffectedEntities: 9, truncated: true, hubs: [{ entityId: 'src/hub.ts#hub', fanIn: 40, reach: 300 }],
