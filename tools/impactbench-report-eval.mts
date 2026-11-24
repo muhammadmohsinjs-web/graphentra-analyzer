@@ -3,6 +3,7 @@
 //
 //   node --import tsx tools/impactbench-report-eval.mts evidence --history <dir> --work <dir> [ids...]
 //   node --import tsx tools/impactbench-report-eval.mts run --history <dir> --work <dir> [--variants base,lookup,lookup-always,verify] [--runs 3] [--concurrency 6] [ids...]
+//   (openai/* report models, e.g. openai/gpt-6-luna, call the OpenAI API directly with OPENAI_API_KEY; --provider openrouter forces the OpenRouter route. The judge and other models stay on OpenRouter.)
 //   (verify = base plus the Phase V verifier; needs OPENAI_API_KEY for the Decisions API. Rows gain usage.verifier, usage.repair, verification, audit.)
 //   node --import tsx tools/impactbench-report-eval.mts summary [--grades <hand-grades.jsonl> [--grades-model glm]]
 //   (--grades: catch/explained from hand grades, matched on id and run, instead of the API judge. Summary also prints R-0 band tables.)
@@ -46,6 +47,9 @@ const history = flag('history') ? path.resolve(flag('history')!) : undefined;
 const work = flag('work') ? path.resolve(flag('work')!) : undefined;
 config({ path: MAIN_ENV, quiet: true });
 const REPORT_MODEL = flag('model', process.env.OPENROUTER_MODEL ?? 'openai/gpt-6-luna')!;
+// gpt-6-luna (any openai/* model) goes straight to the OpenAI API with OPENAI_API_KEY; everything else stays on OpenRouter.
+// --provider openrouter forces the old OpenRouter route for the report model.
+const direct = (model: string) => model.startsWith('openai/') && flag('provider') !== 'openrouter';
 const JUDGE_MODEL = flag('judge', 'deepseek/deepseek-v4-pro-0813')!;
 // --no-judge: write reports only; catch/explain are graded by hand afterwards (no API judge).
 const NO_JUDGE = rest.includes('--no-judge');
@@ -117,10 +121,20 @@ function meteredClient(model: string) {
   const meter = { calls: 0, prompt: 0, completion: 0, cached: 0, cost: 0, reasoning: 0, truncated: 0, last: undefined as string | undefined,
     // Subset of the above: calls sent after a repair round started (the repair call and any retry after it). M4.
     repair: { calls: 0, prompt: 0, completion: 0, cached: 0, cost: 0 } };
-  const client = new OpenAI({ apiKey: process.env.OPENROUTER_API_KEY, baseURL: 'https://openrouter.ai/api/v1', maxRetries: 2, timeout: TIMEOUT_MS });
+  const viaOpenAI = direct(model);
+  const client = viaOpenAI
+    ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY, baseURL: process.env.OPENAI_BASE_URL, maxRetries: 2, timeout: TIMEOUT_MS })
+    : new OpenAI({ apiKey: process.env.OPENROUTER_API_KEY, baseURL: 'https://openrouter.ai/api/v1', maxRetries: 2, timeout: TIMEOUT_MS });
   const create = client.chat.completions.create.bind(client.chat.completions);
   (client.chat.completions as any).create = (body: any, opts: any) => {
-    const promise: any = create({ ...body, max_tokens: body.max_tokens ?? MAX_TOKENS, usage: { include: true } }, opts);
+    // OpenRouter takes `usage.include`, `reasoning.effort` and `max_tokens`; the OpenAI API wants a bare model id,
+    // `reasoning_effort` and `max_completion_tokens`, and rejects the OpenRouter extensions.
+    let request: any;
+    if (viaOpenAI) {
+      const { reasoning, max_tokens, model: id, ...rest } = body;
+      request = { ...rest, model: String(id).replace(/^openai\//, ''), max_completion_tokens: body.max_completion_tokens ?? max_tokens ?? MAX_TOKENS, ...(reasoning?.effort ? { reasoning_effort: reasoning.effort } : {}) };
+    } else request = { ...body, max_tokens: body.max_tokens ?? MAX_TOKENS, usage: { include: true } };
+    const promise: any = create(request, opts);
     promise.then((completion: any) => {
       if (body.response_format?.type === 'json_schema') meter.last = completion?.choices?.[0]?.message?.content ?? meter.last;
       const usage = completion?.usage; if (!usage) return;
@@ -377,7 +391,8 @@ if (command === 'evidence') {
   console.log(`truth in evidence ${rate(all, t => t.as !== 'missed')}, outside diff ${rate(all.filter((t: any) => t.outside), t => t.as !== 'missed')}, in payload ${rate(all, t => t.inPayload)}`);
 } else if (command === 'run') {
   need(flag('history'), 'history'); need(flag('work'), 'work');
-  if (!process.env.OPENROUTER_API_KEY) throw new Error(`OPENROUTER_API_KEY not found (looked in ${MAIN_ENV}).`);
+  if (direct(REPORT_MODEL) && !process.env.OPENAI_API_KEY) throw new Error(`OPENAI_API_KEY not found (looked in ${MAIN_ENV}); ${REPORT_MODEL} runs directly on the OpenAI API.`);
+  if ((!direct(REPORT_MODEL) || !NO_JUDGE) && !process.env.OPENROUTER_API_KEY) throw new Error(`OPENROUTER_API_KEY not found (looked in ${MAIN_ENV}).`);
   fs.mkdirSync(DATA, { recursive: true });
   const done = new Set(fs.existsSync(RUNS) ? fs.readFileSync(RUNS, 'utf8').trim().split('\n').filter(Boolean).map(line => { const r = JSON.parse(line); return `${r.id}|${r.variant}|${r.run}`; }) : []);
   const variants = flag('variants', 'base,lookup,lookup-always')!.split(',');
