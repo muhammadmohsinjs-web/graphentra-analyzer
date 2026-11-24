@@ -16,6 +16,7 @@ import {
 import { buildLLMPayload, qaInstruction } from './qa-evidence';
 import { compactLLMPayload } from './compact-payload';
 import { createCodeLookup, lookupInstruction, type CodeLookupOptions, type LookupLogEntry, type SourceReader } from './code-lookup';
+import { CLUSTER_THRESHOLD, generateClusterReport, type ClusterOptions, type ClusterRunInfo } from './cluster-report';
 import { buildSurfaceEvidence, formatSurfaceEvidence } from './surface-evidence';
 import { createReportVerifier, type ReportVerification, type ReportVerifierOptions } from './verifier/verified-report';
 
@@ -29,6 +30,8 @@ export interface GenerateReportResult {
   lookups?: LookupLogEntry[];
   /** Phase V verifier result and usage, only when `extras.verify` was given. */
   verification?: ReportVerification;
+  /** R-10: how the change was split and merged, only when the report was written in groups. */
+  cluster?: ClusterRunInfo;
 }
 
 export interface GenerateReportExtras {
@@ -38,6 +41,12 @@ export interface GenerateReportExtras {
   lookup?: { read: SourceReader; style?: 'optional' | 'always'; maxRounds?: number } & CodeLookupOptions;
   /** Phase V (ADR-0011): verify the finished report and list what it does not cover. No repair round (V-13). Off when absent. */
   verify?: ReportVerifierOptions;
+  /**
+   * R-10: when more than `threshold` (default 15) functions changed, review them in groups of related functions and merge
+   * the group reports in code, instead of one call for everything. Smaller changes are unaffected. Takes precedence over
+   * `lookup`, which it does not combine with (each group already carries the code a lookup would fetch).
+   */
+  cluster?: ClusterOptions;
 }
 
 export async function generateQAReport(
@@ -54,26 +63,45 @@ export async function generateQAReport(
   const surfaceEvidence = buildSurfaceEvidence(evidence);
   // R-1: one graph index per run, shared by the context pack's surface lookup and the code lookup tool.
   const graphIndex = buildGraphIndex({ entities: evidence.technicalGraph.entities, relations: evidence.technicalGraph.relations, applicationMap });
-  const payload = buildLLMPayload(evidence.impacts, context, {
+  const payloadOptions = {
     applicationMap, relations: evidence.technicalGraph.relations, graphIndex, contextWarnings: warnings,
     capabilities: evidence.technicalGraph.capabilities,
     surfaceEvidence,
-  });
-  const tool = extras.lookup ? createCodeLookup(evidence.technicalGraph, extras.lookup.read, { ...extras.lookup, graphIndex }) : undefined;
+  };
   // V-13e: the gaps are rewritten as plain QA checks by the writer's own model, unless the caller turned it off.
   const verifier = extras.verify
     ? createReportVerifier(evidence.impacts, { ...extras.verify, plainChecks: extras.verify.plainChecks ?? options ?? false })
     : undefined;
-  const writtenReport = await generateImpactReport({
-    instruction: tool ? `${qaInstruction}\n\n${lookupInstruction(extras.lookup!.style)}` : qaInstruction,
-    // R-2: the lossless compact form (one entity table, IDs elsewhere); about 3x smaller on large changes.
-    evidence: compactLLMPayload(payload),
-    options,
-    allowedSurfaceIds: payload.applicationContext.allowedSurfaceIds,
-    ...(tool ? { lookup: { tool, maxRounds: extras.lookup!.maxRounds, requireFirst: extras.lookup!.style === 'always' } } : {}),
-  });
+  let writtenReport: ImpactReport;
+  let tool: ReturnType<typeof createCodeLookup> | undefined;
+  let cluster: ClusterRunInfo | undefined;
+  if (extras.cluster && evidence.impacts.length > (extras.cluster.threshold ?? CLUSTER_THRESHOLD)) {
+    // R-10: one review per group of related changes; no full payload is built for the whole change.
+    const clustered = await generateClusterReport({
+      impacts: evidence.impacts, graphIndex, options, cluster: extras.cluster,
+      buildPayload: subset => buildLLMPayload(subset, context, payloadOptions),
+    });
+    writtenReport = clustered.report;
+    cluster = clustered.info;
+  } else {
+    const payload = buildLLMPayload(evidence.impacts, context, payloadOptions);
+    tool = extras.lookup ? createCodeLookup(evidence.technicalGraph, extras.lookup.read, { ...extras.lookup, graphIndex }) : undefined;
+    writtenReport = await generateImpactReport({
+      instruction: tool ? `${qaInstruction}\n\n${lookupInstruction(extras.lookup!.style)}` : qaInstruction,
+      // R-2: the lossless compact form (one entity table, IDs elsewhere); about 3x smaller on large changes.
+      evidence: compactLLMPayload(payload),
+      options,
+      allowedSurfaceIds: payload.applicationContext.allowedSurfaceIds,
+      ...(tool ? { lookup: { tool, maxRounds: extras.lookup!.maxRounds, requireFirst: extras.lookup!.style === 'always' } } : {}),
+    });
+  }
   const verified = verifier ? await verifier.finish(writtenReport) : undefined;
-  const qaReport = verified?.report ?? writtenReport;
+  // A group whose review failed is listed by the cluster step; the verifier's own list replaces it, so keep both.
+  const failedGroups = writtenReport.notCovered ?? [];
+  const verifiedReport = verified?.report;
+  const qaReport = verifiedReport && failedGroups.length
+    ? { ...verifiedReport, notCovered: [...failedGroups, ...(verifiedReport.notCovered ?? []).filter(item => !failedGroups.some(failed => failed.entity === item.entity))] }
+    : verifiedReport ?? writtenReport;
 
   const markdownReport = `# Graphentra QA Impact Report\n\nEvidence Identity: ${evidenceIdentity}\n\n${formatImpactReport(qaReport)}${formatSurfaceEvidence(surfaceEvidence)}`;
 
@@ -84,6 +112,7 @@ export async function generateQAReport(
     contextWarnings: warnings,
     ...(tool ? { lookups: tool.log } : {}),
     ...(verified ? { verification: verified.verification } : {}),
+    ...(cluster ? { cluster } : {}),
   };
 }
 
