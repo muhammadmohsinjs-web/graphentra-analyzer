@@ -1,0 +1,459 @@
+[
+  {
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "0e5c29b3f31de90344117479954ee19327d31426",
+      "subject": "basic Socket.io implementation of collaborative editing (#879)",
+      "date": "2020-03-09T08:48:25-07:00"
+    },
+    "fix": {
+      "sha": "e27f3f9ad2379c1023bff2c2c7e0d9a0c48de544",
+      "subject": "fix(data): removes unnecessary await (#1549)",
+      "date": "2020-05-06T21:18:49+02:00",
+      "issue": "#1549"
+    },
+    "impacts": 26,
+    "verdict": "reject",
+    "rejectReason": "Fix only drops an unnecessary async/await in getImportedKey; no behavior was broken by the introducer.",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "repo": "consola",
+    "repoUrl": "https://github.com/unjs/consola",
+    "introducer": {
+      "sha": "f4b301b9e26778b1feaabedbdb50e596039fba1c",
+      "subject": "refactos on reporters",
+      "date": "2018-10-18T14:04:45+03:30"
+    },
+    "fix": {
+      "sha": "66eba0f4fb3355385651e7813d04c5de3760c46a",
+      "subject": "fix chalkBgColor cache",
+      "date": "2018-11-02T19:49:48+03:30",
+      "issue": null
+    },
+    "impacts": 30,
+    "changeClass": "plain-logic",
+    "symptom": "Using the same background color name a second time returned the whole cache object instead of the chalk color function, breaking colored badge output.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/utils/chalk.js#chalkBgColor",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Background color chalk helper cache"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix changes the cache-hit return from _bgColorCache to color in the function the introducer wrote; no test added.",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep"
+  },
+  {
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "7eff6893c5c1e09739dfc4a28a2e0bec738c80f4",
+      "subject": "calculate coords based on container viewport position (#1955)",
+      "date": "2020-07-27T13:48:49+02:00"
+    },
+    "fix": {
+      "sha": "fb582b45db4755fd5102f710935e188cb989d926",
+      "subject": "fix: Fix centering element on init (#2445)",
+      "date": "2020-12-16T18:17:39+01:00",
+      "issue": "#2445"
+    },
+    "impacts": 32,
+    "changeClass": "plain-logic",
+    "symptom": "On init with a non-zero canvas offset the scene was not scrolled to the center of the canvas.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/components/App.tsx#App.initializeScene",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Scroll-to-center on init",
+        "Embedding with canvas offsets"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix passes this.state.width/height into calculateScrollCenter; test scroll.test.tsx asserts scrollX/scrollY center with offsets 200/100. Call was added by the introducer without width/height; blame at fix^ points to a later move, so attribution is moderate.",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep"
+  },
+  {
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "65be7973be42dfa5daa7299bbd68cab05f961f0e",
+      "subject": "Rotation support (#1099)",
+      "date": "2020-04-02T10:40:26+02:00"
+    },
+    "fix": {
+      "sha": "4003fa24b247d8f84dca6e04faa9e693a1c60e34",
+      "subject": "fix #1254 (#1255)",
+      "date": "2020-04-05T20:54:27-07:00",
+      "issue": "#1255"
+    },
+    "impacts": 34,
+    "changeClass": "plain-logic",
+    "symptom": "At zoom other than 100% the rotation handle was drawn at the wrong distance from the selected element.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/element/handlerRectangles.ts#handlerRectangles",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Rotation handle position when zoomed"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix divides ROTATION_HANDLER_GAP by zoom (constant added by the introducer with rotation support); no test added.",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep"
+  },
+  {
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "675da16ca4ffb15fe7818b12f4e9a0e586cb9571",
+      "subject": "feat: add view mode in Excalidraw (#2840)",
+      "date": "2021-02-01T21:56:42+01:00"
+    },
+    "fix": {
+      "sha": "cf6a5ff16be39de8ff474c51c5aa18c77e2abcf5",
+      "subject": "fix: state continuously updated when holding ctrl/cmd (#3283)",
+      "date": "2021-03-20T13:28:28+01:00",
+      "issue": "#3283"
+    },
+    "impacts": 40,
+    "verdict": "reject",
+    "rejectReason": "Fix guards a redundant setState; the introducer only moved the pre-existing 'if (event[CTRL_OR_CMD]) setState({isBindingEnabled:false})' lines, so the repeated update predates it (blame is a move).",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    }
+  },
+  {
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "61e5b66dac00176b8f66ad6ba87160b35fc66404",
+      "subject": "Group/ungroup (#1648)",
+      "date": "2020-05-26T13:07:46-07:00"
+    },
+    "fix": {
+      "sha": "46b574283f3ae00d78680098bb41cb1e4da41339",
+      "subject": "Fix zindex in groups (#1660)",
+      "date": "2020-05-26T22:56:22+02:00",
+      "issue": "#1660"
+    },
+    "impacts": 42,
+    "changeClass": "plain-logic",
+    "symptom": "Grouping elements put the group at the wrong z-order, so grouped shapes changed stacking relative to other elements.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/actions/actionGroup.ts#actionGroup.perform",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Grouping elements",
+        "Layer ordering of groups"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix reorders elements after grouping so the group sits at the highest member's position; the introducer's group action returned elements unordered; no test added.",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep"
+  },
+  {
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "015b46ab233e1a6a8d1ca81fa8fd9d2b36a37567",
+      "subject": "feat: expose `StoreAction` in relation to multiplayer history (#7898)",
+      "date": "2024-04-22T09:22:25Z"
+    },
+    "fix": {
+      "sha": "4d83d1c91e8a13ae639032e7cba3900d7729ffc5",
+      "subject": "fix: use Reflect API instead of Object.hasOwn (#7958)",
+      "date": "2024-04-25T15:36:26+02:00",
+      "issue": "#7958"
+    },
+    "impacts": 45,
+    "changeClass": "same-signature-behavior",
+    "symptom": "In browsers without Object.hasOwn the store's observed-app-state check threw, breaking editor updates.",
+    "affected": {
+      "entities": [
+        {
+          "id": "packages/excalidraw/store.ts#isObservedAppState",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "packages/excalidraw/store.ts#getObservedAppState",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Store/history capture on older browsers"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix replaces Object.hasOwn with Reflect.get in code the introducer wrote; no test and no linked issue, so the user-visible failure is inferred from the subject.",
+    "confidence": "low",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep"
+  },
+  {
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "ce267aa0d3bcaa639e72cd41581f030d1a0a3f3b",
+      "subject": "feat: lasso selection (#9169)",
+      "date": "2025-04-07T16:44:25+10:00"
+    },
+    "fix": {
+      "sha": "a18b139a60a50f1db73444140443254961655a55",
+      "subject": "fix: laser pointer trail disappearing on pointerup (#9413) (#9427)",
+      "date": "2025-04-24T10:05:08+10:00",
+      "issue": "#9427"
+    },
+    "impacts": 54,
+    "changeClass": "plain-logic",
+    "symptom": "The laser pointer trail vanished immediately on pointerup instead of fading out.",
+    "affected": {
+      "entities": [
+        {
+          "id": "packages/excalidraw/animated-trail.ts#AnimatedTrail.update",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Laser pointer trail"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix removes the this.pastTrails = [] reset that the lasso introducer added to update(); no test added.",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep"
+  },
+  {
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "d2557474e2a9cfccd0a94ab950a2e763ab12823a",
+      "subject": "fix(editor): fix target element index when creating/adding elements to frames (#11257)",
+      "date": "2026-05-05T21:35:32+02:00"
+    },
+    "fix": {
+      "sha": "8bcdca4526867433f99fdfcb55a063668db0c9dc",
+      "subject": "fix(editor): ignore deleted elements when inserting frame children (#12510)",
+      "date": "2026-10-31T17:48:47+01:00",
+      "issue": "#12510"
+    },
+    "impacts": 67,
+    "changeClass": "plain-logic",
+    "symptom": "After deleting a frame child that sat above the frame, new children of that frame were inserted above the frame, up to the top of the canvas.",
+    "affected": {
+      "entities": [
+        {
+          "id": "packages/element/src/frame.ts#getFrameChildrenInsertionIndex",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Adding elements to frames",
+        "Layer ordering of frame children"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix skips deleted children in getFrameChildrenInsertionIndex (written by the introducer); test in frame.test.tsx expects the new child below the frame despite a deleted child above.",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep"
+  },
+  {
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "550a388b2ba435211e3e91764beaf2ed421686d6",
+      "subject": "feat: command palette (#7804)",
+      "date": "2024-03-28T16:16:32Z"
+    },
+    "fix": {
+      "sha": "ed5ce8d3ded0c4797ce729cc857c7eaab5c5b74a",
+      "subject": "fix: command palette filter (#7981)",
+      "date": "2024-05-08T17:56:05+02:00",
+      "issue": "#7981"
+    },
+    "impacts": 103,
+    "changeClass": "plain-logic",
+    "symptom": "Command palette search was case sensitive, so typing lowercase did not match capitalized command labels.",
+    "affected": {
+      "entities": [
+        {
+          "id": "packages/excalidraw/components/CommandPalette/CommandPalette.tsx#CommandPaletteInner",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Command palette search"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix lowercases the label haystack and the query (both written by the introducer) and moves the dash in the strip regex; no test added.",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep"
+  },
+  {
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "e617ccc2521b46bc1e25a1a771019e09d12ea338",
+      "subject": "Factor out collaboration code (#2313)",
+      "date": "2020-12-05T15:30:53+01:00"
+    },
+    "fix": {
+      "sha": "98c26642d0f405bbea2375d908ba79bf71949ed3",
+      "subject": "fix: hide collab button when onCollabButtonClick not supplied (#2598)",
+      "date": "2020-12-15T16:21:14+01:00",
+      "issue": "#2598"
+    },
+    "impacts": 126,
+    "changeClass": "default-option",
+    "symptom": "The collab button was always shown, even when the host app supplied no onCollabButtonClick handler.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/packages/excalidraw/index.tsx#Excalidraw",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Collab button visibility in the embedded package"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix removes the onCollabButtonClick = noop default (added by the introducer) so the button is hidden when unsupplied; no test added.",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep"
+  },
+  {
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "15e019706d70ee69dc691faf0430d776752ba5e1",
+      "subject": "feat: Orthogonal (elbow) arrows for diagramming (#8299)",
+      "date": "2024-08-01T18:39:03+02:00"
+    },
+    "fix": {
+      "sha": "84398a7e5ccb2765d011be48cad74f375f058158",
+      "subject": "fix: Point duplication in LEE on ALT+click (#8347)",
+      "date": "2024-08-09T12:01:32+02:00",
+      "issue": "#8347"
+    },
+    "impacts": 214,
+    "changeClass": "plain-logic",
+    "symptom": "Alt+click in the linear element editor duplicated a point on elbow arrows.",
+    "affected": {
+      "entities": [
+        {
+          "id": "packages/excalidraw/element/linearElementEditor.ts#LinearElementEditor.handlePointerDown",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Alt+click point add in the line editor",
+        "Elbow arrows"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix changes || to && in the lastUncommittedPoint/isElbowArrow condition the introducer wrote; no test added.",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep"
+  }
+]

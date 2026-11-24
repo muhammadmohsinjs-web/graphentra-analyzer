@@ -81,3 +81,22 @@ that every other id exists in the collector output at the introducer revision.
 | `same-signature-behavior` | Behavior changed, types and signature did not |
 | `default-option` | Default value of an option or argument changed |
 | `plain-logic` | Ordinary logic bug inside the changed code |
+
+## R-11 large-change set (`r11-large.json`)
+
+A separate set for Phase R (R-10 cluster fan-out, R-8 exit gate). It uses the same format and rules as D-0.
+The difference is that every introducer has **more than 25 changed functions** (`impacts` in the harness's
+`analyzer.json`). It holds 29 commits: excalidraw 27, consola 1, json-server 1. Payloads run from 99 KB to 13 MB.
+Ids are `r11-<repo>-NN`, so they never collide with corpus-31 evidence files. No introducer is shared with `d0-corpus.json`.
+
+How it was built:
+1. Ran the SZZ miner with fix limits of 4 source files and 120 lines instead of 3 and 80. Kept candidates whose
+   blame share was at least 0.5 and whose introducer is not in corpus-31.
+2. Ran the extended analyzer on every introducer with at least 250 changed source lines (159 of them). Kept those
+   with more than 25 impacts (94), then took the most likely fix for each introducer and shortlisted 38.
+3. Labeled each pair keep or reject (`r11-parts/`, rejections in `r11-large-rejected.json`), then
+   `merge r11-parts . --name r11-large --id-prefix r11-` and `verify r11-large.json <history>`.
+
+`r11-review.md` lists the ground truth for the human review.
+Run the harness with
+`--corpus impactbench/corpus/r11-large.json --data impactbench/eval/data-r11` on any command.

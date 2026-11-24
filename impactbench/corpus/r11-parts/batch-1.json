@@ -1,0 +1,465 @@
+[
+  {
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "8e26d5b500a02c60ab128934953282b236a1ffcb",
+      "subject": "feat: support vertical text align for bound containers (#4852)",
+      "date": "2022-03-02T20:06:07+05:30"
+    },
+    "fix": {
+      "sha": "94b387ef7ba9d5597a15205da69a91732c7b2d1b",
+      "subject": "fix: ensure verticalAlign properties not shown when no element selected (#4860)",
+      "date": "2022-03-02T23:56:20+01:00",
+      "issue": null
+    },
+    "impacts": 26,
+    "changeClass": "plain-logic",
+    "symptom": "With nothing selected, the vertical-align control showed in the properties panel (all-of-empty-selection was true), and with mixed selections it was hidden.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/components/Actions.tsx#SelectedShapeActions",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Properties panel vertical align visibility"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix changes targetElements.every(...) to some(...) so changeVerticalAlign shows only when at least one selected element is bound text or a container; no test added.",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep"
+  },
+  {
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "0d1058a596145894b703fe3078b574f83bfbb312",
+      "subject": "feat: support segment midpoints in line editor (#5641)",
+      "date": "2022-09-14T19:55:54+05:30"
+    },
+    "fix": {
+      "sha": "02286465079be6c6af646f41317fbc5178c8dc4d",
+      "subject": "fix: line editor points rendering below elements (#5781)",
+      "date": "2022-11-05T11:35:53+01:00",
+      "issue": null
+    },
+    "impacts": 27,
+    "changeClass": "plain-logic",
+    "symptom": "While editing a line, its point handles were drawn under other elements overlapping it, so covered points could not be seen or dragged.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/renderer/renderScene.ts#_renderScene",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Line editor point handles rendering",
+        "Dragging line points covered by other elements"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix defers renderLinearPointHandles until after all visible elements are drawn; test 'in-editor dragging a line point covered by another element' in linearElementEditor.test.tsx drags a point under a rectangle.",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep"
+  },
+  {
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "08ce7c7fc3e1e3056e349a6497014e3931c1578b",
+      "subject": "feat: redesign linear elements \ud83c\udf89 (#5501)",
+      "date": "2022-08-03T20:58:17+05:30"
+    },
+    "fix": {
+      "sha": "27cf5ed17e20b0b90dc98e8a151a598d2ea679c4",
+      "subject": "fix: deselect linear element when clicked inside bounding box outside editor (#5579)",
+      "date": "2022-08-16T23:05:38+05:30",
+      "issue": null
+    },
+    "impacts": 30,
+    "changeClass": "plain-logic",
+    "symptom": "Clicking inside a selected line's bounding box but off the line did not deselect it.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/components/App.tsx#App.onPointerUpFromPointerDownHandler",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        },
+        {
+          "id": "src/components/App.tsx#App.onPointerMoveFromPointerDownHandler",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Deselecting a linear element by clicking inside its bounding box"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix drops the !selectedLinearElement guard (written by the introducer) from the pointer-up deselect branch and sets drag.hasOccurred on drag; no test added.",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep"
+  },
+  {
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "b4903a7eab2330ce127509977472f6c50f52327b",
+      "subject": "feat: drag, resize, and rotate after selecting in lasso (#9732)",
+      "date": "2025-08-20T00:03:02+02:00"
+    },
+    "fix": {
+      "sha": "90ec2739aea65222f235dd7a2c0c929dce7bdbee",
+      "subject": "fix: calling toLowerCase on potentially undefined `navigator.*` values (#9901)",
+      "date": "2025-08-22T17:37:16+02:00",
+      "issue": null
+    },
+    "impacts": 33,
+    "changeClass": "plain-logic",
+    "symptom": "The app crashed at load in environments where navigator.platform or navigator.userAgent is undefined, because the new isMobile constant called toLowerCase on them.",
+    "affected": {
+      "entities": [
+        {
+          "id": "packages/common/src/constants.ts#isMobile",
+          "outsideIntroducerDiff": false,
+          "role": "fault",
+          "collectorGap": true
+        }
+      ],
+      "areas": [
+        "App startup device detection"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix removes .toLowerCase() on navigator.userAgent and navigator.platform in isMobile (both added by the introducer); regexes are already case-insensitive. No test added.",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep"
+  },
+  {
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "cd50aa719fa5dcb77beb9f736725fa744e5ba6ba",
+      "subject": "feat: add system mode to the theme selector (#7853)",
+      "date": "2024-04-08T16:46:24+02:00"
+    },
+    "fix": {
+      "sha": "8a162a4cb4ba420830cf07363fb0495477424442",
+      "subject": "fix: import (#7869)",
+      "date": "2024-04-08T16:59:03+02:00",
+      "issue": null
+    },
+    "impacts": 36,
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "reject",
+    "rejectReason": "SZZ blame wrong: fix only adds a missing CODES import; at fix^ the file already used CODES.D, while the introducer's version used KEYS.D, so a later commit introduced the break."
+  },
+  {
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "5256096d76be4685d3a6f06e2be4926d0b0a9def",
+      "subject": "Fast & Furious (#655)",
+      "date": "2020-02-19T17:25:01+01:00"
+    },
+    "fix": {
+      "sha": "4b8b9965c211a09179ae08a0052460c7462c76df",
+      "subject": "fix early return from renderScene (#815)",
+      "date": "2020-02-23T21:19:27+01:00",
+      "issue": null
+    },
+    "impacts": 40,
+    "changeClass": "plain-logic",
+    "symptom": "Whenever any element was selected, renderScene returned early and the scrollbars were not painted.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/renderer/renderScene.ts#renderScene",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Scrollbar rendering while elements are selected"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix removes the 'return visibleElements.length > 0' that the introducer placed inside the renderSelection block, so the scrollbar painting below runs; no test added.",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep"
+  },
+  {
+    "repo": "json-server",
+    "repoUrl": "https://github.com/typicode/json-server",
+    "introducer": {
+      "sha": "2b26630ac6379fba77eb104b22e83b41a004b52e",
+      "subject": "v0.9.0 (#404)",
+      "date": "2016-11-12T01:59:43+01:00"
+    },
+    "fix": {
+      "sha": "eca6b763f2b904e6c0739f14cd4f9eb04a7c2a27",
+      "subject": "fix filter for boolean value false (#412) (#413)",
+      "date": "2016-11-21T02:24:35+01:00",
+      "issue": "#412"
+    },
+    "impacts": 42,
+    "changeClass": "plain-logic",
+    "symptom": "Filtering a collection by a boolean false value, e.g. /comments?published=false, returned nothing.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/server/router/plural.js#<module>",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Query filtering by false values"
+      ]
+    },
+    "fixAddedTest": true,
+    "evidence": "Fix changes `if (!elementValue)` to `elementValue == null` so false/0 values are compared; test 'should support filtering by boolean value false' expects the three unpublished comments.",
+    "confidence": "high",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep"
+  },
+  {
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "e1b7aacb356a492aa1e0fc6eb57b8896124027f0",
+      "subject": "feat(packages/excalidraw): replace the export functions with `exportScene` (#12347)",
+      "date": "2026-10-18T20:24:17+02:00"
+    },
+    "fix": {
+      "sha": "95307fa136a3e190f73c7af4626e86d6e41c2eb6",
+      "subject": "fix(packages/excalidraw): export PNGs from a CPU-backed canvas (#12471)",
+      "date": "2026-10-27T16:29:21+01:00",
+      "issue": null
+    },
+    "impacts": 46,
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "reject",
+    "rejectReason": "Not caused by introducer: fix works around Chrome's Skia Graphite GPU canvas antialiasing; the canvas creation path is environmental/browser behavior, not logic the introducer changed. Cosmetic quality issue."
+  },
+  {
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "14a66956d76e3a7c7d3ad573171dbad1b063bd08",
+      "subject": "Implement line editing (#1616)",
+      "date": "2020-06-01T11:35:44+02:00"
+    },
+    "fix": {
+      "sha": "476c0e9f8a281b08b65f482cf2f66b8909f5f288",
+      "subject": "Fix undo with line editing (#1717)",
+      "date": "2020-06-05T17:11:24+02:00",
+      "issue": null
+    },
+    "impacts": 54,
+    "changeClass": "plain-logic",
+    "symptom": "Undo after line editing did not step back correctly because history recording was not resumed when finishing a point.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/element/linearElementEditor.ts#LinearElementEditor.handlePointerUp",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Undo while editing a line"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix makes history.resumeRecording() unconditional, removing the lastUncommittedPoint !== null guard the introducer wrote; no test added.",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep"
+  },
+  {
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "98b5c37e452d56b7d0fdbce82ce31e6389ba5330",
+      "subject": "feat: bind text to shapes when pressing enter and support sticky notes \ud83c\udf89  (#4343)",
+      "date": "2021-12-16T21:14:03+05:30"
+    },
+    "fix": {
+      "sha": "28546fbb550ce861daf4c0562e87689a8c33bf5f",
+      "subject": "fix: bound text doesn't inherit container (#4521)",
+      "date": "2021-12-31T14:55:02+01:00",
+      "issue": null
+    },
+    "impacts": 89,
+    "changeClass": "plain-logic",
+    "symptom": "A text element bound to a container inside a group was not part of that group.",
+    "affected": {
+      "entities": [
+        {
+          "id": "src/components/App.tsx#App.startTextEditing",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "Bound text group membership"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix adds groupIds: container?.groupIds ?? [] next to the containerId the introducer set when creating bound text; no test added.",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep"
+  },
+  {
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "a0b98a944f1ddedba090b8a6908ff38b9132177e",
+      "subject": "feat: TextToDiagram v2 (#10530)",
+      "date": "2026-01-15T19:15:41+01:00"
+    },
+    "fix": {
+      "sha": "6135548534fcfacc0ffa7bd1d1f7d32ce05f137d",
+      "subject": "fix: rerender TTD preview on message remove (#10681)",
+      "date": "2026-01-21T14:07:48+01:00",
+      "issue": null
+    },
+    "impacts": 110,
+    "changeClass": "plain-logic",
+    "symptom": "In the text-to-diagram dialog the diagram preview did not re-render after a chat message was removed.",
+    "affected": {
+      "entities": [
+        {
+          "id": "packages/excalidraw/components/TTDDialog/hooks/useMermaidRenderer.ts#useMermaidRenderer",
+          "outsideIntroducerDiff": false,
+          "role": "fault"
+        }
+      ],
+      "areas": [
+        "TTD preview refresh on message removal"
+      ]
+    },
+    "fixAddedTest": false,
+    "evidence": "Fix merges the two effects so a non-generating state flushes and re-renders the last assistant message when content changes; no test added.",
+    "confidence": "medium",
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "keep"
+  },
+  {
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "b57b3b573da874f7527589c10632ec936c1962d2",
+      "subject": "feat: introducing Web-Embeds (alias iframe element) (#6691)",
+      "date": "2023-07-24T16:51:53+02:00"
+    },
+    "fix": {
+      "sha": "1f94f204dd40b5d8766f720bc1e64feb9ade0991",
+      "subject": "fix: isBindableElement to affirm frames (#6900)",
+      "date": "2023-09-15T16:15:06-05:00",
+      "issue": null
+    },
+    "impacts": 128,
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "reject",
+    "rejectReason": "SZZ blame wrong: omission of 'frame' in isBindableElement belongs to the frames feature (81ebf829 introduced frame); web-embeds only added an adjacent 'embeddable' line."
+  },
+  {
+    "repo": "excalidraw",
+    "repoUrl": "https://github.com/excalidraw/excalidraw",
+    "introducer": {
+      "sha": "81ebf82979f7efba460a882478284583451f2f32",
+      "subject": "feat: introduce frames (#6123)",
+      "date": "2023-06-14T18:42:01+02:00"
+    },
+    "fix": {
+      "sha": "eb020d04105a8f725e71292cc822acddec3fa203",
+      "subject": "fix: generic element's labels not flipping with them (#6967)",
+      "date": "2023-09-17T13:26:02+02:00",
+      "issue": null
+    },
+    "impacts": 267,
+    "review": {
+      "by": null,
+      "date": null,
+      "agrees": null,
+      "note": null
+    },
+    "verdict": "reject",
+    "rejectReason": "SZZ blame wrong: bound text was not included in multi-element flip since multi-flip was added (6459ccda); frames only added the includeElementsInFrames option beside it. Bug not caused by frames."
+  }
+]

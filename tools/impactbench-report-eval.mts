@@ -6,6 +6,8 @@
 //   (verify = base plus the Phase V verifier; needs OPENAI_API_KEY for the Decisions API. Rows gain usage.verifier, usage.repair, verification, audit.)
 //   node --import tsx tools/impactbench-report-eval.mts summary
 //
+// Any command takes --corpus <file> (default impactbench/corpus/d0-corpus.json) and --data <dir>; the R-11 large-change set is
+//   --corpus impactbench/corpus/r11-large.json --data impactbench/eval/data-r11
 // <history> holds one full-history clone per corpus repo. <work> receives checkouts and evidence (large; keep it outside the repo).
 // Rows append to impactbench/eval/data/runs.jsonl; a rerun skips (id, variant, run) rows already there.
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -53,7 +55,9 @@ const PRICE: Record<string, [number, number]> = { 'openai/gpt-6-luna': [0.1, 0.5
 
 type Truth = { id: string; outsideIntroducerDiff: boolean; role: string };
 type Entry = { id: string; repo: string; changeClass: string; symptom: string; evidence: string; introducer: { sha: string; subject: string }; fix: { subject: string }; affected: { entities: Truth[]; areas: string[] } };
-const corpus: Entry[] = JSON.parse(fs.readFileSync(path.join(ROOT, 'impactbench/corpus/d0-corpus.json'), 'utf8'));
+// --corpus <file> selects another ground-truth set in the D-0 format, e.g. impactbench/corpus/r11-large.json (R-11). Pair it with --data.
+const CORPUS = path.resolve(ROOT, flag('corpus', 'impactbench/corpus/d0-corpus.json')!);
+const corpus: Entry[] = JSON.parse(fs.readFileSync(CORPUS, 'utf8'));
 const selected = corpus.filter(entry => !ids.length || ids.includes(entry.id));
 const evidenceFile = (id: string) => path.join(work!, 'evidence', `${id}.json`);
 

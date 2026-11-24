@@ -5,7 +5,9 @@
 // curation, not ground truth.
 //
 // Usage: node tools/impactbench-corpus.mjs <history-dir> [repo ...] [--out file]
-//        node tools/impactbench-corpus.mjs merge <parts-dir> <out-dir>
+//        node tools/impactbench-corpus.mjs merge <parts-dir> <out-dir> [--name r11-large --id-prefix r11-]
+//          --name writes <name>.json + <name>-rejected.json instead of d0-corpus.json + d0-rejected.json;
+//          --id-prefix keeps ids apart from corpus-31 (evidence files are keyed by id).
 // <history-dir> holds full-history clones, one folder per repo. Blobless clones work but blame
 // then fetches blobs one by one; `git fetch --refetch` without the filter first is much faster.
 import { spawnSync } from 'node:child_process';
@@ -122,7 +124,7 @@ function validate(e) {
 }
 
 // merge <parts-dir> <out-dir>: kept entries → d0-corpus.json with stable ids; the rest → d0-rejected.json.
-function merge(partsDir, outDir) {
+function merge(partsDir, outDir, { name = null, idPrefix = '' } = {}) {
   const all = fs.readdirSync(partsDir).filter((f) => f.endsWith('.json')).sort()
     .flatMap((f) => JSON.parse(fs.readFileSync(path.join(partsDir, f), 'utf8')));
   const seen = new Set();
@@ -141,10 +143,10 @@ function merge(partsDir, outDir) {
   const corpus = kept.map(({ verdict, rejectReason, id, ...rest }) => {
     const n = (counters.get(rest.repo) ?? 0) + 1;
     counters.set(rest.repo, n);
-    return { id: `${rest.repo}-${String(n).padStart(2, '0')}`, ...rest };
+    return { id: `${idPrefix}${rest.repo}-${String(n).padStart(2, '0')}`, ...rest };
   });
-  fs.writeFileSync(path.join(outDir, 'd0-corpus.json'), JSON.stringify(corpus, null, 2) + '\n');
-  fs.writeFileSync(path.join(outDir, 'd0-rejected.json'), JSON.stringify(rejected, null, 2) + '\n');
+  fs.writeFileSync(path.join(outDir, name ? `${name}.json` : 'd0-corpus.json'), JSON.stringify(corpus, null, 2) + '\n');
+  fs.writeFileSync(path.join(outDir, name ? `${name}-rejected.json` : 'd0-rejected.json'), JSON.stringify(rejected, null, 2) + '\n');
   const byClass = {};
   for (const e of corpus) byClass[e.changeClass] = (byClass[e.changeClass] ?? 0) + 1;
   const outside = corpus.filter((e) => e.affected.entities.some((x) => x.outsideIntroducerDiff)).length;
@@ -196,7 +198,8 @@ async function verify(corpusFile, historyDir) {
 
 const args = process.argv.slice(2);
 if (args[0] === 'merge') {
-  merge(args[1], args[2]);
+  const opt = (n) => { const i = args.indexOf(`--${n}`); return i > 0 ? args[i + 1] : undefined; };
+  merge(args[1], args[2], { name: opt('name') ?? null, idPrefix: opt('id-prefix') ?? '' });
   process.exit(0);
 }
 if (args[0] === 'verify') {
