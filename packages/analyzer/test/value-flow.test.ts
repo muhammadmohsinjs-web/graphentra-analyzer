@@ -63,6 +63,27 @@ test('value flow: a changed constant reaches its readers and what they feed', ()
   assert.ok(!ids.has('src/stock.ts#stockOf'));
 });
 
+// R-4: excalidraw's app_constants.ts holds `export enum WS_SUBTYPES`; a changed value reached none of its 21 readers.
+const EVENTS: Record<string, string> = {
+  'src/constants.ts': 'export enum EVENT {\n  INIT = "INIT",\n  UPDATE = "UPDATE",\n}\n',
+  'src/send.ts': "import { EVENT } from './constants';\nexport const sendInit = () => ({ type: EVENT.INIT });\nexport const sendUpdate = () => ({ type: EVENT.UPDATE });\n",
+  'src/list.ts': "import { EVENT } from './constants';\nexport const allEvents = () => Object.values(EVENT);\nexport const isEvent = (value: EVENT) => value.length > 0;\n",
+  'src/unrelated.ts': 'export const ping = () => "pong";\n',
+};
+
+test('value flow: a changed enum member reaches its readers and code that takes the whole enum', () => {
+  const { ids, result } = received({ 'src/constants.ts': source => source.replace('INIT = "INIT"', 'INIT = "SCENE_INIT"') }, EVENTS);
+  assert.deepEqual(result.impacts.map(impact => impact.changedEntity.id), ['src/constants.ts#<module>']);
+  for (const hit of ['src/send.ts#sendInit', 'src/list.ts#allEvents', 'src/list.ts#isEvent']) assert.ok(ids.has(hit), hit);
+  for (const clean of ['src/send.ts#sendUpdate', 'src/unrelated.ts#ping']) assert.ok(!ids.has(clean), clean);
+});
+
+test('value flow: a removed enum member reaches every reader of the enum', () => {
+  const { ids } = received({ 'src/constants.ts': source => source.replace('  UPDATE = "UPDATE",\n', '') }, EVENTS);
+  for (const hit of ['src/send.ts#sendInit', 'src/send.ts#sendUpdate', 'src/list.ts#allEvents']) assert.ok(ids.has(hit), hit);
+  assert.ok(!ids.has('src/unrelated.ts#ping'));
+});
+
 test('value flow: a helper handing the value back taints only the call that passed it', () => {
   const base = {
     'src/helper.ts': 'export const trim = (text: string) => text.trim();\n',

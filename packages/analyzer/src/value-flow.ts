@@ -243,23 +243,42 @@ function changedLineSeeds(index: ProgramIndex, changed: ChangedEntity): Seed[] {
   return seeds;
 }
 
-/** Every function that reads a module-level constant declared on a changed line of this file. */
+/** Every function that reads a module-level constant or enum declared on a changed line of this file. */
 function changedConstantSeeds(index: ProgramIndex, changedFile: ChangedFile): Seed[] {
   const sourceFile = index.sourceFiles.get(changedFile.file);
   if (!sourceFile) return [];
   const lines = new Set(changedFile.changedLines);
   const seeds: Seed[] = [];
+  const readersOf = (symbol: ts.Symbol | undefined, declared: ts.Node, only?: (reference: ts.Identifier) => boolean): void => {
+    for (const reference of symbol ? index.references.get(symbol) ?? [] : []) {
+      if (reference === declared || (only && !only(reference))) continue;
+      const reader = index.enclosing(reference);
+      if (reader && reader.kind !== 'module') seeds.push({ entityId: reader.id, channel: 'return' });
+    }
+  };
   for (const statement of sourceFile.statements) {
+    if (ts.isEnumDeclaration(statement) && overlaps(sourceFile, statement, lines)) {
+      // R-4: a changed member reaches the code that reads it, and code that takes the whole enum (`Object.values(E)`,
+      // `x: E`). A change outside the members (a removed member, the name) reaches every reader.
+      const changedMembers = statement.members.filter(member => overlaps(sourceFile, member, lines));
+      const enumSymbol = index.resolve(statement.name);
+      if (changedMembers.length === 0 || lines.has(lineOf(sourceFile, statement.getStart(sourceFile)))) {
+        readersOf(enumSymbol, statement.name);
+        continue;
+      }
+      for (const member of changedMembers) readersOf(index.resolve(member.name), member.name);
+      readersOf(enumSymbol, statement.name, reference =>
+        !(ts.isPropertyAccessExpression(reference.parent) && reference.parent.expression === reference) &&
+        !(ts.isElementAccessExpression(reference.parent) && reference.parent.expression === reference) &&
+        !(ts.isQualifiedName(reference.parent) && reference.parent.left === reference));
+      continue;
+    }
     if (!ts.isVariableStatement(statement)) continue;
     for (const declaration of statement.declarationList.declarations) {
       if (!ts.isIdentifier(declaration.name) || !declaration.initializer || !overlaps(sourceFile, declaration, lines)) continue;
       const symbol = index.resolve(declaration.name);
       if (!symbol || index.entityOf(symbol)) continue; // A function is an entity, and its callers are already covered.
-      for (const reference of index.references.get(symbol) ?? []) {
-        if (reference === declaration.name) continue;
-        const reader = index.enclosing(reference);
-        if (reader && reader.kind !== 'module') seeds.push({ entityId: reader.id, channel: 'return' });
-      }
+      readersOf(symbol, declaration.name);
     }
   }
   return seeds;
