@@ -321,7 +321,8 @@ async function oneReport(entry: Entry, variant: string, run: number) {
       if (large.findings?.length) { const g: any = await judge(entry, { summary: '', keyChanges: [], uncertainty: [], testAreas: [{ area: 'findings', checks: large.findings }] }, judgeClient); row.findingsCatch = g.catch; }
     } else {
     const result = await generateQAReport(raw, context, { client, model: REPORT_MODEL, logLevel: 'off' },
-      lookup ? { lookup } : decisions ? { verify: { client: decisions.client } }
+      // Non-cluster variants keep the single-report path they measure (cluster is on by default in generateQAReport).
+      lookup ? { lookup, cluster: false } : decisions ? { verify: { client: decisions.client }, cluster: false }
         // R-10: more than 15 changed functions are reviewed in groups; smaller changes take the base path.
         : variant.startsWith('cluster') ? { cluster: {
           // cluster-triggers: each group also names the input each changed function now handles differently (one check each).
@@ -329,7 +330,7 @@ async function oneReport(entry: Entry, variant: string, run: number) {
           // The base revision supplies the code of changed functions that no longer exist at the analyzed one (removed or renamed away).
           readBase: (file: string) => { try { return execFileSync('git', ['-C', path.join(history!, entry.repo), 'show', `${entry.introducer.sha}^:${file}`], { encoding: 'utf8', maxBuffer: 1 << 26, stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return undefined; } },
           ...(flag('group-size') ? { maxGroupSize: Number(flag('group-size')) } : {}), ...(flag('max-groups') ? { maxGroups: Number(flag('max-groups')) } : {}),
-        } } : {});
+        } } : { cluster: false });
     console.info = quiet;
     logs.push(...(result.lookups ?? []));
     verification = result.verification;
@@ -474,7 +475,7 @@ if (command === 'evidence') {
     const one = recorder(); const many = recorder();
     const quietInfo = console.info; console.info = () => {};
     try {
-      await generateQAReport(raw, context, { client: one.client, model: 'plan', logLevel: 'off' });
+      await generateQAReport(raw, context, { client: one.client, model: 'plan', logLevel: 'off' }, { cluster: false });
       const result = await generateQAReport(raw, context, { client: many.client, model: 'plan', logLevel: 'off' }, { cluster: { read: readAt, readBase: (file: string) => { try { return execFileSync('git', ['-C', path.join(history!, entry.repo), 'show', `${entry.introducer.sha}^:${file}`], { encoding: 'utf8', maxBuffer: 1 << 26, stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return undefined; } }, threshold: Number(flag('threshold', '15')), ...(flag('group-size') ? { maxGroupSize: Number(flag('group-size')) } : {}), ...(flag('max-groups') ? { maxGroups: Number(flag('max-groups')) } : {}) } });
       console.info = quietInfo;
       const groups = result.cluster?.groups ?? [];

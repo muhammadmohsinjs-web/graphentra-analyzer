@@ -263,8 +263,13 @@ test('15 changed functions or fewer take the single-call path, and so does a run
   const large = repoWith(3, 6);
   try {
     const provider = fakeProvider();
-    await generateQAReport(large.evidence, context, { client: provider.client, model: 'offline' });
-    assert.equal(provider.seen.length, 1, 'cluster is opt-in');
+    const byDefault = await generateQAReport(large.evidence, context, { client: provider.client, model: 'offline' });
+    assert.ok(byDefault.cluster && byDefault.cluster.groups.length > 1, 'cluster is on by default above 15 changed functions');
+    assert.ok(provider.seen.length > 1);
+    const off = fakeProvider();
+    const single = await generateQAReport(large.evidence, context, { client: off.client, model: 'offline' }, { cluster: false });
+    assert.equal(off.seen.length, 1, 'cluster: false writes one report for everything');
+    assert.equal(single.cluster, undefined);
     const lowered = fakeProvider();
     await generateQAReport(large.evidence, context, { client: lowered.client, model: 'offline' }, { cluster: { threshold: 20 } });
     assert.equal(lowered.seen.length, 1, 'the threshold is configurable');

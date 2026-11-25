@@ -45,8 +45,11 @@ export interface GenerateReportExtras {
    * R-10: when more than `threshold` (default 15) functions changed, review them in groups of related functions and merge
    * the group reports in code, instead of one call for everything. Smaller changes are unaffected. Takes precedence over
    * `lookup`, which it does not combine with (each group already carries the code a lookup would fetch).
+   * On by default (R-8: on 29 large commits, 0 → 4 strict catches, 6 → 10 incl. borderline, no lost checks); pass `read`
+   * so each group also carries its related code. `false` writes one report for everything (the eval baseline).
+   * Trigger checks (`triggers`) stay opt-in until a held-out test.
    */
-  cluster?: ClusterOptions;
+  cluster?: ClusterOptions | false;
 }
 
 export async function generateQAReport(
@@ -75,10 +78,11 @@ export async function generateQAReport(
   let writtenReport: ImpactReport;
   let tool: ReturnType<typeof createCodeLookup> | undefined;
   let cluster: ClusterRunInfo | undefined;
-  if (extras.cluster && evidence.impacts.length > (extras.cluster.threshold ?? CLUSTER_THRESHOLD)) {
+  const clusterOptions = extras.cluster === false ? undefined : extras.cluster ?? {};
+  if (clusterOptions && evidence.impacts.length > (clusterOptions.threshold ?? CLUSTER_THRESHOLD)) {
     // R-10: one review per group of related changes; no full payload is built for the whole change.
     const clustered = await generateClusterReport({
-      impacts: evidence.impacts, graphIndex, options, cluster: extras.cluster,
+      impacts: evidence.impacts, graphIndex, options, cluster: clusterOptions,
       buildPayload: subset => buildLLMPayload(subset, context, payloadOptions),
     });
     writtenReport = clustered.report;
