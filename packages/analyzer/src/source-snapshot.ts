@@ -30,7 +30,7 @@ export function captureSourceSnapshot(
       throw new GraphentraError('Compiler input is outside the repository. Move configuration and dependencies inside the repository.', 'UNSUPPORTED_EXTERNAL_INPUT');
     }
     if (fs.existsSync(absolute)) {
-      const real = fs.realpathSync(absolute);
+      const real = fs.realpathSync.native(absolute);
       if (!inside(repo.gitRepositoryRoot, real) && !inside(standardLibraryRoot, real)) {
         throw new GraphentraError('Compiler input symlink escapes the repository.', 'UNSUPPORTED_EXTERNAL_INPUT');
       }
@@ -49,7 +49,7 @@ export function captureSourceSnapshot(
     let real: string;
     try {
       fs.lstatSync(absolute);
-      real = fs.realpathSync(absolute);
+      real = fs.realpathSync.native(absolute);
     } catch (error: any) {
       if (error.code === 'ELOOP') return { reason: 'symlink', size: 0 };
       if (error.code === 'ENOENT' || error.code === 'ENOTDIR') return { missing: true, size: 0 };

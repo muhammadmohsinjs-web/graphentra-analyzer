@@ -425,7 +425,7 @@ function emptyApplicationMap(headSha: string, reason?: string): ApplicationMap {
 /** The analyzed project root as the repository context resolves it (real path when it exists). */
 function resolveTargetRoot(target: string): string {
   const resolved = path.resolve(target);
-  try { return fs.realpathSync(resolved); } catch { return resolved; }
+  try { return fs.realpathSync.native(resolved); } catch { return resolved; }
 }
 
 /** The application map is best-effort: a failure never blocks deterministic evidence. */

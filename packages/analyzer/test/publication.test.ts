@@ -13,7 +13,8 @@ test('publication validates before writing and cleans its temporary file after r
     const before = fs.readFileSync(destination);
     assert.throws(() => writeEvidenceFile(destination, { invalid: true }));
     assert.deepEqual(fs.readFileSync(destination), before);
-    assert.equal(fs.statSync(destination).mode & 0o777, 0o600);
+    // Windows has no POSIX permission bits; Node reports 0o666 for any writable file.
+    if (process.platform !== 'win32') assert.equal(fs.statSync(destination).mode & 0o777, 0o600);
     const collision = path.join(directory, 'directory');
     fs.mkdirSync(collision);
     assert.throws(() => writeEvidenceFile(collision, evidence));

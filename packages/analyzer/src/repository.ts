@@ -88,10 +88,12 @@ export function createRepositoryContext(
     throw new InvalidTargetError(rawTarget, 'Path is not a directory.');
   }
 
-  // Canonicalize realpath to handle symlinks (such as macOS /var -> /private/var)
+  // Canonicalize realpath to handle symlinks (such as macOS /var -> /private/var). The native variant also expands
+  // Windows 8.3 short names (C:\Users\RUNNER~1 -> runneradmin), so the target matches git's --show-toplevel.
+  // Every path compared with these roots must use realpathSync.native too.
   let projectRoot: string;
   try {
-    projectRoot = fs.realpathSync(rawTarget);
+    projectRoot = fs.realpathSync.native(rawTarget);
   } catch {
     projectRoot = rawTarget;
   }
@@ -140,7 +142,7 @@ export function createRepositoryContext(
 
   let gitRepositoryRoot: string;
   try {
-    gitRepositoryRoot = fs.realpathSync(rawGitRoot);
+    gitRepositoryRoot = fs.realpathSync.native(rawGitRoot);
   } catch {
     gitRepositoryRoot = rawGitRoot;
   }
