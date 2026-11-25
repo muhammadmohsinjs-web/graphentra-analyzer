@@ -84,6 +84,8 @@ export const impactReportSchema = z
     testAreas: z.array(testAreaSchema).min(1).max(5).optional(),
     notCovered: z.array(notCoveredItemSchema).optional(),
     notCoveredChecks: z.array(notCoveredCheckSchema).optional(),
+    /** R-10: lower-priority checks, most likely first, shown after the main checks (kept, never dropped, when the main list is capped). */
+    moreChecks: z.array(z.string().trim()).optional(),
   })
   .strict();
 
@@ -220,6 +222,10 @@ export function formatImpactReport(report: ImpactReport): string {
 
   if (report.uncertainty.length > 0) {
     lines.push('', 'Uncertainty:', ...report.uncertainty.map(item => `- ${item}`));
+  }
+
+  if (report.moreChecks?.length) {
+    lines.push('', `If time allows (${report.moreChecks.length} more inputs this release handles differently, most likely first):`, ...report.moreChecks.map(check => `- ${check}`));
   }
 
   if (report.notCovered?.length) {

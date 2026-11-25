@@ -59,6 +59,8 @@ export interface ClusterOptions {
    * A failed trigger call never fails the group. Default off.
    */
   triggers?: boolean;
+  /** Trigger checks in the main list; the rest, in rank order, go to `moreChecks`. Default 15 (`TRIGGER_CAP`). */
+  triggerCap?: number;
 }
 
 export interface ChangeGroup {
@@ -415,24 +417,46 @@ export async function generateTriggers(
   });
 }
 
-/** The group report with its trigger checks as one more test area; checks already in the report are not repeated. */
-export function withTriggers(report: ImpactReport, triggers: readonly Trigger[]): ImpactReport {
-  const have = new Set((report.testAreas?.length ? report.testAreas.flatMap(area => area.checks) : report.qaChecks).map(norm));
-  const checks = [...new Set(triggers.map(trigger => trigger.check))].filter(check => !have.has(norm(check)));
-  if (!checks.length) return report;
-  const existing: TestArea[] = report.testAreas?.length ? report.testAreas
-    : [{ area: 'Changed behaviour', surfaceIds: [], howToReach: 'Use the screens named in each check.', access: 'Any user who can reach them.', setup: 'None.', checks: report.qaChecks }];
-  const added: TestArea = { area: TRIGGER_AREA, surfaceIds: [], howToReach: 'Use the screen or action named in each check.',
-    access: 'Same access as the rest of this report.', setup: 'Use the exact input named in each check.', checks };
-  return { ...report, testAreas: [...existing, added], qaChecks: [...report.qaChecks, ...checks] };
+/**
+ * Order of trigger checks, most likely to matter first: the changed function with more changed lines first, then the
+ * one with the larger blast radius. On the large commits of corpus-31 and R-11 (41 with the faulty function among the
+ * changes) this put the faulty function in the top 10 in 26 and the top 15 in 31; chance gives 10 and 16. Blast radius
+ * alone, dependents and surfaces were no better than chance.
+ */
+export function rankTriggers(triggers: readonly Trigger[], impacts: readonly EntityImpact[]): Trigger[] {
+  const byId = new Map(impacts.map(impact => [impact.changedEntity.id, impact]));
+  const score = (trigger: Trigger) => { const impact = byId.get(trigger.changedFunction); return impact ? [impact.change.changedLines.length, impact.blastRadius.totalAffectedEntities] : [0, 0]; };
+  return [...triggers].sort((a, b) => { const [la, ba] = score(a); const [lb, bb] = score(b); return lb! - la! || bb! - ba! || compare(a.changedFunction, b.changedFunction); });
+}
+
+export const TRIGGER_CAP = 15;
+
+/**
+ * Adds ranked trigger checks to the merged report: the first `cap` as test areas after the review's own, the rest as
+ * `moreChecks` ("if time allows"). Nothing is dropped except exact repeats of a check already in the report.
+ */
+export function placeTriggers(report: ImpactReport, ranked: readonly Trigger[], cap: number = TRIGGER_CAP): { report: ImpactReport; placed: Array<{ changedFunction: string; check: string; main: boolean }> } {
+  const have = new Set(report.qaChecks.map(norm));
+  const fresh = ranked.filter(trigger => { const key = norm(trigger.check); if (have.has(key)) return false; have.add(key); return true; });
+  const main = fresh.slice(0, Math.max(0, cap)).map(trigger => trigger.check);
+  const more = fresh.slice(Math.max(0, cap)).map(trigger => trigger.check);
+  const areas: TestArea[] = Array.from({ length: Math.ceil(main.length / 4) }, (_, i) => ({ area: TRIGGER_AREA, surfaceIds: [],
+    howToReach: 'Use the screen or action named in each check.', access: 'Same access as the rest of this report.',
+    setup: 'Use the exact input named in each check.', checks: main.slice(i * 4, i * 4 + 4) }));
+  const placed = fresh.map((trigger, i) => ({ changedFunction: trigger.changedFunction, check: trigger.check, main: i < cap }));
+  if (!fresh.length) return { report, placed };
+  return { report: { ...report, ...(areas.length ? { testAreas: [...(report.testAreas ?? []), ...areas] } : {}), qaChecks: [...report.qaChecks, ...main],
+    ...(more.length ? { moreChecks: [...(report.moreChecks ?? []), ...more] } : {}) }, placed };
 }
 
 export interface ClusterRunInfo {
   changed: number;
   groups: ClusterGroupInfo[];
-  /** Checks in the group reports and in the merged report; the same number means nothing was lost. */
+  /** Checks in the group reports and in the merged report (before trigger checks); the same number means nothing was lost. */
   checksIn: number;
   checksOut: number;
+  /** With `triggers`: every trigger check in rank order, and whether it is in the main list or in `moreChecks`. */
+  triggers?: Array<{ changedFunction: string; check: string; main: boolean }>;
 }
 
 export interface ClusterReportInput {
@@ -494,10 +518,9 @@ export async function generateClusterReport(input: ClusterReportInput): Promise<
       ? generateTriggers(group, compact, related.code, options).then(list => ({ list, error: undefined as string | undefined }), (error: Error) => ({ list: [] as Trigger[], error: error.message }))
       : undefined;
     const reviewed = await review(group, evidence, payload.applicationContext.allowedSurfaceIds);
-    if (!triggered || !reviewed.report) return { group, related, ...reviewed, triggers: undefined, triggerError: undefined as string | undefined };
+    if (!triggered || !reviewed.report) return { group, related, ...reviewed, triggerList: undefined as Trigger[] | undefined, triggerError: undefined as string | undefined };
     const { list, error } = await triggered;
-    const report = withTriggers(reviewed.report, list);
-    return { group, related, ...reviewed, report, triggers: report.qaChecks.length - reviewed.report.qaChecks.length, triggerError: error };
+    return { group, related, ...reviewed, triggerList: list, triggerError: error };
   });
   async function review(group: ChangeGroup, evidence: Record<string, unknown>, allowedSurfaceIds: string[]): Promise<{ report: ImpactReport | undefined; attempts: number; error: string | undefined }> {
     // A failed review (an invalid report after the client's own retries, or a provider error such as a credit limit) is
@@ -523,18 +546,21 @@ export async function generateClusterReport(input: ClusterReportInput): Promise<
     index: outcome.group.index, changed: outcome.group.impacts.length, sharedConsumers: outcome.group.sharedConsumers,
     relatedEntities: outcome.related.code.length, relatedBytes: outcome.related.bytes, relatedTruncated: outcome.related.truncated,
     ok: Boolean(outcome.report), attempts: outcome.attempts, ...(outcome.error ? { error: outcome.error.slice(0, 300) } : {}),
-    ...(outcome.triggers !== undefined ? { triggers: outcome.triggers } : {}), ...(outcome.triggerError ? { triggerError: outcome.triggerError.slice(0, 300) } : {}),
+    ...(outcome.triggerList ? { triggers: outcome.triggerList.length } : {}), ...(outcome.triggerError ? { triggerError: outcome.triggerError.slice(0, 300) } : {}),
   });
   if (!reviewed.length) throw new Error(`Every group review failed (${groups.length} groups). First error: ${outcomes[0]?.error ?? 'none'}`);
   const reports = reviewed.map(outcome => outcome.report!);
-  const report = mergeGroupReports(reports, await summarize(reports.map(r => r.summary), options));
+  const merged = mergeGroupReports(reports, await summarize(reports.map(r => r.summary), options));
+  const checksOut = new Set(merged.qaChecks.map(norm)).size;
+  const triggerList = reviewed.flatMap(outcome => outcome.triggerList ?? []);
+  const { report, placed } = cluster.triggers ? placeTriggers(merged, rankTriggers(triggerList, impacts), cluster.triggerCap ?? TRIGGER_CAP) : { report: merged, placed: undefined };
   const notCovered: NotCoveredItem[] = outcomes.filter(outcome => !outcome.report).flatMap(outcome =>
     outcome.group.impacts.map(impact => impact.changedEntity).filter(entity => getSourceRole(entity.file) === 'production')
       .map(entity => ({ entity: entity.id, name: entity.name, file: entity.file, reason: 'error' as const, score: null })));
   const checksIn = new Set(reports.flatMap(r => (r.testAreas?.length ? r.testAreas.flatMap(a => a.checks) : r.qaChecks).map(norm))).size;
   return {
     report: notCovered.length ? { ...report, notCovered } : report,
-    info: { changed: impacts.length, groups: outcomes.map(infoFor), checksIn, checksOut: new Set(report.qaChecks.map(norm)).size },
+    info: { changed: impacts.length, groups: outcomes.map(infoFor), checksIn, checksOut, ...(placed ? { triggers: placed } : {}) },
     notCovered,
   };
 }

@@ -2,7 +2,7 @@
 // Corpus-32 evaluation: analyzer recall, QA report catch/explain rates, and the lookup tool. Plan: impactbench/eval/PLAN.md.
 //
 //   node --import tsx tools/impactbench-report-eval.mts evidence --history <dir> --work <dir> [ids...]
-//   node --import tsx tools/impactbench-report-eval.mts run --history <dir> --work <dir> [--variants base,lookup,lookup-always,verify,cluster,cluster-triggers] [--cluster-concurrency 4] [--group-size 10] [--max-groups 8] [--runs 3] [--concurrency 6] [ids...]
+//   node --import tsx tools/impactbench-report-eval.mts run --history <dir> --work <dir> [--variants base,lookup,lookup-always,verify,cluster,cluster-triggers] [--cluster-concurrency 4] [--group-size 10] [--max-groups 8] [--trigger-cap 15] [--runs 3] [--concurrency 6] [ids...]
 //   (openai/* report models, e.g. openai/gpt-6-luna, call the OpenAI API directly with OPENAI_API_KEY; --provider openrouter forces the OpenRouter route. The judge and other models stay on OpenRouter.)
 //   (verify = base plus the Phase V verifier; needs OPENAI_API_KEY for the Decisions API. Rows gain usage.verifier, usage.repair, verification, audit.)
 //   node --import tsx tools/impactbench-report-eval.mts summary [--grades <hand-grades.jsonl> [--grades-model glm]]
@@ -325,7 +325,7 @@ async function oneReport(entry: Entry, variant: string, run: number) {
         // R-10: more than 15 changed functions are reviewed in groups; smaller changes take the base path.
         : variant.startsWith('cluster') ? { cluster: {
           // cluster-triggers: each group also names the input each changed function now handles differently (one check each).
-          read, triggers: variant === 'cluster-triggers', concurrency: Number(flag('cluster-concurrency', '4')),
+          read, triggers: variant === 'cluster-triggers', ...(flag('trigger-cap') ? { triggerCap: Number(flag('trigger-cap')) } : {}), concurrency: Number(flag('cluster-concurrency', '4')),
           // The base revision supplies the code of changed functions that no longer exist at the analyzed one (removed or renamed away).
           readBase: (file: string) => { try { return execFileSync('git', ['-C', path.join(history!, entry.repo), 'show', `${entry.introducer.sha}^:${file}`], { encoding: 'utf8', maxBuffer: 1 << 26, stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return undefined; } },
           ...(flag('group-size') ? { maxGroupSize: Number(flag('group-size')) } : {}), ...(flag('max-groups') ? { maxGroups: Number(flag('max-groups')) } : {}),

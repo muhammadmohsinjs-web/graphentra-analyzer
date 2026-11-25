@@ -5,7 +5,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { test } from 'node:test';
 import { analyzeRepository, buildGraphIndex, type Entity, type EntityImpact, type Relation } from '@graphentra/analyzer';
-import { clusterChanges, generateQAReport, mergeGroupReports, relatedCodeFor, TRIGGER_AREA, type ImpactReport } from '../src/index';
+import { clusterChanges, generateQAReport, mergeGroupReports, placeTriggers, rankTriggers, relatedCodeFor, TRIGGER_AREA, type ImpactReport } from '../src/index';
 
 const entity = (id: string, startLine = 1): Entity => {
   const [file, name] = id.split('#') as [string, string];
@@ -283,10 +283,17 @@ test('triggers add one check per changed function to each group and drop invalid
     assert.ok(calls.every(call => call.user.relatedCode && call.user.changes.every((c: any) => 'change' in c)), 'the diff and the related code are sent');
     assert.ok(result.cluster!.groups.every(g => g.ok && g.triggers === 6 && !g.triggerError), 'the unknown function and the code-named check are dropped');
     const area = result.qaReport.testAreas!.filter(a => a.area === TRIGGER_AREA);
-    assert.equal(area.flatMap(a => a.checks).length, 18);
+    assert.equal(area.flatMap(a => a.checks).length, 15, 'the main list is capped at 15 trigger checks');
     assert.ok(area.every(a => a.checks.length <= 4), 'a long area continues in further entries');
-    assert.equal(result.qaReport.qaChecks.length, 21, 'review checks and trigger checks are all kept');
+    assert.equal(result.qaReport.moreChecks!.length, 3, 'the rest move to moreChecks, none is dropped');
+    assert.equal(result.qaReport.qaChecks.length, 18);
+    assert.equal(result.cluster!.triggers!.length, 18);
+    assert.deepEqual(result.cluster!.triggers!.filter(t => !t.main).map(t => t.check), result.qaReport.moreChecks);
+    assert.ok(result.markdownReport.includes('If time allows (3 more inputs'), 'the overflow is visible to the tester');
     assert.equal(result.cluster!.checksIn, result.cluster!.checksOut);
+    const uncapped = await generateQAReport(repo.evidence, context, { client: fakeProvider().client, model: 'offline' }, { cluster: { read, triggers: true, triggerCap: 100 } });
+    assert.equal(uncapped.qaReport.qaChecks.length, 21);
+    assert.equal(uncapped.qaReport.moreChecks, undefined);
   } finally { repo.cleanup(); }
 });
 
@@ -299,4 +306,16 @@ test('a failed trigger call never fails its group', async t => {
     assert.equal(result.qaReport.notCovered, undefined);
     assert.ok(result.cluster!.groups.every(g => g.ok && g.triggers === 0 && /refused triggers/.test(g.triggerError ?? '')));
   } finally { repo.cleanup(); }
+});
+
+test('trigger checks rank by changed lines, then blast radius, and only exact repeats are dropped', () => {
+  const impact = (id: string, lines: number, blast: number) => ({ changedEntity: { id }, change: { changedLines: Array.from({ length: lines }, (_, i) => i + 1) }, blastRadius: { totalAffectedEntities: blast } }) as unknown as EntityImpact;
+  const trigger = (id: string) => ({ changedFunction: id, behaviourChange: 'x', input: 'x', before: 'x', after: 'x', check: `Verify input ${id.length} for ${id.replace(/\W/g, ' ')}.` });
+  const ranked = rankTriggers([trigger('a'), trigger('bb'), trigger('ccc'), trigger('dddd')], [impact('a', 1, 50), impact('bb', 9, 0), impact('ccc', 1, 99), impact('dddd', 9, 3)]);
+  assert.deepEqual(ranked.map(t => t.changedFunction), ['dddd', 'bb', 'ccc', 'a']);
+  const base: ImpactReport = { summary: 'S.', keyChanges: ['K.'], qaChecks: [ranked[1]!.check], uncertainty: [], testAreas: [area('Page', [ranked[1]!.check])] };
+  const { report, placed } = placeTriggers(base, ranked, 1);
+  assert.deepEqual(placed.map(p => [p.changedFunction, p.main]), [['dddd', true], ['ccc', false], ['a', false]], 'the repeat of a report check is not added twice');
+  assert.deepEqual(report.qaChecks, [ranked[1]!.check, ranked[0]!.check]);
+  assert.deepEqual(report.moreChecks, [ranked[2]!.check, ranked[3]!.check]);
 });
