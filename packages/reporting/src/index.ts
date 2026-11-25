@@ -7,6 +7,7 @@ export * from './qa-evidence';
 export * from './compact-payload';
 export * from './application-context';
 export * from './cluster-report';
+export * from './trim-payload';
 export * from './report-generator';
 export * from './surface-evidence';
 export * from './code-lookup';

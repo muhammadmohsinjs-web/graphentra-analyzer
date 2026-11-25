@@ -28,7 +28,8 @@ export const notCoveredItemSchema = z
     entity: z.string(),
     name: z.string(),
     file: z.string(),
-    reason: z.enum(['low_score', 'refusal', 'error', 'missing']),
+    /** `trimmed` (R-3): a dependent cut from the evidence so the call fit the model; the model never saw it. */
+    reason: z.enum(['low_score', 'refusal', 'error', 'missing', 'trimmed']),
     score: z.number().nullable(),
   })
   .strict();
