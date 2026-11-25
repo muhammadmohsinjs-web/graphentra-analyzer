@@ -9,6 +9,9 @@ import { BaselineSourceError } from '../src/errors';
 import { createRepositoryContext } from '../src/repository';
 import { createRepo } from './helpers/git-fixture';
 
+// The git spy is a #!/bin/sh wrapper found through `which`; Windows can run neither.
+const WINDOWS_SKIP = process.platform === 'win32' && 'needs a POSIX shell';
+
 /** Counts git spawns by subcommand while `run` executes, using a logging `git` wrapper first on PATH. */
 function countGit<T>(run: () => T): { result: T; counts: Record<string, number> } {
   const realGit = childProcess.execFileSync('which', ['git'], { encoding: 'utf8' }).trim();
@@ -28,7 +31,7 @@ function countGit<T>(run: () => T): { result: T; counts: Record<string, number> 
   }
 }
 
-test('batched baseline reads return the same bytes and errors as unbatched reads', () => {
+test('batched baseline reads return the same bytes and errors as unbatched reads', { skip: WINDOWS_SKIP }, () => {
   const repo = createRepo();
   try {
     const files: Record<string, Buffer> = {
@@ -64,7 +67,7 @@ test('batched baseline reads return the same bytes and errors as unbatched reads
   } finally { repo.cleanup(); }
 });
 
-test('files over the byte limit are not buffered by the batch', () => {
+test('files over the byte limit are not buffered by the batch', { skip: WINDOWS_SKIP }, () => {
   const repo = createRepo();
   try {
     repo.commitFile('big.txt', 'x'.repeat(5000));

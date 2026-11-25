@@ -110,7 +110,8 @@ test('D10: compilerOptions.plugins in the target tsconfig is never loaded or exe
   } finally { repo.cleanup(); fs.rmSync(markerDir, { recursive: true, force: true }); }
 });
 
-test('hostile repository: analysis finishes, evidence validates and every skip is recorded', () => {
+// Symlinks to /etc/hosts and between files need POSIX paths and symlink rights that Windows runners lack.
+test('hostile repository: analysis finishes, evidence validates and every skip is recorded', { skip: process.platform === 'win32' && 'POSIX symlinks' }, () => {
   const repo = createRepo('graphentra-hostile-');
   try {
     const write = (name: string, content: string | Buffer) => fs.writeFileSync(path.join(repo.dir, name), content);

@@ -100,7 +100,8 @@ test('nested target ignores parent tsconfig and sibling source', () => {
   } finally { repo.cleanup(); }
 });
 
-for (const name of ['space file.ts', 'quote"file.ts', '日本語.ts', 'tab\tfile.ts']) {
+// Windows forbids tab and " in file names.
+for (const name of ['space file.ts', 'quote"file.ts', '日本語.ts', 'tab\tfile.ts'].filter(name => process.platform !== 'win32' || !/[\t"]/.test(name))) {
   test(`untracked source is rejected independent of Git quoting: ${JSON.stringify(name)}`, () => {
     const repo = createRepo();
     try {

@@ -142,7 +142,8 @@ export function captureSourceSnapshot(
     moduleResolution: ts.ModuleResolutionKind.Node10, jsx: ts.JsxEmit.ReactJSX,
   };
   if (configText !== undefined) {
-    const config = ts.parseConfigFileTextToJson(configPath, configText);
+    // TypeScript checks diagnostics against its own forward-slash path; a Windows backslash path fails a Debug assert.
+    const config = ts.parseConfigFileTextToJson(path.sep === '\\' ? configPath.replace(/\\/g, '/') : configPath, configText);
     if (config.error) throw new GraphentraError('Invalid target tsconfig.json.', 'INVALID_OPTIONS');
     const parsed = ts.parseJsonConfigFileContent(config.config, { ...ts.sys, readFile, fileExists }, repo.projectRoot);
     // Empty include sets are permitted: Git inventory determines extraction scope.

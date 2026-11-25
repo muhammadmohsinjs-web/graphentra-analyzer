@@ -123,7 +123,7 @@ test('malformed files never throw and are skipped', () => {
 
 test('uncertified major and sorting, readFile injection', () => {
   const files: Record<string, string> = {
-    '/r/package.json': JSON.stringify({ dependencies: { next: '12.3.0', koa: '^2.0.0' }, devDependencies: { express: '^4.18.0', '@nestjs/core': '^10.0.0' } }),
+    [path.join('/r', 'package.json')]: JSON.stringify({ dependencies: { next: '12.3.0', koa: '^2.0.0' }, devDependencies: { express: '^4.18.0', '@nestjs/core': '^10.0.0' } }),
   };
   const d = detectFrameworkVersions({ projectRoot: '/r', repoRoot: '/r', readFile: (p) => files[p] });
   assert.deepEqual(d.map((x) => x.framework), ['@nestjs/core', 'express', 'koa', 'next']);

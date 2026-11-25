@@ -5,7 +5,9 @@ import { test } from 'node:test';
 import { analyzeRepository } from '../src/analyze';
 import { createRepo } from './helpers/git-fixture';
 
-for (const name of ['space file.ts', 'tab\tfile.ts', 'quote"file.ts', 'slash\\file.ts', '日本語.ts', 'emoji😀.ts']) {
+// Windows forbids tab, " and \ in file names.
+const WINDOWS_ILLEGAL = /[\t"\\]/;
+for (const name of ['space file.ts', 'tab\tfile.ts', 'quote"file.ts', 'slash\\file.ts', '日本語.ts', 'emoji😀.ts'].filter(name => process.platform !== 'win32' || !WINDOWS_ILLEGAL.test(name))) {
   test(`untracked addition yields function impact for ${JSON.stringify(name)}`, () => {
     const repo = createRepo();
     try {

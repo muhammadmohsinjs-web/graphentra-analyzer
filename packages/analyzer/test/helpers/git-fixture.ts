@@ -4,7 +4,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 
 export function createRepo(name = 'graphentra-rev-') {
-  const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), name)));
+  const dir = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), name)));
   const env = { ...process.env };
   for (const key of Object.keys(env)) if (key.startsWith('GIT_')) delete env[key];
   Object.assign(env, { GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: path.join(dir, '.no-gitconfig'),
@@ -23,5 +23,5 @@ export function createRepo(name = 'graphentra-rev-') {
     git(['commit', '-m', message]);
     return git(['rev-parse', 'HEAD']);
   };
-  return { dir, git, commitFile, cleanup: () => fs.rmSync(dir, { recursive: true, force: true }) };
+  return { dir, git, commitFile, cleanup: () => fs.rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }) };
 }

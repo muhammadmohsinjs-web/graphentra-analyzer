@@ -78,7 +78,8 @@ export function createBaselineSnapshot(
   }
   let compilerOptions: ts.CompilerOptions | undefined;
   if (configText !== undefined) {
-    const config = ts.parseConfigFileTextToJson(configPath, configText);
+    // TypeScript checks diagnostics against its own forward-slash path; a Windows backslash path fails a Debug assert.
+    const config = ts.parseConfigFileTextToJson(path.sep === '\\' ? configPath.replace(/\\/g, '/') : configPath, configText);
     if (!config.error) {
       const parsed = ts.parseJsonConfigFileContent(config.config,
         { ...ts.sys, readFile, fileExists, readDirectory: () => [] }, repo.projectRoot);
