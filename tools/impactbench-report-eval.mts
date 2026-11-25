@@ -2,13 +2,15 @@
 // Corpus-32 evaluation: analyzer recall, QA report catch/explain rates, and the lookup tool. Plan: impactbench/eval/PLAN.md.
 //
 //   node --import tsx tools/impactbench-report-eval.mts evidence --history <dir> --work <dir> [ids...]
-//   node --import tsx tools/impactbench-report-eval.mts run --history <dir> --work <dir> [--variants base,lookup,lookup-always,verify] [--runs 3] [--concurrency 6] [ids...]
+//   node --import tsx tools/impactbench-report-eval.mts run --history <dir> --work <dir> [--variants base,lookup,lookup-always,verify,cluster,cluster-triggers] [--cluster-concurrency 4] [--group-size 10] [--max-groups 8] [--trigger-cap 15] [--runs 3] [--concurrency 6] [ids...]
 //   (openai/* report models, e.g. openai/gpt-6-luna, call the OpenAI API directly with OPENAI_API_KEY; --provider openrouter forces the OpenRouter route. The judge and other models stay on OpenRouter.)
 //   (verify = base plus the Phase V verifier; needs OPENAI_API_KEY for the Decisions API. Rows gain usage.verifier, usage.repair, verification, audit.)
 //   node --import tsx tools/impactbench-report-eval.mts summary [--grades <hand-grades.jsonl> [--grades-model glm]]
 //   (--grades: catch/explained from hand grades, matched on id and run, instead of the API judge. Summary also prints R-0 band tables.)
 //   node --import tsx tools/impactbench-report-eval.mts sections --work <dir> [--json <file>] [ids...]
 //   (R-0: bytes and estimated tokens per payload section, as sent and compact. No LLM calls.)
+//   node --import tsx tools/impactbench-report-eval.mts cluster-plan --history <dir> --work <dir> [--threshold 15] [ids...]
+//   (R-10, free: groups and request sizes for the cluster variant, through the real report path with a canned provider. No LLM calls.)
 //
 // Any command takes --corpus <file> (default impactbench/corpus/d0-corpus.json) and --data <dir>; the R-11 large-change set is
 //   --corpus impactbench/corpus/r11-large.json --data impactbench/eval/data-r11
@@ -301,7 +303,7 @@ async function oneReport(entry: Entry, variant: string, run: number) {
   const { client, meter } = meteredClient(REPORT_MODEL);
   const { client: judgeClient, meter: judgeMeter } = meteredClient(JUDGE_MODEL);
   const read = (file: string) => { try { return execFileSync('git', ['-C', path.join(history!, entry.repo), 'show', `${entry.introducer.sha}:${file}`], { encoding: 'utf8', maxBuffer: 1 << 26, stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return undefined; } };
-  const lookup = variant === 'base' || variant === 'verify' ? undefined : { read, style: variant === 'lookup-always' ? 'always' as const : 'optional' as const };
+  const lookup = variant === 'base' || variant === 'verify' || variant.startsWith('cluster') ? undefined : { read, style: variant === 'lookup-always' ? 'always' as const : 'optional' as const };
   // verify = base + the Phase V verifier ("Not covered" list; no repair round since V-13). Same report model and judge as base.
   const decisions = variant === 'verify' ? meteredDecisionClient(createOpenAIDecisionClient({ apiKey: process.env.OPENAI_API_KEY })) : undefined;
   let verification: ReportVerification | undefined;
@@ -319,12 +321,21 @@ async function oneReport(entry: Entry, variant: string, run: number) {
       if (large.findings?.length) { const g: any = await judge(entry, { summary: '', keyChanges: [], uncertainty: [], testAreas: [{ area: 'findings', checks: large.findings }] }, judgeClient); row.findingsCatch = g.catch; }
     } else {
     const result = await generateQAReport(raw, context, { client, model: REPORT_MODEL, logLevel: 'off' },
-      lookup ? { lookup } : decisions ? { verify: { client: decisions.client } } : {});
+      // Non-cluster variants keep the single-report path they measure (cluster is on by default in generateQAReport).
+      lookup ? { lookup, cluster: false } : decisions ? { verify: { client: decisions.client }, cluster: false }
+        // R-10: more than 15 changed functions are reviewed in groups; smaller changes take the base path.
+        : variant.startsWith('cluster') ? { cluster: {
+          // cluster-triggers: each group also names the input each changed function now handles differently (one check each).
+          read, triggers: variant === 'cluster-triggers', ...(flag('trigger-cap') ? { triggerCap: Number(flag('trigger-cap')) } : {}), concurrency: Number(flag('cluster-concurrency', '4')),
+          // The base revision supplies the code of changed functions that no longer exist at the analyzed one (removed or renamed away).
+          readBase: (file: string) => { try { return execFileSync('git', ['-C', path.join(history!, entry.repo), 'show', `${entry.introducer.sha}^:${file}`], { encoding: 'utf8', maxBuffer: 1 << 26, stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return undefined; } },
+          ...(flag('group-size') ? { maxGroupSize: Number(flag('group-size')) } : {}), ...(flag('max-groups') ? { maxGroups: Number(flag('max-groups')) } : {}),
+        } } : { cluster: false });
     console.info = quiet;
     logs.push(...(result.lookups ?? []));
     verification = result.verification;
     const grade = await judge(entry, result.qaReport, judgeClient);
-    row = { ...row, valid: true, ...grade, report: result.qaReport };
+    row = { ...row, valid: true, ...grade, report: result.qaReport, ...(result.cluster ? { cluster: result.cluster } : {}) };
     }
   } catch (error) {
     console.info = quiet;
@@ -401,7 +412,7 @@ if (command === 'evidence') {
   const jobs = selected.flatMap(entry => variants.flatMap(variant => Array.from({ length: runs }, (_, i) => ({ entry, variant, run: i + 1 }))))
     .filter(job => !done.has(`${job.entry.id}|${job.variant}|${job.run}`) && fs.existsSync(evidenceFile(job.entry.id)))
     // --lookup-max-kb: skip tool variants on payloads above this size (each lookup round resends the payload).
-    .filter(job => job.variant === 'base' || job.variant === 'verify' || !flag('lookup-max-kb') || payloadKb(job.entry.id) <= Number(flag('lookup-max-kb')))
+    .filter(job => job.variant === 'base' || job.variant === 'verify' || job.variant.startsWith('cluster') || !flag('lookup-max-kb') || payloadKb(job.entry.id) <= Number(flag('lookup-max-kb')))
     // --skip-started: leave commits that already have rows alone (budget runs cover only untouched commits).
     .filter(job => !rest.includes('--skip-started') || ![...done].some(key => key.startsWith(`${job.entry.id}|`)));
   console.log(`${jobs.length} reports to run with ${REPORT_MODEL}, ${NO_JUDGE ? 'not judged (--no-judge)' : `judged by ${JUDGE_MODEL}`}`);
@@ -441,6 +452,38 @@ if (command === 'evidence') {
     }
   }
   if (flag('json')) { fs.writeFileSync(path.resolve(flag('json')!), `${JSON.stringify(all, null, 1)}\n`); console.log(`\nwrote ${flag('json')}`); }
+} else if (command === 'cluster-plan') {
+  // R-10, free: runs the real report path with a recording client that returns a canned report, so no model is called.
+  // Shows, per commit, how the changed functions are grouped and how big each group's request is next to the one-call request.
+  need(flag('work'), 'work'); need(flag('history'), 'history');
+  const kb = (b: number) => (b / 1024).toFixed(1);
+  const canned = { summary: 'The release changes behaviour.', keyChanges: ['A value changed.'], testAreas: [{ area: 'Area', surfaceIds: [], howToReach: 'Open the page.', access: 'Anyone.', setup: 'None.', checks: ['Verify the value.'] }], uncertainty: [] };
+  const recorder = () => {
+    const sent: number[] = [];
+    const client: any = { chat: { completions: { create: (body: any) => {
+      sent.push(body.messages.reduce((n: number, m: any) => n + Buffer.byteLength(String(m.content)), 0));
+      const content = JSON.stringify(body.response_format.json_schema.name === 'qa_cluster_summary' ? { summary: canned.summary } : canned);
+      const completion = { id: 'plan', model: 'plan', choices: [{ finish_reason: 'stop', message: { content } }], usage: { prompt_tokens: 0, completion_tokens: 0 } };
+      const promise: any = Promise.resolve(completion); promise.withResponse = async () => ({ data: completion, request_id: 'plan' }); return promise;
+    } } } };
+    return { client, sent };
+  };
+  console.log('commit'.padEnd(16) + 'changed  groups  group sizes                    related KB (trunc)  one call KB  largest group KB  sum of groups KB');
+  for (const entry of selected.filter(e => fs.existsSync(evidenceFile(e.id)))) {
+    const raw = loadEvidence(entry.id); const context = fixContext(contextFor(entry, readEvidence(raw).technicalGraph));
+    const readAt = (file: string) => { try { return execFileSync('git', ['-C', path.join(history!, entry.repo), 'show', `${entry.introducer.sha}:${file}`], { encoding: 'utf8', maxBuffer: 1 << 26, stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return undefined; } };
+    const one = recorder(); const many = recorder();
+    const quietInfo = console.info; console.info = () => {};
+    try {
+      await generateQAReport(raw, context, { client: one.client, model: 'plan', logLevel: 'off' }, { cluster: false });
+      const result = await generateQAReport(raw, context, { client: many.client, model: 'plan', logLevel: 'off' }, { cluster: { read: readAt, readBase: (file: string) => { try { return execFileSync('git', ['-C', path.join(history!, entry.repo), 'show', `${entry.introducer.sha}^:${file}`], { encoding: 'utf8', maxBuffer: 1 << 26, stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return undefined; } }, threshold: Number(flag('threshold', '15')), ...(flag('group-size') ? { maxGroupSize: Number(flag('group-size')) } : {}), ...(flag('max-groups') ? { maxGroups: Number(flag('max-groups')) } : {}) } });
+      console.info = quietInfo;
+      const groups = result.cluster?.groups ?? [];
+      const reviews = many.sent.slice(0, groups.length || 1);
+      if (flag('verbose')) console.log(`   related entities per group: ${groups.map(g => g.relatedEntities).join(',')}`);
+      console.log(`${entry.id.padEnd(16)}${String(readEvidence(raw).impacts.length).padStart(7)}${String(groups.length || 1).padStart(8)}  ${(groups.map(g => g.changed).join(',') || 'single call').padEnd(30)} ${(groups.reduce((n, g) => n + g.relatedBytes, 0) / 1024).toFixed(0).padStart(8)} (${groups.filter(g => g.relatedTruncated).length})${kb(one.sent[0]!).padStart(16)}${kb(Math.max(...reviews)).padStart(18)}${kb(reviews.reduce((a, b) => a + b, 0)).padStart(18)}`);
+    } catch (error) { console.info = quietInfo; console.log(`${entry.id.padEnd(16)} ERROR ${(error as Error).message.slice(0, 120)}`); }
+  }
 } else if (command === 'summary') {
   const rows = fs.readFileSync(RUNS, 'utf8').trim().split('\n').map(line => JSON.parse(line));
   // --grades: hand grades (manual judging) replace catch/explained on matching (id, run) rows; --grades-model keeps one model's grades.

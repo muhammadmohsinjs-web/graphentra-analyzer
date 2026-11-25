@@ -196,10 +196,14 @@ export async function runReport(argv: string[] = process.argv.slice(2), dependen
       console.log(result.summaryMessage);
       return;
     }
+    const headSha = comparison.mode === 'working-tree' ? undefined : result.evidence.sourceState.checkoutSha;
+    const baseSha = result.evidence.comparison.resolvedBaseSha;
     const report = await withLLMLoader(verify ? 'QA impact report (verified)' : 'QA impact report', model,
       () => generateQAReport(result.evidence, lifecycle.context, llmOptions, {
         applicationMap: result.applicationMap,
-        ...(options.lookup ? { lookup: { read: sourceReader(target, comparison.mode === 'working-tree' ? undefined : result.evidence.sourceState.checkoutSha) } } : {}),
+        // R-10: changes of more than 15 functions are reviewed in groups, each with its changed, calling and called code.
+        cluster: { read: sourceReader(target, headSha), ...(baseSha ? { readBase: sourceReader(target, baseSha) } : {}) },
+        ...(options.lookup ? { lookup: { read: sourceReader(target, headSha) } } : {}),
         ...(decisionClient ? { verify: { client: decisionClient } } : {}),
       }));
     if (report.verification) console.log(describeVerification(report.verification));

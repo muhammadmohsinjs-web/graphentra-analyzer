@@ -3,12 +3,12 @@
   "id": "r11-consola-01",
   "repo": "consola",
   "changeClass": "plain-logic",
-  "seconds": 1.1,
+  "seconds": 1.2,
   "outcome": "completed",
   "impacts": 30,
   "blastTotal": 12,
   "receivers": 0,
-  "payloadBytes": 101963,
+  "payloadBytes": 103223,
   "truth": [
    {
     "id": "src/utils/chalk.js#chalkBgColor",
@@ -31,7 +31,7 @@
   "impacts": 40,
   "blastTotal": 47,
   "receivers": 28,
-  "payloadBytes": 508214,
+  "payloadBytes": 509994,
   "truth": [
    {
     "id": "src/renderer/renderScene.ts#renderScene",
@@ -54,7 +54,7 @@
   "impacts": 34,
   "blastTotal": 69,
   "receivers": 18,
-  "payloadBytes": 643414,
+  "payloadBytes": 644814,
   "truth": [
    {
     "id": "src/element/handlerRectangles.ts#handlerRectangles",
@@ -72,12 +72,12 @@
   "id": "r11-excalidraw-03",
   "repo": "excalidraw",
   "changeClass": "plain-logic",
-  "seconds": 2.3,
+  "seconds": 2.4,
   "outcome": "completed",
   "impacts": 42,
   "blastTotal": 66,
   "receivers": 52,
-  "payloadBytes": 653484,
+  "payloadBytes": 655184,
   "truth": [
    {
     "id": "src/actions/actionGroup.ts#actionGroup.perform",
@@ -95,12 +95,12 @@
   "id": "r11-excalidraw-04",
   "repo": "excalidraw",
   "changeClass": "plain-logic",
-  "seconds": 2.4,
+  "seconds": 2.6,
   "outcome": "completed",
   "impacts": 54,
   "blastTotal": 123,
   "receivers": 31,
-  "payloadBytes": 972481,
+  "payloadBytes": 974701,
   "truth": [
    {
     "id": "src/element/linearElementEditor.ts#LinearElementEditor.handlePointerUp",
@@ -123,7 +123,7 @@
   "impacts": 28,
   "blastTotal": 50,
   "receivers": 53,
-  "payloadBytes": 374235,
+  "payloadBytes": 375415,
   "truth": [
    {
     "id": "src/components/App.tsx#App.handleCanvasPointerDown",
@@ -149,12 +149,12 @@
   "id": "r11-excalidraw-06",
   "repo": "excalidraw",
   "changeClass": "default-option",
-  "seconds": 3,
+  "seconds": 3.1,
   "outcome": "completed",
   "impacts": 126,
   "blastTotal": 140,
   "receivers": 46,
-  "payloadBytes": 1997385,
+  "payloadBytes": 2002485,
   "truth": [
    {
     "id": "src/packages/excalidraw/index.tsx#Excalidraw",
@@ -172,12 +172,12 @@
   "id": "r11-excalidraw-07",
   "repo": "excalidraw",
   "changeClass": "plain-logic",
-  "seconds": 2.4,
+  "seconds": 2.7,
   "outcome": "completed",
   "impacts": 32,
   "blastTotal": 69,
   "receivers": 24,
-  "payloadBytes": 521557,
+  "payloadBytes": 523037,
   "truth": [
    {
     "id": "src/components/App.tsx#App.initializeScene",
@@ -200,7 +200,7 @@
   "impacts": 210,
   "blastTotal": 249,
   "receivers": 40,
-  "payloadBytes": 7181029,
+  "payloadBytes": 7189968,
   "truth": [
    {
     "id": "src/components/App.tsx#App.handleTextWysiwyg",
@@ -231,7 +231,7 @@
   "impacts": 89,
   "blastTotal": 228,
   "receivers": 81,
-  "payloadBytes": 2688965,
+  "payloadBytes": 2692883,
   "truth": [
    {
     "id": "src/components/App.tsx#App.startTextEditing",
@@ -254,7 +254,7 @@
   "impacts": 61,
   "blastTotal": 168,
   "receivers": 100,
-  "payloadBytes": 1216561,
+  "payloadBytes": 1219061,
   "truth": [
    {
     "id": "src/element/Hyperlink.tsx#getCoordsForPopover",
@@ -280,12 +280,12 @@
   "id": "r11-excalidraw-11",
   "repo": "excalidraw",
   "changeClass": "plain-logic",
-  "seconds": 4.1,
+  "seconds": 4.2,
   "outcome": "completed",
   "impacts": 26,
   "blastTotal": 69,
   "receivers": 37,
-  "payloadBytes": 275859,
+  "payloadBytes": 276899,
   "truth": [
    {
     "id": "src/components/Actions.tsx#SelectedShapeActions",
@@ -303,12 +303,12 @@
   "id": "r11-excalidraw-12",
   "repo": "excalidraw",
   "changeClass": "same-signature-behavior",
-  "seconds": 4.5,
+  "seconds": 4.4,
   "outcome": "completed",
   "impacts": 26,
   "blastTotal": 116,
   "receivers": 6,
-  "payloadBytes": 814837,
+  "payloadBytes": 815897,
   "truth": [
    {
     "id": "src/data/json.ts#loadFromJSON",
@@ -339,7 +339,7 @@
   "impacts": 30,
   "blastTotal": 123,
   "receivers": 62,
-  "payloadBytes": 704768,
+  "payloadBytes": 706068,
   "truth": [
    {
     "id": "src/components/App.tsx#App.onPointerUpFromPointerDownHandler",
@@ -365,12 +365,12 @@
   "id": "r11-excalidraw-14",
   "repo": "excalidraw",
   "changeClass": "plain-logic",
-  "seconds": 4.5,
+  "seconds": 4.6,
   "outcome": "completed",
   "impacts": 27,
   "blastTotal": 62,
   "receivers": 13,
-  "payloadBytes": 953658,
+  "payloadBytes": 954778,
   "truth": [
    {
     "id": "src/renderer/renderScene.ts#_renderScene",
@@ -388,12 +388,12 @@
   "id": "r11-excalidraw-15",
   "repo": "excalidraw",
   "changeClass": "same-signature-behavior",
-  "seconds": 4.9,
+  "seconds": 4.8,
   "outcome": "completed",
   "impacts": 32,
   "blastTotal": 33,
   "receivers": 2,
-  "payloadBytes": 433647,
+  "payloadBytes": 434967,
   "truth": [
    {
     "id": "src/utils.ts#ReactChildrenToObject",
@@ -419,12 +419,12 @@
   "id": "r11-excalidraw-16",
   "repo": "excalidraw",
   "changeClass": "same-signature-behavior",
-  "seconds": 6,
+  "seconds": 5.5,
   "outcome": "completed",
   "impacts": 101,
   "blastTotal": 108,
   "receivers": 135,
-  "payloadBytes": 732396,
+  "payloadBytes": 737658,
   "truth": [
    {
     "id": "src/components/App.tsx#App.onPointerMoveFromPointerDownHandler",
@@ -447,7 +447,7 @@
   "impacts": 41,
   "blastTotal": 123,
   "receivers": 8,
-  "payloadBytes": 728587,
+  "payloadBytes": 730287,
   "truth": [
    {
     "id": "src/actions/actionCanvas.tsx#actionToggleHandTool",
@@ -473,12 +473,12 @@
   "id": "r11-excalidraw-18",
   "repo": "excalidraw",
   "changeClass": "plain-logic",
-  "seconds": 5.3,
+  "seconds": 5.4,
   "outcome": "completed",
   "impacts": 120,
   "blastTotal": 164,
   "receivers": 22,
-  "payloadBytes": 1581344,
+  "payloadBytes": 1587176,
   "truth": [
    {
     "id": "src/components/App.tsx#App.toggleSidebar",
@@ -496,12 +496,12 @@
   "id": "r11-excalidraw-19",
   "repo": "excalidraw",
   "changeClass": "same-signature-behavior",
-  "seconds": 7.1,
+  "seconds": 7,
   "outcome": "completed",
   "impacts": 45,
   "blastTotal": 78,
   "receivers": 103,
-  "payloadBytes": 949851,
+  "payloadBytes": 951691,
   "truth": [
    {
     "id": "packages/excalidraw/store.ts#isObservedAppState",
@@ -527,12 +527,12 @@
   "id": "r11-excalidraw-20",
   "repo": "excalidraw",
   "changeClass": "plain-logic",
-  "seconds": 6.3,
+  "seconds": 6.4,
   "outcome": "completed",
   "impacts": 103,
   "blastTotal": 82,
   "receivers": 184,
-  "payloadBytes": 776002,
+  "payloadBytes": 780242,
   "truth": [
    {
     "id": "packages/excalidraw/components/CommandPalette/CommandPalette.tsx#CommandPaletteInner",
@@ -550,12 +550,12 @@
   "id": "r11-excalidraw-21",
   "repo": "excalidraw",
   "changeClass": "plain-logic",
-  "seconds": 7.3,
+  "seconds": 7.2,
   "outcome": "completed",
   "impacts": 280,
   "blastTotal": 214,
   "receivers": 95,
-  "payloadBytes": 4041795,
+  "payloadBytes": 4053440,
   "truth": [
    {
     "id": "packages/excalidraw/actions/actionHistory.tsx#createUndoAction",
@@ -581,12 +581,12 @@
   "id": "r11-excalidraw-22",
   "repo": "excalidraw",
   "changeClass": "plain-logic",
-  "seconds": 8.1,
+  "seconds": 8.2,
   "outcome": "completed",
   "impacts": 214,
   "blastTotal": 443,
   "receivers": 141,
-  "payloadBytes": 13441486,
+  "payloadBytes": 13451665,
   "truth": [
    {
     "id": "packages/excalidraw/element/linearElementEditor.ts#LinearElementEditor.handlePointerDown",
@@ -604,12 +604,12 @@
   "id": "r11-excalidraw-23",
   "repo": "excalidraw",
   "changeClass": "plain-logic",
-  "seconds": 9.9,
+  "seconds": 9.5,
   "outcome": "completed",
   "impacts": 54,
   "blastTotal": 267,
   "receivers": 53,
-  "payloadBytes": 1738437,
+  "payloadBytes": 1740761,
   "truth": [
    {
     "id": "packages/excalidraw/animated-trail.ts#AnimatedTrail.update",
@@ -632,7 +632,7 @@
   "impacts": 33,
   "blastTotal": 44,
   "receivers": 51,
-  "payloadBytes": 331652,
+  "payloadBytes": 333012,
   "truth": [
    {
     "id": "packages/common/src/constants.ts#isMobile",
@@ -650,12 +650,12 @@
   "id": "r11-excalidraw-25",
   "repo": "excalidraw",
   "changeClass": "plain-logic",
-  "seconds": 10.1,
+  "seconds": 10.3,
   "outcome": "completed",
   "impacts": 110,
   "blastTotal": 86,
   "receivers": 16,
-  "payloadBytes": 1430703,
+  "payloadBytes": 1435223,
   "truth": [
    {
     "id": "packages/excalidraw/components/TTDDialog/hooks/useMermaidRenderer.ts#useMermaidRenderer",
@@ -673,12 +673,12 @@
   "id": "r11-excalidraw-26",
   "repo": "excalidraw",
   "changeClass": "plain-logic",
-  "seconds": 11.9,
+  "seconds": 12,
   "outcome": "completed",
   "impacts": 38,
   "blastTotal": 65,
   "receivers": 16,
-  "payloadBytes": 703873,
+  "payloadBytes": 705453,
   "truth": [
    {
     "id": "packages/element/src/flowchart.ts#placeCluster",
@@ -709,7 +709,7 @@
   "impacts": 67,
   "blastTotal": 245,
   "receivers": 74,
-  "payloadBytes": 2051888,
+  "payloadBytes": 2054648,
   "truth": [
    {
     "id": "packages/element/src/frame.ts#getFrameChildrenInsertionIndex",
@@ -732,7 +732,7 @@
   "impacts": 42,
   "blastTotal": 16,
   "receivers": 0,
-  "payloadBytes": 161437,
+  "payloadBytes": 163117,
   "truth": [
    {
     "id": "src/server/router/plural.js#<module>",
