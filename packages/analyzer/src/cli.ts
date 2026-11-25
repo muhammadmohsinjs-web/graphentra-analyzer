@@ -31,7 +31,7 @@ export function runCli(argv: string[] = process.argv.slice(2)): void {
       maxAffectedEntities: options.maxAffectedEntities, maxDepth: options.maxDepth, hubThreshold: options.hubThreshold,
       ...(options.evidenceSchema ? { evidenceSchema: options.evidenceSchema } : {}) });
     const canonical = (file: string): string => {
-      if (fs.existsSync(file)) return fs.realpathSync(file);
+      if (fs.existsSync(file)) return fs.realpathSync.native(file);
       const parent = path.dirname(file);
       return parent === file ? file : path.join(canonical(parent), path.basename(file));
     };

@@ -50,7 +50,8 @@ test('missing Git retains its stable error code', () => {
   } finally { process.env.PATH = originalPath; repo.cleanup(); }
 });
 
-test('Git timeout retains its stable error code', () => {
+// The fake git is a shell script, which Windows cannot run as `git`.
+test('Git timeout retains its stable error code', { skip: process.platform === 'win32' && 'needs a POSIX shell' }, () => {
   const repo = createRepo();
   const originalPath = process.env.PATH;
   try {

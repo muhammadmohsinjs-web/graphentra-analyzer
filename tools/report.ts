@@ -127,7 +127,7 @@ export async function runReport(argv: string[] = process.argv.slice(2), dependen
     // Created first, so a missing OPENAI_API_KEY fails before any LLM spend.
     const verify = Boolean(options.verify) || environment.GRAPHENTRA_VERIFY_REPORT === '1';
     const decisionClient = verify ? dependencies.decisionClient ?? createOpenAIDecisionClient({ apiKey: environment.OPENAI_API_KEY }) : undefined;
-    const target = fs.realpathSync(path.resolve(options.target));
+    const target = fs.realpathSync.native(path.resolve(options.target));
     const directory = path.join(target, '.graphentra');
     const evidencePath = path.resolve(options.output ?? path.join(directory, 'evidence.json'));
     const contextPath = path.join(directory, APPLICATION_CONTEXT_FILE);
@@ -135,7 +135,7 @@ export async function runReport(argv: string[] = process.argv.slice(2), dependen
     const mapPath = path.join(directory, 'application-map.json');
     const reportPath = options.report ? path.resolve(options.report) : undefined;
     const destinations = [evidencePath, contextPath, contextBackupPath, mapPath, path.join(directory, 'technical-graph.json'), path.join(directory, 'analysis.json'), ...(reportPath ? [reportPath] : [])];
-    const canonical = (file: string): string => fs.existsSync(file) ? fs.realpathSync(file)
+    const canonical = (file: string): string => fs.existsSync(file) ? fs.realpathSync.native(file)
       : path.dirname(file) === file ? file : path.join(canonical(path.dirname(file)), path.basename(file));
     if (new Set(destinations.map(canonical)).size !== destinations.length) throw new Error('Reporting output paths collide.');
     const result = analyzeRepository({ target, comparison, engine: options.engine });
