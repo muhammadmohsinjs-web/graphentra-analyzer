@@ -1,5 +1,6 @@
 export * from './decision-client';
 export * from './openai-decision-client';
+export * from './openrouter-decision-client';
 export * from './fake-decision-client';
 export * from './behaviour';
 export * from './questions';
