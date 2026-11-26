@@ -5,7 +5,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { test } from 'node:test';
 import { analyzeRepository, buildGraphIndex, type Entity, type EntityImpact, type Relation } from '@graphentra/analyzer';
-import { clusterChanges, generateQAReport, mergeGroupReports, placeTriggers, rankTriggers, relatedCodeFor, TRIGGER_AREA, type ImpactReport } from '../src/index';
+import { clusterChanges, createFakeDecisionClient, generateQAReport, mergeGroupReports, placeTriggers, rankTriggers, relatedCodeFor, TRIGGER_AREA, type ImpactReport } from '../src/index';
 
 const entity = (id: string, startLine = 1): Entity => {
   const [file, name] = id.split('#') as [string, string];
@@ -274,6 +274,26 @@ test('15 changed functions or fewer take the single-call path, and so does a run
     await generateQAReport(large.evidence, context, { client: lowered.client, model: 'offline' }, { cluster: { threshold: 20 } });
     assert.equal(lowered.seen.length, 1, 'the threshold is configurable');
   } finally { large.cleanup(); }
+});
+
+test('a cluster report goes through the verifier: its gaps are added and failed groups stay listed (R-8 coverage)', async t => {
+  quiet(t);
+  const repo = repoWith(3, 6);
+  try {
+    const provider = fakeProvider({ failWhen: user => user.changes.some((c: any) => c.changedEntity.startsWith('m1.ts#')) });
+    // One function of a reviewed group is judged not covered; everything else is covered.
+    const decisions = createFakeDecisionClient(question => (question.id === 'coverage:m0.ts#fn0x0' ? 0.1 : 0.95));
+    const result = await generateQAReport(repo.evidence, context, { client: provider.client, model: 'offline' },
+      { cluster: { retryDelayMs: 0 }, verify: { client: decisions, plainChecks: false } });
+    assert.equal(result.cluster!.groups.length, 3, 'the cluster path ran');
+    assert.ok(decisions.calls.length > 0, 'the verifier was asked about the merged report');
+    const coverage = result.verification!.verification.entries.filter(e => e.kind === 'coverage' && e.entity);
+    assert.equal(new Set(coverage.map(e => e.entity)).size, 18, 'every changed function gets a coverage verdict');
+    const listed = result.qaReport.notCovered!;
+    assert.equal(listed.filter(item => item.file === 'm1.ts' && item.reason === 'error').length, 6, 'the failed group stays listed');
+    assert.ok(listed.some(item => item.entity === 'm0.ts#fn0x0' && item.reason !== 'error'), 'the verifier gap is added');
+    assert.equal(new Set(listed.map(item => item.entity)).size, listed.length, 'no entity is listed twice');
+  } finally { repo.cleanup(); }
 });
 
 test('triggers add one check per changed function to each group and drop invalid ones', async t => {

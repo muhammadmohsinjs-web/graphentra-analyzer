@@ -2,9 +2,11 @@
 // Corpus-32 evaluation: analyzer recall, QA report catch/explain rates, and the lookup tool. Plan: impactbench/eval/PLAN.md.
 //
 //   node --import tsx tools/impactbench-report-eval.mts evidence --history <dir> --work <dir> [ids...]
-//   node --import tsx tools/impactbench-report-eval.mts run --history <dir> --work <dir> [--variants base,lookup,lookup-always,verify,cluster,cluster-triggers] [--cluster-concurrency 4] [--group-size 10] [--max-groups 8] [--trigger-cap 15] [--runs 3] [--concurrency 6] [ids...]
+//   node --import tsx tools/impactbench-report-eval.mts run --history <dir> --work <dir> [--variants base,lookup,lookup-always,verify,cluster,cluster-triggers,cluster-verify,cluster-triggers-verify] [--cluster-concurrency 4] [--group-size 10] [--max-groups 8] [--trigger-cap 15] [--runs 3] [--concurrency 6] [ids...]
 //   (openai/* report models, e.g. openai/gpt-6-luna, call the OpenAI API directly with OPENAI_API_KEY; --provider openrouter forces the OpenRouter route. The judge and other models stay on OpenRouter.)
-//   (verify = base plus the Phase V verifier; needs OPENAI_API_KEY for the Decisions API. Rows gain usage.verifier, usage.repair, verification, audit.)
+//   (verify = base plus the Phase V verifier. --verifier openai (default) uses the production Decisions API (OPENAI_API_KEY);
+//   --verifier openrouter asks Luna through OpenRouter (OPENROUTER_API_KEY), an eval-only route that under-flags gaps. Rows gain usage.verifier, usage.repair, verification, audit.
+//   A `-verify` suffix adds the same verifier to a cluster variant, e.g. cluster-verify: R-8 coverage for cluster reports.)
 //   node --import tsx tools/impactbench-report-eval.mts summary [--grades <hand-grades.jsonl> [--grades-model glm]]
 //   (--grades: catch/explained from hand grades, matched on id and run, instead of the API judge. Summary also prints R-0 band tables.)
 //   node --import tsx tools/impactbench-report-eval.mts sections --work <dir> [--json <file>] [ids...]
@@ -27,7 +29,7 @@ import reporting, { type DecisionAnswer, type DecisionClient, type LookupLogEntr
 import { LARGE_VARIANTS, largePayloadReport, payloadSections, payloadSizes, type LargeVariant } from './impactbench-large-payload.mts';
 
 const { readEvidence } = analyzer;
-const { buildLLMPayload, buildSurfaceEvidence, createOpenAIDecisionClient, DEFAULT_THRESHOLD, generateQAReport, getSourceRole, judgeAnswer, loadApplicationContext, notCoveredDisplay } = reporting;
+const { buildLLMPayload, buildSurfaceEvidence, createOpenAIDecisionClient, createOpenRouterDecisionClient, DEFAULT_THRESHOLD, generateQAReport, getSourceRole, judgeAnswer, loadApplicationContext, notCoveredDisplay } = reporting;
 
 /** E7: lines QA reads for the gaps: the plain checks (V-13e) or, without them, the grouped code list (V-13d). The developer list under the checks is not counted (V-13f). */
 const shownLines = (report: any) => { const d = notCoveredDisplay(report); return d.checks.length || d.developer.length; };
@@ -158,6 +160,15 @@ function meteredClient(model: string) {
 // ---------- verifier (Phase V, V-11) ----------
 // USD per million tokens [input, cached input, output]. Decisions pricing is not published; same ESTIMATE as tools/verifier-spike.mts.
 const DECISIONS_PRICE: [number, number, number] = [0.1, 0.01, 0.5];
+// Which verifier route the eval uses. openai (default): the production Decisions API, needs OPENAI_API_KEY; the R-8 gate uses it.
+// openrouter: Luna through OpenRouter (same $0.10/$0.50 list price as the Decisions estimate above). In the 2026-11-26 smoke it
+// flagged no gaps where Decisions flagged five (r11-consola-01), so it inflates coverage. Its probabilities are not comparable
+// with Decisions' scores, so do not mix the two in one gate.
+const VERIFIER = flag('verifier', 'openai')!;
+if (VERIFIER !== 'openrouter' && VERIFIER !== 'openai') throw new Error(`--verifier must be openrouter or openai, got ${VERIFIER}`);
+const verifierClient = () => (VERIFIER === 'openai'
+  ? createOpenAIDecisionClient({ apiKey: process.env.OPENAI_API_KEY })
+  : createOpenRouterDecisionClient({ apiKey: process.env.OPENROUTER_API_KEY }));
 
 /** Wraps the Decisions client: meters tokens, cost and wall time, and records every answer in arrival order (pass 1, then pass 2). */
 function meteredDecisionClient(inner: DecisionClient) {
@@ -305,7 +316,9 @@ async function oneReport(entry: Entry, variant: string, run: number) {
   const read = (file: string) => { try { return execFileSync('git', ['-C', path.join(history!, entry.repo), 'show', `${entry.introducer.sha}:${file}`], { encoding: 'utf8', maxBuffer: 1 << 26, stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return undefined; } };
   const lookup = variant === 'base' || variant === 'verify' || variant.startsWith('cluster') ? undefined : { read, style: variant === 'lookup-always' ? 'always' as const : 'optional' as const };
   // verify = base + the Phase V verifier ("Not covered" list; no repair round since V-13). Same report model and judge as base.
-  const decisions = variant === 'verify' ? meteredDecisionClient(createOpenAIDecisionClient({ apiKey: process.env.OPENAI_API_KEY })) : undefined;
+  // A `-verify` suffix (cluster-verify, cluster-triggers-verify) runs the same verifier on the cluster report, for R-8 coverage.
+  const verifies = variant === 'verify' || variant.endsWith('-verify');
+  const decisions = verifies ? meteredDecisionClient(verifierClient()) : undefined;
   let verification: ReportVerification | undefined;
   let row: any = { id: entry.id, repo: entry.repo, changeClass: entry.changeClass, variant, run, model: REPORT_MODEL };
   const logs: LookupLogEntry[] = [];
@@ -320,17 +333,17 @@ async function oneReport(entry: Entry, variant: string, run: number) {
       // Recall before the merge: would the analysts' own checks have caught it?
       if (large.findings?.length) { const g: any = await judge(entry, { summary: '', keyChanges: [], uncertainty: [], testAreas: [{ area: 'findings', checks: large.findings }] }, judgeClient); row.findingsCatch = g.catch; }
     } else {
+    // R-10: more than 15 changed functions are reviewed in groups; smaller changes take the base path.
+    const cluster = variant.startsWith('cluster') ? {
+      // cluster-triggers: each group also names the input each changed function now handles differently (one check each).
+      read, triggers: variant.startsWith('cluster-triggers'), ...(flag('trigger-cap') ? { triggerCap: Number(flag('trigger-cap')) } : {}), concurrency: Number(flag('cluster-concurrency', '4')),
+      // The base revision supplies the code of changed functions that no longer exist at the analyzed one (removed or renamed away).
+      readBase: (file: string) => { try { return execFileSync('git', ['-C', path.join(history!, entry.repo), 'show', `${entry.introducer.sha}^:${file}`], { encoding: 'utf8', maxBuffer: 1 << 26, stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return undefined; } },
+      ...(flag('group-size') ? { maxGroupSize: Number(flag('group-size')) } : {}), ...(flag('max-groups') ? { maxGroups: Number(flag('max-groups')) } : {}),
+    } : false as const;
     const result = await generateQAReport(raw, context, { client, model: REPORT_MODEL, logLevel: 'off' },
       // Non-cluster variants keep the single-report path they measure (cluster is on by default in generateQAReport).
-      lookup ? { lookup, cluster: false } : decisions ? { verify: { client: decisions.client }, cluster: false }
-        // R-10: more than 15 changed functions are reviewed in groups; smaller changes take the base path.
-        : variant.startsWith('cluster') ? { cluster: {
-          // cluster-triggers: each group also names the input each changed function now handles differently (one check each).
-          read, triggers: variant === 'cluster-triggers', ...(flag('trigger-cap') ? { triggerCap: Number(flag('trigger-cap')) } : {}), concurrency: Number(flag('cluster-concurrency', '4')),
-          // The base revision supplies the code of changed functions that no longer exist at the analyzed one (removed or renamed away).
-          readBase: (file: string) => { try { return execFileSync('git', ['-C', path.join(history!, entry.repo), 'show', `${entry.introducer.sha}^:${file}`], { encoding: 'utf8', maxBuffer: 1 << 26, stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return undefined; } },
-          ...(flag('group-size') ? { maxGroupSize: Number(flag('group-size')) } : {}), ...(flag('max-groups') ? { maxGroups: Number(flag('max-groups')) } : {}),
-        } } : { cluster: false });
+      lookup ? { lookup, cluster: false } : { ...(decisions ? { verify: { client: decisions.client } } : {}), cluster });
     console.info = quiet;
     logs.push(...(result.lookups ?? []));
     verification = result.verification;
@@ -407,7 +420,10 @@ if (command === 'evidence') {
   fs.mkdirSync(DATA, { recursive: true });
   const done = new Set(fs.existsSync(RUNS) ? fs.readFileSync(RUNS, 'utf8').trim().split('\n').filter(Boolean).map(line => { const r = JSON.parse(line); return `${r.id}|${r.variant}|${r.run}`; }) : []);
   const variants = flag('variants', 'base,lookup,lookup-always')!.split(',');
-  if (variants.includes('verify') && !process.env.OPENAI_API_KEY) throw new Error(`OPENAI_API_KEY not found (looked in ${MAIN_ENV}); the verify variant calls OpenAI Decisions directly.`);
+  if (variants.some(v => v === 'verify' || v.endsWith('-verify'))) {
+    if (VERIFIER === 'openai' && !process.env.OPENAI_API_KEY) throw new Error(`OPENAI_API_KEY not found (looked in ${MAIN_ENV}); --verifier openai calls OpenAI Decisions directly.`);
+    if (VERIFIER === 'openrouter' && !process.env.OPENROUTER_API_KEY) throw new Error(`OPENROUTER_API_KEY not found (looked in ${MAIN_ENV}); the verifier runs on OpenRouter by default.`);
+  }
   const runs = Number(flag('runs', '3'));
   const jobs = selected.flatMap(entry => variants.flatMap(variant => Array.from({ length: runs }, (_, i) => ({ entry, variant, run: i + 1 }))))
     .filter(job => !done.has(`${job.entry.id}|${job.variant}|${job.run}`) && fs.existsSync(evidenceFile(job.entry.id)))
@@ -532,6 +548,8 @@ if (command === 'evidence') {
           strayNotCovered: audited.reduce((s, r) => s + r.audit.strayNotCovered, 0),
           // V-13b buckets (absent in data-v3 rows, so 0 there).
           skipped: audited.reduce((s, r) => s + (r.audit.skipped ?? 0), 0), folded: audited.reduce((s, r) => s + (r.audit.folded ?? 0), 0),
+          // Coverage leaves out functions with no behaviour change (nothing to test); see the band table note.
+          coverage: (() => { const p = audited.reduce((s, r) => s + r.audit.production - (r.audit.skipped ?? 0), 0); return p > 0 ? audited.reduce((s, r) => s + r.audit.covered, 0) / p : null; })(),
           // E7 counts the lines a reader sees (a folded inner function adds no line; V-13d groups a long list by file).
           // V-13e: plain checks plus any gap left by code name.
           reportsNotCoveredAtMost3: audited.filter(r => (r.report?.notCovered ? shownLines(r.report) : r.audit.notCovered) <= 3).length,
@@ -573,6 +591,8 @@ if (command === 'evidence') {
   console.log(`total ${rows.length} reports, $${rows.reduce((a, r) => a + costOf(r), 0).toFixed(2)}, ${(rows.reduce((a, r) => a + r.seconds, 0) / 3600).toFixed(1)} report-hours; per-report CSV: ${path.relative(ROOT, path.join(DATA, 'cost-time.csv'))}`);
   // R-0: results by change size. "Caught" = commits where at least one run caught the bug; "majority" = more than half the runs did.
   // Coverage = changed production functions the report covered (Phase V audit), so it is empty for variants without the verifier.
+  // Since 2026-11-26 the denominator leaves out functions with no behaviour change (V-13b `skipped`): there is nothing in them to
+  // test. `coverageAll` keeps the old definition (covered / every changed production function) for comparison with older runs.
   const fnsOf = (id: string) => facts.find(f => f.id === id)?.impacts ?? 0;
   const fnBands: [string, number, number][] = [['<= 10', 0, 10], ['11-25', 11, 25], ['> 25', 26, Infinity]];
   const kbBands: [string, number, number][] = [['< 50 KB', 0, 50], ['50-250 KB', 50, 250], ['250-500 KB', 250, 500], ['500 KB-1 MB', 500, 1024], ['> 1 MB', 1024, Infinity]];
@@ -581,13 +601,16 @@ if (command === 'evidence') {
     const runsOf = (id: string) => rs.filter(r => r.id === id);
     const audited = rs.filter(r => r.audit && r.audit.skipped !== 'invalid');
     const production = audited.reduce((s, r) => s + r.audit.production, 0);
+    const covered = audited.reduce((s, r) => s + r.audit.covered, 0);
+    const testable = production - audited.reduce((s, r) => s + (r.audit.skipped ?? 0), 0);
     const mean = (f: (r: any) => number) => (rs.length ? rs.reduce((s, r) => s + f(r), 0) / rs.length : 0);
     return { commits: commits.length, reports: rs.length, valid: rs.filter(r => r.valid).length,
       caught: commits.filter(id => runsOf(id).some(r => r.catch)).length,
       caughtMajority: commits.filter(id => { const c = runsOf(id); return c.filter(r => r.catch).length * 2 > c.length; }).length,
       explained: commits.filter(id => runsOf(id).some(r => r.explained)).length,
       catchReports: rs.filter(r => r.catch).length,
-      coverage: production ? audited.reduce((s, r) => s + r.audit.covered, 0) / production : null,
+      coverage: testable > 0 ? covered / testable : null,
+      coverageAll: production ? covered / production : null,
       meanOutputTokens: Math.round(mean(r => r.usage.report.completion ?? 0)),
       meanChecks: mean(r => r.checks ?? 0), meanCost: mean(costOf), meanSeconds: Math.round(mean(r => r.seconds ?? 0)) };
   };
