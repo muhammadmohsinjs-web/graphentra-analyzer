@@ -28,6 +28,8 @@ import { getSourceRole, qaInstruction, type buildLLMPayload } from './qa-evidenc
 
 export const CLUSTER_THRESHOLD = 15;
 export const CLUSTER_GROUP_SIZE = 10;
+/** Default cap on the related code fetched for one group (`maxRelatedBytes`). */
+export const DEFAULT_RELATED_BYTES = 60_000;
 export const CLUSTER_MAX_GROUPS = 8;
 
 export interface ClusterOptions {
@@ -201,7 +203,7 @@ export interface RelatedCode {
 export function relatedCodeFor(group: ChangeGroup, index: GraphIndex, read: SourceReader, options: ClusterOptions = {}): { code: RelatedCode[]; bytes: number; truncated: boolean } {
   const perChange = options.relatedPerChange ?? 3;
   const maxLines = options.maxEntityLines ?? 80;
-  const budget = options.maxRelatedBytes ?? 60_000;
+  const budget = options.maxRelatedBytes ?? DEFAULT_RELATED_BYTES;
   const changed = new Set(group.impacts.map(impact => impact.changedEntity.id));
   const files = new Map<string, string[] | undefined>();
   const baseFiles = new Map<string, string[] | undefined>();
